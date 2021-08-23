@@ -15,4 +15,4 @@ class Batch:
         self.id = id
         self.status = self.Status.UNDEFINED
         #self.location Location.UNDEFINED Location can be read from yaml
-        self.OperationTimeStamp['Added to workflow'] = datetime.now()
+        #self.operationTimeStamp['Added to workflow'] = datetime.now()

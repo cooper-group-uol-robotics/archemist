@@ -1,4 +1,4 @@
-from ..exceptions import StationAssignedRackError
+from exceptions import exception
 
 
 class Location:
@@ -26,7 +26,6 @@ class Location:
 
 
 class Station:
-    self.pos = 1
     def __init__(self, name: str, id: int, location: Location):
         self._name = name
         self._id = id
@@ -75,7 +74,7 @@ class Station:
             print('Batch {id} assigned to station {name}'.format(id=batch.id,
                   name=self._name))
         else:
-            raise StationAssignedRackError(self._name)
+            raise exception.StationAssignedRackError(self._name)
 
     def retrieve_batch(self):
         ret_batch = self._assigned_batch
@@ -84,5 +83,5 @@ class Station:
         return ret_batch
 
 
-class StationOpDescriptor:
+#class StationOpDescriptor:
 
