@@ -1,6 +1,6 @@
 from pydoc import locate
 from state import batch, material, recipe, station, result
-import persistance.dbHandler
+import persistence.dbHandler
 from datetime import date, timedelta
 import datetime
 from multipledispatch import dispatch
@@ -11,7 +11,7 @@ class Parser:
     def loadRecipeYaml(self):
         __location__ = os.path.realpath(
        os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistance.fsHandler.FSHandler()
+        handler = persistence.fsHandler.FSHandler()
         return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'recipe.yaml')))
 
     @dispatch(dict)
@@ -21,7 +21,7 @@ class Parser:
         
     @dispatch()    
     def loadConfigYaml(self):
-        handler = persistance.dbHandler.dbHandler()
+        handler = persistence.dbHandler.dbHandler()
         return self.loadConfigYaml(handler.getConfig())
 
     @dispatch(dict)

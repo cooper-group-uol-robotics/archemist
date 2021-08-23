@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import persistance.fsHandler
+import persistence.fsHandler
 import os
 class dbHandler:
     def __init__(self):
@@ -10,7 +10,7 @@ class dbHandler:
     def importConfig(self):
         __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistance.fsHandler.FSHandler()
+        handler = persistence.fsHandler.FSHandler()
         db = self.client.config
         if (db.workflowConfig.count_documents({"workflow": {"$exists": True}}) > 0):
             db.workflowConfig.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
@@ -22,7 +22,7 @@ class dbHandler:
     def importRecipe(self):
         __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistance.fsHandler.FSHandler()
+        handler = persistence.fsHandler.FSHandler()
         db = self.client.config
         if (db.currentRecipe.count_documents({"workflow": {"$exists": True}}) > 0):
             db.currentRecipe.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(os.path.join(__location__, 'recipe.yaml')))
