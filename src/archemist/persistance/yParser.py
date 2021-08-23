@@ -1,6 +1,6 @@
 from pydoc import locate
 from state import batch, material, recipe, station, result
-import persistance.fsHandler
+import persistance.dbHandler
 from datetime import date, timedelta
 import datetime
 from multipledispatch import dispatch
@@ -21,10 +21,8 @@ class Parser:
         
     @dispatch()    
     def loadConfigYaml(self):
-        __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistance.fsHandler.FSHandler()
-        return self.loadConfigYaml(handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
+        handler = persistance.dbHandler.dbHandler()
+        return self.loadConfigYaml(handler.getConfig())
 
     @dispatch(dict)
     def loadConfigYaml(self, configDictionaryInput):
