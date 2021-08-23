@@ -3,16 +3,30 @@ from state import batch, material, recipe, station, result
 import persistance.fsHandler
 from datetime import date, timedelta
 import datetime
-
+from multipledispatch import dispatch
+import os
 class Parser:
-    def loadRecipeYaml(self):
-        handler = persistance.fsHandler.FSHandler()
-        self.loadRecipeYaml(handler.loadYamlFile("recipe.yaml"))
 
+    @dispatch()
+    def loadRecipeYaml(self):
+        __location__ = os.path.realpath(
+       os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        handler = persistance.fsHandler.FSHandler()
+        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'recipe.yaml')))
+
+    @dispatch(dict)
     def loadRecipeYaml(self, recipeDictionary):
-        self.recipe = recipe.Recipe(recipeDictionary["Workflow"]["name"], recipeDictionary["Workflow"]["ID"])
+        newRecipe = recipe.Recipe(recipeDictionary["Workflow"]["name"], recipeDictionary["Workflow"]["ID"])
+        return newRecipe
         
-    
+    @dispatch()    
+    def loadConfigYaml(self):
+        __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        handler = persistance.fsHandler.FSHandler()
+        return self.loadConfigYaml(handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
+
+    @dispatch(dict)
     def loadConfigYaml(self, configDictionaryInput):
         configDictionary = configDictionaryInput["workflow"] #Get rid of top-level workflow key, only interested in everything below
         configList = list() #list of lists, for each category of config
