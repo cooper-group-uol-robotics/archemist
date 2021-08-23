@@ -58,7 +58,7 @@ class Parser:
             exp_date = date.today() + timedelta(days=21)
             if "expiry_date" in configDictionary["Materials"]["solids"][solid]:
                 exp_date = datetime.tstrptime(configDictionary["Materials"]["solids"][solid]["expiry_date"], '%d/%m/%y %H:%M:%S') 
-                
+
             mass = 0
             if configDictionary["Materials"]["solids"][solid]["unit"] == "mg":
                 mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]/1000
@@ -77,14 +77,15 @@ class Parser:
 
         stations = list()
         for stationN in configDictionary["Stations"]:
-            newstation = type(stationN, (station.Station, ), configDictionary["Stations"][stationN])
             locationOf = None
             for x in locations:
                 if x.name == configDictionary["Stations"][stationN]["location"]:
-                    locationOf = x.name
+                    locationOf = x
                     break
                 else:
                     x = None
+            configDictionary["Stations"][stationN]["location"] = locationOf
+            newstation = type(stationN, (station.Station, ), configDictionary["Stations"][stationN])
             newStationObj = newstation(stationN, configDictionary["Stations"][stationN]["id"], locationOf)
             stations.append(newStationObj)
         configList.append(stations)
