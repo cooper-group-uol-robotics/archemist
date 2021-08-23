@@ -8,23 +8,23 @@ workflow:
   Locations:
     quantos_loc:
       node_id: 3
-      graph_id: 7
+      graph_id: 5
       map_id: 7
     liquid_loc:
       node_id: 6
-      graph_id: 7
+      graph_id: 5
       map_id: 7
     ika_loc:
       node_id: 12
-      graph_id: 7
+      graph_id: 5
       map_id: 7
     analyser_loc:
       node_id: 2
-      graph_id: 7
+      graph_id: 5
       map_id: 7
     nolocation:
       node_id: 0
-      graph_id: 0
+      graph_id: 5
       map_id: 0
   Materials:
     liquids:
