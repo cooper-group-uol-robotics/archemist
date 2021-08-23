@@ -27,6 +27,7 @@ class Parser:
             exp_date = date.today() + timedelta(days=21)
             if "expiry_date" in configDictionary["Materials"]["liquids"][liquid]:
                 exp_date = datetime.strptime(configDictionary["Materials"]["liquids"][liquid]["expiry_date"], '%d/%m/%y %H:%M:%S') 
+
             vol = 0
             mass = 0
             dens = configDictionary["Materials"]["liquids"][liquid]["density"]
@@ -40,17 +41,15 @@ class Parser:
                 mass = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000/1000
                 vol = mass/dens    
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "ml":
-                print("ml")
                 vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000
                 mass = vol*dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "l":
-                print("ml")
                 vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]
                 mass = vol*dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "ul":
-                print("ml")
                 vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000/1000
                 mass = vol*dens
+
             liquids.append(material.Liquid(liquid, configDictionary["Materials"]["liquids"][liquid]["id"], exp_date, mass, dens, vol))
         configList.append(liquids)
 
@@ -59,6 +58,7 @@ class Parser:
             exp_date = date.today() + timedelta(days=21)
             if "expiry_date" in configDictionary["Materials"]["solids"][solid]:
                 exp_date = datetime.tstrptime(configDictionary["Materials"]["solids"][solid]["expiry_date"], '%d/%m/%y %H:%M:%S') 
+                
             mass = 0
             if configDictionary["Materials"]["solids"][solid]["unit"] == "mg":
                 mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]/1000
@@ -66,6 +66,7 @@ class Parser:
                 mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]
             elif configDictionary["Materials"]["solids"][solid]["unit"] == "ug":
                 mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]/1000/1000
+
             solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["id"], exp_date, mass, configDictionary["Materials"]["solids"][solid]["dispense_method"]))
         configList.append(solids)
 

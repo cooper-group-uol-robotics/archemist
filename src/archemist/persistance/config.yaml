@@ -32,7 +32,7 @@ workflow:
         id: 51
         amount_to_dispense: 3
         unit: ml
-        density: 2
+        density: 791.4
       ethanol:
         id: 52
         amount_to_dispense: 1
@@ -43,7 +43,7 @@ workflow:
         id: 233
         amount_to_dispense: 5.5
         unit: mg
-        density: 2
+        density: 947
         dispense_method: quantos
       sodium_chloride:
         id: 235
