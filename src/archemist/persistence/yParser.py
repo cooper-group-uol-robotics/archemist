@@ -22,7 +22,9 @@ class Parser:
     @dispatch()    
     def loadConfigYaml(self):
         handler = persistence.dbHandler.dbHandler()
-        return self.loadConfigYaml(handler.getConfig())
+        config = dict()
+        config = {'workflow' : handler.getConfig()}
+        return self.loadConfigYaml(config)
 
     @dispatch(dict)
     def loadConfigYaml(self, configDictionaryInput):

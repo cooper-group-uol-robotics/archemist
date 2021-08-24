@@ -1,82 +1,82 @@
----
-workflow: 
-  name: making_new_crystals_changed
+workflow:
   Batches:
     newBatch:
-      name: "new batch"
       id: 21
+      name: new batch
   Locations:
-    quantos_loc:
-      node_id: 3
-      graph_id: 5
-      map_id: 7
-    liquid_loc:
-      node_id: 6
-      graph_id: 5
-      map_id: 7
-    ika_loc:
-      node_id: 12
-      graph_id: 5
-      map_id: 7
     analyser_loc:
-      node_id: 2
       graph_id: 5
       map_id: 7
+      node_id: 2
+    ika_loc:
+      graph_id: 5
+      map_id: 7
+      node_id: 12
+    liquid_loc:
+      graph_id: 5
+      map_id: 7
+      node_id: 6
     nolocation:
-      node_id: 0
       graph_id: 5
       map_id: 0
+      node_id: 0
+    quantos_loc:
+      graph_id: 5
+      map_id: 7
+      node_id: 3
   Materials:
     liquids:
-      methanol:
-        id: 51
-        amount_to_dispense: 3
-        unit: ml
-        density: 791.4
       ethanol:
-        id: 52
         amount_to_dispense: 1
-        unit: l
         density: 789.3
+        id: 52
+        unit: l
+      methanol:
+        amount_to_dispense: 3
+        density: 791.4
+        id: 51
+        unit: ml
     solids:
       benzimidiazole:
-        id: 233
         amount_to_dispense: 5.5
-        unit: mg
         density: 947
         dispense_method: quantos
+        id: 233
+        unit: mg
       sodium_chloride:
-        id: 235
         amount_to_dispense: 12.1
-        unit: ug
         density: 2170
         dispense_method: quantos
+        id: 235
+        unit: ug
   Stations:
-    solid_dispensing_quantos_QS3:
-      id: 12
-      location: quantos_loc
-      protocol: automated_dosing
-      cartridge_id: 22
-      use_static_shield: false
+    fume_hood:
+      id: 4
+      location: nolocation
+      unit: hour
+      waiting_time: 5
+    ika_plate_rct_digital:
+      id: 3
+      location: ika_loc
+      stirring_duration: 5
+      stirring_rpm: 200
+      unit: minute
     liquid_dispensing_peristaltic_pump_ardu:
       id: 34
       location: liquid_loc
       pump_id: 37
-    fume_hood:
-      id: 4
-      location: nolocation 
-      waiting_time: 5
-      unit: hour
-    ika_plate_rct_digital:
-      id: 3
-      location: ika_loc
-      stirring_rpm: 200
-      stirring_duration: 5
-      unit: minute
     pxrd_analyser:
       id: 6
       location: analyser_loc
       routine_name: get_crystals
+    solid_dispensing_quantos_QS3:
+      cartridge_id: 22
+      id: 12
+      location: quantos_loc
+      protocol: automated_dosing
+      use_static_shield: false
+  name: making_new_crystals_changed
   output:
     characteristic: pxrd_pattern
     type: list
+  timestamp: 08/24/2021, 11:18:22

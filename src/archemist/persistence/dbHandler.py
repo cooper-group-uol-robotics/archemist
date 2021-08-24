@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import persistence.fsHandler
 import os
+from datetime import datetime
 class dbHandler:
     def __init__(self):
         self.client = MongoClient("mongodb://localhost:27017")
@@ -12,8 +13,10 @@ class dbHandler:
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
         handler = persistence.fsHandler.FSHandler()
         db = self.client.config
+        conf = handler.loadYamlFile(os.path.join(__location__, 'config.yaml'))
+        conf["workflow"]["timestamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         if (db.workflowConfig.count_documents({"workflow": {"$exists": True}}) > 0):
-            db.workflowConfig.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
+            db.workflowConfig.replace_one({"workflow": {"$exists": True}}, conf)
             return True
         else:
             db.workflowConfig.insert_one(handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
@@ -33,7 +36,7 @@ class dbHandler:
 
     def getConfig(self):
         db = self.client.config
-        return db.workflowConfig.find_one({"workflow": {"$exists": True}})
+        return db.workflowConfig.find_one({"workflow": {"$exists": True}})["workflow"]
     
     def getCurrentRecipe(self):
         db = self.client.config
