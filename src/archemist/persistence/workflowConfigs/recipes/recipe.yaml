@@ -1,0 +1,24 @@
+recipe:
+  name: example_recipe
+  id: 23
+  stations: {quantos_station, something_else}
+  tasks: {one, two, three, four}
+  taskFlow:
+    1:
+      task: one
+      prereq: {}
+    2: 
+      task: two
+      prereq: {1}
+    3: 
+      task: two
+      prereq: {2}
+    4:
+      task: one
+      prereq: {3}
+    5:
+      task: three
+      prereq: {4}
+    6:
+      task: four
+      prereq: {}
