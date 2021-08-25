@@ -20,13 +20,13 @@ class StationFlow:
         self.nextNode = None 
 
 class Recipe:
-    def __init__(self, name, id, stationFlow: StationFlow, solids: list, liquids:list):
+    def __init__(self, name, id, stationFlow: StationFlow, solids: list, liquids:list, outcomeDescriptors: list):
         self.name = name
         self.id = id
         self.stationDescriptors = list()
         self.solids = solids
         self.liquids = liquids
         self.stationFlow = stationFlow
-        self.outcomeDescriptors = list()
+        self.outcomeDescriptors = outcomeDescriptors
     
 

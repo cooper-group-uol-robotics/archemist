@@ -76,7 +76,17 @@ workflow:
       protocol: automated_dosing
       use_static_shield: false
   name: making_new_crystals_changed
-  output:
-    characteristic: pxrd_pattern
-    type: list
+  OutputDescriptors:
+    crystal_measurement:
+      characteristic: pxrd_pattern
+      type: list
+    ika_outcome:
+      characteristic: temp_speed_pattern
+      type: list
+    liquid_dispense_outcome:
+      characteristic: success_dispense
+      type: booolean
+    quantos_dispense_outcome:
+      characteristic: success_dispense
+      type: boolean
   timestamp: 08/24/2021, 11:18:22

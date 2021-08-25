@@ -37,8 +37,14 @@ class Parser:
             for liquidMaterial in config[1]:
                     if str(liquidMaterial.name) == liquid:
                         liquidsList.append(liquidMaterial)
+        
+        outcomeDescriptorsList = list()
+        for outcome in recipeDictionary["recipe"]["outcomeDescriptors"]:
+            for outcomeDescriptor in config[5]:
+                if str(outcomeDescriptor.name) == outcome:
+                        outcomeDescriptorsList.append(outcomeDescriptor)
 
-        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], recipe.StationFlow(stationFlowList), solidsList, liquidsList)
+        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], recipe.StationFlow(stationFlowList), solidsList, liquidsList, outcomeDescriptorsList)
         return newRecipe
         
     @dispatch()
@@ -130,7 +136,9 @@ class Parser:
         configList.append(stations) #add to list of lists
 
         results = list() #create list of result/output specification from yaml
-        results.append(result.Result(configDictionary["output"]["characteristic"], locate(configDictionary["output"]["type"])))
+        for resultI in configDictionary["OutputDescriptors"]:
+            resultN = result.Result(resultI, configDictionary["OutputDescriptors"][resultI]["characteristic"], locate(configDictionary["OutputDescriptors"][resultI]["type"]))
+            results.append(resultN)
         configList.append(results) #add to list of lists
 
         return configList #finally return list

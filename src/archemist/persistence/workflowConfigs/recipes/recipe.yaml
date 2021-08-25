@@ -23,23 +23,23 @@ recipe:
       station: "liquid_dispensing_peristaltic_pump_ardu"
       task: "dispense_ethanol"
       outcome: "quantos_dispense_outcome"
-      onsuccess: {4}
-      onfail: {3}
+      onsuccess: 4
+      onfail: 3
     4:
       station: "liquid_dispensing_peristaltic_pump_ardu"
       task: "dispense_methanol"
       outcome: "quantos_dispense_outcome"
-      onsuccess: {5}
-      onfail: {4}
+      onsuccess: 5
+      onfail: 4
     5:
       station: "ika_rct_plate_digital"
       task: "stir_heat_chemicals"
       outcome: "ika_outcome"
-      onsuccess: {6}
-      onfail: {5}
+      onsuccess: 6
+      onfail: 5
     6:
       station: "pxrd_analyser"
       task: "measure_crystal_growth"
       outcome: "crystal_measurement"
-      onsuccess: {end}
-      onfail: {1}
+      onsuccess: 0
+      onfail: 1
