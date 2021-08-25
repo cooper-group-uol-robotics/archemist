@@ -12,14 +12,24 @@ class Parser:
         __location__ = os.path.realpath(
        os.path.join(os.getcwd(), os.path.dirname(__file__)))
         handler = persistence.fsHandler.FSHandler()
-        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'recipe.yaml')))
+        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\\recipes\\recipe.yaml')))
 
     @dispatch(dict)
     def loadRecipeYaml(self, recipeDictionary):
-        newRecipe = recipe.Recipe(recipeDictionary["Workflow"]["name"], recipeDictionary["Workflow"]["ID"])
+        config = self.loadConfigYaml()      
+        stationFlowList = list()
+        for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
+            for stateData in stateList:
+                stationF = None
+                for flowStation in config[4]:
+                    if str(flowStation.name) == stateList["station"]:
+                        stationF=flowStation
+                
+            stationFlowList.append(recipe.StationFlow(state, stationF, stateList["task"], stateList["outcome"], stateList["onsuccess"], stateList["onfail"]))
+        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationFlowList)
         return newRecipe
         
-    @dispatch()    
+    @dispatch()
     def loadConfigYaml(self):
         handler = persistence.dbHandler.dbHandler()
         config = dict()

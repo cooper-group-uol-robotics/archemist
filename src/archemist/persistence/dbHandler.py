@@ -13,13 +13,13 @@ class dbHandler:
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
         handler = persistence.fsHandler.FSHandler()
         db = self.client.config
-        conf = handler.loadYamlFile(os.path.join(__location__, 'config.yaml'))
+        conf = handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\config.yaml'))
         conf["workflow"]["timestamp"] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         if (db.workflowConfig.count_documents({"workflow": {"$exists": True}}) > 0):
             db.workflowConfig.replace_one({"workflow": {"$exists": True}}, conf)
             return True
         else:
-            db.workflowConfig.insert_one(handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
+            db.workflowConfig.insert_one(conf)
             return False
 
     def importRecipe(self):
@@ -28,10 +28,10 @@ class dbHandler:
         handler = persistence.fsHandler.FSHandler()
         db = self.client.config
         if (db.currentRecipe.count_documents({"workflow": {"$exists": True}}) > 0):
-            db.currentRecipe.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(os.path.join(__location__, 'recipe.yaml')))
+            db.currentRecipe.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\recipes\recipe.yaml')))
             return True
         else:
-            db.currentRecipe.insert_one(handler.loadYamlFile(os.path.join(__location__, 'config.yaml')))
+            db.currentRecipe.insert_one(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\config.yaml')))
             return False
 
     def getConfig(self):

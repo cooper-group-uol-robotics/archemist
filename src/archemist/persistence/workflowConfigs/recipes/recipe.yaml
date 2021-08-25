@@ -1,24 +1,45 @@
 recipe:
   name: example_recipe
   id: 23
-  stations: {quantos_station, something_else}
-  tasks: {one, two, three, four}
-  taskFlow:
+  materials:
+    liquids: {ethanol, methanol}
+    solids: {sodium_chloride, benzimidiazole}
+  stationDescriptors: {solid_dispensing_quantos_QS3, ika_rct_plate_digital, liquid_dispensing_peristaltic_pump_ardu, pxrd_analyser}
+  outcomeDescriptors: {quantos_dispense_outcome, liquid_dispense_outcome, ika_outcome, crystal_measurement}
+  stationFlow:
     1:
-      task: one
-      prereq: {}
+      station: "solid_dispensing_quantos_QS3"
+      task: "dispense_sodium"
+      outcome: "quantos_dispense_outcome"
+      onsuccess: 2
+      onfail: 1
     2: 
-      task: two
-      prereq: {1}
+      station: "solid_dispensing_quantos_QS3"
+      task: "dispense_benzi"
+      outcome: "quantos_dispense_outcome"
+      onsuccess: 3
+      onfail: 2
     3: 
-      task: two
-      prereq: {2}
+      station: "liquid_dispensing_peristaltic_pump_ardu"
+      task: "dispense_ethanol"
+      outcome: "quantos_dispense_outcome"
+      onsuccess: {4}
+      onfail: {3}
     4:
-      task: one
-      prereq: {3}
+      station: "liquid_dispensing_peristaltic_pump_ardu"
+      task: "dispense_methanol"
+      outcome: "quantos_dispense_outcome"
+      onsuccess: {5}
+      onfail: {4}
     5:
-      task: three
-      prereq: {4}
+      station: "ika_rct_plate_digital"
+      task: "stir_heat_chemicals"
+      outcome: "ika_outcome"
+      onsuccess: {6}
+      onfail: {5}
     6:
-      task: four
-      prereq: {}
+      station: "pxrd_analyser"
+      task: "measure_crystal_growth"
+      outcome: "crystal_measurement"
+      onsuccess: {end}
+      onfail: {1}

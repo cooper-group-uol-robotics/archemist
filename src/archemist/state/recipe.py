@@ -1,11 +1,27 @@
 class Recipe:
-    def __init__(self, name, id):
+    def __init__(self, name, id, stationFlow):
         self.name = name
         self.id = id
-        self.stationRecipes = list()
+        self.stationDescriptors = list()
+        self.materials = list()
+        self.stationFlow = stationFlow
+        self.outcomeDescriptors = list()
     
-class StationRecipe:
+class StationDescriptor:
     def __init__(self, name, stationAssoc, id):
         self.name = name
         self.id = id
-        self.stationAssoc = stationAssoc
+        self.station = stationAssoc
+        self.tasks = list()
+
+class StationFlow:
+    def __init__(self, node, station, task, outcome, onsuccess, onfail):
+        self.stateTable = dict()
+        self.node = node
+        self.station = station
+        self.task = task
+        self.outcome = outcome
+        self.onsuccess = onsuccess
+        self.onfail = onfail
+
+        

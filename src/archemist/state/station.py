@@ -25,6 +25,7 @@ class Location:
         return self._map_id
 
 
+
 class Station:
     def __init__(self, name: str, id: int, location: Location):
         self._name = name
