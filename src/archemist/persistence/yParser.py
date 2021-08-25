@@ -24,9 +24,21 @@ class Parser:
                 for flowStation in config[4]:
                     if str(flowStation.name) == stateList["station"]:
                         stationF=flowStation
-                
-            stationFlowList.append(recipe.StationFlow(state, stationF, stateList["task"], stateList["outcome"], stateList["onsuccess"], stateList["onfail"]))
-        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationFlowList)
+            stationFlowList.append(recipe.StationFlowNode(state, stationF, stateList["task"], stateList["outcome"], stateList["onsuccess"], stateList["onfail"]))
+        
+        solidsList = list()
+        for solid in recipeDictionary["recipe"]["materials"]["solids"]:
+            for solidMaterial in config[2]:
+                    if str(solidMaterial.name) == solid:
+                        solidsList.append(solidMaterial)
+        
+        liquidsList = list()
+        for liquid in recipeDictionary["recipe"]["materials"]["liquids"]:
+            for liquidMaterial in config[1]:
+                    if str(liquidMaterial.name) == liquid:
+                        liquidsList.append(liquidMaterial)
+
+        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], recipe.StationFlow(stationFlowList), solidsList, liquidsList)
         return newRecipe
         
     @dispatch()
