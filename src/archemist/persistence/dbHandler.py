@@ -7,7 +7,24 @@ class dbHandler:
         self.client = MongoClient("mongodb://localhost:27017")
         self.db=self.client.admin
         print("Connected, Host: " + self.db.command("serverStatus")["host"])
-    
+
+    def changeStationProperty(self, station: str, newProperty, newValue):
+        db = self.client.config
+        conf = db.workflowConfig.find_one({"workflow": {"$exists": True}})
+        if (station in conf["workflow"]["Stations"]):
+            if (newProperty in conf["workflow"]["Stations"][station]):
+                oldValue =  conf["workflow"]["Stations"][station][newProperty]
+                conf["workflow"]["Stations"][station][newProperty] = newValue
+                db.workflowConfig.replace_one({"workflow": {"$exists": True}}, conf)
+                print("Success: Property " + str(newProperty) + " in station " + str(station) + " successfully changed from " + str(oldValue) + " to "+ str(newValue))
+                return True
+            else:
+                print("Error: Property not found in station")
+                return False
+        else:
+            print("Error: Station not found in config")
+            return False
+
     def importConfig(self):
         __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))

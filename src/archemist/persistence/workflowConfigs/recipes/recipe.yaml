@@ -4,7 +4,7 @@ recipe:
   materials:
     liquids: {ethanol, methanol}
     solids: {sodium_chloride, benzimidiazole}
-  stationDescriptors: {solid_dispensing_quantos_QS3, ika_rct_plate_digital, liquid_dispensing_peristaltic_pump_ardu, pxrd_analyser}
+  stationDescriptors: {solid_dispensing_quantos_QS3, ika_plate_rct_digital, liquid_dispensing_peristaltic_pump_ardu, pxrd_analyser}
   outcomeDescriptors: {quantos_dispense_outcome, liquid_dispense_outcome, ika_outcome, crystal_measurement}
   stationFlow:
     1:
@@ -32,7 +32,7 @@ recipe:
       onsuccess: 5
       onfail: 4
     5:
-      station: "ika_rct_plate_digital"
+      station: "ika_plate_rct_digital"
       task: "stir_heat_chemicals"
       outcome: "ika_outcome"
       onsuccess: 6
