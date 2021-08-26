@@ -3,6 +3,7 @@ import persistence.fsHandler
 import persistence.yParser
 import os
 
+
 class persistenceManager:
     def __init__(self):
         self.dbhandler = persistence.dbHandler.dbHandler()
@@ -14,15 +15,16 @@ class persistenceManager:
         self.dbhandler.importConfig()
         print("Config imported at: " + self.dbhandler.getConfig()["timestamp"])
         config = dict()
-        config = {'workflow' : self.dbhandler.getConfig()}
-        self.loadedConfig=config
-        return config               
+        config = {'workflow': self.dbhandler.getConfig()}
+        self.loadedConfig = config
+        return config
 
     def overwriteConfig(self):
         __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__)))
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
         config = dict()
-        config = {'workflow' : self.dbhandler.getConfig()}
-        self.fshandler.overwriteYamlFile(config, os.path.join(__location__, 'workflowConfigs\config.yaml'))
-        self.loadedConfig=config
+        config = {'workflow': self.dbhandler.getConfig()}
+        self.fshandler.overwriteYamlFile(config, os.path.join(
+            __location__, 'workflowConfigs\config.yaml'))
+        self.loadedConfig = config
         return config

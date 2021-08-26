@@ -2,10 +2,22 @@ recipe:
   name: example_recipe
   id: 23
   materials:
-    liquids: {ethanol, methanol}
-    solids: {sodium_chloride, benzimidiazole}
-  stationDescriptors: {solid_dispensing_quantos_QS3, ika_plate_rct_digital, liquid_dispensing_peristaltic_pump_ardu, pxrd_analyser}
-  outcomeDescriptors: {quantos_dispense_outcome, liquid_dispense_outcome, ika_outcome, crystal_measurement}
+    liquids: { ethanol, methanol }
+    solids: { sodium_chloride, benzimidiazole }
+  stationDescriptors:
+    {
+      solid_dispensing_quantos_QS3,
+      ika_plate_rct_digital,
+      liquid_dispensing_peristaltic_pump_ardu,
+      pxrd_analyser,
+    }
+  outcomeDescriptors:
+    {
+      quantos_dispense_outcome,
+      liquid_dispense_outcome,
+      ika_outcome,
+      crystal_measurement,
+    }
   stationFlow:
     1:
       station: "solid_dispensing_quantos_QS3"
@@ -13,13 +25,13 @@ recipe:
       outcome: "quantos_dispense_outcome"
       onsuccess: 2
       onfail: 1
-    2: 
+    2:
       station: "solid_dispensing_quantos_QS3"
       task: "dispense_benzi"
       outcome: "quantos_dispense_outcome"
       onsuccess: 3
       onfail: 2
-    3: 
+    3:
       station: "liquid_dispensing_peristaltic_pump_ardu"
       task: "dispense_ethanol"
       outcome: "quantos_dispense_outcome"

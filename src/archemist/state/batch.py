@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Batch:
-    
+
     class Status(Enum):
         NEED_TRANSIT = 1
         IN_TRANSIT = 2
@@ -14,5 +14,5 @@ class Batch:
         self.name = name
         self.id = id
         self.status = self.Status.UNDEFINED
-        #self.location Location.UNDEFINED Location can be read from yaml
+        # self.location Location.UNDEFINED Location can be read from yaml
         #self.operationTimeStamp['Added to workflow'] = datetime.now()

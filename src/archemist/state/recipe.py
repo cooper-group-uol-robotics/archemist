@@ -4,6 +4,7 @@ class StationDescriptor:
         self.id = id
         self.station = stationAssoc
 
+
 class StationFlowNode:
     def __init__(self, node, station, task, outcome, onsuccess, onfail):
         self.nodeid = node
@@ -13,14 +14,16 @@ class StationFlowNode:
         self.onsuccess = onsuccess
         self.onfail = onfail
 
+
 class StationFlow:
     def __init__(self, stationFlowNodes: list):
         self.nodes = stationFlowNodes
         self.currentNode = 1
-        self.nextNode = None 
+        self.nextNode = None
+
 
 class Recipe:
-    def __init__(self, name, id, stationFlow: StationFlow, solids: list, liquids:list, outcomeDescriptors: list):
+    def __init__(self, name, id, stationFlow: StationFlow, solids: list, liquids: list, outcomeDescriptors: list):
         self.name = name
         self.id = id
         self.stationDescriptors = list()
@@ -28,5 +31,3 @@ class Recipe:
         self.liquids = liquids
         self.stationFlow = stationFlow
         self.outcomeDescriptors = outcomeDescriptors
-    
-

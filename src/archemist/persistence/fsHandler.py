@@ -1,5 +1,6 @@
 import yaml
 
+
 class FSHandler:
     def loadYamlFile(self, filePath):
         fileStream = open(filePath, 'r')
