@@ -28,6 +28,7 @@ class Location:
 class Station:
     def __init__(self, name: str, id: int, location: Location):
         self._name = name
+        self._type = "null"
         self._id = id
         self._location = location
         self._available = False
@@ -83,4 +84,27 @@ class Station:
         return ret_batch
 
 
-# class StationOpDescriptor:
+class SolidDispensingStation(Station):
+    def __init__(self):
+        super().__init__()
+        self._type = "SolidDisp"
+
+class LiquidDispensingStation(Station):
+    def __init__(self):
+        super().__init__()
+        self._type = "LiquidDisp"
+
+class HeaterStirrerStation(Station):
+    def __init__(self):
+        super().__init__()
+        self._type = "HeatStir"
+
+class WeighingStation(Station):
+    def __init__(self):
+        super().__init__()
+        self._type = "Weigh"
+
+class CrystalAnalysisStation(Station):
+    def __init__(self):
+        super().__init__()
+        self._type = "Crystal"
