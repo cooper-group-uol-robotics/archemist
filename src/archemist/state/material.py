@@ -72,11 +72,11 @@ class Solid(Material):
     def __init__(self, name: str, id: int, expiry_date: date, mass: float,
                  dispense_method: str):
         super().__init__(name, id, expiry_date, mass)
-        self.dispense_method = dispense_method
+        self._dispense_method = dispense_method
 
     @property
     def dispense_method(self):
-        return self._volume
+        return self._dispense_method
 
     @dispense_method.setter
     def dispense_method(self, value):
