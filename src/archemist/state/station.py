@@ -34,6 +34,34 @@ class Station:
         self._available = False
         self._operational = False
         self._assigned_batch = None
+        self._finished = True
+        self._result = True
+    
+
+    @property
+    def finished(self):
+            return self._finished
+
+    @finished.setter
+    def finished(self, value):
+        if isinstance(value, bool):
+            self._finished = value
+        else:
+            raise ValueError
+
+    @property
+    def outcome(self):
+        if (self._finished):
+            return self._result
+        else:
+            raise exception.StationNoOutcomeError(self._name)
+
+    @outcome.setter
+    def outcome(self, value):
+        if isinstance(value, bool):
+            self._result = value
+        else:
+            raise ValueError
 
     @property
     def name(self):

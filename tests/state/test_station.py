@@ -1,5 +1,5 @@
 import unittest
-from src.archemist.exceptions.exception import StationAssignedRackError, StationUnAssignedRackError
+from src.archemist.exceptions.exception import StationAssignedRackError, StationNoOutcomeError, StationUnAssignedRackError
 
 from src.archemist.state.station import Location, Station, SolidDispensingStation
 from src.archemist.state.batch import Batch
@@ -69,6 +69,13 @@ class StationTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             t_station_new.type="somenewtype"
         self.assertEqual(t_station_new.location.graph_id, 3)
+
+        self.assertEqual(t_station.outcome, True)
+        t_station.outcome = False
+        self.assertEqual(t_station.outcome, False)
+        t_station.finished = False
+        with self.assertRaises(StationNoOutcomeError):
+            print(t_station.outcome)
 
 
 if __name__ == '__main__':

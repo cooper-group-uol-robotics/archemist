@@ -3,18 +3,29 @@ from src.archemist.state.station import Station
 from src.archemist.state.result import Result
 from typing import List
 
-class StationDescriptor:
+class StationOpDescriptor:
     def __init__(self, name: str, stationAssoc: Station, id: int):
-        self.name = name
-        self.id = id
-        self.station = stationAssoc
+        self._name = name
+        self._id = id
+        self._station = stationAssoc
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def station(self):
+        return self._station
 
 class StationFlowNode:
-    def __init__(self, node: int, station: Station, task: str, outcome: Result, onsuccess: int, onfail: int):
+    def __init__(self, node: int, station: Station, task: str, onsuccess: int, onfail: int):
         self.nodeid = node
         self.station = station
         self.task = task
-        self.outcome = outcome
         self.onsuccess = onsuccess
         self.onfail = onfail
 
@@ -25,7 +36,7 @@ class StationFlow:
         self.currentNode = self.nodes[0]
 
     def nextNode(self):
-        if (self.nodes[self.currentNodeID-1].outcome.getResult()):
+        if (self.nodes[self.currentNodeID-1].station.outcome):
             self.currentNodeID = self.currentNode.onsuccess
             self.currentNode = self.nodes[self.currentNodeID-1]
         else:
