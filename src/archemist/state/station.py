@@ -1,4 +1,4 @@
-from exceptions import exception
+from src.archemist.exceptions import exception
 
 
 class Location:
@@ -28,7 +28,7 @@ class Location:
 class Station:
     def __init__(self, name: str, id: int, location: Location):
         self._name = name
-        self._type = "null"
+        self._type = "none"
         self._id = id
         self._location = location
         self._available = False
@@ -38,6 +38,10 @@ class Station:
     @property
     def name(self):
         return self._name
+
+    @property
+    def type(self):
+        return self._type
 
     @property
     def id(self):
@@ -81,30 +85,32 @@ class Station:
         ret_batch = self._assigned_batch
         if(self._assigned_batch is not None):
             self._assigned_batch = None
+        else:
+            raise exception.StationUnAssignedRackError(self._name)
         return ret_batch
-
+        
 
 class SolidDispensingStation(Station):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
         self._type = "SolidDisp"
 
 class LiquidDispensingStation(Station):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
         self._type = "LiquidDisp"
 
 class HeaterStirrerStation(Station):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
         self._type = "HeatStir"
 
 class WeighingStation(Station):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
         self._type = "Weigh"
 
 class CrystalAnalysisStation(Station):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
         self._type = "Crystal"
