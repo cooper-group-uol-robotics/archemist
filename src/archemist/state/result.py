@@ -3,3 +3,6 @@ class Result:
         self.name = name
         self.characteristic = characteristic
         self.cType = cType
+
+    def getResult(self):
+        return True

@@ -3,7 +3,6 @@ from src.archemist.exceptions.exception import StationAssignedRackError, Station
 
 from src.archemist.state.station import Location, Station, SolidDispensingStation
 from src.archemist.state.batch import Batch
-from datetime import date, timedelta
 
 class StationTest(unittest.TestCase):
 
