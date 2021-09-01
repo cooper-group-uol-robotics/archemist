@@ -8,12 +8,14 @@ recipe:
   materials:
     liquids: { ethanol, methanol }
     solids: { sodium_chloride, benzimidiazole }
-  stationDescriptors:
+  stationOpDescriptors:
     {
-      solid_dispensing_quantos_QS3,
-      ika_plate_rct_digital,
-      liquid_dispensing_peristaltic_pump_ardu,
-      pxrd_analyser,
+      dispense_sodium,
+      dispense_benzi,
+      dispense_ethanol,
+      dispense_methanol,
+      stir_heat_chemicals,
+      measure_crystal_growth
     }
   outcomeDescriptors:
     {

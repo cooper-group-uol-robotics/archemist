@@ -51,6 +51,8 @@ class Parser:
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
         stationOpDescriptors = list()
+        for stationopdesc in recipeDictionary["recipe"]["stationOpDescriptors"]:
+            stationOp = None
         
 
         outcomeDescriptors = list()

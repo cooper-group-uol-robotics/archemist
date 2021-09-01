@@ -1,25 +1,7 @@
 from src.archemist.state.material import Liquid, Solid
-from src.archemist.state.station import Station
+from src.archemist.state.station import Station, StationOpDescriptor
 from src.archemist.state.result import Result
 from typing import List
-
-class StationOpDescriptor:
-    def __init__(self, name: str, stationAssoc: Station, id: int):
-        self._name = name
-        self._id = id
-        self._station = stationAssoc
-    
-    @property
-    def name(self):
-        return self._name
-    
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def station(self):
-        return self._station
 
 class StationFlowNode:
     def __init__(self, node: int, station: Station, task: str, onsuccess: int, onfail: int):

@@ -1,0 +1,7 @@
+Changes for archemist:
+1. Remove OutcomeDescriptors as they are
+2. Make OutcomeDescriptors an output of stationOps
+3. Change StationFlow to utilize OutcomeDescriptor outputs
+4. Make Locations a member of Station
+5. StationOpDescriptors generated in recipe, alongside outcome descriptors, under non-static recipe related station definition
+6. Change materials in config to be more general and static

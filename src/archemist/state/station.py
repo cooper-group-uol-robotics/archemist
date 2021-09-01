@@ -116,6 +116,26 @@ class Station:
         else:
             raise exception.StationUnAssignedRackError(self._name)
         return ret_batch
+
+
+class StationOpDescriptor:
+    def __init__(self, name: str, id: int, stationAssoc: Station):
+        self._name = name
+        self._id = id
+        self._station = stationAssoc
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def station(self):
+        return self._station
+
         
 
 class SolidDispensingStation(Station):
