@@ -82,7 +82,7 @@ class persistenceManager:
         config = dict()
         config = {'workflow': self.dbhandler.getConfig()}
         self.loadedConfig = config
-        return config
+        return self.parser.loadConfigYaml(config)
 
     def overwriteConfig(self):
         __location__ = os.path.realpath(
@@ -92,4 +92,4 @@ class persistenceManager:
         self.fshandler.overwriteYamlFile(config, os.path.join(
             __location__, 'workflowConfigs/config.yaml'))
         self.loadedConfig = config
-        return config
+        return self.parser.loadConfigYaml(config)

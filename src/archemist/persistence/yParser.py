@@ -6,6 +6,7 @@ from src.archemist.persistence.dbHandler import dbHandler
 from src.archemist.persistence.fsHandler import FSHandler
 from src.archemist.state.robot import mobileRobot, armRobot
 import src.archemist.state.robots
+import src.archemist.state.stations
 from datetime import date, timedelta
 import datetime
 from multipledispatch import dispatch
@@ -45,10 +46,12 @@ class Parser:
                 for flowStation in config[4]:
                     if str(flowStation.name) == stateList["station"]:
                         stationF = flowStation
-                ##todo: add stationOpDescriptor matching from config
+               
             stationFlowList.append(StationFlowNode(
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
+        stationOpDescriptors = list()
+        
 
         outcomeDescriptors = list()
         for outcome in recipeDictionary["recipe"]["outcomeDescriptors"]:
@@ -58,7 +61,8 @@ class Parser:
 
         stationflow = StationFlow(stationFlowList)
 
-        newRecipe = Recipe(self, recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationflow, solidsList, liquidsList, outcomeDescriptors)
+        newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors, 
+        stationflow, solidsList, liquidsList, outcomeDescriptors)
         return newRecipe
 
     @dispatch()
@@ -67,8 +71,6 @@ class Parser:
         config = dict()
         config = {'workflow': handler.getConfig()}
         return self.loadConfigYaml(config)
-    
-    
 
     @dispatch(dict)
     def loadConfigYaml(self, configDictionaryInput):
@@ -142,7 +144,6 @@ class Parser:
             locations.append(station.Location(location, configDictionary["Locations"][location]["node_id"],
                              configDictionary["Locations"][location]["graph_id"], configDictionary["Locations"][location]["map_id"]))
         configList.append(locations)
-
         
         robots = list()  # list of batches
         for robot in configDictionary["Robots"]:
@@ -161,7 +162,7 @@ class Parser:
 
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
-            # See if location string matches up with a location object in the list of locations
+            stationObj = self.str_to_class_station(stationN)
             locationOf = None
             for x in locations:
                 if x.name == configDictionary["Stations"][stationN]["location"]:
@@ -169,15 +170,12 @@ class Parser:
                     break
                 else:
                     x = None
+            stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], locationOf)
             # set dictionary entry to the location object (instead of name string)
-            configDictionary["Stations"][stationN]["location"] = locationOf
-            # dynamically create new station class for this station with its properties from yaml (with station as base class)
-            newstation = type(stationN, (station.Station, ),
-                              configDictionary["Stations"][stationN])
+            # newstation = type(stationN, (station.Station, ),
+            #                   configDictionary["Stations"][stationN])
             # create object of new station class, passing parameters from yaml and also using location object
-            newStationObj = newstation(
-                stationN, configDictionary["Stations"][stationN]["id"], locationOf)
-            stations.append(newStationObj)
+            stations.append(stationObj)
         configList.append(stations)  # add to list of lists
 
         ##todo: parse station op descriptors from config, to be applied in stationflownodes in recipe
@@ -193,3 +191,6 @@ class Parser:
 
     def str_to_class_robot(self, classname):
       return getattr(src.archemist.state.robots, classname)
+    
+    def str_to_class_station(self, classname):
+      return getattr(src.archemist.state.stations, classname)

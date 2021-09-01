@@ -142,3 +142,8 @@ class CrystalAnalysisStation(Station):
     def __init__(self, name: str, id:int, location:Location):
         super().__init__(name, id, location)
         self._type = "Crystal"
+
+class AbstractStation(Station):
+    def __init__(self, name: str, id:int, location:Location):
+        super().__init__(name, id, location)
+        self._type = "Other"
