@@ -26,8 +26,9 @@ class Parser:
                 for flowStation in config[4]:
                     if str(flowStation.name) == stateList["station"]:
                         stationF = flowStation
+                ##todo: add stationOpDescriptor matching from config
             stationFlowList.append(recipe.StationFlowNode(
-                state, stationF, stateList["task"], stateList["outcome"], stateList["onsuccess"], stateList["onfail"]))
+                state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
         solidsList = list()
         for solid in recipeDictionary["recipe"]["materials"]["solids"]:
@@ -65,10 +66,6 @@ class Parser:
         configList = list()  # list of lists, for each category of config
 
         batches = list()  # list of batches
-        for batchn in configDictionary["Batches"]:
-            # simply add each batch to list
-            batches.append(batch.Batch(
-                configDictionary["Batches"][batchn]["name"], configDictionary["Batches"][batchn]["id"]))
         configList.append(batches)
 
         liquids = list()  # list of liquids
@@ -158,6 +155,8 @@ class Parser:
                 stationN, configDictionary["Stations"][stationN]["id"], locationOf)
             stations.append(newStationObj)
         configList.append(stations)  # add to list of lists
+
+        ##todo: parse station op descriptors from config, to be applied in stationflownodes in recipe
 
         results = list()  # create list of result/output specification from yaml
         for resultI in configDictionary["OutputDescriptors"]:

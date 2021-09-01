@@ -44,16 +44,23 @@ class StationFlow:
             self.currentNode = self.nodes[self.currentNodeID-1]
         return self.currentNode
 
-
     def __len__(self):
         return len(self.nodes)
 
 class Recipe:
-    def __init__(self, name: str, id: int, stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid], outcomeDescriptors: List[Result]):
-        self.name = name
-        self.id = id
-        self.stationDescriptors = list()
+    def __init__(self, name: str, id: int, stationDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid], outcomeDescriptors: List[Result]):
+        self._name = name
+        self._id = id
+        self.stationDescriptors = stationDescriptors
         self.solids = solids
         self.liquids = liquids
         self.stationFlow = stationFlow
         self.outcomeDescriptors = outcomeDescriptors
+    
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def id(self):
+        return self._id

@@ -1,6 +1,10 @@
 recipe:
   name: example_recipe
   id: 23
+  batches:
+    newBatch:
+      id: 21
+      name: new batch
   materials:
     liquids: { ethanol, methanol }
     solids: { sodium_chloride, benzimidiazole }
@@ -22,36 +26,30 @@ recipe:
     1:
       station: "solid_dispensing_quantos_QS3"
       task: "dispense_sodium"
-      outcome: "quantos_dispense_outcome"
       onsuccess: 2
       onfail: 1
     2:
       station: "solid_dispensing_quantos_QS3"
       task: "dispense_benzi"
-      outcome: "quantos_dispense_outcome"
       onsuccess: 3
       onfail: 2
     3:
       station: "liquid_dispensing_peristaltic_pump_ardu"
       task: "dispense_ethanol"
-      outcome: "quantos_dispense_outcome"
       onsuccess: 4
       onfail: 3
     4:
       station: "liquid_dispensing_peristaltic_pump_ardu"
       task: "dispense_methanol"
-      outcome: "quantos_dispense_outcome"
       onsuccess: 5
       onfail: 4
     5:
       station: "ika_plate_rct_digital"
       task: "stir_heat_chemicals"
-      outcome: "ika_outcome"
       onsuccess: 6
       onfail: 5
     6:
       station: "pxrd_analyser"
       task: "measure_crystal_growth"
-      outcome: "crystal_measurement"
       onsuccess: 0
       onfail: 1

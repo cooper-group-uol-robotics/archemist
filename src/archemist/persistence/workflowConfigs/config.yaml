@@ -1,8 +1,4 @@
 workflow:
-  Batches:
-    newBatch:
-      id: 21
-      name: new batch
   Locations:
     analyser_loc:
       graph_id: 5
