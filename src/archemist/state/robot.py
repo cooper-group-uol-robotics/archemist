@@ -1,4 +1,4 @@
-from archemist.state.station import Location
+from src.archemist.state.station import Location
 
 
 class robot:

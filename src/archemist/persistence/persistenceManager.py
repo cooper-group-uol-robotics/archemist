@@ -1,15 +1,15 @@
-import persistence.dbHandler
-import persistence.fsHandler
-import persistence.yParser
+from src.archemist.persistence.dbHandler import dbHandler
+from src.archemist.persistence.fsHandler import FSHandler
+from src.archemist.persistence.yParser import Parser
 import os
 from datetime import datetime
 
 
 class persistenceManager:
     def __init__(self):
-        self.dbhandler = persistence.dbHandler.dbHandler()
-        self.fshandler = persistence.fsHandler.FSHandler()
-        self.parser = persistence.yParser.Parser()
+        self.dbhandler = dbHandler()
+        self.fshandler = FSHandler()
+        self.parser = Parser()
         self.loadedConfig = None
         self.client = self.dbhandler.getDBAccess()
 

@@ -1,4 +1,4 @@
-from archemist.state.station import LiquidDispensingStation, Location
+from src.archemist.state.station import LiquidDispensingStation, Location
 
 
 class peristalticLiquidDispenser(LiquidDispensingStation):

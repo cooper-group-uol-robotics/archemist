@@ -20,6 +20,14 @@ workflow:
       graph_id: 5
       map_id: 7
       node_id: 3
+  Robots:
+    kuka_bot1:
+      id: 1
+      type: "kukaLBRIIWA"
+      startLocation: quantos_loc
+    panda_bot1:
+      id: 2
+      type: "pandaFranka"
   Materials:
     liquids:
       ethanol:

@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import persistence.fsHandler
+from src.archemist.persistence.fsHandler import FSHandler
 import os
 from datetime import datetime
 
@@ -16,7 +16,7 @@ class dbHandler:
     def importConfig(self):
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistence.fsHandler.FSHandler()
+        handler =FSHandler()
         db = self.client.config
         conf = handler.loadYamlFile(os.path.join(
             __location__, 'workflowConfigs/config.yaml'))
@@ -33,7 +33,7 @@ class dbHandler:
     def importRecipe(self):
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistence.fsHandler.FSHandler()
+        handler = FSHandler()
         db = self.client.config
         if (db.currentRecipe.count_documents({"workflow": {"$exists": True}}) > 0):
             db.currentRecipe.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(

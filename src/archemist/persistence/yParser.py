@@ -1,11 +1,14 @@
 from pydoc import locate
-from state import batch, material, recipe, station, result
-import persistence.dbHandler
+from src.archemist.state import material, recipe, station, result
+from src.archemist.persistence.dbHandler import dbHandler
+from src.archemist.persistence.fsHandler import FSHandler
+from src.archemist.state.robot import mobileRobot, armRobot
+import src.archemist.state.robots
 from datetime import date, timedelta
 import datetime
 from multipledispatch import dispatch
 import os
-
+import sys
 
 class Parser:
 
@@ -13,12 +16,26 @@ class Parser:
     def loadRecipeYaml(self):
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
-        handler = persistence.fsHandler.FSHandler()
+        handler = FSHandler()
         return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\\recipes\\recipe.yaml')))
 
     @dispatch(dict)
     def loadRecipeYaml(self, recipeDictionary):
         config = self.loadConfigYaml()
+
+        liquidsList = list()
+        for liquid in recipeDictionary["recipe"]["materials"]["liquids"]:
+            for liquidMaterial in config[0]:
+                if str(liquidMaterial.name) == liquid:
+                    liquidsList.append(liquidMaterial)
+
+
+        solidsList = list()
+        for solid in recipeDictionary["recipe"]["materials"]["solids"]:
+            for solidMaterial in config[1]:
+                if str(solidMaterial.name) == solid:
+                    solidsList.append(solidMaterial)
+
         stationFlowList = list()
         for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
             for stateData in stateList:
@@ -30,17 +47,6 @@ class Parser:
             stationFlowList.append(recipe.StationFlowNode(
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
-        solidsList = list()
-        for solid in recipeDictionary["recipe"]["materials"]["solids"]:
-            for solidMaterial in config[2]:
-                if str(solidMaterial.name) == solid:
-                    solidsList.append(solidMaterial)
-
-        liquidsList = list()
-        for liquid in recipeDictionary["recipe"]["materials"]["liquids"]:
-            for liquidMaterial in config[1]:
-                if str(liquidMaterial.name) == liquid:
-                    liquidsList.append(liquidMaterial)
 
         outcomeDescriptorsList = list()
         for outcome in recipeDictionary["recipe"]["outcomeDescriptors"]:
@@ -54,19 +60,18 @@ class Parser:
 
     @dispatch()
     def loadConfigYaml(self):
-        handler = persistence.dbHandler.dbHandler()
+        handler = dbHandler()
         config = dict()
         config = {'workflow': handler.getConfig()}
         return self.loadConfigYaml(config)
+    
+    
 
     @dispatch(dict)
     def loadConfigYaml(self, configDictionaryInput):
         # Get rid of top-level workflow key, only interested in everything below
         configDictionary = configDictionaryInput["workflow"]
         configList = list()  # list of lists, for each category of config
-
-        batches = list()  # list of batches
-        configList.append(batches)
 
         liquids = list()  # list of liquids
         # loop through each key under "liquids"
@@ -135,6 +140,22 @@ class Parser:
                              configDictionary["Locations"][location]["graph_id"], configDictionary["Locations"][location]["map_id"]))
         configList.append(locations)
 
+        
+        robots = list()  # list of batches
+        for robot in configDictionary["Robots"]:
+            robotObj = self.str_to_class(configDictionary["Robots"][robot]["type"])
+            if (issubclass(robotObj, mobileRobot)):
+                locationOf = None
+                for x in locations:
+                    if x.name == configDictionary["Robots"][robot]["startLocation"]:
+                        locationOf = x  # if it does then use this object
+                        break
+                robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"], locationOf)
+            else:
+                robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"])
+            robots.append(robotObj)
+        configList.append(robots)
+
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             # See if location string matches up with a location object in the list of locations
@@ -166,3 +187,6 @@ class Parser:
         configList.append(results)  # add to list of lists
 
         return configList  # finally return list
+
+    def str_to_class(self, classname):
+      return getattr(src.archemist.state.robots, classname)

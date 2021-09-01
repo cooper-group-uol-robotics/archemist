@@ -1,5 +1,5 @@
-from archemist.persistence.persistenceManager import persistenceManager
-from archemist.persistence.yParser import Parser
+from src.archemist.persistence.persistenceManager import persistenceManager
+from src.archemist.persistence.yParser import Parser
 
 
 class State:

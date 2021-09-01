@@ -1,4 +1,4 @@
-from archemist.state.station import SolidDispensingStation, Location
+from src.archemist.state.station import SolidDispensingStation, Location
 
 
 class quantosStation(SolidDispensingStation):

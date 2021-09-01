@@ -1,6 +1,6 @@
-from archemist.state.robot import robot
+from src.archemist.state.robot import armRobot
 
 
-class pandaFranka(robot):
+class pandaFranka(armRobot):
     def __init__(self, name: str, id: int):
         super().__init__(name, id)
