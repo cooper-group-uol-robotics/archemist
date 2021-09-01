@@ -58,7 +58,7 @@ class persistenceManager:
     def changeSolidProperty(self, solid: str, newProperty, newValue):
         db = self.client.config
         conf = db.workflowConfig.find_one({"workflow": {"$exists": True}})
-        if (liquid in conf["workflow"]["Materials"]["solids"]):
+        if (solid in conf["workflow"]["Materials"]["solids"]):
             if (newProperty in conf["workflow"]["Materials"]["solids"][solid]):
                 oldValue = conf["workflow"]["Materials"]["solids"][solid][newProperty]
                 conf["workflow"]["Materials"]["solids"][solid][newProperty] = newValue

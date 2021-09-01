@@ -1,3 +1,6 @@
+from archemist.state.station import Location
+
+
 class robot:
     def __init__(self, name: str, id: int):
         self._name = name
@@ -29,8 +32,9 @@ class robot:
 
 
 class mobileRobot(robot):
-    def __init__(self, name: str, id: int):
+    def __init__(self, name: str, id: int, initLocation: Location):
         super().__init__(name, id)
+        self._location = initLocation
 
 class armRobot(robot):
     def __init__(self, name: str, id: int):
