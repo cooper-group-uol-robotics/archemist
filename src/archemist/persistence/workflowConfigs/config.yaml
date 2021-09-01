@@ -62,10 +62,10 @@ workflow:
       type: list
     liquid_dispense_outcome:
       characteristic: success_dispense
-      type: booolean
+      type: bool
     quantos_dispense_outcome:
       characteristic: success_dispense
-      type: boolean
+      type: bool
   Stations:
     fume_hood:
       id: 4

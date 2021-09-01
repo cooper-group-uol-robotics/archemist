@@ -1,11 +1,10 @@
 from src.archemist.persistence.persistenceManager import persistenceManager
 from src.archemist.persistence.yParser import Parser
-
+from datetime import datetime
 
 class State:
     def __init__(self):
-
-        return True
+        self._startTime = datetime.now()
     
     def initializeState(self):
         persistence = persistenceManager()

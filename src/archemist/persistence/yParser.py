@@ -1,5 +1,7 @@
 from pydoc import locate
-from src.archemist.state import material, recipe, station, result
+from src.archemist.state import material, station
+from src.archemist.state.result import Result
+from src.archemist.state.recipe import StationFlow, StationFlowNode, Recipe
 from src.archemist.persistence.dbHandler import dbHandler
 from src.archemist.persistence.fsHandler import FSHandler
 from src.archemist.state.robot import mobileRobot, armRobot
@@ -44,18 +46,19 @@ class Parser:
                     if str(flowStation.name) == stateList["station"]:
                         stationF = flowStation
                 ##todo: add stationOpDescriptor matching from config
-            stationFlowList.append(recipe.StationFlowNode(
+            stationFlowList.append(StationFlowNode(
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
 
-        outcomeDescriptorsList = list()
+        outcomeDescriptors = list()
         for outcome in recipeDictionary["recipe"]["outcomeDescriptors"]:
             for outcomeDescriptor in config[5]:
                 if str(outcomeDescriptor.name) == outcome:
-                    outcomeDescriptorsList.append(outcomeDescriptor)
+                    outcomeDescriptors.append(outcomeDescriptor)
 
-        newRecipe = recipe.Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], recipe.StationFlow(
-            stationFlowList), solidsList, liquidsList, outcomeDescriptorsList)
+        stationflow = StationFlow(stationFlowList)
+
+        newRecipe = Recipe(self, recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationflow, solidsList, liquidsList, outcomeDescriptors)
         return newRecipe
 
     @dispatch()
@@ -143,7 +146,7 @@ class Parser:
         
         robots = list()  # list of batches
         for robot in configDictionary["Robots"]:
-            robotObj = self.str_to_class(configDictionary["Robots"][robot]["type"])
+            robotObj = self.str_to_class_robot(configDictionary["Robots"][robot]["type"])
             if (issubclass(robotObj, mobileRobot)):
                 locationOf = None
                 for x in locations:
@@ -181,12 +184,12 @@ class Parser:
 
         results = list()  # create list of result/output specification from yaml
         for resultI in configDictionary["OutputDescriptors"]:
-            resultN = result.Result(resultI, configDictionary["OutputDescriptors"][resultI]["characteristic"], locate(
+            resultN = Result(resultI, configDictionary["OutputDescriptors"][resultI]["characteristic"], locate(
                 configDictionary["OutputDescriptors"][resultI]["type"]))
             results.append(resultN)
         configList.append(results)  # add to list of lists
 
         return configList  # finally return list
 
-    def str_to_class(self, classname):
+    def str_to_class_robot(self, classname):
       return getattr(src.archemist.state.robots, classname)
