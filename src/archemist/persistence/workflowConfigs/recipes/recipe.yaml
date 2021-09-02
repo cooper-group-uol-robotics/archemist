@@ -32,7 +32,7 @@ recipe:
       output: 
         name: "solid_dispensing_output"
         fields:
-          success: bool
+          success: boolu
           massDispensed: float
           unit: string
     stir_heat:

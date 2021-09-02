@@ -90,22 +90,22 @@ class Parser:
             dens = configDictionary["Materials"]["liquids"][liquid]["density"]
             # Also convert for every possible unit, mg, g, ug, ml, l and ul
             if configDictionary["Materials"]["liquids"][liquid]["unit"] == "mg":
-                mass = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000
+                mass = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]/1000
                 vol = mass/dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "g":
-                mass = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]
+                mass = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]
                 vol = mass/dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "ug":
-                mass = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000/1000
+                mass = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]/1000/1000
                 vol = mass/dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "ml":
-                vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000
+                vol = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]/1000
                 mass = vol*dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "l":
-                vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]
+                vol = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]
                 mass = vol*dens
             elif configDictionary["Materials"]["liquids"][liquid]["unit"] == "ul":
-                vol = configDictionary["Materials"]["liquids"][liquid]["amount_to_dispense"]/1000/1000
+                vol = configDictionary["Materials"]["liquids"][liquid]["amount_stored"]/1000/1000
                 mass = vol*dens
 
             # other liquid properties added directly from yaml
@@ -124,11 +124,11 @@ class Parser:
 
             mass = 0  # convert between mass units to universal grams
             if configDictionary["Materials"]["solids"][solid]["unit"] == "mg":
-                mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]/1000
+                mass = configDictionary["Materials"]["solids"][solid]["amount_stored"]/1000
             elif configDictionary["Materials"]["solids"][solid]["unit"] == "g":
-                mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]
+                mass = configDictionary["Materials"]["solids"][solid]["amount_stored"]
             elif configDictionary["Materials"]["solids"][solid]["unit"] == "ug":
-                mass = configDictionary["Materials"]["solids"][solid]["amount_to_dispense"]/1000/1000
+                mass = configDictionary["Materials"]["solids"][solid]["amount_stored"]/1000/1000
 
             # Add solid to list of solids
             solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["id"],
