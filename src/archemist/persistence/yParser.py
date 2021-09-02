@@ -43,7 +43,7 @@ class Parser:
         for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
             for stateData in stateList:
                 stationF = None
-                for flowStation in config[4]:
+                for flowStation in config[3]:
                     if str(flowStation.name) == stateList["station"]:
                         stationF = flowStation
                
@@ -51,20 +51,15 @@ class Parser:
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
         stationOpDescriptors = list()
-        for stationopdesc in recipeDictionary["recipe"]["stationOpDescriptors"]:
-            stationOp = None
-        
-
-        outcomeDescriptors = list()
-        for outcome in recipeDictionary["recipe"]["outcomeDescriptors"]:
-            for outcomeDescriptor in config[5]:
-                if str(outcomeDescriptor.name) == outcome:
-                    outcomeDescriptors.append(outcomeDescriptor)
+        for stationopdesc in recipeDictionary["recipe"]["stationOps"]:
+            stationOp = type(stationopdesc, (station.StationOpDescriptor, ),
+                               recipeDictionary["recipe"]["stationOps"][stationopdesc])
+            stationOpDescriptors.append(stationOp)
 
         stationflow = StationFlow(stationFlowList)
 
         newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors, 
-        stationflow, solidsList, liquidsList, outcomeDescriptors)
+        stationflow, solidsList, liquidsList)
         return newRecipe
 
     @dispatch()
@@ -139,40 +134,19 @@ class Parser:
             solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["id"],
                           exp_date, mass, configDictionary["Materials"]["solids"][solid]["dispense_method"]))
         configList.append(solids)
-
-        locations = list()  # list of possible locations
-        # simply add each location to list directly from yaml
-        for location in configDictionary["Locations"]:
-            locations.append(station.Location(location, configDictionary["Locations"][location]["node_id"],
-                             configDictionary["Locations"][location]["graph_id"], configDictionary["Locations"][location]["map_id"]))
-        configList.append(locations)
         
         robots = list()  # list of batches
         for robot in configDictionary["Robots"]:
             robotObj = self.str_to_class_robot(configDictionary["Robots"][robot]["type"])
-            if (issubclass(robotObj, mobileRobot)):
-                locationOf = None
-                for x in locations:
-                    if x.name == configDictionary["Robots"][robot]["startLocation"]:
-                        locationOf = x  # if it does then use this object
-                        break
-                robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"], locationOf)
-            else:
-                robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"])
+            robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"])
             robots.append(robotObj)
         configList.append(robots)
 
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
-            locationOf = None
-            for x in locations:
-                if x.name == configDictionary["Stations"][stationN]["location"]:
-                    locationOf = x  # if it does then use this object
-                    break
-                else:
-                    x = None
-            stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], locationOf)
+            location = station.Location(configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"])
+            stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)
             # newstation = type(stationN, (station.Station, ),
             #                   configDictionary["Stations"][stationN])

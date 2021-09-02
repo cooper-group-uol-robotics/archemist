@@ -32,9 +32,9 @@ class robot:
 
 
 class mobileRobot(robot):
-    def __init__(self, name: str, id: int, initLocation: Location):
+    def __init__(self, name: str, id: int):
         super().__init__(name, id)
-        self._location = initLocation
+        self._location = None
 
 class armRobot(robot):
     def __init__(self, name: str, id: int):

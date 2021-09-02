@@ -24,6 +24,31 @@ class Location:
     def map_id(self):
         return self._map_id
 
+class StationOutputDescriptor:
+    def __init__(self, success:bool):
+        self._success = success
+    
+    @property
+    def success(self):
+        return self._success
+
+class StationOpDescriptor:
+    def __init__(self, name: str, id: int):
+        self._name = name
+        self._id = id
+
+    def complete(self):
+        out = StationOutputDescriptor(True)
+        return out
+
+    @property
+    def name(self):
+        return self._name
+    
+    @property
+    def id(self):
+        return self._id
+
 
 class Station:
     def __init__(self, name: str, id: int, location: Location):
@@ -35,8 +60,18 @@ class Station:
         self._operational = False
         self._assigned_batch = None
         self._finished = True
-        self._result = True
+        self._result = None
+
+
+    @property
+    def location(self):
+        return self._location
     
+    def setStationOp(self, stationOp: StationOpDescriptor):
+        self._stationOp = stationOp
+    
+    def getResult(self):
+        return self._stationOp.complete()
 
     @property
     def finished(self):
@@ -46,20 +81,6 @@ class Station:
     def finished(self, value):
         if isinstance(value, bool):
             self._finished = value
-        else:
-            raise ValueError
-
-    @property
-    def outcome(self):
-        if (self._finished):
-            return self._result
-        else:
-            raise exception.StationNoOutcomeError(self._name)
-
-    @outcome.setter
-    def outcome(self, value):
-        if isinstance(value, bool):
-            self._result = value
         else:
             raise ValueError
 
@@ -118,52 +139,3 @@ class Station:
         return ret_batch
 
 
-class StationOpDescriptor:
-    def __init__(self, name: str, id: int, stationAssoc: Station):
-        self._name = name
-        self._id = id
-        self._station = stationAssoc
-    
-    @property
-    def name(self):
-        return self._name
-    
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def station(self):
-        return self._station
-
-        
-
-class SolidDispensingStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "SolidDisp"
-
-class LiquidDispensingStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "LiquidDisp"
-
-class HeaterStirrerStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "HeatStir"
-
-class WeighingStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "Weigh"
-
-class CrystalAnalysisStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "Crystal"
-
-class AbstractStation(Station):
-    def __init__(self, name: str, id:int, location:Location):
-        super().__init__(name, id, location)
-        self._type = "Other"

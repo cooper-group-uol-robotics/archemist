@@ -8,50 +8,80 @@ recipe:
   materials:
     liquids: { ethanol, methanol }
     solids: { sodium_chloride, benzimidiazole }
-  stationOpDescriptors:
-    {
-      dispense_sodium,
-      dispense_benzi,
-      dispense_ethanol,
-      dispense_methanol,
-      stir_heat_chemicals,
-      measure_crystal_growth
-    }
-  outcomeDescriptors:
-    {
-      quantos_dispense_outcome,
-      liquid_dispense_outcome,
-      ika_outcome,
-      crystal_measurement,
-    }
+  stationOps:
+    dispense_solid:
+      id: 22
+      station: "solid_dispensing_quantos_QS3"
+      properties:
+        solid: Solid
+        mass: float
+        unit: string
+      output: 
+        name: "solid_dispensing_output"
+        fields:
+          success: bool
+          massDispensed: float
+          unit: string
+    dispense_liquid:
+      id: 23
+      station: "liquid_dispensing_peristaltic_pump_ardu"
+      properties:
+        liquid: Liquid
+        mass: float
+        unit: string
+      output: 
+        name: "solid_dispensing_output"
+        fields:
+          success: bool
+          massDispensed: float
+          unit: string
+    stir_heat:
+      id: 24
+      station: "ika_plate_rct_digital"
+      properties:
+        temp: float
+        rpm: float
+      output: 
+        name: "ika_output"
+        fields:
+          success: bool
+    measure_crystal_growth:
+      id: 25
+      station: "pxrd_analyser"
+      properties:
+      output:
+        name: "pxrd_output"
+        fields:
+          success: bool
+          crystal_ion_count: int
   stationFlow:
     1:
       station: "solid_dispensing_quantos_QS3"
-      task: "dispense_sodium"
+      task: {"dispense_solid", benzimidazole, 200, "mg"}
       onsuccess: 2
       onfail: 1
     2:
       station: "solid_dispensing_quantos_QS3"
-      task: "dispense_benzi"
+      task: {"dispense_solid", sodium_chloride, 1.1, "g"}
       onsuccess: 3
       onfail: 2
     3:
       station: "liquid_dispensing_peristaltic_pump_ardu"
-      task: "dispense_ethanol"
+      task: {"dispense_liquid", ethanol, 0.21, "ml"}
       onsuccess: 4
       onfail: 3
     4:
       station: "liquid_dispensing_peristaltic_pump_ardu"
-      task: "dispense_methanol"
+      task: {"dispense_liquid", methanol, 54, "ml"}
       onsuccess: 5
       onfail: 4
     5:
       station: "ika_plate_rct_digital"
-      task: "stir_heat_chemicals"
+      task: {"stir_heat", 200, 50}
       onsuccess: 6
       onfail: 5
     6:
       station: "pxrd_analyser"
-      task: "measure_crystal_growth"
+      task: {"measure_crystal_growth"}
       onsuccess: 0
       onfail: 1

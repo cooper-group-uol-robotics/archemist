@@ -1,95 +1,73 @@
 workflow:
-  Locations:
-    analyser_loc:
-      graph_id: 5
-      map_id: 7
-      node_id: 2
-    ika_loc:
-      graph_id: 5
-      map_id: 7
-      node_id: 12
-    liquid_loc:
-      graph_id: 5
-      map_id: 7
-      node_id: 6
-    nolocation:
-      graph_id: 5
-      map_id: 0
-      node_id: 0
-    quantos_loc:
-      graph_id: 5
-      map_id: 7
-      node_id: 3
   Robots:
     kuka_bot1:
       id: 1
       type: "kukaLBRIIWA"
-      startLocation: quantos_loc
     panda_bot1:
       id: 2
       type: "pandaFranka"
   Materials:
     liquids:
       ethanol:
-        amount_to_dispense: 0.8735
+        amount_stored: 1.2
         density: 789.3
         id: 52
         unit: l
       methanol:
-        amount_to_dispense: 3
+        amount_stored: 351
         density: 791.4
         id: 51
         unit: ml
     solids:
       benzimidiazole:
-        amount_to_dispense: 5.5
-        density: 947
+        amount_stored: 5.5
         dispense_method: quantos
         id: 233
         unit: mg
       sodium_chloride:
-        amount_to_dispense: 12.1
-        density: 2170
+        amount_stored: 12.1
         dispense_method: quantos
         id: 235
         unit: ug
-  OutputDescriptors:
-    crystal_measurement:
-      characteristic: pxrd_pattern
-      type: list
-    ika_outcome:
-      characteristic: temp_speed_pattern
-      type: list
-    liquid_dispense_outcome:
-      characteristic: success_dispense
-      type: bool
-    quantos_dispense_outcome:
-      characteristic: success_dispense
-      type: bool
   Stations:
     fume_hood:
       id: 4
-      location: nolocation
+      location:
+        graph_id: 5
+        map_id: 7
+        node_id: 2
       unit: hour
       waiting_time: 5
     ika_plate_rct_digital:
       id: 3
-      location: ika_loc
+      location:
+        graph_id: 5
+        map_id: 7
+        node_id: 8
       stirring_duration: 5
       stirring_rpm: 200
       unit: minute
     liquid_dispensing_peristaltic_pump_ardu:
       id: 34
-      location: liquid_loc
+      location:
+        graph_id: 1
+        map_id: 1
+        node_id: 10
       pump_id: 37
     pxrd_analyser:
       id: 25
-      location: analyser_loc
+      location:
+        graph_id: 4
+        map_id: 7
+        node_id: 6
       routine_name: get_crystals
     solid_dispensing_quantos_QS3:
       cartridge_id: 22
       id: 12
-      location: quantos_loc
+      location:
+        graph_id: 1
+        map_id: 6
+        node_id: 3
       protocol: automated_dosing
       use_static_shield: false
   name: making_new_crystals_changed

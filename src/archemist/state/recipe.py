@@ -4,7 +4,7 @@ from src.archemist.state.result import Result
 from typing import List
 
 class StationFlowNode:
-    def __init__(self, node: int, station: Station, task: str, onsuccess: int, onfail: int):
+    def __init__(self, node: int, station: Station, task: list, onsuccess: int, onfail: int):
         self.nodeid = node
         self.station = station
         self.task = task
@@ -18,7 +18,7 @@ class StationFlow:
         self.currentNode = self.nodes[0]
 
     def nextNode(self):
-        if (self.nodes[self.currentNodeID-1].station.outcome):
+        if (self.nodes[self.currentNodeID-1].station.getResult().success):
             self.currentNodeID = self.currentNode.onsuccess
             self.currentNode = self.nodes[self.currentNodeID-1]
         else:
@@ -30,14 +30,13 @@ class StationFlow:
         return len(self.nodes)
 
 class Recipe:
-    def __init__(self, name: str, id: int, stationDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid], outcomeDescriptors: List[Result]):
+    def __init__(self, name: str, id: int, stationOpDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid]):
         self._name = name
         self._id = id
-        self.stationDescriptors = stationDescriptors
+        self.stationopDescriptors = stationOpDescriptors
         self.solids = solids
         self.liquids = liquids
         self.stationFlow = stationFlow
-        self.outcomeDescriptors = outcomeDescriptors
     
     @property
     def name(self):
