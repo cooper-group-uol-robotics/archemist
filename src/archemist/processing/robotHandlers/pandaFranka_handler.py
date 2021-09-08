@@ -34,13 +34,11 @@ class PandaHandler:
             self.wait_for_panda()
 
     def panda_task_cb(self, msg):
-        global panda_task, panda_done
         if msg.task_name == self.panda_task and msg.task_state == TaskStatus.FINISHED:
             self.panda_task = ''
             self.panda_done = True
 
     def wait_for_panda(self):
-        self.panda_done
         while(not self.panda_done):
             rospy.sleep(0.1)
         self.panda_done = False

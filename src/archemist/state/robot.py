@@ -104,6 +104,21 @@ class mobileRobot(robot):
         super().__init__(id)
         self._location = None
 
+    @property
+    def location(self):
+        return self._location
+
+    def moveToLocation(self, loc: Location):
+        self._location = loc
+
 class armRobot(robot):
     def __init__(self, id: int):
         super().__init__(id)
+        self._pose = None
+
+    @property
+    def pose(self):
+        return self._pose
+
+    def moveToPose(self, pose: str):
+        self._pose = pose

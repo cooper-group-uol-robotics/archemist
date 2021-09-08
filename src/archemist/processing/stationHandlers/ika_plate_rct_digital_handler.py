@@ -13,10 +13,9 @@ class IKAPlateHandler:
         rospy.init_node("IKAPlateHandler")
         print("IKAPlateHandler running")
         self.coder = rosMsgCoder()
-        global pub
         self._ikaState = IkaPlateRCTDigital(123, None)
         #dbhandler = dbHandler.dbHandler()
-        pub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
+        self.pub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
         self.pubIka = rospy.Publisher("/IKA_Commands", IKACommand, queue_size=1)
         rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
         rospy.spin()
