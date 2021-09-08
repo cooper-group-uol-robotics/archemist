@@ -1,12 +1,12 @@
 from pydoc import locate
-from src.archemist.state import material, station
-from src.archemist.state.result import Result
-from src.archemist.state.recipe import StationFlow, StationFlowNode, Recipe
-from src.archemist.persistence.dbHandler import dbHandler
-from src.archemist.persistence.fsHandler import FSHandler
-from src.archemist.state.robot import mobileRobot, armRobot
-import src.archemist.state.robots
-import src.archemist.state.stations
+from archemist.state import material, station
+from archemist.state.result import Result
+from archemist.state.recipe import StationFlow, StationFlowNode, Recipe
+from archemist.persistence.dbHandler import dbHandler
+from archemist.persistence.fsHandler import FSHandler
+from archemist.state.robot import mobileRobot, armRobot
+import archemist.state.robots
+import archemist.state.stations
 from datetime import date, timedelta
 import datetime
 from multipledispatch import dispatch
@@ -166,7 +166,7 @@ class Parser:
         return configList  # finally return list
 
     def str_to_class_robot(self, classname):
-      return getattr(src.archemist.state.robots, classname)
+      return getattr(archemist.state.robots, classname)
 
     def str_to_class_station(self, classname):
-      return getattr(src.archemist.state.stations, classname)
+      return getattr(archemist.state.stations, classname)

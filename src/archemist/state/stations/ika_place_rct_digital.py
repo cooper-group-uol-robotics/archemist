@@ -1,4 +1,4 @@
-from src.archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor, State
+from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor, State
 from enum import Enum
 
 

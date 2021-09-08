@@ -1,4 +1,4 @@
-from src.archemist.exceptions import exception
+from archemist.exceptions import exception
 from enum import Enum
 
 class State(Enum):

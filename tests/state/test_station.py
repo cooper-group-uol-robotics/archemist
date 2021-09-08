@@ -1,8 +1,8 @@
 import unittest
-from src.archemist.exceptions.exception import StationAssignedRackError, StationNoOutcomeError, StationUnAssignedRackError
+from archemist.exceptions.exception import StationAssignedRackError, StationNoOutcomeError, StationUnAssignedRackError
 
-from src.archemist.state.station import Location, Station, SolidDispensingStation
-from src.archemist.state.batch import Batch
+from archemist.state.station import Location, Station, SolidDispensingStation
+from archemist.state.batch import Batch
 
 class StationTest(unittest.TestCase):
 

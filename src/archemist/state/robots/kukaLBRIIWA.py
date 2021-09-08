@@ -1,8 +1,8 @@
-from src.archemist.state.robot import mobileRobot
-from src.archemist.state.station import Location
+from archemist.state.robot import mobileRobot
+from archemist.state.station import Location
 
 
-class kukaLBRIIWA(mobileRobot):
+class KukaLBRIIWA(mobileRobot):
     def __init__(self, name: str, id: int):
         super().__init__(name, id)
     
