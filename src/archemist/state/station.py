@@ -25,42 +25,40 @@ class Location:
         return self._map_id
 
 class StationOutputDescriptor:
-    def __init__(self, success:bool):
+    def __init__(self, opName: str, success:bool):
+        self._opName = opName
         self._success = success
     
     @property
     def success(self):
         return self._success
 
+    @property
+    def opName(self):
+        return self._opName
+
 class StationOpDescriptor:
-    def __init__(self, name: str, id: int):
-        self._name = name
-        self._id = id
-
-    def complete(self):
-        out = StationOutputDescriptor(True)
-        return out
+    def __init__(self, stationName: str):
+        self._stationName = stationName
 
     @property
-    def name(self):
-        return self._name
-    
-    @property
-    def id(self):
-        return self._id
+    def stationName(self):
+        return self._stationName
 
 
 class Station:
-    def __init__(self, name: str, id: int, location: Location):
-        self._name = name
-        self._type = "none"
+    def __init__(self, id: int, location: Location):
         self._id = id
         self._location = location
         self._available = False
         self._operational = False
         self._assigned_batch = None
         self._finished = True
-        self._result = None
+        self._currentStationOp = None
+        self._currentStationResult = None
+        self._stationOpHistory = []
+        self._stationOutputHistory = []
+
 
 
     @property
@@ -68,10 +66,15 @@ class Station:
         return self._location
     
     def setStationOp(self, stationOp: StationOpDescriptor):
-        self._stationOp = stationOp
+        self._currentStationOp = stationOp
+        self._stationOpHistory = self._stationOpHistory.append(stationOp)
+
+    def setOperationResult(self, opResult: StationOutputDescriptor):
+        self._currentStationResult = opResult
+        self._stationOutputHistory = self._stationOutputHistory.append(opResult)
     
-    def getResult(self):
-        return self._stationOp.complete()
+    def getOperationResult(self):
+        return self._currentStationResult
 
     @property
     def finished(self):
@@ -83,14 +86,6 @@ class Station:
             self._finished = value
         else:
             raise ValueError
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def type(self):
-        return self._type
 
     @property
     def id(self):
