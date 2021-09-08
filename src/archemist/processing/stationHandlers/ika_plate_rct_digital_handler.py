@@ -1,9 +1,9 @@
 import rospy
-from archemist.msg import HandlerBusMessage
+from archemist_msgs.msg import HandlerBusMessage
 from src.archemist.util.rosMsgCoder import rosMsgCoder
 from src.archemist.state.stations import ika_plate_rct_digital
 from src.archemist.persistence.dbHandler import dbHandler
-from ika_rct_digital.msg import IKACommand
+from archemist_msgs.msg import IKACommand
 class ikaHandler:
     def __init__():
         global pub
@@ -17,8 +17,9 @@ class ikaHandler:
     def handler_cb(self, msg):
         if(msg.station_name == _ikaState.name and msg.station_id == _ikaState.id):
             rospy.loginfo("Receiving Handler")
-            descriptor = vars(rosMsgCoder.decode(msg.opDescriptor))
-            _ikaState.readDescriptor(descriptor)
+            rospy.loginfo(vars(rosMsgCoder.decode(msg.opDescriptor)))
+            descriptor = rosMsgCoder.decode(msg.opDescriptor)
+            #_ikaState.readDescriptor(descriptor)
             dbhandler.updateStationState("ika_plate_rct_digital", descriptor)
             if (descriptor[6] == True):
                 if (descriptor[5] == 1):
