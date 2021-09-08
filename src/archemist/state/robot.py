@@ -1,4 +1,26 @@
 from src.archemist.state.station import Location, State
+from src.archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
+
+class RobotOutputDescriptor:
+    def __init__(self, opName: str, success:bool):
+        self._opName = opName
+        self._success = success
+    
+    @property
+    def success(self):
+        return self._success
+
+    @property
+    def opName(self):
+        return self._opName
+
+class RobotOpDescriptor:
+    def __init__(self, robotName: str):
+        self._robotName = robotName
+
+    @property
+    def robotName(self):
+        return self._robotName 
 
 
 class robot:
@@ -63,14 +85,14 @@ class robot:
             print('Batch {id} assigned to robot {name}'.format(id=batch.id,
                   name=self._name))
         else:
-            raise exception.RobotAssignedRackError(self._name)
+            raise RobotAssignedRackError(self._name)
 
     def retrieve_batch(self):
         ret_batch = self._assigned_batch
         if(self._assigned_batch is not None):
             self._assigned_batch = None
         else:
-            raise exception.RobotUnAssignedRackError(self._name)
+            raise RobotUnAssignedRackError(self._name)
         return ret_batch
 
 class mobileRobot(robot):
@@ -81,24 +103,3 @@ class mobileRobot(robot):
 class armRobot(robot):
     def __init__(self, id: int):
         super().__init__(id)
-
-class RobotOutputDescriptor:
-    def __init__(self, opName: str, success:bool):
-        self._opName = opName
-        self._success = success
-    
-    @property
-    def success(self):
-        return self._success
-
-    @property
-    def opName(self):
-        return self._opName
-
-class RobotOpDescriptor:
-    def __init__(self, robotName: str):
-        self._robotName = robotName
-
-    @property
-    def robotName(self):
-        return self._robotName 
