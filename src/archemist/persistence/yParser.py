@@ -46,7 +46,7 @@ class Parser:
                 for flowStation in config[3]:
                     if str(flowStation.name) == stateList["station"]:
                         stationF = flowStation
-               
+
             stationFlowList.append(StationFlowNode(
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
@@ -58,7 +58,7 @@ class Parser:
 
         stationflow = StationFlow(stationFlowList)
 
-        newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors, 
+        newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors,
         stationflow, solidsList, liquidsList)
         return newRecipe
 
@@ -134,7 +134,7 @@ class Parser:
             solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["id"],
                           exp_date, mass, configDictionary["Materials"]["solids"][solid]["dispense_method"]))
         configList.append(solids)
-        
+
         robots = list()  # list of batches
         for robot in configDictionary["Robots"]:
             robotObj = self.str_to_class_robot(configDictionary["Robots"][robot]["type"])
@@ -167,6 +167,6 @@ class Parser:
 
     def str_to_class_robot(self, classname):
       return getattr(src.archemist.state.robots, classname)
-    
+
     def str_to_class_station(self, classname):
       return getattr(src.archemist.state.stations, classname)

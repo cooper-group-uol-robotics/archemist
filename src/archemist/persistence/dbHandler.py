@@ -13,6 +13,13 @@ class dbHandler:
     def getDBAccess(self):
         return self.client
 
+    def updateStationState(self, station, dict):
+        db=self.client.config
+        dbRecip = db.currentRecipe.find_one({"workflow": {"$exists": True}})
+        dbRecip["Stations"][station] = dict
+        db.workflowConfig.replace_one(
+            {"workflow": {"$exists": True}}, dbRecip)
+
     def importConfig(self):
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
