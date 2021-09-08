@@ -7,7 +7,7 @@ from ika_rct_digital.msg import IKACommand
 class ikaHandler:
     def __init__():
         global pub
-        self._ikaState = ika_plte_rct_digital()
+        self._ikaState = ika_plate_rct_digital()
         global dbhandler
         dbhandler = dbHandler.dbHandler()
         pub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
