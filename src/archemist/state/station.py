@@ -1,4 +1,11 @@
 from src.archemist.exceptions import exception
+from enum import Enum
+
+class State(Enum):
+    WAITING = 0
+    EXECUTING = 1
+    FINISHED = 2
+    IDLE = 3
 
 
 class Location:
@@ -53,7 +60,7 @@ class Station:
         self._available = False
         self._operational = False
         self._assigned_batch = None
-        self._finished = True
+        self._state = State.IDLE
         self._currentStationOp = None
         self._currentStationResult = None
         self._stationOpHistory = []
@@ -77,13 +84,13 @@ class Station:
         return self._currentStationResult
 
     @property
-    def finished(self):
-            return self._finished
+    def state(self):
+            return self._state
 
-    @finished.setter
-    def finished(self, value):
-        if isinstance(value, bool):
-            self._finished = value
+    @state.setter
+    def state(self, value):
+        if isinstance(value, State):
+            self._state = value
         else:
             raise ValueError
 
