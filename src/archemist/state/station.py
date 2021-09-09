@@ -55,7 +55,7 @@ class StationOpDescriptor:
 
 
 class Station:
-    def __init__(self, id: int, location: Location):
+    def __init__(self, name:str, id: int, location: Location):
         self._id = id
         self._location = location
         self._available = False

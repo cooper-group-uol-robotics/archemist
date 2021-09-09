@@ -3,7 +3,7 @@ from archemist.state.material import Liquid
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, id: int, loc: Location, pumpLiquidLevels: dict, liquidsPumpMap: dict):
+    def __init__(self, name: str, id: int, loc: Location, pumpLiquidLevels: dict, liquidsPumpMap: dict):
         super().__init__(name, id, loc)
         self._pumpLiquidLevels = pumpLiquidLevels
         self._liquidsPumpMap = liquidsPumpMap

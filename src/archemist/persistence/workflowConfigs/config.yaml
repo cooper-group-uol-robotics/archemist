@@ -8,7 +8,8 @@ workflow:
     liquids:
       water:
         amount_stored: 400
-        density: 997 #kg/m3
+        #kg/m3
+        density: 997
         pump_id: 1
         unit: ml
     solids:
@@ -42,7 +43,7 @@ workflow:
       liquid_map:
         water: 1
       liquid_levels:
-        water: {400, "ml"}
+        water: {amount: 400, unit: "ml"}
     SolidDispensingQuantosQS2:
       id: 4
       location:
