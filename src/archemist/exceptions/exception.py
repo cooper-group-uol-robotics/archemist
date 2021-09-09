@@ -21,3 +21,20 @@ class RobotUnAssignedRackError(Error):
 class StationNoOutcomeError(Error):
     def __init__(self, station_name):
         self.message = f'{station_name} station hasn not completed and can not provide an outcome result'
+
+class InvalidLiquidError(Error):
+    def __init__(self, station_name):
+        self.message = f'{station_name} station does not contain the specified liquid'
+
+class UsingConsumedCatridgeError(Error):
+    def __init__(self, catridge_id):
+        self.message = f'{catridge_id} is being used while it is consumed catridge'
+
+class QuantosCatridgeLoadedError(Error):
+    def __init__(self):
+        self.message = f'Quantos station already has a loaded catridge!!!'
+
+class QuantosCatridgeUnLoadError(Error):
+    def __init__(self):
+        self.message = f'Quantos station does not have a loaded catridge!!!'
+
