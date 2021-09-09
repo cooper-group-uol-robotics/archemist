@@ -1,2 +1,2 @@
-from .kukaLBRIIWA import kukaLBRIIWA
-from .pandaFranka import pandaFranka
+from .kukaLBRIIWA import KukaLBRIIWA
+from .pandaFranka import PandaFranka

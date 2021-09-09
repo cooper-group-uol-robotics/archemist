@@ -1,6 +1,6 @@
-from src.archemist.persistence.dbHandler import dbHandler
-from src.archemist.persistence.fsHandler import FSHandler
-from src.archemist.persistence.yParser import Parser
+from archemist.persistence.dbHandler import dbHandler
+from archemist.persistence.fsHandler import FSHandler
+from archemist.persistence.yParser import Parser
 import os
 from datetime import datetime
 

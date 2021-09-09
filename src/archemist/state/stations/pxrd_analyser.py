@@ -1,4 +1,4 @@
-from src.archemist.state.station import Station, Location
+from archemist.state.station import Station, Location
 
 
 class pxrd_analyser(Station):

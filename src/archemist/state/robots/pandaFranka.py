@@ -1,4 +1,4 @@
-from src.archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
+from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
 
 
 class PandaFranka(armRobot):
@@ -18,7 +18,7 @@ class PandaMoveOpDescriptor(RobotOpDescriptor):
         return self._start_pos
 
     @property
-    def send_pos(self):
+    def end_pos(self):
         return self._end_pos
 
 ''' ==== Robot Output Descriptors ==== '''

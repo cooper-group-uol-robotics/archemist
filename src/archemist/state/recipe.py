@@ -1,6 +1,6 @@
-from src.archemist.state.material import Liquid, Solid
-from src.archemist.state.station import Station, StationOpDescriptor
-from src.archemist.state.result import Result
+from archemist.state.material import Liquid, Solid
+from archemist.state.station import Station, StationOpDescriptor
+from archemist.state.result import Result
 from typing import List
 
 class StationFlowNode:

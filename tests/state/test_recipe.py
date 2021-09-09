@@ -1,9 +1,9 @@
 import unittest
 
-from src.archemist.state.recipe import Recipe, StationFlow, StationFlowNode, StationOpDescriptor
-from src.archemist.state.station import Station, Location
-from src.archemist.state.result import Result
-from src.archemist.state.material import Liquid, Solid
+from archemist.state.recipe import Recipe, StationFlow, StationFlowNode, StationOpDescriptor
+from archemist.state.station import Station, Location
+from archemist.state.result import Result
+from archemist.state.material import Liquid, Solid
 from datetime import date
 
 class RecipeTest(unittest.TestCase):

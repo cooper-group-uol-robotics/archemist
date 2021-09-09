@@ -1,21 +1,20 @@
 import rospy
 from archemist_msgs.msg import HandlerBusMessage
-from src.archemist.util.rosMsgCoder import rosMsgCoder
-from src.archemist.state.stations import IkaPlateRCTDigital
-from src.archemist.state.stations.ika_place_rct_digital import IKAMode
-from src.archemist.persistence.dbHandler import dbHandler
+from archemist.util.rosMsgCoder import rosMsgCoder
+from archemist.state.stations import IkaPlateRCTDigital
+from archemist.state.stations.ika_place_rct_digital import IKAMode
+from archemist.persistence.dbHandler import dbHandler
 from archemist_msgs.msg import IKACommand
 from enum import Enum
 
-class ikaHandler:
+class IKAPlateHandler:
     def __init__(self):
-        rospy.init_node("ikaHandler")
-        print("running")
+        rospy.init_node("IKAPlateHandler")
+        print("IKAPlateHandler running")
         self.coder = rosMsgCoder()
-        global pub
         self._ikaState = IkaPlateRCTDigital(123, None)
         #dbhandler = dbHandler.dbHandler()
-        pub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
+        self.pub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
         self.pubIka = rospy.Publisher("/IKA_Commands", IKACommand, queue_size=1)
         rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
         rospy.spin()
@@ -41,3 +40,5 @@ class ikaHandler:
                 print("heatingstirring")
                 self.pubIka.publish(ika_command= 7, ika_param=descriptor.setTemperature)
                 self.pubIka.publish(ika_command= 6, ika_param=descriptor.setStirringSpeed)
+            rospy.sleep(descriptor.duration)
+            self.pubIka.publish(ika_command= 8)

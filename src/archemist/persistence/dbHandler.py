@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from src.archemist.persistence.fsHandler import FSHandler
+from archemist.persistence.fsHandler import FSHandler
 import os
 from datetime import datetime
 

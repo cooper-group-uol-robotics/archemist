@@ -1,6 +1,6 @@
 import unittest
 
-from src.archemist.state.material import Liquid, Material, Solid
+from archemist.state.material import Liquid, Material, Solid
 from datetime import date, timedelta
 
 
