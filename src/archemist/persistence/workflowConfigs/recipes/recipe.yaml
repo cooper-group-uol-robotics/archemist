@@ -38,7 +38,7 @@ recipe:
               unit: mg
     PeristalticLiquidDispensing:
       StationOp:
-        dispense_liquid:
+        PeristalticPumpOpDescriptor:
           id: 23
           properties:
             liquid: water
@@ -54,7 +54,7 @@ recipe:
               unit: mL
     IkaPlateRCTDigital:
       StationOp:
-        stirring:
+        IKAStirringOpDescriptor:
           id: 24
           properties:
             rpm: 200

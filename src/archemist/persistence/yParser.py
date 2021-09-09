@@ -44,32 +44,40 @@ class Parser:
             for stationOpDesc in recipeDictionary["recipe"]["stations"][station]["stationOp"]:
                 stationOpObj = self.str_to_class_station(stationOpDesc)
                 if (stationOpDesc == "PeristalticPumpOpDescriptor"):
-
+                    liquid = None
+                    for liq in liquidsList:
+                        if liq.__class__.__name__ == recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["liquid"]:
+                            liquid = liq
+                    stationOpObj = stationOpObj(liquid)
                 elif (stationOpDesc == "IKAHeatingStirringOpDescriptor"):
-
+                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
+                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
+                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
                 elif (stationOpDesc == "IKAHeatingOpDescriptor"):
-
+                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
+                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
                 elif (stationOpDesc == "IKAStirringOpDescriptor"):
-
-
-                stationOpObj = stationOpObj()
-                stationOpDescriptors.append(stationOp)
-
+                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
+                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
+                stationOpDescriptors.append(stationOpObj)
 
         stationFlowList = list()
         for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
             for stateData in stateList:
-                stationF = None
-                for flowStation in config[3]:
-                    if str(flowStation.name) == stateList["station"]:
-                        stationF = flowStation
-
-            stationFlowList.append(StationFlowNode(
-                state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
-
+                if (state == "start"):
+                    stationFlowList.append(StationFlowNode(
+                        None, None, stateList["onsuccess"], stateList["onfail"]))
+                elif (state == "end"):
+                    stationFlowList.append(StationFlowNode(
+                        None, None, stateList["onsuccess"], stateList["onfail"]))
+                else:
+                    stationF = None
+                    for flowStation in config[3]:
+                        if (str(flowStation.name) == stateList["station"]):
+                            stationF = flowStation
+                    stationFlowList.append(StationFlowNode(state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
         stationflow = StationFlow(stationFlowList)
-
         newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors,
         stationflow, solidsList, liquidsList)
         return newRecipe
