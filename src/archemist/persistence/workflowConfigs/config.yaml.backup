@@ -1,0 +1,69 @@
+workflow:
+  Robots:
+    kuka_bot1:
+      id: 1
+      type: "kukaLBRIIWA"
+    panda_bot1:
+      id: 2
+      type: "pandaFranka"
+  Materials:
+    liquids:
+      ethanol:
+        amount_stored: 1.2
+        density: 789.3
+        id: 52
+        unit: l
+      methanol:
+        amount_stored: 351
+        density: 791.4
+        id: 51
+        unit: ml
+    solids:
+      benzimidiazole:
+        amount_stored: 5.5
+        dispense_method: quantos
+        id: 233
+        unit: mg
+      sodium_chloride:
+        amount_stored: 12.1
+        dispense_method: quantos
+        id: 235
+        unit: ug
+  Stations:
+    fume_hood:
+      id: 4
+      location:
+        graph_id: 5
+        map_id: 7
+        node_id: 2
+        desk_pos: "default"
+    ika_plate_rct_digital:
+      id: 3
+      location:
+        graph_id: 5
+        map_id: 7
+        node_id: 8
+        desk_pos: "heater"
+    liquid_dispensing_peristaltic_pump_ardu:
+      id: 34
+      location:
+        graph_id: 1
+        map_id: 1
+        node_id: 10
+        desk_pos: "dispenser"
+    pxrd_analyser:
+      id: 25
+      location:
+        graph_id: 4
+        map_id: 7
+        node_id: 6
+        desk_pos: "default"
+    solid_dispensing_quantos_QS3:
+      id: 12
+      location:
+        graph_id: 1
+        map_id: 6
+        node_id: 3
+        desk_pos: "vialSolidDispense"
+  name: making_new_crystals_changed
+  timestamp: 08/26/2021, 15:28:26
