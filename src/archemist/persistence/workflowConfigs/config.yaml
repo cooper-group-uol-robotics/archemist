@@ -41,7 +41,7 @@ workflow:
         node_id: 8
         desk_pos: "pump"
       liquid_map:
-        water: 1
+        p1: "water"
       liquid_levels:
         water: {amount: 400, unit: "ml"}
     SolidDispensingQuantosQS2:

@@ -5,7 +5,7 @@ recipe:
     liquids: { water }
     solids: { sodium_chloride }
   stations:
-    input_station:
+    InputStation:
       stationOp:
         pickup_batch:
           id: 1
@@ -14,7 +14,14 @@ recipe:
             name: "pick_rack_output"
             fields:
               success: bool
-    solid_dispensing_quantos_QS3:
+        place_batch:
+          id: 2
+          properties:
+          output:
+            name: "place_rack_output"
+            fields:
+              success: bool
+    SolidDispensingQuantosQS2:
       stationOp:
         dispense_solid:
           id: 22
@@ -29,7 +36,7 @@ recipe:
               massDispensed: float
               startingVialMass: float
               unit: mg
-    liquid_dispensing_peristaltic_pump_ardu:
+    PeristalticLiquidDispensing:
       StationOp:
         dispense_liquid:
           id: 23
@@ -45,7 +52,7 @@ recipe:
               unit: mg
               volDispensed: float
               unit: mL
-    ika_plate_rct_digital:
+    IkaPlateRCTDigital:
       StationOp:
         stirring:
           id: 24
@@ -57,7 +64,7 @@ recipe:
             name: "ika_output"
             fields:
             success: bool
-    solubitlity_station:
+    SolubilityStation:
       StationOp:
         solubility_analysis:
           id: 25
@@ -67,46 +74,37 @@ recipe:
             fields:
               success: bool
               solubility: float
-    output_station:
-      stationOp:
-        place_batch:
-          id: 1
-          properties:
-          output:
-            name: "place_rack_output"
-            fields:
-              success: bool
   stationFlow:
     start:
       onSuccess: input_stn
       onFail: end
     input_stn:
-      station: "input_station"
+      station: "InputStation"
       task: {"pickup_batch"}
       onSuccess: solid_disp
       onFail: end
     solid_disp:
-      station: "solid_dispensing_quantos_QS3"
+      station: "SolidDispensingQuantosQS2"
       task: {"dispense_solid", sodium_chloride, 15, "mg"}
       onsuccess: liquid_disp
       onfail: end
     liquid_disp:
-      station: "liquid_dispensing_peristaltic_pump_ardu"
+      station: "PeristalticLiquidDispensing"
       task: {"dispense_liquid", water, 2, "mL"}
       onSuccess: stir_stn
       onFail: end
     stir_stn:
-      station: "ika_plate_rct_digital"
+      station: "IkaPlateRCTDigital"
       task: {"stirring", 200, 1, "seconds"}
       onSuccess: solubility_stn
       onFail: end
     solubility_stn:
-      station: "solubitlity_station"
+      station: "SolubilityStation"
       task: {"solubility_analysis"}
       onSuccess: output_stn
       onFail: end
     output_stn:
-      station: "output_station"
+      station: "InputStation"
       task: {"place_batch"}
       onSuccess: end
       onFail: end
