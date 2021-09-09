@@ -18,7 +18,7 @@ workflow:
         cartridge_id: 1
         unit: mg
   Stations:
-    input_station:
+    InputStation:
       id: 1
       location:
         graph_id: 7
@@ -43,7 +43,7 @@ workflow:
         water: 1
       liquid_levels:
         water: {400, "ml"}
-    solid_dispensing_quantos_QS2:
+    SolidDispensingQuantosQS2:
       id: 4
       location:
         graph_id: 7

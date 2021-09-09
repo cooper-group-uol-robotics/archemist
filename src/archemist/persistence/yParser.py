@@ -142,12 +142,15 @@ class Parser:
                           exp_date, mass, configDictionary["Materials"]["solids"][solid]["dispense_method"]))
         configList.append(solids)
 
-
-
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
-            location = station.Location(configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
+
+            location = station.Location(configDictionary["Stations"][stationN]["location"]["node_id"],
+            configDictionary["Stations"][stationN]["location"]["graph_id"],
+            configDictionary["Stations"][stationN]["location"]["map_id"],
+            configDictionary["Stations"][stationN]["location"]["desk_pos"])
+
             stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)
             # newstation = type(stationN, (station.Station, ),
@@ -156,14 +159,6 @@ class Parser:
             stations.append(stationObj)
         configList.append(stations)  # add to list of lists
 
-        ##todo: parse station op descriptors from config, to be applied in stationflownodes in recipe
-
-        results = list()  # create list of result/output specification from yaml
-        for resultI in configDictionary["OutputDescriptors"]:
-            resultN = Result(resultI, configDictionary["OutputDescriptors"][resultI]["characteristic"], locate(
-                configDictionary["OutputDescriptors"][resultI]["type"]))
-            results.append(resultN)
-        configList.append(results)  # add to list of lists
 
         return configList  # finally return list
 
