@@ -8,7 +8,7 @@ class PeristalticLiquidDispensing(Station):
         super().__init__(id, loc)
         self._pumpLiquidMap = pumpLiquidMap
 
-    def getPumpLiquidLevel(self, pumpId: int):
+    def getPumpLiquidLevel(self, pumpId: str):
         return self._pumpLiquidMap[pumpId].volume
 
     def getPumpID(self, requested_liquid: Liquid):
@@ -23,14 +23,14 @@ class PeristalticLiquidDispensing(Station):
         pumpId = self.getPumpID(liquid)
         return getPumpLiquidLevel(pumpId)
 
-    def addToPumpLiquidLevel(self, pumpId: int, added_value: float):
+    def addToPumpLiquidLevel(self, pumpId: str, added_value: float):
         self._pumpLiquidMap[pumpId].volume = self._pumpLiquidMap[pumpId].volume + added_value
 
     def addLiquid(self, added_liquid: Liquid):
         pumpId = self.getPumpID(added_liquid)
         self.addToPumpLiquidLevel(pumpId, added_liquid.volume)
 
-    def reducePumpLiquidLevel(self, pumpId: int, added_value: float):
+    def reducePumpLiquidLevel(self, pumpId: str, added_value: float):
         self._pumpLiquidMap[pumpId].volume = self._pumpLiquidMap[pumpId].volume - added_value
 
     def dispenseLiquid(self, dispensed_liquid: Liquid):

@@ -27,16 +27,34 @@ class Parser:
 
         liquidsList = list()
         for liquid in recipeDictionary["recipe"]["materials"]["liquids"]:
-            for liquidMaterial in config[0]:
+            for liquidMaterial in config[1]:
                 if str(liquidMaterial.name) == liquid:
                     liquidsList.append(liquidMaterial)
 
 
         solidsList = list()
         for solid in recipeDictionary["recipe"]["materials"]["solids"]:
-            for solidMaterial in config[1]:
+            for solidMaterial in config[2]:
                 if str(solidMaterial.name) == solid:
                     solidsList.append(solidMaterial)
+
+
+        stationOpDescriptors = list()
+        for station in recipeDictionary["recipe"]["stations"]:
+            for stationOpDesc in recipeDictionary["recipe"]["stations"][station]["stationOp"]:
+                stationOpObj = self.str_to_class_station(stationOpDesc)
+                if (stationOpDesc == "PeristalticPumpOpDescriptor"):
+
+                elif (stationOpDesc == "IKAHeatingStirringOpDescriptor"):
+
+                elif (stationOpDesc == "IKAHeatingOpDescriptor"):
+
+                elif (stationOpDesc == "IKAStirringOpDescriptor"):
+
+
+                stationOpObj = stationOpObj()
+                stationOpDescriptors.append(stationOp)
+
 
         stationFlowList = list()
         for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
@@ -49,11 +67,6 @@ class Parser:
             stationFlowList.append(StationFlowNode(
                 state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
 
-        stationOpDescriptors = list()
-        for stationopdesc in recipeDictionary["recipe"]["stationOps"]:
-            stationOp = type(stationopdesc, (station.StationOpDescriptor, ),
-                               recipeDictionary["recipe"]["stationOps"][stationopdesc])
-            stationOpDescriptors.append(stationOp)
 
         stationflow = StationFlow(stationFlowList)
 

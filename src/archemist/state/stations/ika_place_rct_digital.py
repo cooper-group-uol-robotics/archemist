@@ -89,7 +89,7 @@ class IkaPlateRCTDigital(Station):
             raise ValueError
 
     def setStationOp(self, stationOp: StationOpDescriptor):
-        if (stationOp.stationName == self.__class__):
+        if (stationOp.stationName == self.__class__.__name__):
             self._stationOp = stationOp
             self._mode = stationOp.mode
             self._setTemperature = stationOp.setTemperature
@@ -101,9 +101,9 @@ class IkaPlateRCTDigital(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 
-class IKAHeatingStriingOpDescriptor(StationOpDescriptor):
+class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     def __init__(self, setTemperature: int, setStirringSpeed: int, duration: int):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__)
+        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__)
         self._mode = IKAMode.HEATINGSTIRRING
         self._setTemperature = setTemperature
         self._setStirringSpeed = setStirringSpeed
@@ -127,7 +127,7 @@ class IKAHeatingStriingOpDescriptor(StationOpDescriptor):
 
 class IKAHeatingOpDescriptor(StationOpDescriptor):
     def __init__(self, setTemperature: int, duration: int):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__)
+        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__)
         self._mode = IKAMode.HEATING
         self._setTemperature = setTemperature
         self._setStirringSpeed = 0
@@ -146,9 +146,9 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     def mode(self):
         return self._mode
 
-class IKAStriingOpDescriptor(StationOpDescriptor):
+class IKAStirringOpDescriptor(StationOpDescriptor):
     def __init__(self, setStirringSpeed: int, duration: int):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__)
+        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__)
         self._mode = IKAMode.STIRRING
         self._setTemperature = 0
         self._setStirringSpeed = setStirringSpeed
