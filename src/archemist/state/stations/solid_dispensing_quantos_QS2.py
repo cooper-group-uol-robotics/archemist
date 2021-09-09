@@ -1,4 +1,4 @@
-from archemist.state.station import Station, Location
+from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosRackLoadedError
 
@@ -57,9 +57,9 @@ class QuantosCatridge():
                     self._consumed = True
             else:
                 raise UsingConsumedCatridgeError(self._hotel_id)
-            
 
-        
+
+
 
 
 class QuantosSolidDispenserQS2(Station):
@@ -124,7 +124,7 @@ class QuantosSolidDispenserQS2(Station):
 
 class QuantosDispenseOpDescriptor(StationOpDescriptor):
     def __init__(self, solid: Solid):
-        super().__init__(stationName=QuantosSolidDispenserQS2.__class__)
+        super().__init__(stationName=QuantosSolidDispenserQS2.__class__.__name__)
         self._solid = solid
 
     @property
@@ -139,5 +139,3 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
 class QuantosOutputDescriptor(StationOutputDescriptor):
     def __init__(self, opName: str, success:bool):
         super().__init__(opName=opName, succes=success)
-
-

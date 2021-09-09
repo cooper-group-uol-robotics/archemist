@@ -7,23 +7,23 @@ recipe:
   stations:
     InputStation:
       stationOp:
-        pickup_batch:
+        InputStationPickupOp:
           id: 1
           properties:
           output:
             name: "pick_rack_output"
             fields:
               success: bool
-        place_batch:
+        InputStationPlaceOp:
           id: 2
           properties:
           output:
             name: "place_rack_output"
             fields:
               success: bool
-    SolidDispensingQuantosQS2:
+    QuantosSolidDispenserQS2:
       stationOp:
-        dispense_solid:
+        QuantosDispenseOpDescriptor:
           id: 22
           properties:
             solid: sodium_chloride
@@ -37,7 +37,7 @@ recipe:
               startingVialMass: float
               unit: mg
     PeristalticLiquidDispensing:
-      StationOp:
+      stationOp:
         PeristalticPumpOpDescriptor:
           id: 23
           properties:
@@ -53,7 +53,7 @@ recipe:
               volDispensed: float
               unit: mL
     IkaPlateRCTDigital:
-      StationOp:
+      stationOp:
         IKAStirringOpDescriptor:
           id: 24
           properties:
@@ -65,8 +65,8 @@ recipe:
             fields:
             success: bool
     SolubilityStation:
-      StationOp:
-        solubility_analysis:
+      stationOp:
+        SolubilityOpDescriptor:
           id: 25
           properties:
           output:
@@ -76,36 +76,37 @@ recipe:
               solubility: float
   stationFlow:
     start:
-      onSuccess: input_stn
-      onFail: end
+      onSuccess: "input_stn"
+      onFail: "end"
     input_stn:
       station: "InputStation"
-      task: {"pickup_batch"}
-      onSuccess: solid_disp
-      onFail: end
+      task: "InputStationPickupOp"
+      onSuccess: "solid_disp"
+      onFail: "end"
     solid_disp:
-      station: "SolidDispensingQuantosQS2"
-      task: {"dispense_solid", sodium_chloride, 15, "mg"}
-      onsuccess: liquid_disp
-      onfail: end
+      station: "QuantosSolidDispenserQS2"
+      task: "QuantosDispenseOpDescriptor"
+      onSuccess: "liquid_disp"
+      onFail: "end"
     liquid_disp:
       station: "PeristalticLiquidDispensing"
-      task: {"dispense_liquid", water, 2, "mL"}
-      onSuccess: stir_stn
-      onFail: end
+      task: "PeristalticPumpOpDescriptor"
+      onSuccess: "stir_stn"
+      onFail: "end"
     stir_stn:
       station: "IkaPlateRCTDigital"
-      task: {"stirring", 200, 1, "seconds"}
-      onSuccess: solubility_stn
-      onFail: end
+      task: "IKAStirringOpDescriptor"
+      onSuccess: "solubility_stn"
+      onFail: "end"
     solubility_stn:
       station: "SolubilityStation"
-      task: {"solubility_analysis"}
-      onSuccess: output_stn
-      onFail: end
+      task: "SolubilityOpDescriptor"
+      onSuccess: "output_stn"
+      onFail: "end"
     output_stn:
       station: "InputStation"
-      task: {"place_batch"}
-      onSuccess: end
-      onFail: end
+      task: "InputStationPlaceOp"
+      onSuccess: "end"
+      onFail: "end"
     end:
+      ended: True

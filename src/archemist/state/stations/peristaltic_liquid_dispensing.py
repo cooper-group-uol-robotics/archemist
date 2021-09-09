@@ -47,7 +47,7 @@ class PeristalticLiquidDispensing(Station):
 
 class PeristalticPumpOpDescriptor(StationOpDescriptor):
     def __init__(self, liquid: Liquid):
-        super().__init__(stationName=PeristalticLiquidDispensing.__class__)
+        super().__init__(stationName=PeristalticLiquidDispensing.__class__.__name__)
         self._liquid = liquid
 
     @property

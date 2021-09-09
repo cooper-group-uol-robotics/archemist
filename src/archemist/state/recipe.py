@@ -3,8 +3,8 @@ from archemist.state.station import Station, StationOpDescriptor
 from typing import List
 
 class StationFlowNode:
-    def __init__(self, node: int, station: Station, task: list, onsuccess: int, onfail: int):
-        self.nodeid = node
+    def __init__(self, node: str, station: Station, task: list, onsuccess: str, onfail: str):
+        self.nodename = node
         self.station = station
         self.task = task
         self.onsuccess = onsuccess
@@ -13,16 +13,34 @@ class StationFlowNode:
 class StationFlow:
     def __init__(self, stationFlowNodes: List[StationFlowNode]):
         self.nodes = stationFlowNodes
-        self.currentNodeID = 1
         self.currentNode = self.nodes[0]
 
     def nextNode(self):
-        if (self.nodes[self.currentNodeID-1].station.getResult().success):
-            self.currentNodeID = self.currentNode.onsuccess
-            self.currentNode = self.nodes[self.currentNodeID-1]
+        if (self.currentNode.station == None):
+            nextNodeStr = self.currentNode.onsuccess
+            for node in self.nodes:
+                if (node.nodename == nextNodeStr):
+                    self.nextNode = node
+            self.currentNode = self.nextNode
+        elif(self.currentNode.station.getOperationResult() == None):    
+            nextNodeStr = self.currentNode.onsuccess
+            for node in self.nodes:
+                if (node.nodename == nextNodeStr):
+                    self.nextNode = node
+            self.currentNode = self.nextNode
         else:
-            self.currentNodeID =self.currentNode.onfail
-            self.currentNode = self.nodes[self.currentNodeID-1]
+            if (self.currentNode.station.getOperationResult().success()):
+                nextNodeStr = self.currentNode.onsuccess
+                for node in self.nodes:
+                    if (node.nodename == nextNodeStr):
+                        self.nextNode = node
+                self.currentNode = self.nextNode
+            elif(not self.currentNode.station.getOperationResult().success()):
+                nextNodeStr = self.currentNode.onfail
+                for node in self.nodes:
+                    if (node.nodename == nextNodeStr):
+                        self.nextNode = node
+                self.currentNode = self.nextNode
         return self.currentNode
 
     def __len__(self):

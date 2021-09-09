@@ -10,12 +10,12 @@ class FisherWeightingStation(Station):
 
 class FisherWeightNowpDescriptor(StationOpDescriptor):
     def __init__(self):
-        super().__init__(stationName=FisherWeightingStation.__class__)
+        super().__init__(stationName=FisherWeightingStation.__class__.__name__)
 
 class FisherWeightStablepDescriptor(StationOpDescriptor):
     def __init__(self):
         super().__init__(stationName=FisherWeightingStation.__class__)
-        
+
 
 ''' ==== Station Output Descriptors ==== '''
 

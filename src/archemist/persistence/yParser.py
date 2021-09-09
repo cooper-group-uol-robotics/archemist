@@ -19,7 +19,7 @@ class Parser:
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         handler = FSHandler()
-        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs\\recipes\\recipe.yaml')))
+        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs/recipes/recipe.yaml')))
 
     @dispatch(dict)
     def loadRecipeYaml(self, recipeDictionary):
@@ -62,20 +62,19 @@ class Parser:
                 stationOpDescriptors.append(stationOpObj)
 
         stationFlowList = list()
-        for state, stateList in recipeDictionary["recipe"]["stationFlow"].items():
-            for stateData in stateList:
-                if (state == "start"):
-                    stationFlowList.append(StationFlowNode(
-                        None, None, stateList["onsuccess"], stateList["onfail"]))
-                elif (state == "end"):
-                    stationFlowList.append(StationFlowNode(
-                        None, None, stateList["onsuccess"], stateList["onfail"]))
-                else:
-                    stationF = None
-                    for flowStation in config[3]:
-                        if (str(flowStation.name) == stateList["station"]):
-                            stationF = flowStation
-                    stationFlowList.append(StationFlowNode(state, stationF, stateList["task"], stateList["onsuccess"], stateList["onfail"]))
+        for state in recipeDictionary["recipe"]["stationFlow"]:
+            if (state == "start"):
+                stationFlowList.append(StationFlowNode(
+                    state, None, None, recipeDictionary["recipe"]["stationFlow"][state]["onSuccess"], recipeDictionary["recipe"]["stationFlow"][state]["onFail"]))
+            elif (state == "end"):
+                stationFlowList.append(StationFlowNode(
+                    state, None, None, "end", "end"))
+            else:
+                stationF = None
+                for flowStation in config[3]:
+                    if (str(flowStation.__class__.__name__) == recipeDictionary["recipe"]["stationFlow"][state]["station"]):
+                        stationF = flowStation
+                stationFlowList.append(StationFlowNode(state, stationF, recipeDictionary["recipe"]["stationFlow"][state]["task"], recipeDictionary["recipe"]["stationFlow"][state]["onSuccess"], recipeDictionary["recipe"]["stationFlow"][state]["onFail"]))
 
         stationflow = StationFlow(stationFlowList)
         newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors,
@@ -168,8 +167,10 @@ class Parser:
             location = station.Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
             if (stationN == "PeristalticLiquidDispensing"):
                 liquiddict = configDictionary["Stations"][stationN]["liquid_map"]
-                print(liquiddict)
                 stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, liquiddict)
+            elif (stationN == "QuantosSolidDispenserQS2"):
+                cartridges = list()
+                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, cartridges)
             else:
                 stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)

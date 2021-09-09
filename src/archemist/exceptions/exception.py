@@ -34,7 +34,10 @@ class QuantosCatridgeLoadedError(Error):
     def __init__(self):
         self.message = f'Quantos station already has a loaded catridge!!!'
 
+class QuantosRackLoadedError(Error):
+    def __init__(self):
+        self.message = f'Quantos station already has a loaded rack!!!'
+
 class QuantosCatridgeUnLoadError(Error):
     def __init__(self):
         self.message = f'Quantos station does not have a loaded catridge!!!'
-

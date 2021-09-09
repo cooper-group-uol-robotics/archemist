@@ -44,7 +44,7 @@ workflow:
         p1: "water"
       liquid_levels:
         water: {amount: 400, unit: "ml"}
-    SolidDispensingQuantosQS2:
+    QuantosSolidDispenserQS2:
       id: 4
       location:
         graph_id: 7
