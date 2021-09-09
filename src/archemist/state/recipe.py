@@ -1,6 +1,5 @@
 from archemist.state.material import Liquid, Solid
 from archemist.state.station import Station, StationOpDescriptor
-from archemist.state.result import Result
 from typing import List
 
 class StationFlowNode:
@@ -37,11 +36,11 @@ class Recipe:
         self.solids = solids
         self.liquids = liquids
         self.stationFlow = stationFlow
-    
+
     @property
     def name(self):
         return self._name
-    
+
     @property
     def id(self):
         return self._id

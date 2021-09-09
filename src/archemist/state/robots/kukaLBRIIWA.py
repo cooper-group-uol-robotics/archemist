@@ -1,4 +1,4 @@
-from archemist.state.robot import mobileRobot
+from archemist.state.robot import mobileRobot, RobotOpDescriptor, RobotOutputDescriptor
 from archemist.state.station import Location
 
 

@@ -1,6 +1,5 @@
 from pydoc import locate
 from archemist.state import material, station
-from archemist.state.result import Result
 from archemist.state.recipe import StationFlow, StationFlowNode, Recipe
 from archemist.persistence.dbHandler import dbHandler
 from archemist.persistence.fsHandler import FSHandler

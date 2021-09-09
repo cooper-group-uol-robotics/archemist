@@ -1,5 +1,6 @@
 from .fume_hood import fume_hood
+from .input_station import InputStation
 from .ika_place_rct_digital import IkaPlateRCTDigital
 from .peristaltic_liquid_dispensing import PeristalticLiquidDispensing
 from .pxrd_analyser import pxrd_analyser
-from .solid_dispensing_quantos_QS3 import solid_dispensing_quantos_QS3
+from .solid_dispensing_quantos_QS2 import SolidDispensingQuantosQS2
