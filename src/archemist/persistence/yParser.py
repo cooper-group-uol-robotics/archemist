@@ -148,9 +148,9 @@ class Parser:
             if (stationN == "PeristalticLiquidDispensing"):
                 liquiddict = configDictionary["Stations"][stationN]["liquid_map"]
                 print(liquiddict)
-                stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location, liquiddict)
+                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, liquiddict)
             else:
-                stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location)
+                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)
             # newstation = type(stationN, (station.Station, ),
             #                   configDictionary["Stations"][stationN])

@@ -2,8 +2,7 @@ from datetime import date
 
 
 class Material:
-    def __init__(self, name: str, expiry_date: date,
-                 mass: float):
+    def __init__(self, name: str, expiry_date: date, mass: float):
         self._name = name
         self._expiry_date = expiry_date
         self._mass = mass
