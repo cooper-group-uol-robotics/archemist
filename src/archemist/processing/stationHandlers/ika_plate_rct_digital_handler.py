@@ -7,7 +7,6 @@ from src.archemist.persistence.dbHandler import dbHandler
 from archemist_msgs.msg import IKACommand
 from enum import Enum
 
-
 class ikaHandler:
     def __init__(self):
         rospy.init_node("ikaHandler")
