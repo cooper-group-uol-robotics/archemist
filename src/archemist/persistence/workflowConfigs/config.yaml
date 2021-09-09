@@ -25,14 +25,14 @@ workflow:
         map_id: 2
         node_id: 7
         desk_pos: "quantos_rack"
-    ika_plate_rct_digital:
+    IkaPlateRCTDigital:
       id: 2
       location:
         graph_id: 7
         map_id: 2
         node_id: 8
         desk_pos: "ika"
-    liquid_dispensing_peristaltic_pump_ardu:
+    PeristalticLiquidDispensing:
       id: 3
       location:
         graph_id: 7

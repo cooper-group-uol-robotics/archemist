@@ -1,87 +1,113 @@
 recipe:
-  name: example_recipe
-  id: 23
-  batches:
-    newBatch:
-      id: 21
-      name: new batch
+  name: solubility_screening
+  id: 1
   materials:
-    liquids: { ethanol, methanol }
-    solids: { sodium_chloride, benzimidiazole }
-  stationOps:
-    dispense_solid:
-      id: 22
-      station: "solid_dispensing_quantos_QS3"
-      properties:
-        solid: Solid
-        mass: float
-        unit: string
-      output: 
-        name: "solid_dispensing_output"
-        fields:
-          success: bool
-          massDispensed: float
-          unit: string
-    dispense_liquid:
-      id: 23
-      station: "liquid_dispensing_peristaltic_pump_ardu"
-      properties:
-        liquid: Liquid
-        mass: float
-        unit: string
-      output: 
-        name: "solid_dispensing_output"
-        fields:
-          success: boolu
-          massDispensed: float
-          unit: string
-    stir_heat:
-      id: 24
-      station: "ika_plate_rct_digital"
-      properties:
-        temp: float
-        rpm: float
-      output: 
-        name: "ika_output"
-        fields:
-          success: bool
-    measure_crystal_growth:
-      id: 25
-      station: "pxrd_analyser"
-      properties:
-      output:
-        name: "pxrd_output"
-        fields:
-          success: bool
-          crystal_ion_count: int
+    liquids: { water }
+    solids: { sodium_chloride }
+  stations:
+    input_station:
+      stationOp:
+        pickup_batch:
+          id: 1
+          properties:
+          output:
+            name: "pick_rack_output"
+            fields:
+              success: bool
+    solid_dispensing_quantos_QS3:
+      stationOp:
+        dispense_solid:
+          id: 22
+          properties:
+            solid: sodium_chloride
+            mass: 15
+            unit: mg
+          output:
+            name: "solid_dispensing_output"
+            fields:
+              success: bool
+              massDispensed: float
+              startingVialMass: float
+              unit: mg
+    liquid_dispensing_peristaltic_pump_ardu:
+      StationOp:
+        dispense_liquid:
+          id: 23
+          properties:
+            liquid: water
+            volume: 2
+            unit: mL
+          output:
+            name: "liquid_dispensing_output"
+            fields:
+              success: bool
+              massDispensed: float
+              unit: mg
+              volDispensed: float
+              unit: mL
+    ika_plate_rct_digital:
+      StationOp:
+        stirring:
+          id: 24
+          properties:
+            rpm: 200
+            duration: 1
+            unit: seconds
+          output:
+            name: "ika_output"
+            fields:
+            success: bool
+    solubitlity_station:
+      StationOp:
+        solubility_analysis:
+          id: 25
+          properties:
+          output:
+            name: "solubility"
+            fields:
+              success: bool
+              solubility: float
+    output_station:
+      stationOp:
+        place_batch:
+          id: 1
+          properties:
+          output:
+            name: "place_rack_output"
+            fields:
+              success: bool
   stationFlow:
-    1:
+    start:
+      onSuccess: input_stn
+      onFail: end
+    input_stn:
+      station: "input_station"
+      task: {"pickup_batch"}
+      onSuccess: solid_disp
+      onFail: end
+    solid_disp:
       station: "solid_dispensing_quantos_QS3"
-      task: {"dispense_solid", benzimidazole, 200, "mg"}
-      onsuccess: 2
-      onfail: 1
-    2:
-      station: "solid_dispensing_quantos_QS3"
-      task: {"dispense_solid", sodium_chloride, 1.1, "g"}
-      onsuccess: 3
-      onfail: 2
-    3:
+      task: {"dispense_solid", sodium_chloride, 15, "mg"}
+      onsuccess: liquid_disp
+      onfail: end
+    liquid_disp:
       station: "liquid_dispensing_peristaltic_pump_ardu"
-      task: {"dispense_liquid", ethanol, 0.21, "ml"}
-      onsuccess: 4
-      onfail: 3
-    4:
-      station: "liquid_dispensing_peristaltic_pump_ardu"
-      task: {"dispense_liquid", methanol, 54, "ml"}
-      onsuccess: 5
-      onfail: 4
-    5:
+      task: {"dispense_liquid", water, 2, "mL"}
+      onSuccess: stir_stn
+      onFail: end
+    stir_stn:
       station: "ika_plate_rct_digital"
-      task: {"stir_heat", 200, 50}
-      onsuccess: 6
-      onfail: 5
-    6:
-      station: "pxrd_analyser"
-      task: {"measure_crystal_growth"}
-      onsuccess: 0
-      onfail: 1
+      task: {"stirring", 200, 1, "seconds"}
+      onSuccess: solubility_stn
+      onFail: end
+    solubility_stn:
+      station: "solubitlity_station"
+      task: {"solubility_analysis"}
+      onSuccess: output_stn
+      onFail: end
+    output_stn:
+      station: "output_station"
+      task: {"place_batch"}
+      onSuccess: end
+      onFail: end
+    end:

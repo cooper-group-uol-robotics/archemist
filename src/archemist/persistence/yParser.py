@@ -75,6 +75,13 @@ class Parser:
         configDictionary = configDictionaryInput["workflow"]
         configList = list()  # list of lists, for each category of config
 
+        robots = list()  # list of batches
+        for robot in configDictionary["Robots"]:
+            robotObj = self.str_to_class_robot(robot)
+            robotObj = robotObj(configDictionary["Robots"][robot]["id"])
+            robots.append(robotObj)
+        configList.append(robots)
+
         liquids = list()  # list of liquids
         # loop through each key under "liquids"
         for liquid in configDictionary["Materials"]["liquids"]:
@@ -110,7 +117,7 @@ class Parser:
 
             # other liquid properties added directly from yaml
             liquids.append(material.Liquid(
-                liquid, configDictionary["Materials"]["liquids"][liquid]["id"], exp_date, mass, dens, vol))
+                liquid, configDictionary["Materials"]["liquids"][liquid]["pump_id"], exp_date, mass, dens, vol))
         configList.append(liquids)
 
         solids = list()  # list of solids to be used
@@ -131,21 +138,16 @@ class Parser:
                 mass = configDictionary["Materials"]["solids"][solid]["amount_stored"]/1000/1000
 
             # Add solid to list of solids
-            solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["id"],
+            solids.append(material.Solid(solid, configDictionary["Materials"]["solids"][solid]["cartridge_id"],
                           exp_date, mass, configDictionary["Materials"]["solids"][solid]["dispense_method"]))
         configList.append(solids)
 
-        robots = list()  # list of batches
-        for robot in configDictionary["Robots"]:
-            robotObj = self.str_to_class_robot(configDictionary["Robots"][robot]["type"])
-            robotObj = robotObj(robot, configDictionary["Robots"][robot]["id"])
-            robots.append(robotObj)
-        configList.append(robots)
+
 
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
-            location = station.Location(configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"])
+            location = station.Location(configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
             stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)
             # newstation = type(stationN, (station.Station, ),
