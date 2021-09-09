@@ -28,7 +28,7 @@ class Material:
 
 
 class Liquid(Material):
-    def __init__(self, name: str, pump_id: int, expiry_date: date, mass: float,
+    def __init__(self, name: str, pump_id: str, expiry_date: date, mass: float,
                  density: float, volume: float):
         super().__init__(name, expiry_date, mass)
         self._density = density

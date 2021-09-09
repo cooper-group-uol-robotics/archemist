@@ -9,14 +9,15 @@ class KukaHandler:
     def __init__(self):
         rospy.init_node("kuka_handler")
         print("kuka_handler running")
+        # Read state from database
         self._kukaRobotState = KukaLBRIIWA(123)
         self.coder = rosMsgCoder()
         #self._dbhandler = dbHandler.dbHandler()
         self._ackpub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
         self._kmrCmdPub = rospy.Publisher('/kuka2/kmr/nav_commands', NavCommand, queue_size=1)
         self._lbrCmdPub = rospy.Publisher('/kuka2/lbr/command', LBRCommand, queue_size=1)
-        rospy.Subscriber('/kuka2/kmr/task_status', TaskStatus, kmr_task_cb, queue_size=2)
-        rospy.Subscriber('/kuka2/lbr/task_status', TaskStatus, lbr_task_cb, queue_size=2)
+        rospy.Subscriber('/kuka2/kmr/task_status', TaskStatus, self.kmr_task_cb, queue_size=2)
+        rospy.Subscriber('/kuka2/lbr/task_status', TaskStatus, self.lbr_task_cb, queue_size=2)
         rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
         self.kmr_task = ''
         self.kmr_done = False
@@ -25,7 +26,7 @@ class KukaHandler:
 
 
     def handler_cb(self, msg):
-        if(msg.station_name == self._pandaState.__class__.__name__ and msg.station_id == self._pandaState.id):
+        if(msg.station_name == self._kukaRobotState.__class__.__name__ and msg.station_id == self._kukaRobotState.id):
             rospy.loginfo("Receiving Handler")
             opDescriptor = self.coder.decode(msg.opDescriptor)
             #self._pandaState.setRobotOp(opDescriptor)
@@ -33,22 +34,23 @@ class KukaHandler:
             if (opDescriptor.__class__.__name__ == 'KukaMoveBaseOpDescriptor'):
                 navCommand = self.process_kmr_op(opDescriptor)
                 kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
-                rospy.loginfo('exec ' + navCommand)
+                rospy.loginfo('exec ' + kmr_task)
                 self._kmrCmdPub.publish(navCommand)
                 self.wait_for_kmr()
+                # Create result discriptor --=--==-=-=-=-=-=-
                 # TODO calibrate the arm after every motion
             elif (opDescriptor.__class__.__name__ == 'KukaMoveArmOpDescriptor'):
                 armCommand = self.process_lbr_op(opDescriptor)
                 lbr_task = armCommand.job_name
                 print('exec ' + lbr_task)
                 self._lbrCmdPub.publish(armCommand)
-                wait_for_lbr()
+                self.wait_for_lbr()
             elif (opDescriptor.__class__.__name__ == 'KukaCalibrateArmOpDescriptor'):
                 armCommand = self.process_calib_op(opDescriptor)
                 lbr_task = armCommand.job_name
                 print('exec ' + lbr_task)
                 self._lbrCmdPub.publish(armCommand)
-                wait_for_lbr()
+                self.wait_for_lbr()
 
 
     def kmr_task_cb(self, msg):
@@ -90,9 +92,9 @@ class KukaHandler:
         return None
 
     def process_calib_op(self, robotOp):
-        if robotOp.location == 'quantos_station':
+        if robotOp.location == 'quantos':
             return LBRCommand(job_name='quantosStation_calib')
-        elif robotOp.location == 'panda_station':
+        elif robotOp.location == 'panda':
             return LBRCommand(job_name='pandaStation_calib')
         else:
             rospy.logerr('unknown panda op')

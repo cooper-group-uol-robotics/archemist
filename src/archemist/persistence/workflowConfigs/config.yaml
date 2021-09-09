@@ -10,11 +10,11 @@ workflow:
         amount_stored: 400
         #kg/m3
         density: 997
-        pump_id: 1
+        pump_id: 'p1'
         unit: ml
     solids:
       sodium_chloride:
-        amount_stored: 5000
+        amount_stored: 10000
         dispense_method: quantos
         cartridge_id: 1
         unit: mg
