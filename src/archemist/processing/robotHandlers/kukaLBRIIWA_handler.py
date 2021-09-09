@@ -5,7 +5,7 @@ from archemist.util.rosMsgCoder import rosMsgCoder
 from archemist.state.robots import KukaLBRIIWA
 from archemist.persistence.dbHandler import dbHandler
 
-class PandaHandler:
+class KukaHandler:
     def __init__(self):
         rospy.init_node("kuka_handler")
         print("kuka_handler running")
@@ -86,7 +86,7 @@ class PandaHandler:
         elif robotOp.start_pos == 'panda_vial' and robotOp.end_pos == 'robot_rack1':
             return LBRCommand(job_name='pandaUnload_job')
         else:
-            rospy.logerr('unknown panda op')    
+            rospy.logerr('unknown panda op')
         return None
 
     def process_calib_op(self, robotOp):
@@ -95,5 +95,5 @@ class PandaHandler:
         elif robotOp.location == 'panda_station':
             return LBRCommand(job_name='pandaStation_calib')
         else:
-            rospy.logerr('unknown panda op')    
+            rospy.logerr('unknown panda op')
         return None

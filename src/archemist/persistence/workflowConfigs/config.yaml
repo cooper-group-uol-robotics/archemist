@@ -1,74 +1,54 @@
 workflow:
   Robots:
-    kuka_bot1:
+    KukaLBRIIWA:
       id: 1
-      type: "kukaLBRIIWA"
-    panda_bot1:
-      id: 2
-      type: "pandaFranka"
+    PandaFranka:
+      id: 1
   Materials:
     liquids:
-      ethanol:
-        amount_stored: 1.2
-        density: 789.3
-        id: 52
-        unit: l
-      methanol:
-        amount_stored: 351
-        density: 791.4
-        id: 51
+      water:
+        amount_stored: 400
+        density: 997 #kg/m3
+        pump_id: 1
         unit: ml
     solids:
-      benzimidiazole:
-        amount_stored: 5.5
-        dispense_method: quantos
-        id: 233
-        unit: mg
       sodium_chloride:
-        amount_stored: 12.1
+        amount_stored: 5000
         dispense_method: quantos
-        id: 235
-        unit: ug
+        cartridge_id: 1
+        unit: mg
   Stations:
-    fume_hood:
-      id: 4
+    input_station:
+      id: 1
       location:
-        graph_id: 5
-        map_id: 7
-        node_id: 2
-      unit: hour
-      waiting_time: 5
+        graph_id: 7
+        map_id: 2
+        node_id: 7
+        desk_pos: "quantos_rack"
     ika_plate_rct_digital:
+      id: 2
+      location:
+        graph_id: 7
+        map_id: 2
+        node_id: 8
+        desk_pos: "ika"
+    liquid_dispensing_peristaltic_pump_ardu:
       id: 3
       location:
-        graph_id: 5
-        map_id: 7
+        graph_id: 7
+        map_id: 2
         node_id: 8
-      stirring_duration: 5
-      stirring_rpm: 200
-      unit: minute
-    liquid_dispensing_peristaltic_pump_ardu:
-      id: 34
+        desk_pos: "pump"
+      liquid_map:
+        water: 1
+      liquid_levels:
+        water: {400, "ml"}
+    solid_dispensing_quantos_QS2:
+      id: 4
       location:
-        graph_id: 1
-        map_id: 1
-        node_id: 10
-      pump_id: 37
-    pxrd_analyser:
-      id: 25
-      location:
-        graph_id: 4
-        map_id: 7
-        node_id: 6
-      routine_name: get_crystals
-    solid_dispensing_quantos_QS3:
-      cartridge_id: 22
-      id: 12
-      location:
-        graph_id: 1
-        map_id: 6
-        node_id: 3
-      protocol: automated_dosing
-      use_static_shield: false
-  name: making_new_crystals_changed
+        graph_id: 7
+        map_id: 2
+        node_id: 7
+        desk_pos: "quantos_back"
+  name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26
