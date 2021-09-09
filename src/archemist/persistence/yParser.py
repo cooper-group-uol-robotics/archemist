@@ -147,7 +147,8 @@ class Parser:
             location = station.Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
             if (stationN == "PeristalticLiquidDispensing"):
                 liquiddict = configDictionary["Stations"][stationN]["liquid_map"]
-                stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location, liquiddict, liquiddict)
+                print(liquiddict)
+                stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location, liquiddict)
             else:
                 stationObj = stationObj(stationN, configDictionary["Stations"][stationN]["id"], location)
             # set dictionary entry to the location object (instead of name string)
