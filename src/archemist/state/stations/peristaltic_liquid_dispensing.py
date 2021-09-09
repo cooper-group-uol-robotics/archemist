@@ -1,4 +1,4 @@
-from archemist.state.station import Station, Location
+from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Liquid
 from archemist.exceptions.exception import InvalidLiquidError
 
@@ -61,5 +61,3 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
 class PeristalticPumpOutputDescriptor(StationOutputDescriptor):
     def __init__(self, opName: str, success:bool):
         super().__init__(opName=opName, succes=success)
-
-    

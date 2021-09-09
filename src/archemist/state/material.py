@@ -2,20 +2,15 @@ from datetime import date
 
 
 class Material:
-    def __init__(self, name: str, id: int, expiry_date: date,
+    def __init__(self, name: str, expiry_date: date,
                  mass: float):
         self._name = name
-        self._id = id
         self._expiry_date = expiry_date
         self._mass = mass
 
     @property
     def name(self):
         return self._name
-
-    @property
-    def id(self):
-        return self._id
 
     @property
     def expiry_date(self):
@@ -34,11 +29,12 @@ class Material:
 
 
 class Liquid(Material):
-    def __init__(self, name: str, id: int, expiry_date: date, mass: float,
+    def __init__(self, name: str, pump_id: int, expiry_date: date, mass: float,
                  density: float, volume: float):
-        super().__init__(name, id, expiry_date, mass)
+        super().__init__(name, expiry_date, mass)
         self._density = density
         self._volume = volume
+        self._pump_id = pump_id
 
     @property
     def density(self):
@@ -63,17 +59,17 @@ class Liquid(Material):
             raise ValueError
 
     def __str__(self):
-        return f'Liquid: {self._name}, ID: {self._id}, Expiry date: {self._expiry_date},\
+        return f'Liquid: {self._name}, Pump ID: {self._pump_id}, Expiry date: {self._expiry_date},\
                  Mass: {self._mass} g, Volume: {self._volume} L,\
                  Density: {self._density} g/L'
 
 
 class Solid(Material):
-    def __init__(self, name: str, id: int, expiry_date: date, mass: float,
+    def __init__(self, name: str, cartridge_id: int, expiry_date: date, mass: float,
                  dispense_method: str):
-        super().__init__(name, id, expiry_date, mass)
+        super().__init__(name, expiry_date, mass)
         self._dispense_method = dispense_method
-
+        self._cartridge_id = cartridge_id
     @property
     def dispense_method(self):
         return self._dispense_method
@@ -83,5 +79,5 @@ class Solid(Material):
         self._dispense_method = value
 
     def __str__(self):
-        return f'Solid: {self._name}, ID: {self._id}, Expiry date: {self._expiry_date},\
+        return f'Solid: {self._name}, Cartridge ID: {self._cartridge_id}, Expiry date: {self._expiry_date},\
                  Mass: {self._mass} g, Dispense method: {self._dispense_method}'

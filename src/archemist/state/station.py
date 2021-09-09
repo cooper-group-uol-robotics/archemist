@@ -9,11 +9,12 @@ class State(Enum):
 
 
 class Location:
-    def __init__(self, name: str, node_id: int, graph_id: int, map_id: int):
+    def __init__(self, name: str, node_id: int, graph_id: int, map_id: int, desk_pos: str):
         self._name = name
         self._node_id = node_id
         self._graph_id = graph_id
         self._map_id = map_id
+        self._desk_pos = desk_pos
 
     @property
     def name(self):
@@ -35,7 +36,7 @@ class StationOutputDescriptor:
     def __init__(self, opName: str, success:bool):
         self._opName = opName
         self._success = success
-    
+
     @property
     def success(self):
         return self._success
@@ -54,7 +55,7 @@ class StationOpDescriptor:
 
 
 class Station:
-    def __init__(self, id: int, location: Location):
+    def __init__(self, name:str, id: int, location: Location):
         self._id = id
         self._location = location
         self._available = False
@@ -71,7 +72,7 @@ class Station:
     @property
     def location(self):
         return self._location
-    
+
     def setStationOp(self, stationOp: StationOpDescriptor):
         self._currentStationOp = stationOp
         self._stationOpHistory = self._stationOpHistory.append(stationOp)
@@ -79,7 +80,7 @@ class Station:
     def setOperationResult(self, opResult: StationOutputDescriptor):
         self._currentStationResult = opResult
         self._stationOutputHistory = self._stationOutputHistory.append(opResult)
-    
+
     def getOperationResult(self):
         return self._currentStationResult
 
@@ -139,5 +140,3 @@ class Station:
         else:
             raise exception.StationUnAssignedRackError(self._name)
         return ret_batch
-
-

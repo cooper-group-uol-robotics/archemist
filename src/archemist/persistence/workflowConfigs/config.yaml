@@ -8,7 +8,8 @@ workflow:
     liquids:
       water:
         amount_stored: 400
-        density: 997 #kg/m3
+        #kg/m3
+        density: 997
         pump_id: 1
         unit: ml
     solids:
@@ -18,21 +19,21 @@ workflow:
         cartridge_id: 1
         unit: mg
   Stations:
-    input_station:
+    InputStation:
       id: 1
       location:
         graph_id: 7
         map_id: 2
         node_id: 7
         desk_pos: "quantos_rack"
-    ika_plate_rct_digital:
+    IkaPlateRCTDigital:
       id: 2
       location:
         graph_id: 7
         map_id: 2
         node_id: 8
         desk_pos: "ika"
-    liquid_dispensing_peristaltic_pump_ardu:
+    PeristalticLiquidDispensing:
       id: 3
       location:
         graph_id: 7
@@ -42,8 +43,8 @@ workflow:
       liquid_map:
         water: 1
       liquid_levels:
-        water: {400, "ml"}
-    solid_dispensing_quantos_QS2:
+        water: {amount: 400, unit: "ml"}
+    SolidDispensingQuantosQS2:
       id: 4
       location:
         graph_id: 7
