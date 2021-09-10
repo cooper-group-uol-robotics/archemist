@@ -1,4 +1,5 @@
-from archemist.state.station import Location, State
+from archemist.state.station import State
+from archemist.util.location import Location
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
 from archemist.state.batch import Batch, BatchState
 
@@ -6,7 +7,7 @@ class RobotOutputDescriptor:
     def __init__(self, opName: str, success:bool):
         self._opName = opName
         self._success = success
-    
+
     @property
     def success(self):
         return self._success
@@ -21,10 +22,10 @@ class RobotOpDescriptor:
 
     @property
     def robotName(self):
-        return self._robotName 
+        return self._robotName
 
 
-class robot:
+class Robot:
     def __init__(self, id: int):
         self._id = id
         self._available = False
@@ -37,7 +38,7 @@ class robot:
     @property
     def id(self):
         return self._id
-    
+
     @property
     def available(self):
         return self._available
@@ -98,7 +99,7 @@ class robot:
                 return True
         return False
 
-class mobileRobot(robot):
+class mobileRobot(Robot):
     def __init__(self, id: int):
         super().__init__(id)
         self._location = None
@@ -110,7 +111,7 @@ class mobileRobot(robot):
     def moveToLocation(self, loc: Location):
         self._location = loc
 
-class armRobot(robot):
+class armRobot(Robot):
     def __init__(self, id: int):
         super().__init__(id)
         self._pose = None

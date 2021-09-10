@@ -11,6 +11,7 @@ import datetime
 from multipledispatch import dispatch
 import os
 import sys
+from archemist.util.location import Location
 
 class Parser:
 
@@ -162,7 +163,7 @@ class Parser:
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
-            location = station.Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
+            location = Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
             parameters = configDictionary["Stations"][stationN]["parameters"]
             stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, parameters, liquids, solids)
             # set dictionary entry to the location object (instead of name string)

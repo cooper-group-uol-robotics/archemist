@@ -20,9 +20,12 @@ class WorkflowManager:
         launch.start()
         for station in self._state.stations:
             stationHandlerName = station.__class__.__name__ + "_Handler"
-            node = roslaunch.core.Node('archemist', stationHandlerName)
-            process = launch.launch(node)
-        
+            try:
+                node = roslaunch.core.Node('archemist', stationHandlerName)
+                process = launch.launch(node)
+            except:
+                print("Couldn't launch node: " + stationHandlerName)
+
 
     def process(self):
         while (True):
@@ -60,7 +63,7 @@ class WorkflowManager:
             elif (batch_current_station == batch_next_station):
                 self._advanceBatch(batch)
 
-    def _advanceBatch(self, batch: Batch):
+    def _advanceBatch(self, batch):
         for station in state.stations:
             if (station.__class__.__name__ == batch.getCurrentFlowNode().station):
                 station.add_batch(batch)

@@ -1,8 +1,6 @@
 from datetime import datetime
 from archemist.state.material import Solid, Liquid
-from archemist.state.station import Location, StationOpDescriptor, StationOutputDescriptor
-from archemist.state.recipe import Recipe
-from enm import Enum
+from enum import Enum
 
 class BatchState(Enum):
     READY_FOR_PROCESSING = 0
@@ -49,7 +47,7 @@ class Sample():
         return self._location
 
     @location.setter
-    def location(self, location: Location):
+    def location(self, location):
         if isinstance(location, Location):
             self._location = location
         else:
@@ -77,7 +75,7 @@ class Sample():
         else:
             raise ValueError
 
-    def addOpeationOp(self, opeation: StationOpDescriptor):
+    def addOpeationOp(self, opeation):
         self._operationOps.append((datetime.now(), opeation))
 
     @property
@@ -96,7 +94,7 @@ class Sample():
 
 class Batch:
 
-    def __init__(self, id: int, recipe: Recipe, rows: int, cols: int):
+    def __init__(self, id: int, recipe, rows: int, cols: int):
         self.id = id
         self._location = None
         self._recipe = recipe
@@ -122,7 +120,7 @@ class Batch:
         return self._location
 
     @location.setter
-    def location(self, location: Location):
+    def location(self, location):
         if isinstance(location, Location):
             self._location = location
         else:
@@ -172,6 +170,3 @@ class Batch:
                 self._fresh_samples.append(i)
                 self._processed_samples.remove(i)
             self._state = BatchState.READY_FOR_PROCESSING
-
-
-    
