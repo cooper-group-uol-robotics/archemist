@@ -16,7 +16,7 @@ workflow:
       sodium_chloride:
         amount_stored: 10000
         dispense_method: quantos
-        cartridge_id: 1
+        cartridge_id: 'cat1'
         unit: mg
   Stations:
     InputStation:
@@ -26,6 +26,7 @@ workflow:
         map_id: 2
         node_id: 7
         desk_pos: "quantos_rack"
+      parameters:
     IkaPlateRCTDigital:
       id: 2
       location:
@@ -33,6 +34,7 @@ workflow:
         map_id: 2
         node_id: 8
         desk_pos: "ika"
+      parameters:
     PeristalticLiquidDispensing:
       id: 3
       location:
@@ -40,10 +42,9 @@ workflow:
         map_id: 2
         node_id: 8
         desk_pos: "pump"
-      liquid_map:
-        p1: "water"
-      liquid_levels:
-        water: {amount: 400, unit: "ml"}
+      parameters:
+        liquid_pump_map:
+          "water": "p1"
     QuantosSolidDispenserQS2:
       id: 4
       location:
@@ -51,5 +52,10 @@ workflow:
         map_id: 2
         node_id: 7
         desk_pos: "quantos_back"
+      parameters:
+        catridges:
+          cat1:
+            solid: "sodium_chloride"
+            remaining_dosages: 100
   name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26

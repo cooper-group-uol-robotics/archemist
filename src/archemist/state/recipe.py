@@ -15,36 +15,23 @@ class StationFlow:
         self.nodes = stationFlowNodes
         self.currentNode = self.nodes[0]
 
-    def nextNode(self):
-        if (self.currentNode.station == None):
-            nextNodeStr = self.currentNode.onsuccess
-            for node in self.nodes:
-                if (node.nodename == nextNodeStr):
-                    self.nextNode = node
-            self.currentNode = self.nextNode
-        elif(self.currentNode.station.getOperationResult() == None):    
-            nextNodeStr = self.currentNode.onsuccess
-            for node in self.nodes:
-                if (node.nodename == nextNodeStr):
-                    self.nextNode = node
-            self.currentNode = self.nextNode
-        else:
-            if (self.currentNode.station.getOperationResult().success()):
-                nextNodeStr = self.currentNode.onsuccess
-                for node in self.nodes:
-                    if (node.nodename == nextNodeStr):
-                        self.nextNode = node
-                self.currentNode = self.nextNode
-            elif(not self.currentNode.station.getOperationResult().success()):
-                nextNodeStr = self.currentNode.onfail
-                for node in self.nodes:
-                    if (node.nodename == nextNodeStr):
-                        self.nextNode = node
-                self.currentNode = self.nextNode
-        return self.currentNode
 
-    def __len__(self):
-        return len(self.nodes)
+    def advanceSuccess(self):
+        nextNode = self.currentNode.onsuccess
+        for node in self.nodes:
+            if (nextNode == node.nodename):
+                self.currentNode = node
+                return
+    
+    def advanceFail(self):
+        nextNode = self.currentNode.onfail
+        for node in self.nodes:
+            if (nextNode == node.nodename):
+                self.currentNode = node
+                return
+
+    def hasEnded(self):
+        return self.currentNode.nodename == 'end'
 
 class Recipe:
     def __init__(self, name: str, id: int, stationOpDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid]):

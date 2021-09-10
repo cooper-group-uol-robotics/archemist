@@ -11,14 +11,14 @@ recipe:
           id: 1
           properties:
           output:
-            name: "pick_rack_output"
+            name: "InputStationResultDescriptor"
             fields:
               success: bool
         InputStationPlaceOp:
           id: 2
           properties:
           output:
-            name: "place_rack_output"
+            name: "InputStationResultDescriptor"
             fields:
               success: bool
     QuantosSolidDispenserQS2:
@@ -30,7 +30,7 @@ recipe:
             mass: 15
             unit: mg
           output:
-            name: "solid_dispensing_output"
+            name: "QuantosOutputDescriptor"
             fields:
               success: bool
               massDispensed: float
@@ -45,7 +45,7 @@ recipe:
             volume: 2
             unit: mL
           output:
-            name: "liquid_dispensing_output"
+            name: "PeristalticPumpOutputDescriptor"
             fields:
               success: bool
               massDispensed: float
@@ -61,19 +61,21 @@ recipe:
             duration: 1
             unit: seconds
           output:
-            name: "ika_output"
+            name: "IKAOutputDescriptor"
             fields:
-            success: bool
+              success: bool
     SolubilityStation:
       stationOp:
         SolubilityOpDescriptor:
           id: 25
           properties:
+            duration: 10
+            unit: seconds
           output:
-            name: "solubility"
+            name: "SolubilityDescriptor"
             fields:
               success: bool
-              solubility: float
+              turbidity: float
   stationFlow:
     start:
       onSuccess: "input_stn"

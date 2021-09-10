@@ -1,9 +1,9 @@
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
-from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosRackLoadedError
+from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
 
 class QuantosCatridge():
-    def __init__(self, solid: Solid, remaining_dosages: int, blocked: bool, hotel_id: int):
+    def __init__(self, solid: Solid, remaining_dosages: int, hotel_id: str):
         self._solid = solid
         self._remaining_dosages = remaining_dosages
         self._blocked = False
@@ -11,62 +11,66 @@ class QuantosCatridge():
         self._loaded_to_quantos = False
         self._hotel_id = hotel_id
 
-        @property
-        def solid(self):
-            return self._solid
+    @property
+    def solid(self):
+        return self._solid
 
-        @property
-        def hotel_id(self):
-            return self._hotel_id
+    @property
+    def hotel_id(self):
+        return self._hotel_id
 
-        @property
-        def consumed(self):
-            return self._consumed
+    @property
+    def consumed(self):
+        return self._consumed
 
-        @property
-        def blocked(self):
-            return self._blocked
+    @property
+    def blocked(self):
+        return self._blocked
 
-        @blocked.setter
-        def blocked(self, value):
-            if isinstance(value, bool):
-                self._blocked = value
-            else:
-                raise ValueError
+    @blocked.setter
+    def blocked(self, value):
+        if isinstance(value, bool):
+            self._blocked = value
+        else:
+            raise ValueError
 
-        @property
-        def loaded_to_quantos(self):
-            return self._loaded_to_quantos
+    @property
+    def loaded_to_quantos(self):
+        return self._loaded_to_quantos
 
-        @loaded_to_quantos.setter
-        def loaded_to_quantos(self, value):
-            if isinstance(value, bool):
-                self._loaded_to_quantos = value
-            else:
-                raise ValueError
+    @loaded_to_quantos.setter
+    def loaded_to_quantos(self, value):
+        if isinstance(value, bool):
+            self._loaded_to_quantos = value
+        else:
+            raise ValueError
 
-        @property
-        def remaining_dosages(self):
-            return self._remaining_dosages
+    @property
+    def remaining_dosages(self):
+        return self._remaining_dosages
 
-        def dispense(self, dispensed_solid: Solid):
-            if (not self._consumed):
-                self._solid.mass = self._solid.mass - dispensed_solid.mass
-                self._remaining_dosages -= 1
-                if (_remaining_dosages <= 0):
-                    self._consumed = True
-            else:
-                raise UsingConsumedCatridgeError(self._hotel_id)
+    def dispense(self, dispensed_solid: Solid):
+        if (not self._consumed):
+            self._solid.mass = self._solid.mass - dispensed_solid.mass
+            self._remaining_dosages -= 1
+            if (self._remaining_dosages <= 0):
+                self._consumed = True
+        else:
+            raise UsingConsumedCatridgeError(self._hotel_id)
 
 
 
 
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, id: int, loc: Location, catridges: list):
+    def __init__(self, id: int, loc: Location, parameters: dict, liquids: list, solids: list):
         super().__init__(id, loc)
         self._carouselPos = -1
-        self._catridges = catridges
+        self._catridges = list()
+        for cat in parameters['catridges']:
+            for solid in solids:
+                if (solid.cartridge_id == cat):
+                    self._catridges.append(QuantosCatridge(solid,parameters['catridges'][cat]['remaining_dosages'],solid.cartridge_id))
         self._current_catridge = None
         self._doors_open = True
 
@@ -105,7 +109,7 @@ class QuantosSolidDispenserQS2(Station):
 
     def unload_current_catridge(self):
         if (self._current_catridge != None):
-            for catridge in _catridges:
+            for catridge in self._catridges:
                 if (catridge == self._current_catridge):
                     catridge.loaded = False
                     break
@@ -115,7 +119,8 @@ class QuantosSolidDispenserQS2(Station):
 
     def setStationOp(self, stationOp: StationOpDescriptor):
         if (stationOp.stationName == self.__class__):
-            self._current_catridge.dispense(stationOp.solid)
+            temp_solid = Solid(stationOp.solid_name, None, None, stationOp.dispense_mass,'quantos')
+            self._current_catridge.dispense(temp_solid)
         else:
             raise ValueError
 
@@ -123,13 +128,18 @@ class QuantosSolidDispenserQS2(Station):
 ''' ==== Station Operation Descriptors ==== '''
 
 class QuantosDispenseOpDescriptor(StationOpDescriptor):
-    def __init__(self, solid: Solid):
-        super().__init__(stationName=QuantosSolidDispenserQS2.__class__.__name__)
-        self._solid = solid
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
+        super().__init__(stationName=QuantosSolidDispenserQS2.__class__.__name__, output=output)
+        self._solid_name = properties['solid']
+        self._dispense_mass = properties['mass']
 
     @property
-    def solid(self):
-        return self._solid
+    def solid_name(self):
+        return self._solid_name
+
+    @property
+    def dispense_mass(self):
+        return self._dispense_mass
 
 # TODO you can have another op for loading catridge and doing stuff
 
@@ -137,5 +147,5 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
 ''' ==== Station Output Descriptors ==== '''
 
 class QuantosOutputDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str, success:bool):
-        super().__init__(opName=opName, succes=success)
+    def __init__(self, opName: str):
+        super().__init__(opName=opName)

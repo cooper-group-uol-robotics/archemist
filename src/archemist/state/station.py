@@ -33,25 +33,49 @@ class Location:
         return self._map_id
 
 class StationOutputDescriptor:
-    def __init__(self, opName: str, success:bool):
+    def __init__(self, opName: str):
         self._opName = opName
-        self._success = success
+        self._has_result = False
+        self._success = False
 
     @property
     def success(self):
         return self._success
+
+    @success.setter
+    def success(self, value):
+        if isinstance(value, bool):
+            self._success = value
+        else:
+            raise ValueError
+
+    @property
+    def has_result(self):
+        return self._has_result
+
+    @has_result.setter
+    def has_result(self, value):
+        if isinstance(value, bool):
+            self._has_result = value
+        else:
+            raise ValueError
 
     @property
     def opName(self):
         return self._opName
 
 class StationOpDescriptor:
-    def __init__(self, stationName: str):
+    def __init__(self, stationName: str, output: StationOutputDescriptor):
         self._stationName = stationName
+        self._output = output
 
     @property
     def stationName(self):
         return self._stationName
+
+    @property
+    def output(self):
+        return self._output
 
 
 class Station:

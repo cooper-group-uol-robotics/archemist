@@ -3,6 +3,10 @@ from archemist.persistence.fsHandler import FSHandler
 from archemist.persistence.yParser import Parser
 import os
 from datetime import datetime
+from bson.binary import Binary
+from bson.objectid import ObjectId
+import pickle
+
 
 
 class persistenceManager:
@@ -93,3 +97,37 @@ class persistenceManager:
             __location__, 'workflowConfigs/config.yaml'))
         self.loadedConfig = config
         return self.parser.loadConfigYaml(config)
+
+    def storeWorkFlowState(self, state):
+        client = self.dbhandler.getDBAccess()
+        db = client['test']
+        state_coll = db.test_collection
+        flatDocument = dict()
+        for station in state._stations:
+            flatDocument[station.__class__.__name__] = Binary(pickle.dumps(station))
+        for robot in state._robots:
+            flatDocument[robot.__class__.__name__] = Binary(pickle.dumps(robot))
+        for liquid in state._liquids:
+            flatDocument[liquid.name] = Binary(pickle.dumps(liquid))
+        for solid in state._solids:
+            flatDocument[solid.name] = Binary(pickle.dumps(solid))
+        return state_coll.insert(flatDocument)
+
+    def retrieveWorkflowState(self):
+        client = self.dbhandler.getDBAccess()
+        db = client['test']
+        state_coll = db.test_collection
+        statess = state_coll.find_one({'_id': ObjectId('613ad79b370a233f6aa5d7f6')})
+        return statess
+
+    def updateObjectState(self, object):
+        client = self.dbhandler.getDBAccess()
+        db = client['test']
+        state_coll = db.test_collection
+        new_pickled_obj = Binary(pickle.dumps(object))
+        state_coll.update({'_id': ObjectId('613ad79b370a233f6aa5d7f6')}, {'$set': {object.__class__.__name__, new_pickled_obj}})
+
+
+
+
+

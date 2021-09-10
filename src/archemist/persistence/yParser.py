@@ -43,23 +43,25 @@ class Parser:
         for station in recipeDictionary["recipe"]["stations"]:
             for stationOpDesc in recipeDictionary["recipe"]["stations"][station]["stationOp"]:
                 stationOpObj = self.str_to_class_station(stationOpDesc)
-                if (stationOpDesc == "PeristalticPumpOpDescriptor"):
-                    liquid = None
-                    for liq in liquidsList:
-                        if liq.__class__.__name__ == recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["liquid"]:
-                            liquid = liq
-                    stationOpObj = stationOpObj(liquid)
-                elif (stationOpDesc == "IKAHeatingStirringOpDescriptor"):
-                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
-                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
-                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
-                elif (stationOpDesc == "IKAHeatingOpDescriptor"):
-                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
-                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
-                elif (stationOpDesc == "IKAStirringOpDescriptor"):
-                    stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
-                    recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
-                stationOpDescriptors.append(stationOpObj)
+                # if (stationOpDesc == "PeristalticPumpOpDescriptor"):
+                #     liquid = None
+                #     for liq in liquidsList:
+                #         if liq.__class__.__name__ == recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["liquid"]:
+                #             liquid = liq
+                #     stationOpObj = stationOpObj(liquid)
+                # elif (stationOpDesc == "IKAHeatingStirringOpDescriptor"):
+                #     stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
+                #     recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
+                #     recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
+                # elif (stationOpDesc == "IKAHeatingOpDescriptor"):
+                #     stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["temp"],
+                #     recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
+                # elif (stationOpDesc == "IKAStirringOpDescriptor"):
+                #     stationOpObj = stationOpObj(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["rpm"],
+                #     recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]["duration"])
+                input_properties = recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["properties"]
+                stationOutputObj = self.str_to_class_station(recipeDictionary["recipe"]["stations"][station]["stationOp"][stationOpDesc]["output"]["name"])
+                stationOpDescriptors.append(stationOpObj(input_properties, stationOutputObj(stationOpDesc)))
 
         stationFlowList = list()
         for state in recipeDictionary["recipe"]["stationFlow"]:
@@ -70,11 +72,7 @@ class Parser:
                 stationFlowList.append(StationFlowNode(
                     state, None, None, "end", "end"))
             else:
-                stationF = None
-                for flowStation in config[3]:
-                    if (str(flowStation.__class__.__name__) == recipeDictionary["recipe"]["stationFlow"][state]["station"]):
-                        stationF = flowStation
-                stationFlowList.append(StationFlowNode(state, stationF, recipeDictionary["recipe"]["stationFlow"][state]["task"], recipeDictionary["recipe"]["stationFlow"][state]["onSuccess"], recipeDictionary["recipe"]["stationFlow"][state]["onFail"]))
+                stationFlowList.append(StationFlowNode(state, recipeDictionary["recipe"]["stationFlow"][state]["station"], recipeDictionary["recipe"]["stationFlow"][state]["task"], recipeDictionary["recipe"]["stationFlow"][state]["onSuccess"], recipeDictionary["recipe"]["stationFlow"][state]["onFail"]))
 
         stationflow = StationFlow(stationFlowList)
         newRecipe = Recipe(recipeDictionary["recipe"]["name"], recipeDictionary["recipe"]["id"], stationOpDescriptors,
@@ -165,14 +163,8 @@ class Parser:
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
             location = station.Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
-            if (stationN == "PeristalticLiquidDispensing"):
-                liquiddict = configDictionary["Stations"][stationN]["liquid_map"]
-                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, liquiddict)
-            elif (stationN == "QuantosSolidDispenserQS2"):
-                cartridges = list()
-                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, cartridges)
-            else:
-                stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location)
+            parameters = configDictionary["Stations"][stationN]["parameters"]
+            stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, parameters, liquids, solids)
             # set dictionary entry to the location object (instead of name string)
             # newstation = type(stationN, (station.Station, ),
             #                   configDictionary["Stations"][stationN])

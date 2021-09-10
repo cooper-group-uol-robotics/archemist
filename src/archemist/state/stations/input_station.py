@@ -1,9 +1,9 @@
-from archemist.state.station import Station, Location, StationOpDescriptor
+from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.batch import Batch
 
 
 class InputStation(Station):
-    def __init__(self, id: int, loc: Location):
+    def __init__(self, id: int, loc: Location, parameters: dict, liquids: list, solids: list):
         super().__init__(id, loc)
         self._batches = []
 
@@ -26,10 +26,14 @@ class InputStation(Station):
         return ret_batch
 
 class InputStationPickupOp(StationOpDescriptor):
-    def __init__(self):
-        super().__init__(stationName=InputStation.__class__.__name__)
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
+        super().__init__(stationName=InputStation.__class__.__name__, output=output)
 
 
 class InputStationPlaceOp(StationOpDescriptor):
-    def __init__(self):
-        super().__init__(stationName=InputStation.__class__.__name__)
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
+        super().__init__(stationName=InputStation.__class__.__name__, output=output)
+
+class InputStationResultDescriptor(StationOutputDescriptor):
+    def __init__(self, opName: str):
+        super().__init__(opName=opName)

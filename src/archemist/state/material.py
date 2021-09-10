@@ -39,6 +39,11 @@ class Liquid(Material):
     def density(self):
         return self._density
 
+    @property
+    def pump_id(self):
+        return self._pump_id
+
+
     @density.setter
     def density(self, value):
         if value >= 0:
@@ -64,7 +69,7 @@ class Liquid(Material):
 
 
 class Solid(Material):
-    def __init__(self, name: str, cartridge_id: int, expiry_date: date, mass: float,
+    def __init__(self, name: str, cartridge_id: str, expiry_date: date, mass: float,
                  dispense_method: str):
         super().__init__(name, expiry_date, mass)
         self._dispense_method = dispense_method
@@ -76,6 +81,10 @@ class Solid(Material):
     @dispense_method.setter
     def dispense_method(self, value):
         self._dispense_method = value
+
+    @property
+    def cartridge_id(self):
+        return self._cartridge_id
 
     def __str__(self):
         return f'Solid: {self._name}, Cartridge ID: {self._cartridge_id}, Expiry date: {self._expiry_date},\

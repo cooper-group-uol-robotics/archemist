@@ -4,9 +4,13 @@ from archemist.exceptions.exception import InvalidLiquidError
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, id: int, loc: Location, pumpLiquidMap: dict):
+    def __init__(self, id: int, loc: Location, parameters: dict, liquids: list, solids: list):
         super().__init__(id, loc)
-        self._pumpLiquidMap = pumpLiquidMap
+        self._pumpLiquidMap = dict()
+        for liquidName, pumpId in parameters['liquid_pump_map'].items():
+            for liquid in liquids:
+                if liquid.pump_id == pumpId:
+                    self._pumpLiquidMap[pumpId] = liquid
 
     def getPumpLiquidLevel(self, pumpId: str):
         return self._pumpLiquidMap[pumpId].volume
@@ -46,18 +50,23 @@ class PeristalticLiquidDispensing(Station):
 ''' ==== Station Operation Descriptors ==== '''
 
 class PeristalticPumpOpDescriptor(StationOpDescriptor):
-    def __init__(self, liquid: Liquid):
-        super().__init__(stationName=PeristalticLiquidDispensing.__name__)
-        self._liquid = liquid
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
+        super().__init__(stationName=PeristalticLiquidDispensing.__name__, output=output)
+        self._liquid_name = properties['liquid']
+        self._dispense_volume = properties['volume']
 
     @property
-    def liquid(self):
-        return self._liquid
+    def liquid_name(self):
+        return self._liquid_name
+
+    @property
+    def dispense_volume(self):
+        return self._dispense_volume
 
 
 
 ''' ==== Station Output Descriptors ==== '''
 
 class PeristalticPumpOutputDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str, success:bool):
-        super().__init__(opName=opName, success=success)
+    def __init__(self, opName: str):
+        super().__init__(opName=opName)

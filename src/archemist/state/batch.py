@@ -13,7 +13,6 @@ class Sample():
         self._capped = False
         self._processed = False
         self._operationOps = []
-        self._opResults = []
 
     @property
     def id(self):
@@ -73,16 +72,10 @@ class Sample():
     def addOpeationOp(self, opeation: StationOpDescriptor):
         self._operationOps.append((datetime.now(), opeation))
 
-    def addOpResult(self, result: StationOutputDescriptor):
-        self._opResults.append((datetime.now(), result))
-
     @property
     def operationOps(self):
         return self._operationOps
 
-    @property
-    def opResults(self):
-        return self._opResults
 
     def getTotalMass(self):
         total_mass = 0
@@ -129,7 +122,7 @@ class Batch:
         self._station_history.append((datetime.now(), station_name))
 
     @property
-    def station_history(sel):
+    def station_history(self):
         return self._station_history
 
     @property
