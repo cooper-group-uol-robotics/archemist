@@ -7,7 +7,7 @@ from archemist.persistence.dbHandler import dbHandler
 from archemist_msgs.msg import IKACommand
 from enum import Enum
 
-class IKAPlateHandler:
+class IkaPlateRCTDigital_Handler:
     def __init__(self):
         rospy.init_node("IKAPlateHandler")
         print("IKAPlateHandler running")

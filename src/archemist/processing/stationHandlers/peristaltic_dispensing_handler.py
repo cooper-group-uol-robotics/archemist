@@ -8,7 +8,7 @@ from archemist.state.material import Liquid
 from datetime import datetime
 from std_msgs.msg import String
 
-class PeristalticDispensingHandler:
+class PeristalticLiquidDispensing_Handler:
     def __init__(self):
         rospy.init_node("PeristalticDispensingHandler")
         print("PeristalticDispensingHandler running")
@@ -37,4 +37,3 @@ class PeristalticDispensingHandler:
                     # send back to the central
                 # elif (pump_id == 'p2'):
                 #   publish to another pump or indicate that in your message using pumpid field
-

@@ -9,7 +9,7 @@ from archemist.state.material import Solid
 from datetime import datetime
 from std_msgs.msg import String
 
-class QuantosDispensingHandler:
+class QuantosSolidDispenserQS2_Handler:
     def __init__(self):
         self.persistence = persistenceManager()
         self.state = persistenceManager().pull()

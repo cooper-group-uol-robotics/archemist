@@ -2,6 +2,8 @@ from archemist.state.state import State
 from archemist.persistence.persistenceManager import persistenceManager
 from archemist.state.station import Station
 from archemist.state.robot import Robot
+import rospy
+import roslaunch
 
 class WorkflowManager:
     def __init__(self):
@@ -11,8 +13,16 @@ class WorkflowManager:
         self._processing_batch_queue = []
         self._robot_queue = []
 
-
-    #def initilize(self)
+    def initializeWorkflow(self):
+        self._state = State()
+        self._state.initializeState()
+        launch = roslaunch.scriptapi.ROSLaunch()
+        launch.start()
+        for station in self._state.stations:
+            stationHandlerName = station.__class__.__name__ + "_Handler"
+            node = roslaunch.core.Node('archemist', stationHandlerName)
+            process = launch.launch(node)
+        
 
     def process(self):
         while (True):
@@ -21,7 +31,7 @@ class WorkflowManager:
                 self._checkStation(station)
             for robot in state.robots:
                 self._checksRobot(robot)
-            
+
             # rack processing
             self._processCompleteBatches()
 
@@ -55,6 +65,3 @@ class WorkflowManager:
             if (station.__class__.__name__ == batch.getCurrentFlowNode().station):
                 station.add_batch(batch)
                 # in the station handler you start processing added batch and execute statioOp
-
-
-                
