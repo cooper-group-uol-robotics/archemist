@@ -3,10 +3,9 @@ from archemist.persistence.fsHandler import FSHandler
 from archemist.persistence.yParser import Parser
 import os
 from datetime import datetime
-from bson.binary import Binary
-from bson.objectid import ObjectId
 import pickle
-
+import codecs
+from bson import ObjectId
 
 
 class persistenceManager:
@@ -16,6 +15,7 @@ class persistenceManager:
         self.parser = Parser()
         self.loadedConfig = None
         self.client = self.dbhandler.getDBAccess()
+        self.lastObject = None
 
     def changeStationProperty(self, station: str, newProperty, newValue):
         db = self.client.config
@@ -103,26 +103,31 @@ class persistenceManager:
         db = client['test']
         state_coll = db.test_collection
         flatDocument = dict()
-        for station in state._stations:
-            flatDocument[station.__class__.__name__] = Binary(pickle.dumps(station))
-        for robot in state._robots:
-            flatDocument[robot.__class__.__name__] = Binary(pickle.dumps(robot))
-        for liquid in state._liquids:
-            flatDocument[liquid.name] = Binary(pickle.dumps(liquid))
-        for solid in state._solids:
-            flatDocument[solid.name] = Binary(pickle.dumps(solid))
-        return state_coll.insert(flatDocument)
+        for station in state.stations:
+            flatDocument[station.__class__.__name__] = codecs.encode(pickle.dumps(station), "base64").decode()
+        for robot in state.robots:
+            flatDocument[robot.__class__.__name__] = codecs.encode(pickle.dumps(robot), "base64").decode()
+        for liquid in state.liquids:
+            flatDocument[liquid.name] = codecs.encode(pickle.dumps(liquid), "base64").decode()
+        for solid in state.solids:
+            flatDocument[solid.name] = codecs.encode(pickle.dumps(solid), "base64").decode()
+        self.lastObject = state_coll.replace_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, flatDocument, upsert=True)
+        return self.lastObject
 
     def pull(self):
         client = self.dbhandler.getDBAccess()
         db = client['test']
         state_coll = db.test_collection
-        statess = state_coll.find_one({'_id': ObjectId('613ad79b370a233f6aa5d7f6')})
-        return statess
+        statess = state_coll.find_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')})
+        statesCol = dict()
+        for state in statess:
+            if (state != "_id"):
+                statesCol[state] = pickle.loads(codecs.decode(statess[state].encode(), "base64"))
+        return statesCol
 
     def updateObjectState(self, object):
         client = self.dbhandler.getDBAccess()
         db = client['test']
         state_coll = db.test_collection
-        new_pickled_obj = Binary(pickle.dumps(object))
-        state_coll.update({'_id': ObjectId('613ad79b370a233f6aa5d7f6')}, {'$set': {object.__class__.__name__, new_pickled_obj}})
+        new_pickled_obj = codecs.encode(pickle.dumps(object), "base64").decode()
+        state_coll.update_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, {'$set': {object.__class__.__name__: new_pickled_obj}})
