@@ -98,7 +98,7 @@ class persistenceManager:
         self.loadedConfig = config
         return self.parser.loadConfigYaml(config)
 
-    def storeWorkFlowState(self, state):
+    def push(self, state):
         client = self.dbhandler.getDBAccess()
         db = client['test']
         state_coll = db.test_collection
@@ -113,7 +113,7 @@ class persistenceManager:
             flatDocument[solid.name] = Binary(pickle.dumps(solid))
         return state_coll.insert(flatDocument)
 
-    def retrieveWorkflowState(self):
+    def pull(self):
         client = self.dbhandler.getDBAccess()
         db = client['test']
         state_coll = db.test_collection
@@ -126,8 +126,3 @@ class persistenceManager:
         state_coll = db.test_collection
         new_pickled_obj = Binary(pickle.dumps(object))
         state_coll.update({'_id': ObjectId('613ad79b370a233f6aa5d7f6')}, {'$set': {object.__class__.__name__, new_pickled_obj}})
-
-
-
-
-
