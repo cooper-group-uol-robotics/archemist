@@ -7,7 +7,6 @@ import pickle
 import codecs
 from bson import ObjectId
 
-
 class persistenceManager:
     def __init__(self):
         self.dbhandler = dbHandler()

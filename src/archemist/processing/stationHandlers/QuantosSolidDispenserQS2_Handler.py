@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rospy
 from archemist_msgs.msg import HandlerBusMessage
 from archemist.util.rosMsgCoder import rosMsgCoder

@@ -16,23 +16,27 @@ class WorkflowManager:
     def initializeWorkflow(self):
         self._state = State()
         self._state.initializeState()
-        launch = roslaunch.scriptapi.ROSLaunch()
-        launch.start()
-        for station in self._state.stations:
-            stationHandlerName = station.__class__.__name__ + "_Handler"
-            try:
-                node = roslaunch.core.Node('archemist', stationHandlerName)
-                process = launch.launch(node)
-            except:
-                print("Couldn't launch node: " + stationHandlerName)
+        self._persistanceManager.push(self._state)
+        self._state = self._persistanceManager.pull()
+        # launch = roslaunch.scriptapi.ROSLaunch()
+        # launch.start()
+        # for station in self._state.stations:
+        #     stationHandlerName = station.__class__.__name__ + "_Handler"
+        #     try:
+        #         node = roslaunch.core.Node('archemist', stationHandlerName)
+        #         process = launch.launch(node)
+        #     except:
+        #         print("Couldn't launch node: " + stationHandlerName)
 
+    def pullState(self):
+        self._state = self._persistanceManager.pull()
 
     def process(self):
         while (True):
             self._state = self._persistanceManager.pull()
-            for station in state.stations:
+            for station in self._state.stations:
                 self._checkStation(station)
-            for robot in state.robots:
+            for robot in self._state.robots:
                 self._checksRobot(robot)
 
             # rack processing
