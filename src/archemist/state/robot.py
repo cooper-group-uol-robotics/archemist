@@ -1,5 +1,6 @@
 from archemist.state.station import Location, State
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
+from archemist.state.batch import Batch, BatchState
 
 class RobotOutputDescriptor:
     def __init__(self, opName: str, success:bool):
@@ -31,9 +32,7 @@ class robot:
         self._assigned_batch = None
         self._state = State.IDLE
         self._currentRobotOp = None
-        self._currentRobotResult = None
         self._robotOpHistory = []
-        self._robotOutputHistory = []
 
     @property
     def id(self):
@@ -76,15 +75,9 @@ class robot:
         self._currentRobotOp = robotOp
         self._robotOpHistory = self._robotOpHistory.append(robotOp)
 
-    def setOperationResult(self, opResult: RobotOutputDescriptor):
-        self._currentRobotResult = opResult
-        self._robotOutputHistory = self._robotOutputHistory.append(opResult)
-    
-    def getOperationResult(self):
-        return self._currentRobotResult
-
     def add_batch(self, batch):
         if(self._assigned_batch is None):
+            batch.state = BatchState.TRANSIT
             self._assigned_batch = batch
             print('Batch {id} assigned to robot {name}'.format(id=batch.id,
                   name=self._name))
@@ -98,6 +91,12 @@ class robot:
         else:
             raise RobotUnAssignedRackError(self._name)
         return ret_batch
+
+    def has_finished_batch(self):
+        if (self._assigned_batch != None):
+            if (self._assigned_batch.state == BatchState.TRANSIT_DONE):
+                return True
+        return False
 
 class mobileRobot(robot):
     def __init__(self, id: int):

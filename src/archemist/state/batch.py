@@ -2,6 +2,14 @@ from datetime import datetime
 from archemist.state.material import Solid, Liquid
 from archemist.state.station import Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.recipe import Recipe
+from enm import Enum
+
+class BatchState(Enum):
+    READY_FOR_PROCESSING = 0
+    PROCESSING = 1
+    PROCESING_DONE = 2
+    TRANSIT = 3
+    TRANSIT_DONE = 4
 
 class Sample():
     def __init__(self, id: int, rack_indx: tuple):
@@ -92,11 +100,13 @@ class Batch:
         self.id = id
         self._location = None
         self._recipe = recipe
-        id = 1
+        self._state = BatchState.READY_FOR_PROCESSING
+        self._num_sample = 0
         for i in range(0,rows):
             for j in range(0, cols):
-                self._samples.append(Sample(id,(i,j)))
-                id += 1
+                self._fresh_samples.append(Sample(id,(i,j)))
+                _num_sample += 1
+        self._processed_samples = []
         self._station_history = []
 
     @property
@@ -118,35 +128,50 @@ class Batch:
         else:
             raise ValueError
 
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, state: BatchState):
+        if isinstance(state, BatchState):
+            self._state = state
+        else:
+            raise ValueError
+
+
     def addStationStamp(self, station_name: str):
         self._station_history.append((datetime.now(), station_name))
+
+    def getLastStationStamp(self):
+        return self._station_history[-1]
 
     @property
     def station_history(self):
         return self._station_history
+
+    def getCurrentFlowNode(self):
+        return self._recipe.currentNode
 
     @property
     def samples(self):
         return self._samples
 
     def getFreshSample(self):
-        for sample in self._samples:
-            if (not sample.processed):
-                return sample
+        self._state = BatchState.PROCESING
+        return self._fresh_samples.pop()
 
     def putProcessedSample(self, processed_sample:Sample):
-        for sample in self._samples:
-            if (processed_sample.id == sample.id):
-                sample.processed = True
-
-    def isBatchProcessed(self):
-        for sample in self._samples:
-            if (not sample.processed):
-                return False
-        return True
+       self._processed_samples.append(processed_sample)
+       if (len(self._processed_samples) ==  self._num_sample):
+           self._state = BatchState.PROCESING_DONE
 
     def resetBatchForProcessing(self):
-        for sample in self._samples:
-            sample.processed = False
+        if self._state == BatchState.PROCESING_DONE:
+            for i in self._processed_samples[:]:
+                self._fresh_samples.append(i)
+                self._processed_samples.remove(i)
+            self._state = BatchState.READY_FOR_PROCESSING
+
 
     
