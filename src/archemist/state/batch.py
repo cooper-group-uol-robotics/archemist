@@ -1,23 +1,17 @@
 from datetime import datetime
 from archemist.state.material import Solid, Liquid
-from enum import Enum
-
-class BatchState(Enum):
-    READY_FOR_PROCESSING = 0
-    PROCESSING = 1
-    PROCESING_DONE = 2
-    TRANSIT = 3
-    TRANSIT_DONE = 4
+from archemist.util import Location
+from archemist.util.sm import ProcessSM
 
 class Sample():
-    def __init__(self, id: int, rack_indx: tuple):
+    def __init__(self, id: int, rack_indx: tuple, location: Location, recipe):
         self._id = id
         self._rack_indx = rack_indx
         self._liquids = []
         self._solids = []
-        self._location = None
+        self._location = location
+        self._recipe = recipe
         self._capped = False
-        self._processed = False
         self._operationOps = []
 
     @property
@@ -64,23 +58,22 @@ class Sample():
         else:
             raise ValueError
 
-    @property
-    def processed(self):
-        return self._processed
-
-    @processed.setter
-    def processed(self, value: bool):
-        if isinstance(value, bool):
-            self._processed = value
-        else:
-            raise ValueError
-
     def addOpeationOp(self, opeation):
-        self._operationOps.append((datetime.now(), opeation))
+        self._operationOps.append(opeation)
+    
+    def getCurrentOp(self):
+        self._operationOps[-1]
 
     @property
     def operationOps(self):
         return self._operationOps
+
+    @property
+    def recipe(self):
+        return self._recipe
+
+    def getCurrentFlowNode(self):
+        return self._recipe.stationFlow.currentNode
 
 
     def getTotalMass(self):
@@ -94,18 +87,26 @@ class Sample():
 
 class Batch:
 
-    def __init__(self, id: int, recipe, rows: int, cols: int):
-        self.id = id
-        self._location = None
+    def __init__(self, id: int, recipe, rows: int, cols: int, location: Location):
+        self._id = id
+        self._location = location
         self._recipe = recipe
-        self._state = BatchState.READY_FOR_PROCESSING
-        self._num_sample = 0
+        self._recipe.advanceNode(True) # to move out of start state
+        self._samples = list()
         for i in range(0,rows):
             for j in range(0, cols):
-                self._fresh_samples.append(Sample(id,(i,j)))
-                _num_sample += 1
+                self._samples.append(Sample(id,(i,j),location,recipe))
+        
+        self._assigned = False
+        self._all_processed = False
+        
+        #self._current_sample = self._samples[0]
         self._processed_samples = []
+        
         self._station_history = []
+        self._operationOps = []
+
+        self.processSM = ProcessSM()
 
     @property
     def id(self):
@@ -123,20 +124,21 @@ class Batch:
     def location(self, location):
         if isinstance(location, Location):
             self._location = location
+            for sample in self._samples:
+                sample.location = location
         else:
             raise ValueError
 
     @property
-    def state(self):
-        return self._state
+    def assigned(self):
+        return self._assigned
 
-    @state.setter
-    def state(self, state: BatchState):
-        if isinstance(state, BatchState):
-            self._state = state
+    @assigned.setter
+    def assigned(self, value):
+        if isinstance(value, bool):
+            self._assigned = value
         else:
             raise ValueError
-
 
     def addStationStamp(self, station_name: str):
         self._station_history.append((datetime.now(), station_name))
@@ -148,25 +150,39 @@ class Batch:
     def station_history(self):
         return self._station_history
 
-    def getCurrentFlowNode(self):
-        return self._recipe.currentNode
+    def getCurrentStation(self):
+        return self._recipe.getCurrentNode()
 
-    @property
-    def samples(self):
-        return self._samples
+    def getUpcomingStation(self):
+        return self._recipe.stationFlow.getUpcomingNode()
 
-    def getFreshSample(self):
-        self._state = BatchState.PROCESING
-        return self._fresh_samples.pop()
+    def advanceRecipeState(self, success: bool):
+        #single batch mode here
+        self._recipe.advanceNode(success)
+        if self._recipe.hasEnded():
+            self._processed_samples.append(self._samples.pop(0))
+            if not self._samples:
+                # done will all samples
+                self._all_processed = True
+            else:
+                self._current_sample = self._samples[0]
+                self._recipe.reset()
 
-    def putProcessedSample(self, processed_sample:Sample):
-       self._processed_samples.append(processed_sample)
-       if (len(self._processed_samples) ==  self._num_sample):
-           self._state = BatchState.PROCESING_DONE
+    def batchComplete(self):
+        return self._all_processed
 
-    def resetBatchForProcessing(self):
-        if self._state == BatchState.PROCESING_DONE:
-            for i in self._processed_samples[:]:
-                self._fresh_samples.append(i)
-                self._processed_samples.remove(i)
-            self._state = BatchState.READY_FOR_PROCESSING
+    def advanceProcessState(self):
+        self.processSM.advanceState()
+
+    def resetProcessState(self):
+        self.processSM.reset()
+
+
+    def addOpeationOp(self, opeation):
+        self._operationOps.append(opeation)
+    
+    def getCurrentOp(self):
+        self._operationOps[-1]
+    
+    def getCurrentSample(self):
+        return self._samples[0]

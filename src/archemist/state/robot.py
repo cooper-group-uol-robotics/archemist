@@ -58,8 +58,8 @@ class RobotOpDescriptor:
         self._timestamp = datetime.now()
 
 class VialMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, name, start_pos: str, end_pos: str, output: RobotOutputDescriptor):
-        super().__init__(robotName=name, output=output)
+    def __init__(self, robotName, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(robotName=robotName, output=output)
         self._start_pos = start_pos
         self._end_pos = end_pos
 
@@ -71,19 +71,23 @@ class VialMoveOpDescriptor(RobotOpDescriptor):
     def end_pos(self):
         return self._end_pos
 
-class RackMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, name, start_pos: str, end_pos: str, output: RobotOutputDescriptor):
-        super().__init__(robotName=name, output=output)
-        self._start_pos = start_pos
+class RackPlaceOpDescriptor(RobotOpDescriptor):
+    def __init__(self, robotName, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(robotName=robotName, output=output)
         self._end_pos = end_pos
-
-    @property
-    def start_pos(self):
-        return self._start_pos
 
     @property
     def end_pos(self):
         return self._end_pos
+
+class RackPickOpDescriptor(RobotOpDescriptor):
+    def __init__(self, robotName, start_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(robotName=robotName, output=output)
+        self._start_pos = start_pos
+
+    @property
+    def start_pos(self):
+        return self._start_pos
 
 class TransportBatchOpDescriptor(RobotOpDescriptor):
     def __init__(self, robotName, target_loc: Location, output: RobotOutputDescriptor):
@@ -102,9 +106,10 @@ class Robot:
 
         self._available = False
         self._operational = False
+        self._location = None
         
-        self._assigned_object = None
-        self._completed_object = None
+        self._assigned_batch = None
+        self._processed_batch = None
         self._state = State.IDLE
         
         self._currentRobotOp = None
@@ -137,6 +142,17 @@ class Robot:
             raise ValueError
 
     @property
+    def location(self):
+        return self._location
+
+    @location.setter
+    def location(self, value):
+        if isinstance(value, Location):
+            self._location = value
+        else:
+            raise ValueError
+
+    @property
     def state(self):
             return self._state
 
@@ -151,39 +167,31 @@ class Robot:
         self._currentRobotOp = robotOp
         self._robotOpHistory = self._robotOpHistory.append(robotOp)
 
-    def assign_object(self, object):
-        if(self._assigned_object is None):
-            self._assigned_object = object
-            print('Batch {id} assigned to robot {name}'.format(id=object.id,
-                  name=self.__class__.__name__))
+    def add_batch(self, object):
+        if(self._assigned_batch is None):
+            self._assigned_batch = object
+            # print('Batch {id} assigned to robot {name}'.format(id=object.id,
+            #       name=self.__class__.__name__))
         else:
-            raise RobotAssignedRackError(self._name)
+            raise RobotAssignedRackError(self.__class__.__name__)
 
-    def has_complete_object(self):
-        return self._completed_object != None
+    def has_processed_batch(self):
+        return self._processed_batch is not None
 
-    def get_completed_object(self):
-        obj = self._completed_object
-        if not self._completed_object: 
-            self._completed_object = None
+    def get_processed_batch(self):
+        obj = self._processed_batch
+        if self._processed_batch is not None: 
+            self._processed_batch = None
         return obj
 
 class mobileRobot(Robot):
     def __init__(self, id: int):
         super().__init__(id)
-        self._location = None
         self._rack_holders = []
-
-    @property
-    def location(self):
-        return self._location
 
     @property 
     def rack_holders(self):
         return self._rack_holders
-
-    def moveToLocation(self, loc: Location):
-        self._location = loc
 
 class armRobot(Robot):
     def __init__(self, id: int):

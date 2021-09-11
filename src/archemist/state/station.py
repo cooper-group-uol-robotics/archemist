@@ -144,15 +144,15 @@ class Station:
         if(self._assigned_batch is None):
             self._assigned_batch = batch
             print('Sample {id} assigned to station {name}'.format(id=batch.id,
-                  name=self._name))
+                  name=self.__class__.__name__))
         else:
-            raise exception.StationAssignedRackError(self._name)
+            raise exception.StationAssignedRackError(self.__class__.__name__)
 
     def has_processed_batch(self):
-        return self._processed_batch != None
+        return self._processed_batch is not None
 
     def get_processed_batch(self):
         sample = self._processed_batch
-        if not self._processed_batch: 
+        if self._processed_batch is not None: 
             self._processed_batch = None
         return sample

@@ -24,8 +24,8 @@ workflow:
       locations:
         rack_holder:
             graph_id: 7
-            node_id: 7
-            frame_name: "quantos_rack"
+            node_id: 8
+            frame_name: "input_frame"
         pre_load_pos: 
         load_pos:
           graph_id: 7
@@ -38,9 +38,6 @@ workflow:
       locations:
         rack_holder:
         pre_load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "handover_cube"
         load_pos:
           graph_id: 7
           node_id: 8
@@ -52,6 +49,9 @@ workflow:
       locations:
         rack_holder:
         pre_load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "handover_cube"
         load_pos:
           graph_id: 7
           node_id: 8
@@ -78,5 +78,19 @@ workflow:
           cat1:
             solid: "sodium_chloride"
             remaining_dosages: 100
+    SolubilityStation:
+      id: 5
+      locations:
+        rack_holder:
+        pre_load_pos:
+        load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "camera"
+        post_load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "handover_cube"
+      parameters:
   name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26

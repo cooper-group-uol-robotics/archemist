@@ -11,14 +11,14 @@ class State:
         self.stations = []
         self.robots = []
     
-    def initializeState(self, use_config_file: bool):
+    def initializeState(self, reset_db: bool):
         self.persistence = persistenceManager()
-        if (use_config_file):
-            config = self.persistence.loadConfig()
-            self.robots = config[0]
-            self.liquids = config[1]
-            self.solids = config[2]
-            self.stations = config[3]
+        config = self.persistence.loadConfig()
+        self.robots = config[0]
+        self.liquids = config[1]
+        self.solids = config[2]
+        self.stations = config[3]
+        if (reset_db):
             self.storeToDB()
         else:
             self.updateFromDB()

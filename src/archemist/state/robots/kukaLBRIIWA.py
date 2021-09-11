@@ -1,4 +1,4 @@
-from archemist.state.robot import mobileRobot, RobotOpDescriptor, RobotOutputDescriptor, TransportBatchOpDescriptor, VialMoveOpDescriptor,RackMoveOpDescriptor
+from archemist.state.robot import mobileRobot, RackPickOpDescriptor, RobotOpDescriptor, RobotOutputDescriptor, TransportBatchOpDescriptor, VialMoveOpDescriptor, RackPlaceOpDescriptor
 from archemist.state.station import Location
 
 
@@ -34,14 +34,19 @@ class KukaMoveBaseOpDescriptor(TransportBatchOpDescriptor):
 
 
 class KukaVialMoveOpDescriptor(VialMoveOpDescriptor):
-    def __init__(self, start_pos: str, end_pos: str):
+    def __init__(self, start_pos: Location, end_pos: Location):
         super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
 
-class KukaRackMoveOpDescriptor(RackMoveOpDescriptor):
-    def __init__(self, start_pos: str, end_pos: str):
-        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
+class KukaRackPlaceOpDescriptor(RackPlaceOpDescriptor):
+    def __init__(self, end_pos: Location):
+        super().__init__(robotName=KukaLBRIIWA.__name__, 
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
+
+class KukaPickOpDescriptor(RackPickOpDescriptor):
+    def __init__(self, start_pos: Location):
+        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
+                         output=KukaOutputtDescriptor(self.__class__.__name__))
 
 class KukaCalibrateArmOpDescriptor(RobotOpDescriptor):
     def __init__(self, location: str):

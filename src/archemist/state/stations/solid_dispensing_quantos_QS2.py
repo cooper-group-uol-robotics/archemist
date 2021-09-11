@@ -103,14 +103,14 @@ class QuantosSolidDispenserQS2(Station):
             raise ValueError
 
     def load_catridge(self, catridge: QuantosCatridge):
-        if (self._current_catridge == None):
+        if (self._current_catridge is None):
             catridge.loaded_to_quantos = False
             self._current_catridge = None
         else:
             raise QuantosCatridgeLoadedError()
 
     def unload_current_catridge(self):
-        if (self._current_catridge != None):
+        if (self._current_catridge is not None):
             for catridge in self._catridges:
                 if (catridge == self._current_catridge):
                     catridge.loaded = False
