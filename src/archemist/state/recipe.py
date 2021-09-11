@@ -7,6 +7,10 @@ class StationFlowNode:
         self.nodename = node
         self.station = station
         self.task = task
+        self.pre_load_success = False
+        self.load_success = False
+        self.processing_success = False
+        self.post_load_success = False
         self.onsuccess = onsuccess
         self.onfail = onfail
 
@@ -17,6 +21,25 @@ class StationFlow:
 
 
     def advanceSuccess(self):
+        if not self.pre_load_success:
+            self.pre_load_success = True
+            return
+        elif not self.load_success:
+            self.load_success = True
+            return
+        elif not self.processing_success:
+            self.processing_success = True
+            return
+        elif not self.post_load_success:
+            self.post_load_success = True
+            return
+        nextNode = self.currentNode.onsuccess
+        for node in self.nodes:
+            if (nextNode == node.nodename):
+                self.currentNode = node
+                return
+
+    def advanceNodeSuccess(self):
         nextNode = self.currentNode.onsuccess
         for node in self.nodes:
             if (nextNode == node.nodename):

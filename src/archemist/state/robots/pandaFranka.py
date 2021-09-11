@@ -1,4 +1,4 @@
-from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
+from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor,VialMoveOpDescriptor
 
 
 class PandaFranka(armRobot):
@@ -7,22 +7,13 @@ class PandaFranka(armRobot):
 
 ''' ==== Robot Operation Descriptors ==== '''
 
-class PandaMoveOpDescriptor(RobotOpDescriptor):
+class PandaMoveOpDescriptor(VialMoveOpDescriptor):
     def __init__(self, start_pos: str, end_pos: str):
-        super().__init__(robotName=PandaFranka.__class__)
-        self._start_pos = start_pos
-        self._end_pos = end_pos
-
-    @property
-    def start_pos(self):
-        return self._start_pos
-
-    @property
-    def end_pos(self):
-        return self._end_pos
+        super().__init__(robotName=PandaFranka.__name__, start_pos=start_pos, 
+                         end_pos=end_pos, output=PandaOutputtDescriptor(self.__class__.__name__))
 
 ''' ==== Robot Output Descriptors ==== '''
 
 class PandaOutputtDescriptor(RobotOutputDescriptor):
-    def __init__(self, opName: str, success:bool):
-        super().__init__(opName=opName, succes=success)
+    def __init__(self, opName: str):
+        super().__init__(opName=opName)

@@ -1,37 +1,112 @@
 from archemist.state.station import State
 from archemist.util.location import Location
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
-from archemist.state.batch import Batch, BatchState
+from datetime import datetime
 
 class RobotOutputDescriptor:
-    def __init__(self, opName: str, success:bool):
+    def __init__(self, opName: str):
         self._opName = opName
-        self._success = success
+        self._success = False
+        self._has_result = False
+        self._success = False
+        self._timestamp = None
 
     @property
     def success(self):
         return self._success
 
+    @success.setter
+    def success(self, value):
+        if isinstance(value, bool):
+            self._success = value
+        else:
+            raise ValueError
+
+    @property
+    def has_result(self):
+        return self._has_result
+
+    @has_result.setter
+    def has_result(self, value):
+        if isinstance(value, bool):
+            self._has_result = value
+        else:
+            raise ValueError
+
     @property
     def opName(self):
         return self._opName
 
+    def addTimeStamp(self):
+        self._timestamp = datetime.now()
+
 class RobotOpDescriptor:
-    def __init__(self, robotName: str):
+    def __init__(self, robotName: str, output: RobotOutputDescriptor):
         self._robotName = robotName
+        self._output = output
+        self._timestamp = None
 
     @property
     def robotName(self):
         return self._robotName
 
+    @property
+    def output(self):
+        return self._output
+
+    def addTimeStamp(self):
+        self._timestamp = datetime.now()
+
+class VialMoveOpDescriptor(RobotOpDescriptor):
+    def __init__(self, name, start_pos: str, end_pos: str, output: RobotOutputDescriptor):
+        super().__init__(robotName=name, output=output)
+        self._start_pos = start_pos
+        self._end_pos = end_pos
+
+    @property
+    def start_pos(self):
+        return self._start_pos
+
+    @property
+    def end_pos(self):
+        return self._end_pos
+
+class RackMoveOpDescriptor(RobotOpDescriptor):
+    def __init__(self, name, start_pos: str, end_pos: str, output: RobotOutputDescriptor):
+        super().__init__(robotName=name, output=output)
+        self._start_pos = start_pos
+        self._end_pos = end_pos
+
+    @property
+    def start_pos(self):
+        return self._start_pos
+
+    @property
+    def end_pos(self):
+        return self._end_pos
+
+class TransportBatchOpDescriptor(RobotOpDescriptor):
+    def __init__(self, robotName, target_loc: Location, output: RobotOutputDescriptor):
+        super().__init__(robotName=robotName, output=output)
+        self._target_loc = target_loc
+
+    @property
+    def target_loc(self):
+        return self._target_loc
+
+
 
 class Robot:
     def __init__(self, id: int):
         self._id = id
+
         self._available = False
         self._operational = False
-        self._assigned_batch = None
+        
+        self._assigned_object = None
+        self._completed_object = None
         self._state = State.IDLE
+        
         self._currentRobotOp = None
         self._robotOpHistory = []
 
@@ -76,37 +151,36 @@ class Robot:
         self._currentRobotOp = robotOp
         self._robotOpHistory = self._robotOpHistory.append(robotOp)
 
-    def add_batch(self, batch):
-        if(self._assigned_batch is None):
-            batch.state = BatchState.TRANSIT
-            self._assigned_batch = batch
-            print('Batch {id} assigned to robot {name}'.format(id=batch.id,
-                  name=self._name))
+    def assign_object(self, object):
+        if(self._assigned_object is None):
+            self._assigned_object = object
+            print('Batch {id} assigned to robot {name}'.format(id=object.id,
+                  name=self.__class__.__name__))
         else:
             raise RobotAssignedRackError(self._name)
 
-    def retrieve_batch(self):
-        ret_batch = self._assigned_batch
-        if(self._assigned_batch is not None):
-            self._assigned_batch = None
-        else:
-            raise RobotUnAssignedRackError(self._name)
-        return ret_batch
+    def has_complete_object(self):
+        return self._completed_object != None
 
-    def has_finished_batch(self):
-        if (self._assigned_batch != None):
-            if (self._assigned_batch.state == BatchState.TRANSIT_DONE):
-                return True
-        return False
+    def get_completed_object(self):
+        obj = self._completed_object
+        if not self._completed_object: 
+            self._completed_object = None
+        return obj
 
 class mobileRobot(Robot):
     def __init__(self, id: int):
         super().__init__(id)
         self._location = None
+        self._rack_holders = []
 
     @property
     def location(self):
         return self._location
+
+    @property 
+    def rack_holders(self):
+        return self._rack_holders
 
     def moveToLocation(self, loc: Location):
         self._location = loc

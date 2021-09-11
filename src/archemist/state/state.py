@@ -11,21 +11,42 @@ class State:
         self.stations = []
         self.robots = []
     
-    def initializeState(self):
+    def initializeState(self, use_config_file: bool):
         self.persistence = persistenceManager()
-        parser = Parser()
-        config = self.persistence.loadConfig()
-        self.robots = config[0]
-        self.liquids = config[1]
-        self.solids = config[2]
-        self.stations = config[3]
-        self.recipe = parser.loadRecipeYaml()
+        if (use_config_file):
+            config = self.persistence.loadConfig()
+            self.robots = config[0]
+            self.liquids = config[1]
+            self.solids = config[2]
+            self.stations = config[3]
+            self.storeToDB()
+        else:
+            self.updateFromDB()
+        #self.recipe = parser.loadRecipeYaml()
+        #parser = Parser()
 
-    def store(self):
-        self.persistence.storeWorkFlowState(self)
+    def getUnassignedBatches(self):
+        return [batch for batch in self.batches if not batch.assigned]
 
-    def update(self):
-        self.persistence.retrieveWorkflowState()
+    def getStation(self, stationName: str):
+        return next(station for station in self.stations if station.__class__.__name__ == stationName)
 
+    def getRobot(self, name: str, id: int):
+        return next(robot for robot in self.robots if (robot.__class__.__name__ == name and robot.id == id))
 
-        
+    def storeToDB(self):
+        self.persistence.push(self)
+
+    def updateFromDB(self):
+        state_dict = self.persistence.pull()
+        updated_stations = [state_dict[station.__class__.__name__] for station in self.stations]
+        self.stations = updated_stations
+        updated_robots = [state_dict[robot.__class__.__name__] for robot in self.robots]
+        self.robots = updated_robots
+        updated_solids = [state_dict[solid.name] for solid in self.solids]
+        self.solids = updated_solids
+        updated_liquids = [state_dict[liquid.name] for liquid in self.liquids]
+        self.liquids = updated_liquids
+
+    def modifyObjectDB(self, object):
+        self.persistence.updateObjectState(object)

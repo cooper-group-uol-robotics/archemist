@@ -27,7 +27,10 @@ workflow:
             node_id: 7
             frame_name: "quantos_rack"
         pre_load_pos: 
-        load_pos: 
+        load_pos:
+          graph_id: 7
+          node_id: 7
+          frame_name: "quantos_rack"
         post_load_pos: 
       parameters:
     IkaPlateRCTDigital:

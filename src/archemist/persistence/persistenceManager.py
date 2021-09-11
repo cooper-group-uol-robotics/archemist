@@ -7,6 +7,8 @@ import pickle
 import codecs
 from bson import ObjectId
 
+from archemist.state.material import Liquid, Solid
+
 class persistenceManager:
     def __init__(self):
         self.dbhandler = dbHandler()
@@ -113,6 +115,17 @@ class persistenceManager:
         self.lastObject = state_coll.replace_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, flatDocument, upsert=True)
         return self.lastObject
 
+    # def pull(self):
+    #     client = self.dbhandler.getDBAccess()
+    #     db = client['test']
+    #     state_coll = db.test_collection
+    #     statess = state_coll.find_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')})
+    #     statesCol = dict()
+    #     for state in statess:
+    #         if (state != "_id"):
+    #             statesCol[state] = pickle.loads(codecs.decode(statess[state].encode(), "base64"))
+    #     return statesCol
+    
     def pull(self):
         client = self.dbhandler.getDBAccess()
         db = client['test']
@@ -129,4 +142,7 @@ class persistenceManager:
         db = client['test']
         state_coll = db.test_collection
         new_pickled_obj = codecs.encode(pickle.dumps(object), "base64").decode()
-        state_coll.update_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, {'$set': {object.__class__.__name__: new_pickled_obj}})
+        if (isinstance(object, Liquid) or isinstance(object, Solid)):
+            state_coll.update_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, {'$set': {object.name: new_pickled_obj}})
+        else:
+            state_coll.update_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, {'$set': {object.__class__.__name__: new_pickled_obj}})

@@ -2,12 +2,11 @@ from archemist.exceptions import exception
 from enum import Enum
 from datetime import datetime
 from archemist.util.location import Location
-from archemist.state.batch import Batch
+from archemist.state.batch import Batch, Sample
 class State(Enum):
     WAITING = 0
     EXECUTING = 1
-    FINISHED = 2
-    IDLE = 3
+    IDLE = 2
 
 class StationOutputDescriptor:
     def __init__(self, opName: str):
@@ -76,7 +75,7 @@ class Station:
         self._operational = False
 
         self._assigned_batch = None
-        self._finished_batch = None
+        self._processed_batch = None
         self._state = State.IDLE
         
         self._currentStationOp = None
@@ -143,17 +142,17 @@ class Station:
 
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):
-            batch.addStationStamp(self.__class__.__name__)
             self._assigned_batch = batch
-            print('Batch {id} assigned to station {name}'.format(id=batch.id,
+            print('Sample {id} assigned to station {name}'.format(id=batch.id,
                   name=self._name))
         else:
             raise exception.StationAssignedRackError(self._name)
 
-    def retrieve_finished_batch(self):
-        ret_batch = self._finished_batch
-        if(self._finished_batch is not None):
-            self._finished_batch = None
-        else:
-            raise exception.StationUnAssignedRackError(self._name)
-        return ret_batch
+    def has_processed_batch(self):
+        return self._processed_batch != None
+
+    def get_processed_batch(self):
+        sample = self._processed_batch
+        if not self._processed_batch: 
+            self._processed_batch = None
+        return sample

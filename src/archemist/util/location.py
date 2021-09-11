@@ -15,3 +15,12 @@ class Location:
     @property
     def frame_name(self):
         return self._frame_name
+
+    def __eq__(self, o: object) -> bool:
+        return o._node_id == self._node_id and o._graph_id == self._graph_id and o._frame_name == self._frame_name
+
+    def get_map_coordinates(self):
+        return (self._node_id, self._graph_id)
+
+    def __str__(self):
+        return 'node_id:{0}, graph_id{1}, frame_name:{2}'.format(self.node_id, self.graph_id, self.frame_name)
