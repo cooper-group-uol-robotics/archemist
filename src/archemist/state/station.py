@@ -64,23 +64,41 @@ class StationOpDescriptor:
 
 
 class Station:
-    def __init__(self, id: int, location: Location):
+    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
+                 load: Location, post_load: Location):
         self._id = id
-        self._location = location
+        self._rack_holder = rack_holder
+        self._pre_load = pre_load
+        self._load = load
+        self._post_load = post_load
+
         self._available = False
         self._operational = False
+
         self._assigned_batch = None
-        self._current_vial = None
+        self._finished_batch = None
         self._state = State.IDLE
+        
         self._currentStationOp = None
         self._stationOpHistory = []
-        self._stationOutputHistory = []
 
 
 
     @property
-    def location(self):
-        return self._location
+    def rack_holder_loc(self):
+        return self._rack_holder
+
+    @property
+    def pre_load_loc(self):
+        return self._pre_load
+
+    @property
+    def load_loc(self):
+        return self._load
+
+    @property
+    def post_load_loc(self):
+        return self._post_load
 
     def setStationOp(self, stationOp: StationOpDescriptor):
         self._currentStationOp = stationOp
@@ -100,10 +118,6 @@ class Station:
     @property
     def id(self):
         return self._id
-
-    @property
-    def location(self):
-        return self._location
 
     @property
     def available(self):
@@ -129,8 +143,6 @@ class Station:
 
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):
-            batch.state = BatchState.READY_FOR_PROCESSING
-            batch.location = self.location
             batch.addStationStamp(self.__class__.__name__)
             self._assigned_batch = batch
             print('Batch {id} assigned to station {name}'.format(id=batch.id,
@@ -138,16 +150,10 @@ class Station:
         else:
             raise exception.StationAssignedRackError(self._name)
 
-    def retrieve_batch(self):
-        ret_batch = self._assigned_batch
-        if(self._assigned_batch is not None):
-            self._assigned_batch = None
+    def retrieve_finished_batch(self):
+        ret_batch = self._finished_batch
+        if(self._finished_batch is not None):
+            self._finished_batch = None
         else:
             raise exception.StationUnAssignedRackError(self._name)
         return ret_batch
-
-    def has_finished_batch(self):
-        if (self._assigned_batch != None):
-            if (self._assigned_batch.state == BatchState.PROCESING_DONE):
-                return True
-        return False

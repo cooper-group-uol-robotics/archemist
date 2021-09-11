@@ -10,8 +10,10 @@ class IKAMode(Enum):
 ''' ==== Station Description ==== '''
 
 class IkaPlateRCTDigital(Station):
-    def __init__(self, id: int, loc: Location, parameters: dict, liquids: list, solids: list):
-        super().__init__(id, loc)
+    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
+                 load: Location, post_load: Location, parameters: dict, 
+                 liquids: list, solids: list):
+        super().__init__(id, rack_holder, pre_load, load, post_load)
         self._mode = None
         self._currentTemperature = None
         self._setTemperature = None

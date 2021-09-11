@@ -21,37 +21,55 @@ workflow:
   Stations:
     InputStation:
       id: 1
-      location:
-        graph_id: 7
-        map_id: 2
-        node_id: 7
-        desk_pos: "quantos_rack"
+      locations:
+        rack_holder:
+            graph_id: 7
+            node_id: 7
+            frame_name: "quantos_rack"
+        pre_load_pos: 
+        load_pos: 
+        post_load_pos: 
       parameters:
     IkaPlateRCTDigital:
       id: 2
-      location:
-        graph_id: 7
-        map_id: 2
-        node_id: 8
-        desk_pos: "ika"
+      locations:
+        rack_holder:
+        pre_load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "handover_cube"
+        load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "ika"
+        post_load_pos:
       parameters:
     PeristalticLiquidDispensing:
       id: 3
-      location:
-        graph_id: 7
-        map_id: 2
-        node_id: 8
-        desk_pos: "pump"
+      locations:
+        rack_holder:
+        pre_load_pos:
+        load_pos:
+          graph_id: 7
+          node_id: 8
+          frame_name: "pump"
+        post_load_pos:
       parameters:
         liquid_pump_map:
           "water": "p1"
     QuantosSolidDispenserQS2:
       id: 4
-      location:
-        graph_id: 7
-        map_id: 2
-        node_id: 7
-        desk_pos: "quantos_back"
+      locations:
+        rack_holder:
+          graph_id: 7
+          node_id: 7
+          frame_name: 'quantos_rack'
+        pre_load_pos:
+        load_pos:
+          graph_id: 7
+          node_id: 7
+          frame_name: "quantos_carousel"
+        post_load_pos:
       parameters:
         catridges:
           cat1:

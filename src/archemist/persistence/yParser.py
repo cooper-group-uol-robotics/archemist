@@ -163,13 +163,36 @@ class Parser:
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             stationObj = self.str_to_class_station(stationN)
-            location = Location((stationN + "_" + configDictionary["Stations"][stationN]["location"]["desk_pos"]), configDictionary["Stations"][stationN]["location"]["node_id"], configDictionary["Stations"][stationN]["location"]["graph_id"], configDictionary["Stations"][stationN]["location"]["map_id"], configDictionary["Stations"][stationN]["location"]["desk_pos"])
+            
+            if configDictionary["Stations"][stationN]["locations"]["rack_holder"]:
+                rack_holder = Location(configDictionary["Stations"][stationN]["locations"]["rack_holder"]["node_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["rack_holder"]["graph_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["rack_holder"]["frame_name"])
+            else:
+                rack_holder = None
+            
+            if configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]:
+                pre_load_pos = Location(configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["node_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["graph_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["frame_name"])
+            else:
+                pre_load_pos = None
+            
+            if configDictionary["Stations"][stationN]["locations"]["load_pos"]:
+                load_pos = Location(configDictionary["Stations"][stationN]["locations"]["load_pos"]["node_id"],
+                                    configDictionary["Stations"][stationN]["locations"]["load_pos"]["graph_id"],
+                                    configDictionary["Stations"][stationN]["locations"]["load_pos"]["frame_name"])
+            else:
+                load_pos = None
+            if configDictionary["Stations"][stationN]["locations"]["post_load_pos"]:
+                post_load_pos = Location(configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["node_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["graph_id"],
+                                        configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["frame_name"])
+            else:
+                post_load_pos = None
+            
             parameters = configDictionary["Stations"][stationN]["parameters"]
-            stationObj = stationObj(configDictionary["Stations"][stationN]["id"], location, parameters, liquids, solids)
-            # set dictionary entry to the location object (instead of name string)
-            # newstation = type(stationN, (station.Station, ),
-            #                   configDictionary["Stations"][stationN])
-            # create object of new station class, passing parameters from yaml and also using location object
+            stationObj = stationObj(configDictionary["Stations"][stationN]["id"], rack_holder,pre_load_pos,load_pos,post_load_pos, parameters, liquids, solids)
             stations.append(stationObj)
         configList.append(stations)  # add to list of lists
 

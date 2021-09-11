@@ -4,8 +4,10 @@ from archemist.exceptions.exception import InvalidLiquidError
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, id: int, loc: Location, parameters: dict, liquids: list, solids: list):
-        super().__init__(id, loc)
+    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
+                 load: Location, post_load: Location, parameters: dict, 
+                 liquids: list, solids: list):
+        super().__init__(id, rack_holder, pre_load, load, post_load)
         self._pumpLiquidMap = dict()
         for liquidName, pumpId in parameters['liquid_pump_map'].items():
             for liquid in liquids:

@@ -37,10 +37,10 @@ class Recipe:
     def __init__(self, name: str, id: int, stationOpDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid]):
         self._name = name
         self._id = id
-        self.stationopDescriptors = stationOpDescriptors
-        self.solids = solids
-        self.liquids = liquids
-        self.stationFlow = stationFlow
+        self._stationopDescriptors = stationOpDescriptors
+        self._solids = solids
+        self._liquids = liquids
+        self._stationFlow = stationFlow
 
     @property
     def name(self):
@@ -49,3 +49,19 @@ class Recipe:
     @property
     def id(self):
         return self._id
+
+    @property
+    def stationOpDescriptors (self):
+        return self.stationopDescriptors
+
+    @property
+    def solids (self):
+        return self._solids
+
+    @property
+    def liquids (self):
+        return self._liquids
+
+    @property
+    def stationFlow (self):
+        return self._stationFlow
