@@ -26,7 +26,7 @@ class WorkflowManager:
         self._state = State()
         self._state.initializeState(reset_db=True)
         kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
-        kuka1.location = Location(1,7,'drive_frame')
+        kuka1.location = Location(7,7,'drive_frame')
         self._state.modifyObjectDB(kuka1)
         panda = self._state.getRobot('PandaFranka',1)
         panda.location = Location(8,7,'neutral')
@@ -139,11 +139,14 @@ class WorkflowManager:
                     print('inside ' + str(batch.processSM.state))
                     upcoming_station_name = batch.getUpcomingStation().station
                     upcoming_station = self._state.getStation(upcoming_station_name)
-                    if sample.location.get_map_coordinates() !=  upcoming_station.load_loc.get_map_coordinates():
-                        robotOp = RackPickOpDescriptor('', batch.location, None)
-                        print('Picking rack from {0}'.format(str(robotOp.start_pos)))
-                        batchOp_tup = (batch,robotOp)
-                        self._robot_batch_queue.append(batchOp_tup)
+                    if batch.location.get_map_coordinates() !=  upcoming_station.load_loc.get_map_coordinates():
+                        if current_station.rack_holder_loc is not None:
+                            robotOp = RackPickOpDescriptor('', batch.location, None)
+                            print('Picking rack from {0}'.format(str(robotOp.start_pos)))
+                            batchOp_tup = (batch,robotOp)
+                            self._robot_batch_queue.append(batchOp_tup)
+                        else:
+                            batch.advanceProcessState()
                     else:
                         batch.advanceProcessState()
                 elif batch.processSM.state == States.RESET:
@@ -203,18 +206,18 @@ class WorkflowManager:
                 robot = self._state.getRobot('KukaLBRIIWA',1) # here you can select a robot
                 robotOp = KukaPickOpDescriptor(robotOp.start_pos)
                 batch.addOpeationOp(robotOp)
-                if (robot.location != robotOp.start_pos):
-                    navRobotOp = KukaMoveBaseOpDescriptor(robot.id, robotOp.start_pos, True)
-                    batch.addOpeationOp(navRobotOp)
+                # if (robot.location != robotOp.start_pos):
+                #     navRobotOp = KukaMoveBaseOpDescriptor(robot.id, robotOp.start_pos, True)
+                #     batch.addOpeationOp(navRobotOp)
                 self._commitBatch(robot, batch)
                # print('commanding robot {0} with command {1}'.format(robot.__class__.__name__,robotOp.__class__.__name__))
             elif isinstance(robotOp, RackPlaceOpDescriptor):
                 robot = self._state.getRobot('KukaLBRIIWA',1)
                 robotOp = KukaRackPlaceOpDescriptor(robotOp.end_pos)
                 batch.addOpeationOp(robotOp)
-                if (robot.location != robotOp.end_pos):
-                    navRobotOp = KukaMoveBaseOpDescriptor(robot.id, robotOp.end_pos, True)
-                    batch.addOpeationOp(navRobotOp)
+                # if (robot.location != robotOp.end_pos):
+                #     navRobotOp = KukaMoveBaseOpDescriptor(robot.id, robotOp.end_pos, True)
+                #     batch.addOpeationOp(navRobotOp)
                 self._commitBatch(robot, batch)
                # print('commanding robot {0} with command {1}'.format(robot.__class__.__name__,robotOp.__class__.__name__))
             elif isinstance(robotOp,VialMoveOpDescriptor):

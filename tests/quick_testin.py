@@ -3,6 +3,6 @@ from archemist.util.location import Location
 from time import sleep
 wm = WorkflowManager()
 wm.initializeWorkflow()
-wm.createBatch(1,1,1,Location(8,7,'input_frame'))
+wm.createBatch(1,1,1,Location(7,7,'quantos_rack'))
 # set panda and kuka location
 wm.process()

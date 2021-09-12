@@ -78,7 +78,7 @@ recipe:
               turbidity: float
   stationFlow:
     start:
-      onSuccess: "input_stn"
+      onSuccess: "solid_disp"
       onFail: "end"
     input_stn:
       station: "InputStation"

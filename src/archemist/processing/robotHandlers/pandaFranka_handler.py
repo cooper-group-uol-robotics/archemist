@@ -3,13 +3,16 @@ from archemist_msgs.msg import HandlerBusMessage, PandaCommand
 from kmriiwa_chemist_msgs.msg import TaskStatus
 from archemist.util.rosMsgCoder import rosMsgCoder
 from archemist.state.robots import PandaFranka
-from archemist.persistence.dbHandler import dbHandler
+from archemist.state.state import State
+from archemist.util.location import Location
 
 class PandaHandler:
     def __init__(self):
         rospy.init_node("panda_handler")
         print("panda_handler running")
-        self._pandaState = PandaFranka(123)
+        self.state = State()
+        self.state.initializeState(False)
+        self._pandaState = self.state.getRobot('PandaFranka',1)
         self.coder = rosMsgCoder()
         #self._dbhandler = dbHandler.dbHandler()
         self._ackpub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
@@ -44,12 +47,31 @@ class PandaHandler:
         self.panda_done = False
 
     def process_op(self, robotOp):
-        if robotOp.start_pos == 'initial' and robotOp.end_pos == 'pump':
+        if robotOp.start_pos.frame_name == 'handover_cube' and robotOp.end_pos.frame_name == 'pump':
             return PandaCommand(panda_command=PandaCommand.MOVEVIALINITIALPOSITIONTOPUMP)
-        elif robotOp.start_pos == 'pump' and robotOp.end_pos == 'ika':
+        elif robotOp.start_pos.frame_name == 'pump' and robotOp.end_pos.frame_name == 'ika':
             return PandaCommand(panda_command=PandaCommand.MOVEVIALPUMPTOSTIRRER)
-        elif robotOp.start_pos == 'ika' and robotOp.end_pos == 'initial':
+        elif robotOp.start_pos.frame_name == 'ika' and robotOp.end_pos.frame_name == 'handover_cube':
             return PandaCommand(panda_command=PandaCommand.MOVEVIALSTIRRERTOINITIALPOSITION)
         else:
             rospy.logerr('unknown panda op')    
         return None
+
+    def handle(self):
+        self.state.updateFromDB()
+        self._pandaState = self.state.getRobot('PandaFranka',1)
+        
+        if self._pandaState._assigned_batch is not None:
+            opDescriptor = self._pandaState._assigned_batch.getCurrentOp()
+            opDescriptor.addTimeStamp()
+            pandaJob = self.process_op(opDescriptor)
+            self.panda_task = str(pandaJob.panda_command)
+            rospy.loginfo('exec ' + self.panda_task)
+            self._pandaCmdPub.publish(pandaJob)
+            self.wait_for_panda()
+
+            self._pandaState._processed_batch = self._pandaState._assigned_batch
+            self._pandaState._processed_batch.getCurrentSample().location = Location(8,7,opDescriptor.end_pos.frame_name)
+            self._pandaState._processed_batch.advanceProcessState()
+            self._pandaState._assigned_batch = None
+            self.state.modifyObjectDB(self._pandaState)

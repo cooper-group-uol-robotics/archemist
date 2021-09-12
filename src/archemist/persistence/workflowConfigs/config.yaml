@@ -86,7 +86,7 @@ workflow:
         load_pos:
           graph_id: 7
           node_id: 8
-          frame_name: "camera"
+          frame_name: "ika"
         post_load_pos:
           graph_id: 7
           node_id: 8
