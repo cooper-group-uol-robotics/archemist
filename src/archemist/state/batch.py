@@ -62,7 +62,7 @@ class Sample():
         self._operationOps.append(opeation)
     
     def getCurrentOp(self):
-        self._operationOps[-1]
+        return self._operationOps.pop()
 
     @property
     def operationOps(self):
@@ -182,7 +182,7 @@ class Batch:
         self._operationOps.append(opeation)
     
     def getCurrentOp(self):
-        self._operationOps[-1]
+        return self._operationOps.pop()
     
     def getCurrentSample(self):
         return self._samples[0]

@@ -47,19 +47,24 @@ class PeristalticLiquidDispensing_Handler:
         self.state.updateFromDB()
         self._peristalticDispenser = self.state.getStation('PeristalticLiquidDispensing')
         if self._peristalticDispenser._assigned_batch is not None:
+            print ('inside')
             opDescriptor = self._peristalticDispenser._assigned_batch.getCurrentOp()
-            opDescriptor.addTimeStamp()
-            pump_id = self._peristalticDispenser.getPumpID(opDescriptor.liquid)
+            temp_liquid = Liquid(opDescriptor.liquid_name,'',None,0,0,opDescriptor.dispense_volume)
+            pump_id = self._peristalticDispenser.getPumpID(temp_liquid)
             if (pump_id == 'p1'):
-                self._pubPeristaltic.publish(dispenser_command=8, dispenser_ml=opDescriptor.liquid.volume)
+                self._pubPeristaltic.publish(dispenser_command=8, dispenser_ml=opDescriptor.dispense_volume)
                 rospy.wait_for_message("/Dispenser_Done", String)
-                print(PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__, True))
-                result = PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__)
-                result.has_result = True
-                result.success = True
-                result.addTimeStamp()
-                opDescriptor.output = result
+                
+                # print(PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__, True))
+                # result = PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__)
+                # result.has_result = True
+                # result.success = True
+                # result.addTimeStamp()
+                # opDescriptor.output = result
                 self._peristalticDispenser._assigned_batch.advanceProcessState()
                 self._peristalticDispenser._processed_batch = self._peristalticDispenser._assigned_batch
                 self._peristalticDispenser._assigned_batch = None
                 self.state.modifyObjectDB(self._peristalticDispenser)
+
+if __name__ == '__main__':
+    ika_handler = PeristalticLiquidDispensing_Handler()

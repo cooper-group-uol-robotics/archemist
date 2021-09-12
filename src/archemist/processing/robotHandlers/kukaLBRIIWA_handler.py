@@ -2,7 +2,7 @@ import rospy
 from archemist_msgs.msg import HandlerBusMessage
 from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand
 from archemist.util.rosMsgCoder import rosMsgCoder
-from archemist.state.robots import KukaLBRIIWA
+from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA,KukaVialMoveOpDescriptor
 from archemist.state.state import State
 from archemist.util.location import Location
 from rospy.core import is_shutdown
@@ -27,8 +27,8 @@ class KukaHandler:
         self.kmr_done = False
         self.lbr_task = ''
         self.lbr_done = False
-
-        while (rospy.is_shutdown()):
+        rospy.sleep(3)
+        while (not rospy.is_shutdown()):
             self.handle()
             rospy.sleep(3)
 
@@ -41,22 +41,22 @@ class KukaHandler:
             #self.dbhandler.updateRobotState("pandaFranka", vars(opDescriptor))
             if (opDescriptor.__class__.__name__ == 'KukaMoveBaseOpDescriptor'):
                 navCommand = self.process_kmr_op(opDescriptor)
-                kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
-                rospy.loginfo('exec ' + kmr_task)
+                self.kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
+                rospy.loginfo('exec ' + self.kmr_task)
                 self._kmrCmdPub.publish(navCommand)
                 self.wait_for_kmr()
                 # Create result discriptor --=--==-=-=-=-=-=-
                 # TODO calibrate the arm after every motion
             elif (opDescriptor.__class__.__name__ == 'KukaMoveArmOpDescriptor'):
                 armCommand = self.process_lbr_op(opDescriptor)
-                lbr_task = armCommand.job_name
-                print('exec ' + lbr_task)
+                self.lbr_task = armCommand.job_name
+                print('exec ' + self.lbr_task)
                 self._lbrCmdPub.publish(armCommand)
                 self.wait_for_lbr()
             elif (opDescriptor.__class__.__name__ == 'KukaCalibrateArmOpDescriptor'):
                 armCommand = self.process_calib_op(opDescriptor)
-                lbr_task = armCommand.job_name
-                print('exec ' + lbr_task)
+                self.lbr_task = armCommand.job_name
+                print('exec ' + self.lbr_task)
                 self._lbrCmdPub.publish(armCommand)
                 self.wait_for_lbr()
 
@@ -85,20 +85,20 @@ class KukaHandler:
         return NavCommand(robot_id=robotOp.robot_id,graph_id=robotOp.target_loc.graph_id,node_id=robotOp.target_loc.node_id,fine_localization=robotOp.fine_localization)
 
     def process_lbr_rack_op(self, robotOp):
-        if robotOp.start_pos == 'quantos_rack':
+        if robotOp.start_pos.frame_name == 'quantos_rack':
             return LBRCommand(job_name='quantosPickRack_job')
         else:
             rospy.logerr('unknown panda op')
         return None
 
     def process_lbr_vial_op(self, robotOp):
-        if robotOp.start_pos == 'quantos_rack' and robotOp.end_pos == 'quantos_carousel':
+        if robotOp.start_pos.frame_name == 'quantos_rack' and robotOp.end_pos.frame_name == 'quantos_carousel':
             return LBRCommand(job_name='quantosLoad_job')
-        elif robotOp.start_pos == 'quantos_carousel' and robotOp.end_pos == 'quantos_rack':
+        elif robotOp.start_pos.frame_name == 'quantos_carousel' and robotOp.end_pos.frame_name == 'quantos_rack':
             return LBRCommand(job_name='quantosUnload_job')
-        elif robotOp.start_pos == 'robot_rack' and robotOp.end_pos == 'handover_cube':
+        elif robotOp.start_pos.frame_name == 'robot_rack' and robotOp.end_pos.frame_name == 'handover_cube':
             return LBRCommand(job_name='pandaLoad_job')
-        elif robotOp.start_pos == 'handover_cube' and robotOp.end_pos == 'robot_rack':
+        elif robotOp.start_pos.frame_name == 'handover_cube' and robotOp.end_pos.frame_name == 'robot_rack':
             return LBRCommand(job_name='pandaUnload_job')
         else:
             rospy.logerr('unknown panda op')
@@ -120,79 +120,81 @@ class KukaHandler:
         
         if self._kukaRobotState._assigned_batch is not None:
             opDescriptor = self._kukaRobotState._assigned_batch.getCurrentOp()
-            opDescriptor.addTimeStamp()
             
             if (opDescriptor.__class__.__name__ == 'KukaMoveBaseOpDescriptor'):
                 navCommand = self.process_kmr_op(opDescriptor)
-                kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
-                rospy.loginfo('exec ' + kmr_task)
+                self.kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
+                rospy.loginfo('exec ' + self.kmr_task)
                 self._kmrCmdPub.publish(navCommand)
                 self.wait_for_kmr()
                 self._kukaRobotState.location = opDescriptor.target_loc
                 
-                if (opDescriptor.target_loc.get_map_coordinates() == (7,7)):
+                if (self._kukaRobotState.location.get_map_coordinates() == (7,7)):
                     armCommand = LBRCommand(job_name='quantosStation_calib')
-                    lbr_task = armCommand.job_name
-                    print('exec ' + lbr_task)
+                    self.lbr_task = armCommand.job_name
+                    print('exec ' + self.lbr_task)
                     self._lbrCmdPub.publish(armCommand)
                     self.wait_for_lbr()
-                elif (opDescriptor.target_loc.get_map_coordinates() == (8,7)):
+                elif (self._kukaRobotState.location.get_map_coordinates() == (8,7)):
                     armCommand = LBRCommand(job_name='pandaStation_calib')
-                    lbr_task = armCommand.job_name
-                    print('exec ' + lbr_task)
+                    self.lbr_task = armCommand.job_name
+                    print('exec ' + self.lbr_task)
                     self._lbrCmdPub.publish(armCommand)
                     self.wait_for_lbr()
                 # Create result discriptor --=--==-=-=-=-=-=-
                 # TODO calibrate the arm after every motion
-                self._kukaRobotState._processed_batch =self._kukaRobotState._assigned_batch
-                self._kukaRobotState.location =  Location(opDescriptor.target_loc.node_id, opDescriptor.target_loc.graph_id, 'robot_rack')
+                self._kukaRobotState._processed_batch = self._kukaRobotState._assigned_batch
                 self._kukaRobotState._processed_batch.location = Location(opDescriptor.target_loc.node_id, opDescriptor.target_loc.graph_id, 'robot_rack')
                 self._kukaRobotState._processed_batch.advanceProcessState()
                 self._kukaRobotState._assigned_batch = None
                 self.state.modifyObjectDB(self._kukaRobotState)
             
-            elif (opDescriptor.__class__.__name__ == 'KukaVialMoveOpDescriptor'):
-                if (self._kukaRobotState.get_map_coordinates() != opDescriptor.target_loc.get_map_coordinates()):
-                    navCommand = NavCommand(robot_id=self._kukaRobotState.id,graph_id=opDescriptor.target_loc.graph_id,node_id=opDescriptor.target_loc.node_id,fine_localization=True)
-                    kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
-                    rospy.loginfo('exec ' + kmr_task)
+            elif isinstance(opDescriptor,KukaVialMoveOpDescriptor):
+                if (self._kukaRobotState.location.get_map_coordinates() != opDescriptor.start_pos.get_map_coordinates()):
+                    navCommand = NavCommand(robot_id=self._kukaRobotState.id,graph_id=opDescriptor.start_pos.graph_id,node_id=opDescriptor.start_pos.node_id,fine_localization=True)
+                    self.kmr_task = '{0}nav to n:{1} g:{2}'.format('fine_' if navCommand.fine_localization else '' , navCommand.node_id, navCommand.graph_id)
+                    rospy.loginfo('exec ' + self.kmr_task)
                     self._kmrCmdPub.publish(navCommand)
                     self.wait_for_kmr()
-                    self._kukaRobotState.location = opDescriptor.target_loc
-                    if (opDescriptor.target_loc.get_map_coordinates() == (7,7)):
+                    self._kukaRobotState.location = opDescriptor.start_pos
+                    if (opDescriptor.start_pos.get_map_coordinates() == (7,7)):
                         armCommand = LBRCommand(job_name='quantosStation_calib')
-                        lbr_task = armCommand.job_name
-                        print('exec ' + lbr_task)
+                        self.lbr_task = armCommand.job_name
+                        print('exec ' + self.lbr_task)
                         self._lbrCmdPub.publish(armCommand)
                         self.wait_for_lbr()
-                    elif (opDescriptor.target_loc.get_map_coordinates() == (8,7)):
+                    elif (opDescriptor.start_pos.get_map_coordinates() == (8,7)):
                         armCommand = LBRCommand(job_name='pandaStation_calib')
-                        lbr_task = armCommand.job_name
-                        print('exec ' + lbr_task)
+                        self.lbr_task = armCommand.job_name
+                        print('exec ' + self.lbr_task)
                         self._lbrCmdPub.publish(armCommand)
                         self.wait_for_lbr()
 
                 armCommand = self.process_lbr_vial_op(opDescriptor)
-                lbr_task = armCommand.job_name
-                print('exec ' + lbr_task)
+                self.lbr_task = armCommand.job_name
+                print('exec ' + self.lbr_task)
                 self._lbrCmdPub.publish(armCommand)
                 self.wait_for_lbr()
                 
                 self._kukaRobotState._processed_batch =self._kukaRobotState._assigned_batch
-                self._kukaRobotState._processed_batch.getCurrentSample().location = opDescriptor.target_loc
+                self._kukaRobotState._processed_batch.getCurrentSample().location = opDescriptor.end_pos
                 self._kukaRobotState._processed_batch.advanceProcessState()
                 self._kukaRobotState._assigned_batch = None
                 self.state.modifyObjectDB(self._kukaRobotState)
 
             elif (opDescriptor.__class__.__name__ == 'KukaPickOpDescriptor'):
                 armCommand = self.process_lbr_rack_op(opDescriptor)
-                lbr_task = armCommand.job_name
-                print('exec ' + lbr_task)
+                self.lbr_task = armCommand.job_name
+                print('exec ' + self.lbr_task)
                 self._lbrCmdPub.publish(armCommand)
                 self.wait_for_lbr()
 
                 self._kukaRobotState._processed_batch =self._kukaRobotState._assigned_batch
-                self._kukaRobotState._processed_batch = Location(opDescriptor.target_loc.node_id, opDescriptor.target_loc.graph_id, 'robot_rack')
+                self._kukaRobotState._processed_batch = Location(opDescriptor.start_pos.node_id, opDescriptor.start_pos.graph_id, 'robot_rack')
                 self._kukaRobotState._processed_batch.advanceProcessState()
                 self._kukaRobotState._assigned_batch = None
                 self.state.modifyObjectDB(self._kukaRobotState)
+
+
+if __name__ == '__main__':
+    kuka_handler = KukaHandler()

@@ -26,42 +26,45 @@ class QuantosSolidDispenserQS2_Handler:
         self.state.initializeState(False)
         self._ackpub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
         self._pubQuantos = rospy.Publisher("/Quantos_Commands", QuantosCommand, queue_size=1)
-        self._pubQuantos.publish(quantos_command=20, quantos_int=opDescriptor, quantos_float=opDescriptor.dispense_mass())
+        # put quantos in the correct place before robot
+        rospy.sleep(3)
+        self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
+        rospy.wait_for_message("/Quantos_Done", String)
         rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
 
         while (not rospy.is_shutdown()):
             self.handle()
             rospy.sleep(3)
 
-    def handler_cb(self, msg):
-        if(msg.station_name == self.stationState.__class__.__name__ and msg.station_id == self.stationState.id):
-            rospy.loginfo("Receiving Handler")
-            opDescriptor = self.coder.decode(msg.opDescriptor)
-            self.stationState.setStationOp(opDescriptor)
-            #dbhandler.updateStationState("ika_plate_rct_digital", descriptor)
-            if (opDescriptor.__class__.__name__ == 'QuantosDispenseOpDescriptor'):
-                print("dispensing solid")
-                self._pubQuantos.publish(quantos_command=20, quantos_int=opDescriptor., quantos_float=opDescriptor.dispense_mass())
-                rospy.wait_for_message("/Dispenser_Done", String)
-                print(PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__, True))
-                    # send back to the central
-                # elif (pump_id == 'p2'):
-                #   publish to another pump or indicate that in your message using pumpid field
+    def handler_cb(self):
+        pass
+
 
     def handle(self):
         self.state.updateFromDB()
         self.quantos = self.state.getStation('QuantosSolidDispenserQS2')
         
         if self.quantos._assigned_batch is not None:
+            print ('got work to do')
             current_op = self.quantos._assigned_batch.getCurrentOp()
             current_op.addTimeStamp()
-            
-            self._pubQuantos.publish(quantos_command=20, quantos_int=opDescriptor., quantos_float=opDescriptor.dispense_mass())
-            rospy.wait_for_message("/Dispenser_Done", String)
 
-            # write the quantos logic here
+            # self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
+            # rospy.wait_for_message("/Quantos_Done", String)
+            #Well 5 exposed to KUKA, load in empty vial
+
+            #Dispense solid
+            self._pubQuantos.publish(quantos_command=20, quantos_int= 5, quantos_float= 200.0)
+            rospy.wait_for_message("/Quantos_Done", String)
+            
+            self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
+            rospy.wait_for_message("/Quantos_Done", String)
+            #Well 5 exposed to KUKA, unload filed vial
 
             self.quantos._assigned_batch.advanceProcessState()
             self.quantos._processed_batch = self.quantos._assigned_batch
             self.quantos._assigned_batch = None
             self.state.modifyObjectDB(self.quantos)
+
+if __name__ == '__main__':
+    ika_handler = QuantosSolidDispenserQS2_Handler()

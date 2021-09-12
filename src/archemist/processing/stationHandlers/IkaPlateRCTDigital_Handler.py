@@ -54,8 +54,8 @@ class IkaPlateRCTDigital_Handler:
         self.state.updateFromDB()
         self._ikaState = self.state.getStation('IkaPlateRCTDigital')
         if self._ikaState._assigned_batch is not None:
+            print('inside')
             current_op = self._ikaState._assigned_batch.getCurrentOp()
-            current_op.addTimeStamp()
             if (current_op.mode == IKAMode.HEATING):
                 print("heating")
                 self.pubIka.publish(ika_command= 7, ika_param=current_op.setTemperature)
@@ -78,3 +78,5 @@ class IkaPlateRCTDigital_Handler:
             self._ikaState._assigned_batch = None
             self.state.modifyObjectDB(self._ikaState)
 
+if __name__ == '__main__':
+    ika_handler = IkaPlateRCTDigital_Handler()

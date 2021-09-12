@@ -5,6 +5,7 @@ from archemist.util.rosMsgCoder import rosMsgCoder
 from archemist.state.robots import PandaFranka
 from archemist.state.state import State
 from archemist.util.location import Location
+from rospy.core import is_shutdown
 
 class PandaHandler:
     def __init__(self):
@@ -21,6 +22,9 @@ class PandaHandler:
         rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
         self.panda_task = ''
         self.panda_done = False
+        while (not rospy.is_shutdown()):
+            self.handle()
+            rospy.sleep(3)
 
 
     def handler_cb(self, msg):
@@ -63,7 +67,6 @@ class PandaHandler:
         
         if self._pandaState._assigned_batch is not None:
             opDescriptor = self._pandaState._assigned_batch.getCurrentOp()
-            opDescriptor.addTimeStamp()
             pandaJob = self.process_op(opDescriptor)
             self.panda_task = str(pandaJob.panda_command)
             rospy.loginfo('exec ' + self.panda_task)
@@ -75,3 +78,6 @@ class PandaHandler:
             self._pandaState._processed_batch.advanceProcessState()
             self._pandaState._assigned_batch = None
             self.state.modifyObjectDB(self._pandaState)
+
+if __name__ == '__main__':
+    panad_handler = PandaHandler()
