@@ -168,7 +168,7 @@ class Batch:
                 self._current_sample = self._samples[0]
                 self._recipe.reset()
 
-    def batchComplete(self):
+    def complete(self):
         return self._all_processed
 
     def advanceProcessState(self):

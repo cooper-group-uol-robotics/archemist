@@ -27,7 +27,7 @@ recipe:
           id: 22
           properties:
             solid: sodium_chloride
-            mass: 15
+            mass: 5
             unit: mg
           output:
             name: "QuantosOutputDescriptor"
@@ -58,7 +58,7 @@ recipe:
           id: 24
           properties:
             rpm: 200
-            duration: 1
+            duration: 10
             unit: seconds
           output:
             name: "IKAOutputDescriptor"
@@ -103,7 +103,7 @@ recipe:
     solubility_stn:
       station: "SolubilityStation"
       task: "SolubilityOpDescriptor"
-      onSuccess: "output_stn"
+      onSuccess: "end"
       onFail: "end"
     output_stn:
       station: "InputStation"

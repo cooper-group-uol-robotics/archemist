@@ -190,7 +190,7 @@ class KukaHandler:
                 self.wait_for_lbr()
 
                 self._kukaRobotState._processed_batch =self._kukaRobotState._assigned_batch
-                self._kukaRobotState._processed_batch = Location(opDescriptor.start_pos.node_id, opDescriptor.start_pos.graph_id, 'robot_rack')
+                self._kukaRobotState._processed_batch.location = Location(opDescriptor.start_pos.node_id, opDescriptor.start_pos.graph_id, 'robot_rack')
                 self._kukaRobotState._processed_batch.advanceProcessState()
                 self._kukaRobotState._assigned_batch = None
                 self.state.modifyObjectDB(self._kukaRobotState)

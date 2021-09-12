@@ -151,18 +151,19 @@ class WorkflowManager:
                         batch.advanceProcessState()
                 elif batch.processSM.state == States.RESET:
                     print('inside ' + str(batch.processSM.state))
-                    batch.advanceRecipeState(True)    
-                    batch.resetProcessState()     
+                    batch.advanceRecipeState(True)   
+                    batch.resetProcessState()
                 
                 self.scheduleRobotJobs()
-            
-            if not batch.assigned:
+            if batch.complete():
+                self._completed_batches.append(batch)
+            elif not batch.assigned:
                 self._unassigned_batches.append(batch)
             robot_batches = self.getCompletedRobotObjects()
             self._unassigned_batches.extend(robot_batches)
             station_batches = self.getCompleteStationBatches()
             self._unassigned_batches.extend(station_batches)
-            sleep(0.1)
+            sleep(3)
 
     def getCompletedRobotObjects(self):
         processed_batches = list()
@@ -170,11 +171,7 @@ class WorkflowManager:
             if robot.has_processed_batch():
                 unassigned_batch = robot.get_processed_batch()
                 unassigned_batch.assigned = False
-                if (unassigned_batch.batchComplete()):
-                    self._completed_batches.append(unassigned_batch)
-                    # here you can log the batch
-                else:
-                    processed_batches.append(unassigned_batch)
+                processed_batches.append(unassigned_batch)
                 self._state.modifyObjectDB(robot)
         return processed_batches
 
@@ -184,10 +181,7 @@ class WorkflowManager:
             if station.has_processed_batch():
                 unassigned_batch = station.get_processed_batch()
                 unassigned_batch.assigned = False
-                if (unassigned_batch.batchComplete()):
-                    self._completed_batches.append(unassigned_batch)
-                else:
-                    processed_batches.append(unassigned_batch)
+                processed_batches.append(unassigned_batch)
                 self._state.modifyObjectDB(station)
         return processed_batches
 
@@ -231,14 +225,20 @@ class WorkflowManager:
                                 batch.addOpeationOp(robotOp)
                                 self._commitBatch(robot, batch)
                                 print('commanding robot {0} with command {1}'.format(robot.__class__.__name__,robotOp.__class__.__name__))
-                                break
+                                return
                         elif isinstance(robot, PandaFranka):
                             if all((frame != robotOp.end_pos.frame_name and frame != robotOp.start_pos.frame_name) for frame in panda_hard_frame):
                                 robotOp = PandaMoveOpDescriptor(robotOp.start_pos, robotOp.end_pos)
                                 batch.addOpeationOp(robotOp)
                                 self._commitBatch(robot, batch)
                                 print('commanding robot {0} with command {1}'.format(robot.__class__.__name__,robotOp.__class__.__name__))
-                                break
+                                return
+                # no robots nearby
+                if all((frame != robotOp.end_pos.frame_name and frame != robotOp.start_pos.frame_name) for frame in kuka_hard_frames):
+                                robot = self._state.getRobot('KukaLBRIIWA',1)
+                                robotOp = KukaVialMoveOpDescriptor(robotOp.start_pos, robotOp.end_pos)
+                                batch.addOpeationOp(robotOp)
+                                self._commitBatch(robot, batch)
 
 
     def _commitBatch(self, robot, batch):
