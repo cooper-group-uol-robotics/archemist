@@ -57,6 +57,14 @@ class PandaHandler:
             return PandaCommand(panda_command=PandaCommand.MOVEVIALPUMPTOSTIRRER)
         elif robotOp.start_pos.frame_name == 'ika' and robotOp.end_pos.frame_name == 'handover_cube':
             return PandaCommand(panda_command=PandaCommand.MOVEVIALSTIRRERTOINITIALPOSITION)
+        elif robotOp.start_pos.frame_name == 'ika' and robotOp.end_pos.frame_name == 'scale':
+            return PandaCommand(panda_command=PandaCommand.MOVEVIALHEATERTOSCALE)
+        elif robotOp.start_pos.frame_name == 'scale' and robotOp.end_pos.frame_name == 'ika':
+            return PandaCommand(panda_command=PandaCommand.MOVEVIALSCALETOHEATER)
+        elif robotOp.start_pos.frame_name == 'scale' and robotOp.end_pos.frame_name == 'handover_cube':
+            return PandaCommand(panda_command=PandaCommand.MOVEVIALSCALETOINITIALPOSITION)
+        elif robotOp.start_pos.frame_name == 'pump' and robotOp.end_pos.frame_name == 'scale':
+            return PandaCommand(panda_command=PandaCommand.MOVEVIALPUMPTOSCALE)
         else:
             rospy.logerr('unknown panda op')    
         return None

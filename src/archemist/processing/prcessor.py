@@ -26,7 +26,7 @@ class WorkflowManager:
         self._state = State()
         self._state.initializeState(reset_db=True)
         kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
-        kuka1.location = Location(7,7,'drive_frame')
+        kuka1.location = Location(5,7,'drive_frame')
         self._state.modifyObjectDB(kuka1)
         panda = self._state.getRobot('PandaFranka',1)
         panda.location = Location(8,7,'neutral')
@@ -163,7 +163,7 @@ class WorkflowManager:
             self._unassigned_batches.extend(robot_batches)
             station_batches = self.getCompleteStationBatches()
             self._unassigned_batches.extend(station_batches)
-            sleep(3)
+            sleep(1)
 
     def getCompletedRobotObjects(self):
         processed_batches = list()

@@ -1,0 +1,176 @@
+recipe:
+  name: solubility_screening
+  id: 1
+  materials:
+    liquids: { water }
+    solids: { sodium_chloride }
+  stations:
+    InputStation:
+      stationOp:
+        InputStationPickupOp:
+          id: 1
+          properties:
+          output:
+            name: "InputStationResultDescriptor"
+            fields:
+              success: bool
+        InputStationPlaceOp:
+          id: 2
+          properties:
+          output:
+            name: "InputStationResultDescriptor"
+            fields:
+              success: bool
+    QuantosSolidDispenserQS2:
+      stationOp:
+        QuantosDispenseOpDescriptor:
+          id: 22
+          properties:
+            solid: sodium_chloride
+            mass: 200
+            unit: mg
+          output:
+            name: "QuantosOutputDescriptor"
+            fields:
+              success: bool
+              massDispensed: float
+              startingVialMass: float
+              unit: mg
+    PeristalticLiquidDispensing:
+      stationOp:
+        PeristalticPumpOpDescriptor:
+          id: 23
+          properties:
+            liquid: water
+            volume: 2
+            unit: mL
+          output:
+            name: "PeristalticPumpOutputDescriptor"
+            fields:
+              success: bool
+              massDispensed: float
+              unit: mg
+              volDispensed: float
+              unit: mL
+    IkaPlateRCTDigital:
+      stationOp:
+        IKAHeatingOpDescriptor:
+          id: 24
+          properties:
+            temperature: 60
+            duration: 30
+            unit: seconds
+          output:
+            name: "IKAOutputDescriptor"
+            fields:
+              success: bool
+    FisherWeightingStation:
+      stationOp:
+        FisherWeightStablepDescriptor:
+          properties:
+          output:
+            name: "FisherOutputDescriptor"
+            fields:
+              success: bool
+              weight: float
+  stationFlow:
+    start:
+      onSuccess: "solid_disp"
+      onFail: "end"
+    solid_disp:
+      station: "QuantosSolidDispenserQS2"
+      task: "QuantosDispenseOpDescriptor"
+      onSuccess: "liquid_disp"
+      onFail: "end"
+    liquid_disp:
+      station: "PeristalticLiquidDispensing"
+      task: "PeristalticPumpOpDescriptor"
+      onSuccess: "init_weight"
+      onFail: "end"
+    init_weight:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn1"
+      onFail: "end"  
+    heating_stn1:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn2"
+      onFail: "end"
+    weight_stn2:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn2"
+      onFail: "end"
+    heating_stn2:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn3"
+      onFail: "end"
+    weight_stn3:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "end"
+      onFail: "end"
+    heating_stn3:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn4"
+      onFail: "end"
+    weight_stn4:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn4"
+      onFail: "end"
+    heating_stn4:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn5"
+      onFail: "end"
+    weight_stn5:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn5"
+      onFail: "end"
+    heating_stn5:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn6"
+      onFail: "end"
+    weight_stn6:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn6"
+      onFail: "end"
+    heating_stn6:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn7"
+      onFail: "end"
+    weight_stn7:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn7"
+      onFail: "end"
+    heating_stn7:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn8"
+      onFail: "end"
+    weight_stn8:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "heating_stn9"
+      onFail: "end"
+    heating_stn9:
+      station: "IkaPlateRCTDigital"
+      task: "IKAHeatingOpDescriptor"
+      onSuccess: "weight_stn9"
+      onFail: "end"
+    weight_stn9:
+      station: "FisherWeightingStation"
+      task: "FisherWeightStablepDescriptor"
+      onSuccess: "end"
+      onFail: "end"
+    end:
+      ended: True
