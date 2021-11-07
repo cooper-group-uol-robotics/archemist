@@ -3,14 +3,15 @@ from enum import Enum
 from datetime import datetime
 from archemist.util.location import Location
 from archemist.state.batch import Batch, Sample
-class State(Enum):
-    WAITING = 0
-    EXECUTING = 1
+from transitions import Machine
+
+class StationState(Enum):
+    WAITING_ON_ROBOT = 0
+    PROCESSING = 1
     IDLE = 2
 
 class StationOutputDescriptor:
-    def __init__(self, opName: str):
-        self._opName = opName
+    def __init__(self):
         self._has_result = False
         self._success = False
         self._timestamp = None
@@ -37,11 +38,7 @@ class StationOutputDescriptor:
         else:
             raise ValueError
 
-    @property
-    def opName(self):
-        return self._opName
-
-    def addTimeStamp(self):
+    def add_timestamp(self):
         self._timestamp = datetime.now()
 
 class StationOpDescriptor:
@@ -58,76 +55,41 @@ class StationOpDescriptor:
     def output(self):
         return self._output
 
-    def addTimeStamp(self):
+    def add_timestamp(self):
         self._timestamp = datetime.now()
 
 
 class Station:
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location):
+    def __init__(self, id: int, process_sm: Machine):
         self._id = id
-        self._rack_holder = rack_holder
-        self._pre_load = pre_load
-        self._load = load
-        self._post_load = post_load
 
-        self._available = False
         self._operational = False
+        self._state = StationState.IDLE
+        self._process_sm = process_sm
 
         self._assigned_batch = None
         self._processed_batch = None
-        self._state = State.IDLE
+        self._req_robot_job = None
         
-        self._currentStationOp = None
-        self._stationOpHistory = []
+        
+        self._current_station_op = None
+        self._station_op_history = []
 
-
-
-    @property
-    def rack_holder_loc(self):
-        return self._rack_holder
-
-    @property
-    def pre_load_loc(self):
-        return self._pre_load
-
-    @property
-    def load_loc(self):
-        return self._load
-
-    @property
-    def post_load_loc(self):
-        return self._post_load
-
-    def setStationOp(self, stationOp: StationOpDescriptor):
-        self._currentStationOp = stationOp
-        self._stationOpHistory = self._stationOpHistory.append(stationOp)
+    def set_station_op(self, stationOp: StationOpDescriptor):
+        self._current_station_op = stationOp
+        self._station_op_history = self._station_op_history.append(stationOp)
 
     @property
     def state(self):
             return self._state
-
-    @state.setter
-    def state(self, value):
-        if isinstance(value, State):
-            self._state = value
-        else:
-            raise ValueError
 
     @property
     def id(self):
         return self._id
 
     @property
-    def available(self):
-        return self._available
-
-    @available.setter
-    def available(self, value):
-        if isinstance(value, bool):
-            self._available = value
-        else:
-            raise ValueError
+    def process_sm(self):
+        return self._process_sm
 
     @property
     def operational(self):
@@ -140,19 +102,42 @@ class Station:
         else:
             raise ValueError
 
+    @property
+    def station_op_history(self):
+        return self._station_op_history
+
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):
             self._assigned_batch = batch
-            print('Sample {id} assigned to station {name}'.format(id=batch.id,
+            print('Batch {id} assigned to station {name}'.format(id=batch.id,
                   name=self.__class__.__name__))
+            self._state = StationState.PROCESSING
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
     def has_processed_batch(self):
         return self._processed_batch is not None
 
+    def batch_completed(self):
+        self._processed_batch = self._assigned_batch
+        self._assigned_batch = None
+
     def get_processed_batch(self):
         sample = self._processed_batch
         if self._processed_batch is not None: 
             self._processed_batch = None
+            self._state = StationState.IDLE
         return sample
+
+    def has_robot_job(self):
+        return self._req_robot_job is not None
+    
+    def get_robot_job(self):
+        self._state = StationState.WAITING_ON_ROBOT
+        return self._req_robot_job
+
+    def robot_job_done(self):
+        self._req_robot_job = None
+        self._state = StationState.PROCESSING
+
+

@@ -1,12 +1,12 @@
+from transitions.core import Machine
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.batch import Batch
 
 
 class InputStation(Station):
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location, parameters: dict, 
+    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, rack_holder, pre_load, load, post_load)
+        super().__init__(id, process_sm)
         self._batches = []
 
     def batches_available(self):
@@ -37,5 +37,5 @@ class InputStationPlaceOp(StationOpDescriptor):
         super().__init__(stationName=InputStation.__class__.__name__, output=output)
 
 class InputStationResultDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

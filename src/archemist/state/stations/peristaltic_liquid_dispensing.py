@@ -1,51 +1,51 @@
+from transitions.core import Machine
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Liquid
 from archemist.exceptions.exception import InvalidLiquidError
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location, parameters: dict, 
+    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, rack_holder, pre_load, load, post_load)
-        self._pumpLiquidMap = dict()
+        super().__init__(id, process_sm)
+        self._pump_liquid_map = dict()
         for liquidName, pumpId in parameters['liquid_pump_map'].items():
             for liquid in liquids:
                 if liquid.pump_id == pumpId:
-                    self._pumpLiquidMap[pumpId] = liquid
+                    self._pump_liquid_map[pumpId] = liquid
 
-    def getPumpLiquidLevel(self, pumpId: str):
-        return self._pumpLiquidMap[pumpId].volume
+    def get_pump_liquid_level(self, pumpId: str):
+        return self._pump_liquid_map[pumpId].volume
 
-    def getPumpID(self, requested_liquid: Liquid):
+    def get_pump_id(self, requested_liquid: Liquid):
         # assuming only single liquid per pump
-        for pumpId, liquid in self._pumpLiquidMap.items():
+        for pumpId, liquid in self._pump_liquid_map.items():
             if liquid.name == requested_liquid.name:
                 return pumpId
             else:
                 raise InvalidLiquidError(self.__class__.__name__)
 
-    def getLiquidLevel(self, liquid: Liquid):
-        pumpId = self.getPumpID(liquid)
-        return self.getPumpLiquidLevel(pumpId)
+    def get_liquid_level(self, liquid: Liquid):
+        pumpId = self.get_pump_id(liquid)
+        return self.get_pump_liquid_level(pumpId)
 
-    def addToPumpLiquidLevel(self, pumpId: str, added_value: float):
-        self._pumpLiquidMap[pumpId].volume = self._pumpLiquidMap[pumpId].volume + added_value
+    def add_to_pump_liquid_level(self, pumpId: str, added_value: float):
+        self._pump_liquid_map[pumpId].volume = self._pump_liquid_map[pumpId].volume + added_value
 
-    def addLiquid(self, added_liquid: Liquid):
-        pumpId = self.getPumpID(added_liquid)
-        self.addToPumpLiquidLevel(pumpId, added_liquid.volume)
+    def add_liquid(self, added_liquid: Liquid):
+        pumpId = self.get_pump_id(added_liquid)
+        self.add_to_pump_liquid_level(pumpId, added_liquid.volume)
 
-    def reducePumpLiquidLevel(self, pumpId: str, added_value: float):
-        self._pumpLiquidMap[pumpId].volume = self._pumpLiquidMap[pumpId].volume - added_value
+    def reduce_pump_liquid_level(self, pumpId: str, added_value: float):
+        self._pump_liquid_map[pumpId].volume = self._pump_liquid_map[pumpId].volume - added_value
 
-    def dispenseLiquid(self, dispensed_liquid: Liquid):
-        pumpId = self.getPumpID(dispensed_liquid)
-        self.reducePumpLiquidLevel(pumpId, dispensed_liquid.volume)
+    def dispense_liquid(self, dispensed_liquid: Liquid):
+        pumpId = self.get_pump_id(dispensed_liquid)
+        self.reduce_pump_liquid_level(pumpId, dispensed_liquid.volume)
 
-    def setStationOp(self, stationOp: StationOpDescriptor):
+    def set_statio_op(self, stationOp: StationOpDescriptor):
         if (stationOp.stationName == self.__class__.__name__):
-            self.dispenseLiquid(stationOp.liquid)
+            self.dispense_liquid(stationOp.liquid)
         else:
             raise ValueError
 
@@ -70,5 +70,5 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
 ''' ==== Station Output Descriptors ==== '''
 
 class PeristalticPumpOutputDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

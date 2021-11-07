@@ -16,5 +16,5 @@ class PandaMoveOpDescriptor(VialMoveOpDescriptor):
 ''' ==== Robot Output Descriptors ==== '''
 
 class PandaOutputtDescriptor(RobotOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

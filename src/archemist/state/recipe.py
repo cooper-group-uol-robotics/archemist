@@ -4,80 +4,48 @@ from typing import List
 
 class StationFlowNode:
     def __init__(self, node: str, station: Station, task: list, onsuccess: str, onfail: str):
-        self.nodename = node
+        self.node_name = node
         self.station = station
         self.task = task
-        self.pre_load_success = False
-        self.load_success = False
-        self.processing_success = False
-        self.post_load_success = False
-        self.onsuccess = onsuccess
-        self.onfail = onfail
+        self.on_success = onsuccess
+        self.on_fail = onfail
 
 class StationFlow:
     def __init__(self, stationFlowNodes: List[StationFlowNode]):
         self.nodes = stationFlowNodes
-        self.currentNode = self.nodes[0]
+        self.current_node = self.nodes[0]
 
-
-    def advanceSuccess(self):
-        if not self.currentNode.pre_load_success:
-            self.currentNode.pre_load_success = True
-            return
-        elif not self.currentNode.load_success:
-            self.currentNode.load_success = True
-            return
-        elif not self.currentNode.processing_success:
-            self.currentNode.processing_success = True
-            return
-        elif not self.currentNode.post_load_success:
-            self.currentNode.post_load_success = True
-            return
-        nextNode = self.currentNode.onsuccess
+    def advance_node_success(self):
+        nextNode = self.current_node.on_success
         for node in self.nodes:
-            if (nextNode == node.nodename):
-                self.currentNode = node
-                return
-
-    def advanceNodeSuccess(self):
-        nextNode = self.currentNode.onsuccess
-        for node in self.nodes:
-            if (nextNode == node.nodename):
-                self.currentNode = node
+            if (nextNode == node.node_name):
+                self.current_node = node
                 return
     
-    def advanceFail(self):
-        nextNode = self.currentNode.onfail
+    def advance_node_fail(self):
+        nextNode = self.current_node.on_fail
         for node in self.nodes:
-            if (nextNode == node.nodename):
-                self.currentNode = node
+            if (nextNode == node.node_name):
+                self.current_node = node
                 return
 
-    def hasEnded(self):
-        return self.currentNode.nodename == 'end'
+    def has_ended(self):
+        return self.current_node.node_name == 'end'
 
-    def reset(self):
+    def get_upcoming_node(self):
+        nextNode = self.current_node.on_success
         for node in self.nodes:
-            node.pre_load_success = False
-            node.load_success = False
-            node.processing_success = False
-            node.post_load_success = False
-        self.currentNode = self.nodes[0]
-
-    def getUpcomingNode(self):
-        nextNode = self.currentNode.onsuccess
-        for node in self.nodes:
-            if (nextNode == node.nodename):
+            if (nextNode == node.node_name):
                 return node
 
 class Recipe:
     def __init__(self, name: str, id: int, stationOpDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid]):
         self._name = name
         self._id = id
-        self._stationopDescriptors = stationOpDescriptors
+        self._station_op_descriptors = stationOpDescriptors
         self._solids = solids
         self._liquids = liquids
-        self._stationFlow = stationFlow
+        self._station_flow = stationFlow
 
     @property
     def name(self):
@@ -88,8 +56,8 @@ class Recipe:
         return self._id
 
     @property
-    def stationOpDescriptors (self):
-        return self._stationopDescriptors
+    def station_op_descriptors (self):
+        return self._station_op_descriptors
 
     @property
     def solids (self):
@@ -100,33 +68,24 @@ class Recipe:
         return self._liquids
 
     @property
-    def stationFlow (self):
-        return self._stationFlow
+    def station_flow (self):
+        return self._station_flow
 
-    def getCurrentNode(self):
-        return self._stationFlow.currentNode
+    def get_current_recipe_state(self):
+        return self._station_flow.current_node
 
-    def advanceState(self, success: bool):
+    def advance_recipe_state(self, success: bool):
         if success:
-            self._stationFlow.advanceSuccess()
+            self._station_flow.advance_node_success()
         else:
-            self._stationFlow.advanceFail()
+            self._station_flow.advance_node_fail()
 
-    def advanceNode(self, success: bool):
-        if success:
-            self._stationFlow.advanceNodeSuccess()
-        else:
-            self._stationFlow.advanceFail()
+    def is_complete(self):
+        self._station_flow.has_ended()
 
-    def resetFlow(self):
-        self.stationFlow.reset()
-
-    def hasEnded(self):
-        self.stationFlow.hasEnded()
-
-    def getCurrentTaskOp(self):
-        for taskOp in self._stationopDescriptors:
-            if taskOp.__class__.__name__ == self.stationFlow.currentNode.task:
+    def get_current_task_op(self):
+        for taskOp in self._station_op_descriptors:
+            if taskOp.__class__.__name__ == self._station_flow.current_node.task:
                 return taskOp
 
 

@@ -1,11 +1,16 @@
 from archemist.state.station import State
 from archemist.util.location import Location
+from enum import Enum
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
 from datetime import datetime
 
+class RobotState(Enum):
+    EXECUTING_JOB = 0
+    WAITING_ON_STATION = 1
+    IDLE = 2
+
 class RobotOutputDescriptor:
-    def __init__(self, opName: str):
-        self._opName = opName
+    def __init__(self):
         self._success = False
         self._has_result = False
         self._success = False
@@ -33,22 +38,18 @@ class RobotOutputDescriptor:
         else:
             raise ValueError
 
-    @property
-    def opName(self):
-        return self._opName
-
     def addTimeStamp(self):
         self._timestamp = datetime.now()
 
 class RobotOpDescriptor:
-    def __init__(self, robotName: str, output: RobotOutputDescriptor):
-        self._robotName = robotName
+    def __init__(self, robot_name: str, output: RobotOutputDescriptor):
+        self._robot_name = robot_name
         self._output = output
         self._timestamp = None
 
     @property
-    def robotName(self):
-        return self._robotName
+    def robot_name(self):
+        return self._robot_name
 
     @property
     def output(self):
@@ -58,8 +59,8 @@ class RobotOpDescriptor:
         self._timestamp = datetime.now()
 
 class VialMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robotName, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
-        super().__init__(robotName=robotName, output=output)
+    def __init__(self, robot_name: str, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(robot_name=robot_name, output=output)
         self._start_pos = start_pos
         self._end_pos = end_pos
 
@@ -71,34 +72,37 @@ class VialMoveOpDescriptor(RobotOpDescriptor):
     def end_pos(self):
         return self._end_pos
 
-class RackPlaceOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robotName, end_pos: Location, output: RobotOutputDescriptor):
-        super().__init__(robotName=robotName, output=output)
-        self._end_pos = end_pos
-
-    @property
-    def end_pos(self):
-        return self._end_pos
-
-class RackPickOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robotName, start_pos: Location, output: RobotOutputDescriptor):
-        super().__init__(robotName=robotName, output=output)
+class RackMoveOpDescriptor(RobotOpDescriptor):
+    def __init__(self, robot_name: str, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(robot_name=robot_name, output=output)
         self._start_pos = start_pos
+        self._end_pos = end_pos
 
     @property
     def start_pos(self):
         return self._start_pos
+
+    @property
+    def end_pos(self):
+        return self._end_pos
 
 class TransportBatchOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robotName, target_loc: Location, output: RobotOutputDescriptor):
-        super().__init__(robotName=robotName, output=output)
+    def __init__(self, robot_name: str, target_loc: Location, output: RobotOutputDescriptor):
+        super().__init__(robot_name=robot_name, output=output)
         self._target_loc = target_loc
 
     @property
     def target_loc(self):
         return self._target_loc
 
+class SpecialJobOpDescriptor(RobotOpDescriptor):
+    def __init__(self, robot_name: str, job_name: str, output: RobotOutputDescriptor):
+        super().__init__(robot_name=robot_name, output=output)
+        self._job_name = job_name
 
+    @property
+    def job_name(self):
+        return self._job_name
 
 class Robot:
     def __init__(self, id: int):
@@ -108,12 +112,13 @@ class Robot:
         self._operational = False
         self._location = None
         
-        self._assigned_batch = None
-        self._processed_batch = None
-        self._state = State.IDLE
+        self._assigned_job = None
+        self._complete_job = None
+
+        self._state = RobotState.IDLE
         
-        self._currentRobotOp = None
-        self._robotOpHistory = []
+        self._current_robot_op = None
+        self._robot_op_history = []
 
     @property
     def id(self):
@@ -156,32 +161,35 @@ class Robot:
     def state(self):
             return self._state
 
-    @state.setter
-    def state(self, value):
-        if isinstance(value, State):
-            self._state = value
-        else:
-            raise ValueError
+    @property
+    def robot_op_history(self):
+        return self._robot_op_history
 
-    def setRobotOp(self, robotOp: RobotOpDescriptor):
-        self._currentRobotOp = robotOp
-        self._robotOpHistory = self._robotOpHistory.append(robotOp)
+    def set_robot_op(self, robot_op: RobotOpDescriptor):
+        self._current_robot_op = robot_op
+        self._robot_op_history = self._robot_op_history.append(robot_op)
 
-    def add_batch(self, object):
-        if(self._assigned_batch is None):
-            self._assigned_batch = object
+    def assign_job(self, object):
+        if(self._assigned_job is None):
+            self._assigned_job = object
+            self._state = RobotState.EXECUTING_JOB
             # print('Batch {id} assigned to robot {name}'.format(id=object.id,
             #       name=self.__class__.__name__))
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
-    def has_processed_batch(self):
-        return self._processed_batch is not None
+    def job_completed(self):
+        self._complete_job = self._assigned_job
+        self._assigned_job = None
 
-    def get_processed_batch(self):
-        obj = self._processed_batch
-        if self._processed_batch is not None: 
-            self._processed_batch = None
+    def has_complete_job(self):
+        return self._complete_job is not None
+
+    def get_complete_job(self):
+        obj = self._complete_job
+        if self._complete_job is not None: 
+            self._complete_job = None
+            self._state = RobotState.IDLE
         return obj
 
 class mobileRobot(Robot):

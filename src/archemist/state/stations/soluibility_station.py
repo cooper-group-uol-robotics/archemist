@@ -1,12 +1,12 @@
+from transitions.core import Machine
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 
 
 ''' ==== Station Description ==== '''
 class SolubilityStation(Station):
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location, parameters: dict, 
+    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, rack_holder, pre_load, load, post_load)
+        super().__init__(id, process_sm)
         self._recording = False
 
     @property
@@ -35,8 +35,8 @@ class SolubilityOpDescriptor(StationOpDescriptor):
 ''' ==== Station Output Descriptors ==== '''
 
 class SolubilityDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()
         self._turbidity = -1
 
     @property

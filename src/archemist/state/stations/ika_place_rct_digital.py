@@ -1,3 +1,4 @@
+from transitions.core import Machine
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor, State
 from enum import Enum
 
@@ -10,74 +11,73 @@ class IKAMode(Enum):
 ''' ==== Station Description ==== '''
 
 class IkaPlateRCTDigital(Station):
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location, parameters: dict, 
+    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, rack_holder, pre_load, load, post_load)
+        super().__init__(id, process_sm)
         self._mode = None
-        self._currentTemperature = None
-        self._setTemperature = None
-        self._currentStirringSpeed = None
-        self._setStirringSpeed = None
-        self._externalTemp = None
-        self._viscosityTrend = None
-        self._setDuration = None
+        self._current_temperature = None
+        self._set_temperature = None
+        self._current_stirring_speed = None
+        self._set_stirring_speed = None
+        self._external_temp = None
+        self._viscosity_trend = None
+        self._set_duration = None
 
     @property
-    def currentTemperature(self):
-        return self._currentTemperature
+    def current_temperature(self):
+        return self._current_temperature
 
-    @currentTemperature.setter
-    def currentTemperature(self, value):
-        self._currentTemperature = value
-
-    @property
-    def setTemperature(self):
-        return self._setTemperature
-
-    @setTemperature.setter
-    def setTemperature(self, value):
-        self._setTemperature = value
+    @current_temperature.setter
+    def current_temperature(self, value):
+        self._current_temperature = value
 
     @property
-    def currentStirringSpeed(self):
-        return self._currentStirringSpeed
+    def set_temperature(self):
+        return self._set_temperature
 
-    @currentStirringSpeed.setter
-    def currentStirringSpeed(self, value):
-        self._currentStirringSpeed = value
-
-    @property
-    def setStirringSpeed(self):
-        return self._setStirringSpeed
-
-    @setStirringSpeed.setter
-    def setStirringSpeed(self, value):
-        self._setStirringSpeed = value
+    @set_temperature.setter
+    def set_temperature(self, value):
+        self._set_temperature = value
 
     @property
-    def setDuration(self):
-        return self._setDuration
+    def current_stirring_speed(self):
+        return self._current_stirring_speed
 
-    @setDuration.setter
-    def setDuration(self, value):
-        self._setDuration = value
-
-    @property
-    def externalTemp(self):
-        return self._externalTemp
-
-    @externalTemp.setter
-    def externalTemp(self, value):
-        self._externalTemp = value
+    @current_stirring_speed.setter
+    def current_stirring_speed(self, value):
+        self._current_stirring_speed = value
 
     @property
-    def viscosityTrend(self):
-        return self._viscosityTrend
+    def set_stirring_speed(self):
+        return self._set_stirring_speed
 
-    @viscosityTrend.setter
-    def viscosityTrend(self, value):
-        self._viscosityTrend = value
+    @set_stirring_speed.setter
+    def set_stirring_speed(self, value):
+        self._set_stirring_speed = value
+
+    @property
+    def set_duration(self):
+        return self._set_duration
+
+    @set_duration.setter
+    def set_duration(self, value):
+        self._set_duration = value
+
+    @property
+    def external_temp(self):
+        return self._external_temp
+
+    @external_temp.setter
+    def external_temp(self, value):
+        self._external_temp = value
+
+    @property
+    def viscosity_trend(self):
+        return self._viscosity_trend
+
+    @viscosity_trend.setter
+    def viscosity_trend(self, value):
+        self._viscosity_trend = value
 
     @property
     def mode(self):
@@ -94,9 +94,9 @@ class IkaPlateRCTDigital(Station):
         if (stationOp.stationName == self.__class__.__name__):
             self._stationOp = stationOp
             self._mode = stationOp.mode
-            self._setTemperature = stationOp.setTemperature
-            self._setStirringSpeed = stationOp.setStirringSpeed
-            self._setDuration = stationOp.duration
+            self._set_temperature = stationOp.set_temperature
+            self._set_stirring_speed = stationOp.set_stirring_speed
+            self._set_duration = stationOp.duration
         else:
             raise ValueError
 
@@ -107,17 +107,17 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     def __init__(self, properties: dict, output: StationOutputDescriptor):
         super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
         self._mode = IKAMode.HEATINGSTIRRING
-        self._setTemperature = properties['temperature']
-        self._setStirringSpeed = properties['rpm']
+        self._set_temperature = properties['temperature']
+        self._set_stirring_speed = properties['rpm']
         self._duration = properties['duration']
 
     @property
-    def setTemperature(self):
-        return self._setTemperature
+    def set_temperature(self):
+        return self._set_temperature
 
     @property
-    def setStirringSpeed(self):
-        return self._setStirringSpeed
+    def set_stirring_speed(self):
+        return self._set_stirring_speed
 
     @property
     def mode(self):
@@ -131,13 +131,13 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     def __init__(self, properties: dict, output: StationOutputDescriptor):
         super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
         self._mode = IKAMode.HEATING
-        self._setTemperature = properties['temperature']
-        self._setStirringSpeed = 0
+        self._set_temperature = properties['temperature']
+        self._set_stirring_speed = 0
         self._duration = properties['duration']
 
     @property
-    def setTemperature(self):
-        return self._setTemperature
+    def set_temperature(self):
+        return self._set_temperature
 
 
     @property
@@ -152,13 +152,13 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
     def __init__(self, properties: dict, output: StationOutputDescriptor):
         super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
         self._mode = IKAMode.STIRRING
-        self._setTemperature = 0
-        self._setStirringSpeed = properties['rpm']
+        self._set_temperature = 0
+        self._set_stirring_speed = properties['rpm']
         self._duration = properties['duration']
 
     @property
-    def setStirringSpeed(self):
-        return self._setStirringSpeed
+    def set_stirring_speed(self):
+        return self._set_stirring_speed
 
     @property
     def mode(self):
@@ -171,5 +171,5 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
 ''' ==== Station Output Descriptors ==== '''
 
 class IKAOutputDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

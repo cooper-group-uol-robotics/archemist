@@ -1,4 +1,4 @@
-from archemist.state.robot import mobileRobot, RackPickOpDescriptor, RobotOpDescriptor, RobotOutputDescriptor, TransportBatchOpDescriptor, VialMoveOpDescriptor, RackPlaceOpDescriptor
+from archemist.state.robot import mobileRobot, RackMoveOpDescriptor, SpecialJobOpDescriptor, RobotOutputDescriptor, TransportBatchOpDescriptor, VialMoveOpDescriptor
 from archemist.state.station import Location
 
 
@@ -32,25 +32,19 @@ class KukaMoveBaseOpDescriptor(TransportBatchOpDescriptor):
     def robot_id(self):
         return self._robot_id
 
-
 class KukaVialMoveOpDescriptor(VialMoveOpDescriptor):
     def __init__(self, start_pos: Location, end_pos: Location):
         super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
 
-class KukaRackPlaceOpDescriptor(RackPlaceOpDescriptor):
-    def __init__(self, end_pos: Location):
-        super().__init__(robotName=KukaLBRIIWA.__name__, 
+class KukaRackMoveOpDescriptor(RackMoveOpDescriptor):
+    def __init__(self, start_pos: Location, end_pos: Location):
+        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos,
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
 
-class KukaPickOpDescriptor(RackPickOpDescriptor):
-    def __init__(self, start_pos: Location):
-        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
-                         output=KukaOutputtDescriptor(self.__class__.__name__))
-
-class KukaCalibrateArmOpDescriptor(RobotOpDescriptor):
+class KukaCalibrateArmOpDescriptor(SpecialJobOpDescriptor):
     def __init__(self, location: str):
-        super().__init__(robotName=KukaLBRIIWA.__class__)
+        super().__init__(robotName=KukaLBRIIWA.__class__, job_name='ArmCalibrate', output=KukaOutputtDescriptor(self.__class__.__name__))
         self._location = location
 
     @property
@@ -62,5 +56,5 @@ class KukaCalibrateArmOpDescriptor(RobotOpDescriptor):
 ''' ==== Robot Output Descriptors ==== '''
 
 class KukaOutputtDescriptor(RobotOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

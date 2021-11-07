@@ -50,7 +50,7 @@ class WorkflowManager:
             self._state.updateFromDB()
             while self._unassigned_batches: # single vial mode
                 batch = self._unassigned_batches.pop()
-                current_station_name = batch.getCurrentStation().station
+                current_station_name = batch.getCurrentStation()
                 current_station = self._state.getStation(current_station_name)
                 #print('processing batch at ' + str(batch.location) + ' heading to ' + next_station_name) 
                 sample = batch.getCurrentSample()

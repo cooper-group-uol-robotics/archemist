@@ -1,3 +1,4 @@
+from transitions.core import Machine
 from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
@@ -63,11 +64,10 @@ class QuantosCatridge():
 
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, id: int, rack_holder: Location, pre_load: Location,
-                 load: Location, post_load: Location, parameters: dict, 
+    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, rack_holder, pre_load, load, post_load)
-        self._carouselPos = -1
+        super().__init__(id, process_sm)
+        self._carousel_pos = -1
         self._catridges = list()
         for cat in parameters['catridges']:
             for solid in solids:
@@ -77,13 +77,13 @@ class QuantosSolidDispenserQS2(Station):
         self._doors_open = True
 
     @property
-    def carouselPos(self):
-        return self._carouselPos
+    def carousel_pos(self):
+        return self._carousel_pos
 
-    @carouselPos.setter
-    def carouselPos(self, value: int):
+    @carousel_pos.setter
+    def carousel_pos(self, value: int):
         if (value <= 20 and value >= 1):
-            self._carouselPos = value
+            self._carousel_pos = value
         else:
             raise ValueError
 
@@ -119,7 +119,7 @@ class QuantosSolidDispenserQS2(Station):
         else:
             print('unloading catridge when no catridge is loaded!!!')
 
-    def setStationOp(self, stationOp: StationOpDescriptor):
+    def set_station_op(self, stationOp: StationOpDescriptor):
         if (stationOp.stationName == self.__class__):
             temp_solid = Solid(stationOp.solid_name, None, None, stationOp.dispense_mass,'quantos')
             self._current_catridge.dispense(temp_solid)
@@ -149,5 +149,5 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
 ''' ==== Station Output Descriptors ==== '''
 
 class QuantosOutputDescriptor(StationOutputDescriptor):
-    def __init__(self, opName: str):
-        super().__init__(opName=opName)
+    def __init__(self):
+        super().__init__()

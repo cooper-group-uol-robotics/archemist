@@ -21,58 +21,21 @@ workflow:
   Stations:
     InputStation:
       id: 1
-      locations:
-        rack_holder:
-            graph_id: 7
-            node_id: 8
-            frame_name: "input_frame"
-        pre_load_pos: 
-        load_pos:
-          graph_id: 7
-          node_id: 7
-          frame_name: "quantos_rack"
-        post_load_pos: 
+      process_state_machine: SomeSM
       parameters:
     IkaPlateRCTDigital:
       id: 2
-      locations:
-        rack_holder:
-        pre_load_pos:
-        load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "ika"
-        post_load_pos:
+      process_state_machine: SomeSM
       parameters:
     PeristalticLiquidDispensing:
       id: 3
-      locations:
-        rack_holder:
-        pre_load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "handover_cube"
-        load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "pump"
-        post_load_pos:
+      process_state_machine: SomeSM
       parameters:
         liquid_pump_map:
           "water": "p1"
     QuantosSolidDispenserQS2:
       id: 4
-      locations:
-        rack_holder:
-          graph_id: 7
-          node_id: 7
-          frame_name: 'quantos_rack'
-        pre_load_pos:
-        load_pos:
-          graph_id: 7
-          node_id: 7
-          frame_name: "quantos_carousel"
-        post_load_pos:
+      process_state_machine: SomeSM
       parameters:
         catridges:
           cat1:
@@ -80,17 +43,7 @@ workflow:
             remaining_dosages: 100
     SolubilityStation:
       id: 5
-      locations:
-        rack_holder:
-        pre_load_pos:
-        load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "ika"
-        post_load_pos:
-          graph_id: 7
-          node_id: 8
-          frame_name: "handover_cube"
+      process_state_machine: SomeSM
       parameters:
   name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26

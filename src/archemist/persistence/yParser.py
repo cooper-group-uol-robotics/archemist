@@ -162,38 +162,12 @@ class Parser:
 
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
-            stationObj = self.str_to_class_station(stationN)
-            
-            if configDictionary["Stations"][stationN]["locations"]["rack_holder"]:
-                rack_holder = Location(configDictionary["Stations"][stationN]["locations"]["rack_holder"]["node_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["rack_holder"]["graph_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["rack_holder"]["frame_name"])
-            else:
-                rack_holder = None
-            
-            if configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]:
-                pre_load_pos = Location(configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["node_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["graph_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["pre_load_pos"]["frame_name"])
-            else:
-                pre_load_pos = None
-            
-            if configDictionary["Stations"][stationN]["locations"]["load_pos"]:
-                load_pos = Location(configDictionary["Stations"][stationN]["locations"]["load_pos"]["node_id"],
-                                    configDictionary["Stations"][stationN]["locations"]["load_pos"]["graph_id"],
-                                    configDictionary["Stations"][stationN]["locations"]["load_pos"]["frame_name"])
-            else:
-                load_pos = None
-            if configDictionary["Stations"][stationN]["locations"]["post_load_pos"]:
-                post_load_pos = Location(configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["node_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["graph_id"],
-                                        configDictionary["Stations"][stationN]["locations"]["post_load_pos"]["frame_name"])
-            else:
-                post_load_pos = None
-            
+            station_cls = self.str_to_class_station(stationN)
+            station_sm_cls = self.str_to_class_state_machine(configDictionary["Stations"][stationN]["process_state_machine"])
             parameters = configDictionary["Stations"][stationN]["parameters"]
-            stationObj = stationObj(configDictionary["Stations"][stationN]["id"], rack_holder,pre_load_pos,load_pos,post_load_pos, parameters, liquids, solids)
-            stations.append(stationObj)
+            station_sm_obj = station_sm_cls()
+            station_obj = station_cls(configDictionary["Stations"][stationN]["id"], station_sm_obj, parameters, liquids, solids)
+            stations.append(station_obj)
         configList.append(stations)  # add to list of lists
 
 
@@ -204,3 +178,6 @@ class Parser:
 
     def str_to_class_station(self, classname):
       return getattr(archemist.state.stations, classname)
+
+    def str_to_class_state_machine(self, classname):
+      return getattr(archemist.processing.stationSMs, classname)
