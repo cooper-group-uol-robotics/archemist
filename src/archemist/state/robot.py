@@ -1,4 +1,3 @@
-from archemist.state.station import State
 from archemist.util.location import Location
 from enum import Enum
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError

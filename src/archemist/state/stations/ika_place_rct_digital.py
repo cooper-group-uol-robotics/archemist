@@ -1,5 +1,5 @@
 from transitions.core import Machine
-from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor, State
+from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from enum import Enum
 
 

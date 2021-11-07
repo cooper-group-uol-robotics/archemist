@@ -1,5 +1,5 @@
 from transitions.core import Machine
-from archemist.state.station import Station, Location, StationOpDescriptor, StationOutputDescriptor
+from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
 
