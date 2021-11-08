@@ -163,9 +163,10 @@ class Parser:
         stations = list()  # list of stations
         for stationN in configDictionary["Stations"]:
             station_cls = self.str_to_class_station(stationN)
-            station_sm_cls = self.str_to_class_state_machine(configDictionary["Stations"][stationN]["process_state_machine"])
+            station_sm_name = list(configDictionary["Stations"][stationN]["process_state_machine"].keys())[0]
+            station_sm_cls = self.str_to_class_state_machine(station_sm_name)
             parameters = configDictionary["Stations"][stationN]["parameters"]
-            station_sm_obj = station_sm_cls()
+            station_sm_obj = station_sm_cls(configDictionary["Stations"][stationN]["process_state_machine"][station_sm_name]['batch_mode'])
             station_obj = station_cls(configDictionary["Stations"][stationN]["id"], station_sm_obj, parameters, liquids, solids)
             stations.append(station_obj)
         configList.append(stations)  # add to list of lists
