@@ -8,7 +8,8 @@ from transitions import Machine
 class StationState(Enum):
     WAITING_ON_ROBOT = 0
     PROCESSING = 1
-    IDLE = 2
+    PROCESSING_COMPLETE = 2
+    IDLE = 3
 
 class StationOutputDescriptor:
     def __init__(self):
@@ -70,7 +71,8 @@ class Station:
         self._assigned_batch = None
         self._processed_batch = None
         self._req_robot_job = None
-        
+
+        self._loaded_samples = 0        
         
         self._current_station_op = None
         self._station_op_history = []
@@ -105,6 +107,21 @@ class Station:
     @property
     def station_op_history(self):
         return self._station_op_history
+
+    def load_sample(self):
+        self._loaded_samples += 1
+
+    def unload_sample(self):
+        self._loaded_samples -= 1
+
+    @property
+    def loaded_samples(self):
+        return self._loaded_samples
+
+    @property
+    def assigned_batch(self):
+        return self._assigned_batch
+
 
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):

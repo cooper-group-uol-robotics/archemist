@@ -81,8 +81,10 @@ class Batch:
         self._recipe = recipe
         self._recipe.advance_recipe_state(True) # to move out of start state
         self._samples = list()
+        self._num_samples = 0
         for indx in range(0,num_samples):
             self._samples.append(Sample(id,indx,location))
+            self._num_samples += 1
         
         self._assigned = False
         
@@ -133,4 +135,8 @@ class Batch:
 
     def complete(self):
         return self._all_processed
+
+    @property
+    def num_samples(self):
+        return self._num_samples
 
