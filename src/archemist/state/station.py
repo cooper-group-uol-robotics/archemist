@@ -61,12 +61,13 @@ class StationOpDescriptor:
 
 
 class Station:
-    def __init__(self, id: int, process_sm: Machine):
+    def __init__(self, id: int, location:Location, process_sm: Machine):
         self._id = id
 
         self._operational = False
         self._state = StationState.IDLE
         self._process_sm = process_sm
+        self._location = location
 
         self._assigned_batch = None
         self._processed_batch = None
@@ -96,6 +97,10 @@ class Station:
     @property
     def operational(self):
         return self._operational
+
+    @property
+    def location(self):
+        return self._location
 
     @operational.setter
     def operational(self, value):
@@ -150,11 +155,14 @@ class Station:
         return self._req_robot_job is not None
     
     def get_robot_job(self):
-        self._state = StationState.WAITING_ON_ROBOT
         return self._req_robot_job
+
+    def set_robot_job(self, robot_job):
+        self._req_robot_job = robot_job
+        self._state = StationState.WAITING_ON_ROBOT
 
     def robot_job_done(self):
         self._req_robot_job = None
-        self._state = StationState.PROCESSING
+        self._state = StationState.IDLE
 
 

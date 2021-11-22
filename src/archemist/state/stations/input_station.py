@@ -4,9 +4,9 @@ from archemist.state.batch import Batch
 
 
 class InputStation(Station):
-    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
+    def __init__(self, id: int, location: Location, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, process_sm)
+        super().__init__(id, location, process_sm)
         self._batches = []
 
     def batches_available(self):

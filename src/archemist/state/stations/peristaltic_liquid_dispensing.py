@@ -2,12 +2,13 @@ from transitions.core import Machine
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Liquid
 from archemist.exceptions.exception import InvalidLiquidError
+from archemist.util.location import Location
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, id: int, process_sm: Machine, parameters: dict, 
+    def __init__(self, id: int, location:Location, process_sm: Machine, parameters: dict, 
                  liquids: list, solids: list):
-        super().__init__(id, process_sm)
+        super().__init__(id, location, process_sm)
         self._pump_liquid_map = dict()
         for liquidName, pumpId in parameters['liquid_pump_map'].items():
             for liquid in liquids:

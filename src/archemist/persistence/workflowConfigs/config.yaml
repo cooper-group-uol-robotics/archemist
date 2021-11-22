@@ -21,29 +21,48 @@ workflow:
   Stations:
     InputStation:
       id: 1
+      location:
+        node_id: 1
+        graph_id: 7
       process_state_machine: 
         SomeSM:
-          batch_mode: true
+          args:
+            batch_mode: true
       parameters:
     IkaPlateRCTDigital:
       id: 2
+      location:
+        node_id: 1
+        graph_id: 7
       process_state_machine:
-        SomeSM:
-          batch_mode: true
+        RackOnStationSm:
+          args:
+            batch_mode: true
+            place_frame: '/ikaStation/rackHolderFrame'
+            load_frame: '/ikaStation/loadFrame'
+            unload_frame: '/ikaStation/unloadFrame'
       parameters:
     PeristalticLiquidDispensing:
       id: 3
+      location:
+        node_id: 1
+        graph_id: 7
       process_state_machine:
         SomeSM:
-          batch_mode: true
+          args:
+            batch_mode: true
       parameters:
         liquid_pump_map:
           "water": "p1"
     QuantosSolidDispenserQS2:
       id: 4
+      location:
+        node_id: 1
+        graph_id: 7
       process_state_machine:
         SomeSM:
-          batch_mode: true
+          args:
+            batch_mode: true
       parameters:
         catridges:
           cat1:
@@ -51,9 +70,13 @@ workflow:
             remaining_dosages: 100
     SolubilityStation:
       id: 5
+      location:
+        node_id: 1
+        graph_id: 7
       process_state_machine:
         SomeSM:
-          batch_mode: true
+          args:
+            batch_mode: true
       parameters:
   name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26

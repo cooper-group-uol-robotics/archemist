@@ -19,7 +19,8 @@ class KukaLBRIIWA(mobileRobot):
 
 class KukaMoveBaseOpDescriptor(TransportBatchOpDescriptor):
     def __init__(self, robot_id: int, target_loc: Location, fine_localization: bool):
-        super().__init__(robotName=KukaLBRIIWA.__name__, target_loc=target_loc, 
+        self.robot_name = KukaLBRIIWA.__name__
+        super().__init__(target_loc=target_loc, 
                          output=KukaOutputtDescriptor(self.__class__.__name__))
         self._fine_localization = fine_localization
         self._robot_id = robot_id
@@ -34,17 +35,20 @@ class KukaMoveBaseOpDescriptor(TransportBatchOpDescriptor):
 
 class KukaVialMoveOpDescriptor(VialMoveOpDescriptor):
     def __init__(self, start_pos: Location, end_pos: Location):
-        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos, 
+        self.robot_name = KukaLBRIIWA.__name__
+        super().__init__(start_pos=start_pos, 
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
 
 class KukaRackMoveOpDescriptor(RackMoveOpDescriptor):
     def __init__(self, start_pos: Location, end_pos: Location):
-        super().__init__(robotName=KukaLBRIIWA.__name__, start_pos=start_pos,
+        self.robot_name = KukaLBRIIWA.__name__
+        super().__init__(start_pos=start_pos,
                          end_pos=end_pos, output=KukaOutputtDescriptor(self.__class__.__name__))
 
 class KukaCalibrateArmOpDescriptor(SpecialJobOpDescriptor):
     def __init__(self, location: str):
-        super().__init__(robotName=KukaLBRIIWA.__class__, job_name='ArmCalibrate', output=KukaOutputtDescriptor(self.__class__.__name__))
+        self.robot_name = KukaLBRIIWA.__name__
+        super().__init__(job_name='ArmCalibrate', output=KukaOutputtDescriptor(self.__class__.__name__))
         self._location = location
 
     @property

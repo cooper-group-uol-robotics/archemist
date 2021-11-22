@@ -41,14 +41,9 @@ class RobotOutputDescriptor:
         self._timestamp = datetime.now()
 
 class RobotOpDescriptor:
-    def __init__(self, robot_name: str, output: RobotOutputDescriptor):
-        self._robot_name = robot_name
+    def __init__(self, output: RobotOutputDescriptor):
         self._output = output
         self._timestamp = None
-
-    @property
-    def robot_name(self):
-        return self._robot_name
 
     @property
     def output(self):
@@ -58,8 +53,8 @@ class RobotOpDescriptor:
         self._timestamp = datetime.now()
 
 class VialMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robot_name: str, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
-        super().__init__(robot_name=robot_name, output=output)
+    def __init__(self, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(output=output)
         self._start_pos = start_pos
         self._end_pos = end_pos
 
@@ -72,8 +67,8 @@ class VialMoveOpDescriptor(RobotOpDescriptor):
         return self._end_pos
 
 class RackMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robot_name: str, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
-        super().__init__(robot_name=robot_name, output=output)
+    def __init__(self, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+        super().__init__(output=output)
         self._start_pos = start_pos
         self._end_pos = end_pos
 
@@ -86,8 +81,8 @@ class RackMoveOpDescriptor(RobotOpDescriptor):
         return self._end_pos
 
 class TransportBatchOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robot_name: str, target_loc: Location, output: RobotOutputDescriptor):
-        super().__init__(robot_name=robot_name, output=output)
+    def __init__(self, target_loc: Location, output: RobotOutputDescriptor):
+        super().__init__(output=output)
         self._target_loc = target_loc
 
     @property
@@ -95,8 +90,8 @@ class TransportBatchOpDescriptor(RobotOpDescriptor):
         return self._target_loc
 
 class SpecialJobOpDescriptor(RobotOpDescriptor):
-    def __init__(self, robot_name: str, job_name: str, output: RobotOutputDescriptor):
-        super().__init__(robot_name=robot_name, output=output)
+    def __init__(self, job_name: str, output: RobotOutputDescriptor):
+        super().__init__(output=output)
         self._job_name = job_name
 
     @property

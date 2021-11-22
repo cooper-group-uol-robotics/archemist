@@ -10,7 +10,8 @@ class PandaFranka(armRobot):
 
 class PandaMoveOpDescriptor(VialMoveOpDescriptor):
     def __init__(self, start_pos: Location, end_pos: Location):
-        super().__init__(robotName=PandaFranka.__name__, start_pos=start_pos, 
+        self.robot_name = PandaFranka.__name__
+        super().__init__(start_pos=start_pos, 
                          end_pos=end_pos, output=PandaOutputtDescriptor(self.__class__.__name__))
 
 ''' ==== Robot Output Descriptors ==== '''
