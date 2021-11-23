@@ -3,7 +3,7 @@ from enum import Enum
 from datetime import datetime
 from archemist.util.location import Location
 from archemist.state.batch import Batch, Sample
-from transitions import Machine
+#import archemist.processing.stationSMs
 
 class StationState(Enum):
     WAITING_ON_ROBOT = 0
@@ -61,12 +61,11 @@ class StationOpDescriptor:
 
 
 class Station:
-    def __init__(self, id: int, location:Location, process_sm: Machine):
+    def __init__(self, id: int, location:Location):
         self._id = id
 
         self._operational = False
         self._state = StationState.IDLE
-        self._process_sm = process_sm
         self._location = location
 
         self._assigned_batch = None
@@ -86,13 +85,16 @@ class Station:
     def state(self):
             return self._state
 
+    @state.setter
+    def state(self, new_state):
+        if isinstance(new_state, StationState):
+            self._state = new_state
+        else:
+            raise ValueError
+
     @property
     def id(self):
         return self._id
-
-    @property
-    def process_sm(self):
-        return self._process_sm
 
     @property
     def operational(self):

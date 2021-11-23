@@ -164,11 +164,11 @@ class Parser:
         for stationN in configDictionary["Stations"]:
             station_cls = self.str_to_class_station(stationN)
             station_sm_name = list(configDictionary["Stations"][stationN]["process_state_machine"].keys())[0]
-            station_sm_cls = self.str_to_class_state_machine(station_sm_name)
+            #station_sm_cls = self.str_to_class_state_machine(station_sm_name)
             parameters = configDictionary["Stations"][stationN]["parameters"]
-            station_sm_obj = station_sm_cls(configDictionary["Stations"][stationN]["process_state_machine"][station_sm_name]['args'])
+            #station_sm_obj = station_sm_cls(configDictionary["Stations"][stationN]["process_state_machine"][station_sm_name]['args'])
             station_location = Location(node_id=configDictionary["Stations"][stationN]['location']['node_id'], graph_id=configDictionary["Stations"][stationN]['location']['graph_id'], frame_name='')
-            station_obj = station_cls(configDictionary["Stations"][stationN]["id"], station_location, station_sm_obj, parameters, liquids, solids)
+            station_obj = station_cls(configDictionary["Stations"][stationN]["id"], station_location, parameters, liquids, solids)
             stations.append(station_obj)
         configList.append(stations)  # add to list of lists
 
@@ -183,3 +183,10 @@ class Parser:
 
     def str_to_class_state_machine(self, classname):
       return getattr(archemist.processing.stationSMs, classname)
+
+    def create_process_sm(self, station_name):
+        handler = dbHandler()
+        configDict = handler.getConfig()
+        station_sm_name = list(configDict["Stations"][station_name]["process_state_machine"].keys())[0]
+        station_sm_cls = self.str_to_class_state_machine(station_sm_name)
+        return station_sm_cls(configDict["Stations"][station_name]["process_state_machine"][station_sm_name]['args'])

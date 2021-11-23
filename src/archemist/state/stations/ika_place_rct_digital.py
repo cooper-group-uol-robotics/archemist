@@ -1,4 +1,3 @@
-from transitions.core import Machine
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from enum import Enum
 
@@ -13,9 +12,9 @@ class IKAMode(Enum):
 ''' ==== Station Description ==== '''
 
 class IkaPlateRCTDigital(Station):
-    def __init__(self, id: int, location: Location, process_sm: Machine, parameters: dict, 
-                 liquids: list, solids: list):
-        super().__init__(id, location, process_sm)
+    def __init__(self, id: int, location: Location,
+                 parameters: dict, liquids: list, solids: list):
+        super().__init__(id, location)
         self._mode = None
         self._current_temperature = None
         self._set_temperature = None

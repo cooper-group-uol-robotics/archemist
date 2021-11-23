@@ -1,4 +1,3 @@
-from transitions.core import Machine
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
@@ -65,9 +64,9 @@ class QuantosCatridge():
 
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, location: Location, id: int, process_sm: Machine, parameters: dict, 
-                 liquids: list, solids: list):
-        super().__init__(id, location, process_sm)
+    def __init__(self, location: Location, id: int,
+                 parameters: dict, liquids: list, solids: list):
+        super().__init__(id, location)
         self._carousel_pos = -1
         self._catridges = list()
         for cat in parameters['catridges']:
