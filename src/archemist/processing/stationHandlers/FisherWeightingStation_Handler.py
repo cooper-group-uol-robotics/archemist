@@ -29,6 +29,8 @@ class FisherWeightingStation_Handler(StationHandler):
         current_op.output.weight = balance_reading.weight
         current_op.output.addTimeStamp()
 
+        return current_op
+
     # def handle(self):
     #     self._state.updateFromDB() # maybe this can be changed to retrieve only one entity/might be problamtic if multiple stations access the same batch
     #     self._weightingStation = self.state.getStation('FisherWeightingStation')

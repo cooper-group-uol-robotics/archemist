@@ -23,7 +23,17 @@ class StationHandler:
 
         self._station_sm.process_state_transitions()
         if (self._station.state == StationState.PROCESSING):
-            self.process()
+            station_op = self.process()
+            self.update_batch(station_op)
             self._station.state = StationState.PROCESSING_COMPLETE
         
         self._state.modifyObjectDB(self._station)
+
+    def update_batch(self, operation_op):
+        if (self._station_sm.batch_mode):
+            for _ in range(0, self._station.assigned_batch.num_samples):
+                self._station.assigned_batch.get_current_sample.add_opeation_op(operation_op)
+                self._station.assigned_batch.process_current_sample()
+        else:
+            self._station.assigned_batch.get_current_sample.add_opeation_op(operation_op)
+            self._station.assigned_batch.process_current_sample()

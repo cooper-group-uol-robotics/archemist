@@ -42,6 +42,8 @@ class IkaPlateRCTDigital_Handler(StationHandler):
         current_op.output.success = True
         current_op.output.addTimeStamp()
 
+        return current_op
+
 
     # def handle(self):
     #     self.state.updateFromDB()

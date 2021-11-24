@@ -105,7 +105,7 @@ class RackOnStationSm():
         self._station.state = StationState.PROCESSING
 
     def request_unload_vial_job(self):
-        self._station.set_robot_job(VialMoveOpDescriptor(self._station.assigned_batch.location, Location(self._station.location.node_id, self._station.location.graph_id, self._unload_frame), RobotOutputDescriptor()))
+        self._station.set_robot_job(VialMoveOpDescriptor(Location(self._station.location.node_id, self._station.location.graph_id, self._unload_frame), self._station.assigned_batch.location, RobotOutputDescriptor()))
 
     def finish_batch(self):
         self._station.batch_completed()

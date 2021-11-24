@@ -3,12 +3,11 @@ from archemist.state.material import Solid, Liquid
 from archemist.util import Location
 
 class Sample():
-    def __init__(self, id: int, rack_indx: int, location: Location):
+    def __init__(self, id: int, rack_indx: int):
         self._id = id
         self._rack_indx = rack_indx
         self._liquids = []
         self._solids = []
-        self._location = location
         self._capped = False
         self._operation_ops = []
 
@@ -33,17 +32,6 @@ class Sample():
 
     def add_solid(self, solid: Solid):
         self._solids.append(solid)
-
-    @property
-    def location(self):
-        return self._location
-
-    @location.setter
-    def location(self, location):
-        if isinstance(location, Location):
-            self._location = location
-        else:
-            raise ValueError
 
     @property
     def capped(self):
@@ -83,15 +71,14 @@ class Batch:
         self._samples = list()
         self._num_samples = 0
         for indx in range(0,num_samples):
-            self._samples.append(Sample(id,indx,location))
+            self._samples.append(Sample(id,indx))
             self._num_samples += 1
         
         self._assigned = False
         
+        self._current_sample_index = 0
         self._all_processed = False
-        
-        self._processed_samples = []
-        
+                
         self._station_history = []
 
     @property
@@ -110,8 +97,6 @@ class Batch:
     def location(self, location):
         if isinstance(location, Location):
             self._location = location
-            for sample in self._samples:
-                sample.location = location
         else:
             raise ValueError
 
@@ -126,6 +111,19 @@ class Batch:
         else:
             raise ValueError
 
+    # @property
+    # def current_sample_index(self):
+    #     return self._current_sample_index
+
+    def get_current_sample(self):
+        return self._samples[self._current_sample_index]
+
+    def process_current_sample(self):
+        self._current_sample_index += 1
+        if (self._current_sample_index == (self._num_samples - 1)):
+            self._all_processed = True
+            self._current_sample_index = 0
+
     def add_station_stamp(self, station_name: str):
         self._station_history.append((datetime.now(), station_name))
 
@@ -133,7 +131,7 @@ class Batch:
     def station_history(self):
         return self._station_history
 
-    def complete(self):
+    def are_all_samples_processed(self):
         return self._all_processed
 
     @property
