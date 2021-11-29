@@ -5,14 +5,14 @@ from datetime import datetime
 
 class RobotState(Enum):
     EXECUTING_JOB = 0
-    WAITING_ON_STATION = 1
+    EXECUTION_COMPLETE = 1
+    #WAITING_ON_STATION = 1
     IDLE = 2
 
 class RobotOutputDescriptor:
     def __init__(self):
         self._success = False
         self._has_result = False
-        self._success = False
         self._timestamp = None
 
     @property
@@ -52,55 +52,75 @@ class RobotOpDescriptor:
     def addTimeStamp(self):
         self._timestamp = datetime.now()
 
-class VialMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+class MoveSampleOp(RobotOpDescriptor):
+    def __init__(self, sample_index: int , start_location: Location, target_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
-        self._start_pos = start_pos
-        self._end_pos = end_pos
+        self._sample_index = sample_index
+        self._start_location = start_location
+        self._target_location = target_location
 
     @property
-    def start_pos(self):
-        return self._start_pos
+    def sample_index(self):
+        return self._sample_index
 
     @property
-    def end_pos(self):
-        return self._end_pos
+    def start_location(self):
+        return self._start_location
 
-class RackMoveOpDescriptor(RobotOpDescriptor):
-    def __init__(self, start_pos: Location, end_pos: Location, output: RobotOutputDescriptor):
+    @property
+    def target_location(self):
+        return self._target_location
+
+class PickAndPlaceBatchOp(RobotOpDescriptor):
+    def __init__(self, pick_location: Location, place_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
-        self._start_pos = start_pos
-        self._end_pos = end_pos
+        self._pick_location = pick_location
+        self._place_location = place_location
 
     @property
-    def start_pos(self):
-        return self._start_pos
+    def pick_location(self):
+        return self._pick_location
 
     @property
-    def end_pos(self):
-        return self._end_pos
+    def place_location(self):
+        return self._place_location
 
-class TransportBatchOpDescriptor(RobotOpDescriptor):
-    def __init__(self, target_loc: Location, output: RobotOutputDescriptor):
+class PickBatchToDeckOp(RobotOpDescriptor):
+    def __init__(self, pick_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
-        self._target_loc = target_loc
+        self._pick_location = pick_location
 
     @property
-    def target_loc(self):
-        return self._target_loc
+    def pick_location(self):
+        return self._pick_location
+
+class PlaceBatchFromDeckOp(RobotOpDescriptor):
+    def __init__(self, place_location: Location, output: RobotOutputDescriptor):
+        super().__init__(output=output)
+        self._place_location = place_location
+
+    @property
+    def place_location(self):
+        return self._place_location
 
 class SpecialJobOpDescriptor(RobotOpDescriptor):
-    def __init__(self, job_name: str, output: RobotOutputDescriptor):
+    def __init__(self, job_name: str, target_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
         self._job_name = job_name
+        self._job_location = target_location
 
     @property
     def job_name(self):
         return self._job_name
 
+    @property
+    def job_location(self):
+        return self._job_location
+
 class Robot:
     def __init__(self, id: int):
         self._id = id
+        self._saved_frames = []
 
         self._available = False
         self._operational = False
@@ -111,12 +131,15 @@ class Robot:
 
         self._state = RobotState.IDLE
         
-        self._current_robot_op = None
-        self._robot_op_history = []
+        self._robot_job_history = []
 
     @property
     def id(self):
         return self._id
+
+    @property
+    def saved_frames(self):
+        return self._saved_frames
 
     @property
     def available(self):
@@ -156,25 +179,25 @@ class Robot:
             return self._state
 
     @property
-    def robot_op_history(self):
-        return self._robot_op_history
+    def assigned_job(self):
+            return self._assigned_job
 
-    def set_robot_op(self, robot_op: RobotOpDescriptor):
-        self._current_robot_op = robot_op
-        self._robot_op_history = self._robot_op_history.append(robot_op)
+    @property
+    def robot_job_history(self):
+        return self._robot_job_history
 
     def assign_job(self, object):
         if(self._assigned_job is None):
             self._assigned_job = object
             self._state = RobotState.EXECUTING_JOB
-            # print('Batch {id} assigned to robot {name}'.format(id=object.id,
-            #       name=self.__class__.__name__))
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
-    def job_completed(self):
+    def complete_assigned_job(self):
         self._complete_job = self._assigned_job
         self._assigned_job = None
+        self._robot_job_history.append(self._complete_job)
+        self._state = RobotState.EXECUTION_COMPLETE
 
     def has_complete_job(self):
         return self._complete_job is not None
@@ -198,11 +221,3 @@ class mobileRobot(Robot):
 class armRobot(Robot):
     def __init__(self, id: int):
         super().__init__(id)
-        self._pose = None
-
-    @property
-    def pose(self):
-        return self._pose
-
-    def moveToPose(self, pose: str):
-        self._pose = pose

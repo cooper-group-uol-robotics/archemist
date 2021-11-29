@@ -124,8 +124,8 @@ class Batch:
             self._all_processed = True
             self._current_sample_index = 0
 
-    def add_station_stamp(self, station_name: str):
-        self._station_history.append((datetime.now(), station_name))
+    def add_station_stamp(self, station_stamp: str):
+        self._station_history.append((datetime.now(), station_stamp))
 
     @property
     def station_history(self):

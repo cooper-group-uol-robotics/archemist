@@ -24,7 +24,7 @@ class FisherWeightingStation_Handler(StationHandler):
         self.pubFisherScale.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
         balance_reading = rospy.wait_for_message('/Balance_Weights',BalanceReading)
         
-        current_op.has_result = True
+        current_op.output.has_result = True
         current_op.output.success = True
         current_op.output.weight = balance_reading.weight
         current_op.output.addTimeStamp()

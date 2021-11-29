@@ -6,10 +6,11 @@ from archemist.state.batch import Batch, Sample
 #import archemist.processing.stationSMs
 
 class StationState(Enum):
-    WAITING_ON_ROBOT = 0
+    IDLE = 0
     PROCESSING = 1
-    PROCESSING_COMPLETE = 2
-    IDLE = 3
+    WAITING_ON_ROBOT = 2
+    WAITING_ON_OPERATION = 3
+    OPERATION_COMPLETE = 4
 
 class StationOutputDescriptor:
     def __init__(self):
@@ -133,8 +134,10 @@ class Station:
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):
             self._assigned_batch = batch
-            print('Batch {id} assigned to station {name}'.format(id=batch.id,
-                  name=self.__class__.__name__))
+            station_stamp = 'station [{name}, {stn_id}]'.format(name=self.__class__.__name__, 
+                stn_id=self._id)
+            print('Batch {id} assigned to '.format (id=batch.id)+ station_stamp)
+            batch.add_station_stamp(station_stamp)
             self._state = StationState.PROCESSING
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
@@ -142,29 +145,32 @@ class Station:
     def has_processed_batch(self):
         return self._processed_batch is not None
 
-    def batch_completed(self):
+    def process_assigned_batch(self):
         self._processed_batch = self._assigned_batch
         self._assigned_batch = None
 
     def get_processed_batch(self):
-        sample = self._processed_batch
+        batch = self._processed_batch
         if self._processed_batch is not None: 
             self._processed_batch = None
             self._state = StationState.IDLE
-        return sample
+        return batch
 
     def has_robot_job(self):
         return self._req_robot_job is not None
     
     def get_robot_job(self):
+        self._state = StationState.WAITING_ON_ROBOT
         return self._req_robot_job
 
     def set_robot_job(self, robot_job):
         self._req_robot_job = robot_job
-        self._state = StationState.WAITING_ON_ROBOT
 
-    def robot_job_done(self):
+    def finish_robot_job(self):
         self._req_robot_job = None
-        self._state = StationState.IDLE
+        self._state = StationState.PROCESSING
+
+    def create_location_from_frame(self, frame: str) -> Location:
+        return Location(self._location.node_id, self._location.graph_id, frame)
 
 
