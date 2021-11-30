@@ -118,9 +118,9 @@ class SpecialJobOpDescriptor(RobotOpDescriptor):
         return self._job_location
 
 class Robot:
-    def __init__(self, id: int):
+    def __init__(self, id: int, saved_frames: list):
         self._id = id
-        self._saved_frames = []
+        self._saved_frames = saved_frames
 
         self._available = False
         self._operational = False
@@ -190,6 +190,7 @@ class Robot:
         if(self._assigned_job is None):
             self._assigned_job = object
             self._state = RobotState.EXECUTING_JOB
+            self._logRobot(f'Job is assigned. Robot state is {self._state}')
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
@@ -198,6 +199,7 @@ class Robot:
         self._assigned_job = None
         self._robot_job_history.append(self._complete_job)
         self._state = RobotState.EXECUTION_COMPLETE
+        self._logRobot(f'The assigned job is complete. Robot state is {self._state}')
 
     def has_complete_job(self):
         return self._complete_job is not None
@@ -207,11 +209,15 @@ class Robot:
         if self._complete_job is not None: 
             self._complete_job = None
             self._state = RobotState.IDLE
+            self._logRobot(f'The finished job is retrieved. Robot state is {self._state}')
         return obj
 
+    def _logRobot(self, message: str):
+        print(f'Robot [{self.__class__.__name__}, {self._id}]: ' + message)
+
 class mobileRobot(Robot):
-    def __init__(self, id: int):
-        super().__init__(id)
+    def __init__(self, id: int, saved_frames: list):
+        super().__init__(id, saved_frames)
         self._rack_holders = []
 
     @property 
@@ -219,5 +225,5 @@ class mobileRobot(Robot):
         return self._rack_holders
 
 class armRobot(Robot):
-    def __init__(self, id: int):
-        super().__init__(id)
+    def __init__(self, id: int, saved_frames: list):
+        super().__init__(id, saved_frames)

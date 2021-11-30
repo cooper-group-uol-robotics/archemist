@@ -20,7 +20,7 @@ class Parser:
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         handler = FSHandler()
-        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs/recipes/recipe.yaml')))
+        return self.loadRecipeYaml(handler.loadYamlFile(os.path.join(__location__, 'workflowConfigs/recipes/recipe_test.yaml')))
 
     @dispatch(dict)
     def loadRecipeYaml(self, recipeDictionary):
@@ -96,7 +96,8 @@ class Parser:
         robots = list()  # list of batches
         for robot in configDictionary["Robots"]:
             robotObj = self.str_to_class_robot(robot)
-            robotObj = robotObj(configDictionary["Robots"][robot]["id"])
+            saved_frames = configDictionary["Robots"][robot]["saved_frames"]
+            robotObj = robotObj(configDictionary["Robots"][robot]["id"], saved_frames)
             robots.append(robotObj)
         configList.append(robots)
 

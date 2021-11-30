@@ -1,10 +1,10 @@
-from archemist.state.robot import mobileRobot, RackMoveOpDescriptor, SpecialJobOpDescriptor, RobotOutputDescriptor, TransportBatchOpDescriptor, VialMoveOpDescriptor
+from archemist.state.robot import mobileRobot, SpecialJobOpDescriptor, RobotOutputDescriptor
 from archemist.state.station import Location
 
 
 class KukaLBRIIWA(mobileRobot):
-    def __init__(self, id: int):
-        super().__init__(id)
+    def __init__(self, id: int, saved_frames: list):
+        super().__init__(id, saved_frames)
 
 
 ''' ==== Robot Operation Descriptors ==== '''

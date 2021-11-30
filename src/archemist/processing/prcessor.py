@@ -2,10 +2,10 @@ from archemist.exceptions.exception import Error
 from archemist.state.state import State
 from archemist.persistence.persistenceManager import persistenceManager, Parser
 from archemist.state.station import Station, StationState
-from archemist.state.robot import Robot, RobotState, VialMoveOpDescriptor, TransportBatchOpDescriptor, RackPlaceOpDescriptor
+from archemist.state.robot import Robot, RobotState
 from archemist.state.batch import Batch
-from archemist.state.robots.pandaFranka import PandaFranka, PandaMoveOpDescriptor
-from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA, KukaMoveBaseOpDescriptor, KukaPickOpDescriptor, KukaRackPlaceOpDescriptor,KukaVialMoveOpDescriptor, RackPickOpDescriptor
+from archemist.state.robots.pandaFranka import PandaFranka
+from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
 from archemist.util.location import Location
 from archemist.util.sm import States
 from archemist.processing.scheduler import SimpleRobotScheduler
@@ -27,11 +27,11 @@ class WorkflowManager:
     def initializeWorkflow(self):
         self._state = State()
         self._state.initializeState(reset_db=True)
-        kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
-        kuka1.location = Location(5,7,'drive_frame')
-        self._state.modifyObjectDB(kuka1)
+        # kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
+        # kuka1.location = Location(5,7,'drive_frame')
+        # self._state.modifyObjectDB(kuka1)
         panda = self._state.getRobot('PandaFranka',1)
-        panda.location = Location(8,7,'neutral')
+        panda.location = Location(1,7,'neutral')
         self._state.modifyObjectDB(panda)
         # launch = roslaunch.scriptapi.ROSLaunch()
         # launch.start()
@@ -43,9 +43,9 @@ class WorkflowManager:
         #     except:
         #         print("Couldn't launch node: " + stationHandlerName)
 
-    def createBatch(self, batch_id, rows, cols, location):
+    def createBatch(self, batch_id, num_sample, location):
         parser = Parser()
-        self._unassigned_batches.append(Batch(batch_id, parser.loadRecipeYaml(), rows, cols, location))
+        self._unassigned_batches.append(Batch(batch_id, parser.loadRecipeYaml(), num_sample, location))
 
     # this can keep track of the batches on the robot deck
     def process(self):
@@ -55,6 +55,7 @@ class WorkflowManager:
             while self._unassigned_batches:
                 batch = self._unassigned_batches.pop()
                 if batch.recipe.is_complete():
+                    print(f'batch (id:{batch.id}) recipe is complete. The batch is added to the complete batches list')
                     self._completed_batches.append(batch)
                 else:
                     current_station_name = batch.recipe.get_current_recipe_state().station
@@ -90,7 +91,9 @@ class WorkflowManager:
                     self._state.modifyObjectDB(station_to_notify)
                     self._state.modifyObjectDB(robot)
 
-            self._scheduler.schedule(self._job_station_queue, self._state)
-            sleep(1)
+            if (self._job_station_queue):
+                self._scheduler.schedule(self._job_station_queue, self._state)
+            
+            sleep(5)
 
 

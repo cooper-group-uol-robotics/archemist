@@ -95,7 +95,7 @@ class persistenceManager:
         config = dict()
         config = {'workflow': self.dbhandler.getConfig()}
         self.fshandler.overwriteYamlFile(config, os.path.join(
-            __location__, 'workflowConfigs/config.yaml'))
+            __location__, 'workflowConfigs/config_test.yaml'))
         self.loadedConfig = config
         return self.parser.loadConfigYaml(config)
 

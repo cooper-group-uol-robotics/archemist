@@ -33,7 +33,7 @@ class dbHandler:
         handler =FSHandler()
         db = self.client.config
         conf = handler.loadYamlFile(os.path.join(
-            __location__, 'workflowConfigs/config.yaml'))
+            __location__, 'workflowConfigs/config_test.yaml'))
         conf["workflow"]["timestamp"] = datetime.now().strftime(
             "%m/%d/%Y, %H:%M:%S")
         if (db.workflowConfig.count_documents({"workflow": {"$exists": True}}) > 0):
@@ -51,11 +51,11 @@ class dbHandler:
         db = self.client.config
         if (db.currentRecipe.count_documents({"workflow": {"$exists": True}}) > 0):
             db.currentRecipe.replace_one({"workflow": {"$exists": True}}, handler.loadYamlFile(
-                os.path.join(__location__, 'workflowConfigs/recipes/recipe.yaml')))
+                os.path.join(__location__, 'workflowConfigs/recipes/recipe_test.yaml')))
             return True
         else:
             db.currentRecipe.insert_one(handler.loadYamlFile(
-                os.path.join(__location__, 'workflowConfigs/recipes/recipe.yaml')))
+                os.path.join(__location__, 'workflowConfigs/recipes/recipe_test.yaml')))
             return False
 
     def getConfig(self):

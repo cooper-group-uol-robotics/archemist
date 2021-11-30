@@ -1,10 +1,10 @@
-from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor,VialMoveOpDescriptor
+from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
 from archemist.util.location import Location
 
 
 class PandaFranka(armRobot):
-    def __init__(self, id: int):
-        super().__init__(id)
+    def __init__(self, id: int, saved_frames: list):
+        super().__init__(id, saved_frames)
 
 ''' ==== Robot Operation Descriptors ==== '''
 

@@ -11,6 +11,7 @@ class StationState(Enum):
     WAITING_ON_ROBOT = 2
     WAITING_ON_OPERATION = 3
     OPERATION_COMPLETE = 4
+    PROCESSING_COMPLETE = 5
 
 class StationOutputDescriptor:
     def __init__(self):
@@ -134,11 +135,10 @@ class Station:
     def add_batch(self, batch: Batch):
         if(self._assigned_batch is None):
             self._assigned_batch = batch
-            station_stamp = 'station [{name}, {stn_id}]'.format(name=self.__class__.__name__, 
-                stn_id=self._id)
-            print('Batch {id} assigned to '.format (id=batch.id)+ station_stamp)
+            station_stamp = f'station [{self.__class__.__name__}, {self._id}]'
             batch.add_station_stamp(station_stamp)
             self._state = StationState.PROCESSING
+            self._logStation(f'Batch {batch.id} is assigned. Station state is {self._state}')
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
@@ -148,12 +148,15 @@ class Station:
     def process_assigned_batch(self):
         self._processed_batch = self._assigned_batch
         self._assigned_batch = None
+        self.state = StationState.PROCESSING_COMPLETE
+        self._logStation(f'Batch {self._processed_batch.id} processing is complete. Station state is {self._state}')
 
     def get_processed_batch(self):
         batch = self._processed_batch
         if self._processed_batch is not None: 
             self._processed_batch = None
             self._state = StationState.IDLE
+            self._logStation(f'Processed Batch {self._processed_batch.id} is retrieved. Station state is {self._state}')
         return batch
 
     def has_robot_job(self):
@@ -161,16 +164,22 @@ class Station:
     
     def get_robot_job(self):
         self._state = StationState.WAITING_ON_ROBOT
+        self._logStation(f'Robot job request is retrieved. Station state is {self._state}')
         return self._req_robot_job
 
     def set_robot_job(self, robot_job):
         self._req_robot_job = robot_job
+        self._logStation('robot job is set')
 
     def finish_robot_job(self):
         self._req_robot_job = None
         self._state = StationState.PROCESSING
+        self._logStation(f'Robot job request is finished. Station state is {self._state}')
 
     def create_location_from_frame(self, frame: str) -> Location:
         return Location(self._location.node_id, self._location.graph_id, frame)
+
+    def _logStation(self, message: str):
+        print(f'Station [{self.__class__.__name__}, {self._id}]: ' + message)
 
 

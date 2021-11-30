@@ -1,6 +1,6 @@
 from archemist.state.robot import Robot, RobotState, PickBatchToDeckOp, PlaceBatchFromDeckOp, PickAndPlaceBatchOp, MoveSampleOp
 from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
-from archemist.state.robots.pandaFranka import PandaFranka, PandaMoveOpDescriptor
+from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.state import State
 
 
@@ -32,7 +32,7 @@ class SimpleRobotScheduler(RobotScheduler):
                     self._commit_robot_job(state, robot, job_station_tup)
                     job_assigned = True
             elif isinstance(robot_job, MoveSampleOp):
-                for robot in self._state.robots:
+                for robot in state.robots:
                     if robot.state == RobotState.IDLE:
                         if robot.location.get_map_coordinates() == robot_job.start_pos.get_map_coordinates():
                             if robot_job.start_pos.frame_name in robot.saved_frames and robot_job.end_pos.frame_name in robot.saved_frames:

@@ -22,6 +22,7 @@ class StationHandler:
         self._state.updateFromDB()
         self._station = self.state.getStation(self._station_name)
 
+        self._station_sm.set_station(self._station)
         self._station_sm.process_state_transitions()
         if (self._station.state == StationState.WAITING_ON_OPERATION):
             station_op = self.process()
