@@ -79,13 +79,17 @@ class Recipe:
             self._station_flow.advance_node_success()
         else:
             self._station_flow.advance_node_fail()
+        self._logRecipe('Current state advanced to ' + self.station_flow.current_node.node_name)
 
     def is_complete(self):
-        self._station_flow.has_ended()
+        return self._station_flow.has_ended()
 
     def get_current_task_op(self):
         for taskOp in self._station_op_descriptors:
             if taskOp.__class__.__name__ == self._station_flow.current_node.task:
                 return taskOp
+
+    def _logRecipe(self, message: str):
+        print(f'Recipe [{self._id}]: ' + message)
 
 

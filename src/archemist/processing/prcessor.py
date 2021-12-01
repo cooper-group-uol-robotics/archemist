@@ -58,12 +58,14 @@ class WorkflowManager:
                     print(f'batch (id:{batch.id}) recipe is complete. The batch is added to the complete batches list')
                     self._completed_batches.append(batch)
                 else:
+                    print(f'Attempting to assign batch [id:{batch.id}] to its designated station')
                     current_station_name = batch.recipe.get_current_recipe_state().station
                     current_station = self._state.getStation(current_station_name)
                     if current_station.state == StationState.IDLE:
                         current_station.add_batch(batch)
                         self._state.modifyObjectDB(current_station)
                     else:
+                        print(f'Batch [id:{batch.id}] couldnt be assigned because station is busy')
                         # TODO un assigned batch add back to the list
                         pass
 
@@ -74,16 +76,19 @@ class WorkflowManager:
                     robot_job = station.get_robot_job()
                     job_station_tuple = tuple((robot_job, station.__class__.__name__))
                     self._job_station_queue.append(job_station_tuple)
+                    print(f'Robot job from [{station.__class__.__name__}, {station.id}] is added to robot scheduling queue.')
                     self._state.modifyObjectDB(station)
                 elif station.has_processed_batch():
                     processed_batch = station.get_processed_batch()
                     processed_batch.recipe.advance_recipe_state(True)
                     self._unassigned_batches.append(processed_batch)
+                    print(f'Processed batch (id:{processed_batch.id}) is retrieved from station [{current_station.__class__.__name__}, {current_station.id}]')
                     self._state.modifyObjectDB(station)
 
             # process workflow robots
             for robot in self._state.robots:
                 if robot.has_complete_job():
+                    print(f'Robot [{robot.__class__.__name__}, {robot.id}] finished executing its assigned job')
                     (robot_job, station_name) = robot.get_complete_job()
                     # todo check the robot job matches
                     station_to_notify = self._state.getStation(station_name)

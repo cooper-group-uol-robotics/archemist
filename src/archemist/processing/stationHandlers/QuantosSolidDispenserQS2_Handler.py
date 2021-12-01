@@ -47,7 +47,7 @@ class QuantosSolidDispenserQS2_Handler:
         if self.quantos._assigned_batch is not None:
             print ('got work to do')
             current_op = self.quantos._assigned_batch.getCurrentOp()
-            current_op.addTimeStamp()
+            current_op.add_timestamp()
 
             # self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
             # rospy.wait_for_message("/Quantos_Done", String)

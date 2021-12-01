@@ -156,7 +156,7 @@ class Station:
         if self._processed_batch is not None: 
             self._processed_batch = None
             self._state = StationState.IDLE
-            self._logStation(f'Processed Batch {self._processed_batch.id} is retrieved. Station state is {self._state}')
+            self._logStation(f'Processed batch was retrieved. Station state is {self._state}')
         return batch
 
     def has_robot_job(self):

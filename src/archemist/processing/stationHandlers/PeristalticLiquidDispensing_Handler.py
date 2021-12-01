@@ -59,7 +59,7 @@ class PeristalticLiquidDispensing_Handler:
                 # result = PeristalticPumpOutputDescriptor(opDescriptor.__class__.__name__)
                 # result.has_result = True
                 # result.success = True
-                # result.addTimeStamp()
+                # result.add_timestamp()
                 # opDescriptor.output = result
                 self._peristalticDispenser._assigned_batch.advanceProcessState()
                 self._peristalticDispenser._processed_batch = self._peristalticDispenser._assigned_batch

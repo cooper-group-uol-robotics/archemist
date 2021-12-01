@@ -53,7 +53,7 @@ class PandaHandler(RobotHandler):
 
     def execute_job(self):
         (assigned_job, station) = self._robot.assigned_job
-        assigned_job.addTimeStamp()
+        assigned_job.add_timestamp()
         pandaJob = self.process_op(assigned_job) # this has to be changed to convert vial job to a good message to panda
         self._panda_task = str(pandaJob.panda_command)
         rospy.loginfo('executing ' + self._panda_task)
@@ -62,7 +62,7 @@ class PandaHandler(RobotHandler):
 
         assigned_job.output.has_result = True
         assigned_job.output.success = True
-        assigned_job.output.addTimeStamp()
+        assigned_job.output.add_timestamp()
 
         #self._pandaState._processed_batch.getCurrentSample().location = Location(8,7,opDescriptor.end_pos.frame_name)
 

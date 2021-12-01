@@ -27,7 +27,7 @@ class FisherWeightingStation_Handler(StationHandler):
         current_op.output.has_result = True
         current_op.output.success = True
         current_op.output.weight = balance_reading.weight
-        current_op.output.addTimeStamp()
+        current_op.output.add_timestamp()
 
         return current_op
 

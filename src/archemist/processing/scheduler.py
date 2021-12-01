@@ -34,8 +34,8 @@ class SimpleRobotScheduler(RobotScheduler):
             elif isinstance(robot_job, MoveSampleOp):
                 for robot in state.robots:
                     if robot.state == RobotState.IDLE:
-                        if robot.location.get_map_coordinates() == robot_job.start_pos.get_map_coordinates():
-                            if robot_job.start_pos.frame_name in robot.saved_frames and robot_job.end_pos.frame_name in robot.saved_frames:
+                        if robot.location.get_map_coordinates() == robot_job.start_location.get_map_coordinates():
+                            if robot_job.start_location.frame_name in robot.saved_frames and robot_job.target_location.frame_name in robot.saved_frames:
                                 job_station_tup = tuple((robot_job, station))
                                 self._commit_robot_job(state, robot, job_station_tup)
                                 job_assigned = True

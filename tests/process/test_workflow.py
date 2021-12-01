@@ -3,4 +3,4 @@ from archemist.util.location import Location
 
 wm = WorkflowManager()
 wm.initializeWorkflow()
-wm.createBatch(1,1,Location(1,7,'/ikaStation/RackHolderFrame'))
+wm.createBatch(69,3,Location(1,7,'/ikaStation/RackHolderFrame'))

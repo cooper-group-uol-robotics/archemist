@@ -37,7 +37,7 @@ class RobotOutputDescriptor:
         else:
             raise ValueError
 
-    def addTimeStamp(self):
+    def add_timestamp(self):
         self._timestamp = datetime.now()
 
 class RobotOpDescriptor:
@@ -49,7 +49,7 @@ class RobotOpDescriptor:
     def output(self):
         return self._output
 
-    def addTimeStamp(self):
+    def add_timestamp(self):
         self._timestamp = datetime.now()
 
 class MoveSampleOp(RobotOpDescriptor):

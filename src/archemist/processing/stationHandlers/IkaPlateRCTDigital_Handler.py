@@ -40,7 +40,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
         
         current_op.has_result = True
         current_op.output.success = True
-        current_op.output.addTimeStamp()
+        current_op.output.add_timestamp()
 
         return current_op
 
@@ -66,7 +66,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
     #         # result = IKAOutputDescriptor(current_op.__class__.__name__)
     #         # result.has_result = True
     #         # result.success = True
-    #         # result.addTimeStamp()
+    #         # result.add_timestamp()
     #         # current_op.output = result
     #         self._ikaState._assigned_batch.advanceProcessState()
     #         self._ikaState._processed_batch = self._ikaState._assigned_batch

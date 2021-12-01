@@ -20,7 +20,7 @@ class StationHandler:
 
     def handle(self):
         self._state.updateFromDB()
-        self._station = self.state.getStation(self._station_name)
+        self._station = self._state.getStation(self._station_name)
 
         self._station_sm.set_station(self._station)
         self._station_sm.process_state_transitions()
@@ -35,10 +35,10 @@ class StationHandler:
         self._station.set_station_op(operation_op)
         if (self._station_sm.batch_mode):
             for _ in range(0, self._station.assigned_batch.num_samples):
-                self._station.assigned_batch.get_current_sample.add_opeation_op(operation_op)
+                self._station.assigned_batch.get_current_sample().add_operation_op(operation_op)
                 self._station.assigned_batch.process_current_sample()
         else:
-            self._station.assigned_batch.get_current_sample.add_opeation_op(operation_op)
+            self._station.assigned_batch.get_current_sample().add_operation_op(operation_op)
             self._station.assigned_batch.process_current_sample()
 
 class RobotHandler:

@@ -12,11 +12,11 @@ class StationLoadingSm():
         self._station = None
 
         ''' States '''
-        states = [ State(name='init_state'), 
-            State(name='load_sample', on_enter='request_load_vial_job'), 
-            State(name='station_process', on_enter='start_operation'),
-            State(name='unload_sample', on_enter='request_unload_vial_job'),
-            State(name='final_state', on_enter='finalize_batch_processing')]
+        states = [ State(name='init_state', on_enter='_print_state'), 
+            State(name='load_sample', on_enter=['request_load_vial_job', '_print_state']), 
+            State(name='station_process', on_enter=['start_operation', '_print_state']),
+            State(name='unload_sample', on_enter=['request_unload_vial_job','_print_state']),
+            State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
         
         self.machine = Machine(self, states=states, initial='init_state')
 
@@ -94,6 +94,9 @@ class StationLoadingSm():
     def finalize_batch_processing(self):
         self._station.process_assigned_batch()
         self.to_init_state()
+
+    def _print_state(self):
+        print(f'SM [{self.__class__.__name__}]: current state is {self.state}')
 
 
 

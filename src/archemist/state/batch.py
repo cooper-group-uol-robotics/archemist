@@ -44,7 +44,7 @@ class Sample():
         else:
             raise ValueError
 
-    def add_opeation_op(self, opeation):
+    def add_operation_op(self, opeation):
         self._operation_ops.append(opeation)
 
     @property
@@ -120,12 +120,14 @@ class Batch:
 
     def process_current_sample(self):
         self._current_sample_index += 1
-        if (self._current_sample_index == (self._num_samples - 1)):
+        if (self._current_sample_index == (self._num_samples)):
             self._all_processed = True
             self._current_sample_index = 0
+            self._logBatch('All samples have been processed. Batch index is reset to 0.')
 
     def add_station_stamp(self, station_stamp: str):
         self._station_history.append((datetime.now(), station_stamp))
+        self._logBatch(f'stamp ({station_stamp}) added.')
 
     @property
     def station_history(self):
@@ -137,4 +139,7 @@ class Batch:
     @property
     def num_samples(self):
         return self._num_samples
+
+    def _logBatch(self, message: str):
+        print(f'Batch [{self._id}]: ' + message)
 
