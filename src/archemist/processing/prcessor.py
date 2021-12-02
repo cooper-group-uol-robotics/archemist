@@ -55,17 +55,19 @@ class WorkflowManager:
             while self._unassigned_batches:
                 batch = self._unassigned_batches.pop()
                 if batch.recipe.is_complete():
-                    print(f'batch (id:{batch.id}) recipe is complete. The batch is added to the complete batches list')
+                    self._log_processor(f'{batch} recipe is complete. The batch is added to the complete batches list')
                     self._completed_batches.append(batch)
+                    self._state.processed_batches.append(batch)
+                    self._state.storeToDB()
                 else:
-                    print(f'Attempting to assign batch [id:{batch.id}] to its designated station')
                     current_station_name = batch.recipe.get_current_recipe_state().station
                     current_station = self._state.getStation(current_station_name)
+                    self._log_processor(f'Trying to assign ({batch}) to {current_station}')
                     if current_station.state == StationState.IDLE:
                         current_station.add_batch(batch)
                         self._state.modifyObjectDB(current_station)
                     else:
-                        print(f'Batch [id:{batch.id}] couldnt be assigned because station is busy')
+                        self._log_processor(f'{batch} could not be assigned to {current_station}.')
                         # TODO un assigned batch add back to the list
                         pass
 
@@ -75,23 +77,24 @@ class WorkflowManager:
                 if station.state == StationState.PROCESSING and station.has_robot_job():
                     robot_job = station.get_robot_job()
                     job_station_tuple = tuple((robot_job, station.__class__.__name__))
+                    self._log_processor(f'{job_station_tuple} is added to robot scheduling queue.')
                     self._job_station_queue.append(job_station_tuple)
-                    print(f'Robot job from [{station.__class__.__name__}, {station.id}] is added to robot scheduling queue.')
                     self._state.modifyObjectDB(station)
                 elif station.has_processed_batch():
                     processed_batch = station.get_processed_batch()
                     processed_batch.recipe.advance_recipe_state(True)
+                    self._log_processor(f'Processing {processed_batch} is complete. Adding to the unassigned list.')
                     self._unassigned_batches.append(processed_batch)
-                    print(f'Processed batch (id:{processed_batch.id}) is retrieved from station [{current_station.__class__.__name__}, {current_station.id}]')
                     self._state.modifyObjectDB(station)
 
             # process workflow robots
             for robot in self._state.robots:
                 if robot.has_complete_job():
-                    print(f'Robot [{robot.__class__.__name__}, {robot.id}] finished executing its assigned job')
                     (robot_job, station_name) = robot.get_complete_job()
+                    self._log_processor(f'{robot} finished executing job {robot_job}')
                     # todo check the robot job matches
                     station_to_notify = self._state.getStation(station_name)
+                    self._log_processor(f'Notifying {station_to_notify}')
                     station_to_notify.finish_robot_job()
                     self._state.modifyObjectDB(station_to_notify)
                     self._state.modifyObjectDB(robot)
@@ -100,5 +103,11 @@ class WorkflowManager:
                 self._scheduler.schedule(self._job_station_queue, self._state)
             
             sleep(5)
+
+    def _log_processor(self, message:str):
+        print(f'[{self}]: {message}')
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}'
 
 

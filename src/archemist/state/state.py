@@ -10,6 +10,7 @@ class State:
         self.solids = []
         self.stations = []
         self.robots = []
+        self.processed_batches = []
     
     def initializeState(self, reset_db: bool):
         self.persistence = persistenceManager()
@@ -24,9 +25,6 @@ class State:
             self.updateFromDB()
         #self.recipe = parser.loadRecipeYaml()
         #parser = Parser()
-
-    def getUnassignedBatches(self):
-        return [batch for batch in self.batches if not batch.assigned]
 
     def getStation(self, stationName: str):
         return next(station for station in self.stations if station.__class__.__name__ == stationName)
@@ -47,6 +45,8 @@ class State:
         self.solids = updated_solids
         updated_liquids = [state_dict[liquid.name] for liquid in self.liquids]
         self.liquids = updated_liquids
+        updated_batches = [state_dict[str(batch)] for batch in self.processed_batches]
+        self.processed_batches = updated_batches
 
     def modifyObjectDB(self, object):
         self.persistence.updateObjectState(object)

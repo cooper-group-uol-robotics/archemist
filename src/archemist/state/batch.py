@@ -123,11 +123,11 @@ class Batch:
         if (self._current_sample_index == (self._num_samples)):
             self._all_processed = True
             self._current_sample_index = 0
-            self._logBatch('All samples have been processed. Batch index is reset to 0.')
+            self._log_batch('All samples have been processed. Batch index is reset to 0.')
 
     def add_station_stamp(self, station_stamp: str):
         self._station_history.append((datetime.now(), station_stamp))
-        self._logBatch(f'stamp ({station_stamp}) added.')
+        self._log_batch(f'({station_stamp}) stamp is added.')
 
     @property
     def station_history(self):
@@ -140,6 +140,9 @@ class Batch:
     def num_samples(self):
         return self._num_samples
 
-    def _logBatch(self, message: str):
-        print(f'Batch [{self._id}]: ' + message)
+    def _log_batch(self, message: str):
+        print(f'[{self}]: {message}')
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}-{self._id}'
 

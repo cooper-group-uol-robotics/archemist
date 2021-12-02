@@ -8,7 +8,7 @@ from archemist.processing.handler import StationHandler
 
 class FisherWeightingStation_Handler(StationHandler):
     def __init__(self):
-        super.__init__('FisherWeightingStation')
+        super().__init__('FisherWeightingStation')
         rospy.init_node(self._station_name + '_handler')
         self.pubFisherScale = rospy.Publisher("/Balance_Commands", BalanceCommand, queue_size=2)
 

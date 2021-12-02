@@ -112,6 +112,8 @@ class persistenceManager:
             flatDocument[liquid.name] = codecs.encode(pickle.dumps(liquid), "base64").decode()
         for solid in state.solids:
             flatDocument[solid.name] = codecs.encode(pickle.dumps(solid), "base64").decode()
+        for batch in state.processed_batches:
+            flatDocument[str(batch)] = codecs.encode(pickle.dumps(batch), "base64").decode()
         self.lastObject = state_coll.replace_one({'_id': ObjectId('613b2fb9df96390d3263f0e4')}, flatDocument, upsert=True)
         return self.lastObject
 

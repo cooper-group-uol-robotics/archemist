@@ -96,7 +96,7 @@ class StationLoadingSm():
         self.to_init_state()
 
     def _print_state(self):
-        print(f'SM [{self.__class__.__name__}]: current state is {self.state}')
+        print(f'[{self.__class__.__name__}]: current state is {self.state}')
 
 
 

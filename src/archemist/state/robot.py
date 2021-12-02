@@ -71,6 +71,9 @@ class MoveSampleOp(RobotOpDescriptor):
     def target_location(self):
         return self._target_location
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} {self._start_location.frame_name} -> {self._target_location.frame_name}, sample_index: {self._sample_index}'
+
 class PickAndPlaceBatchOp(RobotOpDescriptor):
     def __init__(self, pick_location: Location, place_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
@@ -85,6 +88,9 @@ class PickAndPlaceBatchOp(RobotOpDescriptor):
     def place_location(self):
         return self._place_location
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} {self._pick_location} -> {self._place_location}'
+
 class PickBatchToDeckOp(RobotOpDescriptor):
     def __init__(self, pick_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
@@ -94,6 +100,9 @@ class PickBatchToDeckOp(RobotOpDescriptor):
     def pick_location(self):
         return self._pick_location
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} {self._pick_location} -> robot_deck'
+
 class PlaceBatchFromDeckOp(RobotOpDescriptor):
     def __init__(self, place_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
@@ -102,6 +111,9 @@ class PlaceBatchFromDeckOp(RobotOpDescriptor):
     @property
     def place_location(self):
         return self._place_location
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} robot_deck -> {self._place_location}'
 
 class SpecialJobOpDescriptor(RobotOpDescriptor):
     def __init__(self, job_name: str, target_location: Location, output: RobotOutputDescriptor):
@@ -116,6 +128,9 @@ class SpecialJobOpDescriptor(RobotOpDescriptor):
     @property
     def job_location(self):
         return self._job_location
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
 
 class Robot:
     def __init__(self, id: int, saved_frames: list):
@@ -189,17 +204,19 @@ class Robot:
     def assign_job(self, object):
         if(self._assigned_job is None):
             self._assigned_job = object
+            self._log_robot(f'Job ({self._assigned_job[0]}) is assigned.')
             self._state = RobotState.EXECUTING_JOB
-            self._logRobot(f'Job is assigned. Robot state is {self._state}')
+            self._log_robot(f'Current state changed to {self._state}')
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
     def complete_assigned_job(self):
         self._complete_job = self._assigned_job
         self._assigned_job = None
+        self._log_robot(f'Job ({self._complete_job[0]}) is complete.')
         self._robot_job_history.append(self._complete_job)
         self._state = RobotState.EXECUTION_COMPLETE
-        self._logRobot(f'The assigned job is complete. Robot state is {self._state}')
+        self._log_robot(f'Current state changed to {self._state}')
 
     def has_complete_job(self):
         return self._complete_job is not None
@@ -208,12 +225,16 @@ class Robot:
         obj = self._complete_job
         if self._complete_job is not None: 
             self._complete_job = None
+            self._log_robot(f'Job ({obj[0]}) is retrieved.')
             self._state = RobotState.IDLE
-            self._logRobot(f'The finished job is retrieved. Robot state is {self._state}')
+            self._log_robot(f'Current state changed to {self._state}')
         return obj
 
-    def _logRobot(self, message: str):
-        print(f'Robot [{self.__class__.__name__}, {self._id}]: ' + message)
+    def _log_robot(self, message: str):
+        print(f'[{self}]: {message}')
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}-{self._id}'
 
 class mobileRobot(Robot):
     def __init__(self, id: int, saved_frames: list):
