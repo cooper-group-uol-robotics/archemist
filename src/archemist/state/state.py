@@ -45,8 +45,8 @@ class State:
         self.solids = updated_solids
         updated_liquids = [state_dict[liquid.name] for liquid in self.liquids]
         self.liquids = updated_liquids
-        updated_batches = [state_dict[str(batch)] for batch in self.processed_batches]
-        self.processed_batches = updated_batches
+        if 'processed_batches' in state_dict:
+            self.processed_batches = state_dict['processed_batches']
 
     def modifyObjectDB(self, object):
         self.persistence.updateObjectState(object)

@@ -7,7 +7,6 @@ from archemist.state.batch import Batch
 from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
 from archemist.util.location import Location
-from archemist.util.sm import States
 from archemist.processing.scheduler import SimpleRobotScheduler
 import rospy
 import roslaunch
