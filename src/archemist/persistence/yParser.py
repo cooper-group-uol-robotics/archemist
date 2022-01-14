@@ -1,5 +1,5 @@
 from archemist.state import material
-from archemist.state.recipe import StationFlow, StationFlowNode, Recipe
+#from archemist.state.recipe import StationFlow, StationFlowNode, Recipe
 from archemist.persistence.dbHandler import dbHandler
 from archemist.persistence.fsHandler import FSHandler
 import archemist.state.robots
@@ -175,11 +175,12 @@ class Parser:
 
 
         return configList  # finally return list
-
+    
     def str_to_class_robot(self, classname):
       return getattr(archemist.state.robots, classname)
 
-    def str_to_class_station(self, classname):
+    @staticmethod
+    def str_to_class_station(classname):
       return getattr(archemist.state.stations, classname)
 
     def str_to_class_state_machine(self, classname):

@@ -38,7 +38,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
         rospy.sleep(current_op.duration)
         self.pubIka.publish(ika_command= 8)
         
-        current_op.has_result = True
+        current_op.output.has_result = True
         current_op.output.success = True
         current_op.output.add_timestamp()
 
