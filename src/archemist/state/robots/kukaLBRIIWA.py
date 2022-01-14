@@ -1,5 +1,5 @@
 from archemist.state.robot import mobileRobot, SpecialJobOpDescriptor, RobotOutputDescriptor
-from archemist.state.station import Location
+from archemist.util import Location
 
 
 class KukaLBRIIWA(mobileRobot):

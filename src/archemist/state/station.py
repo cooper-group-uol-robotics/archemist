@@ -2,7 +2,7 @@ from archemist.exceptions import exception
 from enum import Enum
 from datetime import datetime
 from archemist.util.location import Location
-from archemist.state.batch import Batch, Sample
+#from archemist.state.batch import Batch, Sample
 #import archemist.processing.stationSMs
 
 class StationState(Enum):
@@ -133,7 +133,7 @@ class Station:
         return self._assigned_batch
 
 
-    def add_batch(self, batch: Batch):
+    def add_batch(self, batch):
         if(self._assigned_batch is None):
             self._assigned_batch = batch
             self._log_station(f'{batch} is assigned for processing.')

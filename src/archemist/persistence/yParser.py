@@ -3,7 +3,7 @@ from archemist.state import material
 from archemist.persistence.dbHandler import dbHandler
 from archemist.persistence.fsHandler import FSHandler
 import archemist.state.robots
-import archemist.state.stations
+#import archemist.state.stations
 import archemist.processing.stationSMs
 
 from datetime import date, timedelta
