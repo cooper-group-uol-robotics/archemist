@@ -23,6 +23,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
             rospy.sleep(3)
 
     def process(self):
+        # TODO change get_current_task_op
         current_op = self._station.assigned_batch.recipe.get_current_task_op()
         current_op.add_timestamp()
         if (current_op.mode == IKAMode.HEATING):

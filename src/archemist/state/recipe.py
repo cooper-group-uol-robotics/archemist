@@ -1,4 +1,3 @@
-from archemist.persistence.yParser import Parser
 from archemist.persistence.dbObjProxy import DbObjProxy
 from transitions import Machine
 
@@ -48,14 +47,15 @@ class Recipe:
     def is_complete(self):
         return self.current_state == 'end'
 
-    def get_current_task_op(self):
+    def get_current_task_op_dict(self):
         if not self.is_complete():
             self._station_flow.state = self.current_state
             _, current_op_name = self._station_flow.state.split('.')
             current_op_dict = next(op_dict for op_dict in self._station_op_descriptors if op_dict['type'] == current_op_name)
-            station_op_obj = Parser.str_to_class_station(current_op_name)
-            station_op_output_obj = Parser.str_to_class_station(current_op_dict['output'])
-            return station_op_obj(current_op_dict['properties'], station_op_output_obj())
+            return current_op_dict
+            #station_op_obj = getattr(archemist.state.stations, current_op_name)
+            #station_op_output_obj = Parser.str_to_class_station(current_op_dict['output'])
+            #return station_op_obj(current_op_dict['properties'], station_op_output_obj())
 
     def _logRecipe(self, message: str):
         print(f'Recipe [{self._id}]: ' + message)

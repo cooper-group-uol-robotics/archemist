@@ -1,91 +1,129 @@
 from datetime import date
 
+from bson.objectid import ObjectId
 
-class Material:
-    def __init__(self, name: str, expiry_date: date, mass: float):
-        self._name = name
-        self._expiry_date = expiry_date
-        self._mass = mass
+from archemist.persistence.dbObjProxy import DbObjProxy
+
+
+class Material(DbObjProxy):
+    def __init__(self, db_name: str, material_document: dict):
+        
+        if len(material_document) > 1:
+            material_document['object'] = self.__class__.__name__
+            super().__init__(db_name, 'materials', material_document)
+        else:
+            super().__init__(db_name, 'materials', material_document['object_id'])
 
     @property
     def name(self):
-        return self._name
+        return self.get_field('name')
 
     @property
     def expiry_date(self):
-        return self._expiry_date
+        return self.get_field('expiry_date')
 
     @property
     def mass(self):
-        return self._mass
+        return self.get_field('mass')
 
     @mass.setter
     def mass(self, value):
         if value >= 0:
-            self._mass = value
+            self.update_field('mass', value)
         else:
             raise ValueError
 
 
 class Liquid(Material):
-    def __init__(self, name: str, pump_id: str, expiry_date: date, mass: float,
-                 density: float, volume: float):
-        super().__init__(name, expiry_date, mass)
-        self._density = density
-        self._volume = volume
-        self._pump_id = pump_id
+    def __init__(self, db_name:str, liquid_document: dict):
+        
+        if len(liquid_document) > 1:
+            if liquid_document['unit'] == 'l':
+                liquid_document['volume'] = liquid_document['amount_stored']
+                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
+            elif liquid_document['unit'] == 'ml':
+                liquid_document['volume'] = liquid_document['amount_stored']/1000
+                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
+            elif liquid_document['unit'] == 'ul':
+                liquid_document['volume'] = liquid_document['amount_stored']/1000000
+                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
+            elif liquid_document['unit'] == 'g':
+                liquid_document['mass'] = liquid_document['amount_stored']
+                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
+            elif liquid_document['unit'] == 'mg':
+                liquid_document['mass'] = liquid_document['amount_stored']/1000
+                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
+            elif liquid_document['unit'] == 'ug':
+                liquid_document['mass'] = liquid_document['amount_stored']/1000000
+                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
+            liquid_document.pop('amount_stored')
+        super().__init__(db_name, liquid_document)
+
+    @classmethod
+    def from_dict(cls, db_name:str, liquid_document: dict):
+        return cls(db_name, liquid_document)
+
+    @classmethod
+    def from_object_id(cls, db_name:str, object_id: ObjectId):
+        liquid_document = {'object_id': object_id}
+        return cls(db_name, liquid_document)
 
     @property
     def density(self):
-        return self._density
+        #return in g/l which is equivalent to kg/m3
+        return self.get_field('density')
 
     @property
     def pump_id(self):
-        return self._pump_id
-
-
-    @density.setter
-    def density(self, value):
-        if value >= 0:
-            self._density = value
-        else:
-            raise ValueError
+        return self.get_field('pump_id')
 
     @property
     def volume(self):
-        return self._volume
+        # return in l
+        return self.get_field('volume')
 
     @volume.setter
     def volume(self, value):
         if value >= 0:
-            self._volume = value
+            self.update_field('volume', value)
         else:
             raise ValueError
 
     def __str__(self):
-        return f'Liquid: {self._name}, Pump ID: {self._pump_id}, Expiry date: {self._expiry_date},\
-                 Mass: {self._mass} g, Volume: {self._volume} L,\
-                 Density: {self._density} g/L'
+        return f'Liquid: {self.name}, Pump ID: {self.pump_id}, Expiry date: {self.expiry_date},\
+                 Mass: {self.mass} g, Volume: {self.volume} L,\
+                 Density: {self.density} g/L'
 
 
 class Solid(Material):
-    def __init__(self, name: str, cartridge_id: str, expiry_date: date, mass: float,
-                 dispense_method: str):
-        super().__init__(name, expiry_date, mass)
-        self._dispense_method = dispense_method
-        self._cartridge_id = cartridge_id
+    def __init__(self, db_name: str, solid_document: dict):
+        if solid_document['unit'] == 'g':
+            solid_document['mass'] = solid_document['amount_stored']
+        elif solid_document['unit'] == 'mg':
+            solid_document['mass'] = solid_document['amount_stored']/1000
+        elif solid_document['unit'] == 'ug':
+            solid_document['mass'] = solid_document['amount_stored']/1000000
+        solid_document.pop('amount_stored')
+        
+        super().__init__(db_name, solid_document)
+
+    @classmethod
+    def from_dict(cls, db_name:str, solid_document: dict):
+        return cls(db_name, solid_document)
+
+    @classmethod
+    def from_object_id(cls, db_name:str, object_id: ObjectId):
+        solid_document = {'object_id': object_id}
+        return cls(db_name, solid_document)
+    
     @property
     def dispense_method(self):
-        return self._dispense_method
-
-    @dispense_method.setter
-    def dispense_method(self, value):
-        self._dispense_method = value
+        return self.get_field('dispense_method')
 
     @property
     def cartridge_id(self):
-        return self._cartridge_id
+        return self.get_field('cartridge_id')
 
     def __str__(self):
-        return f'Solid: {self._name}, Cartridge ID: {self._cartridge_id}, Expiry date: {self._expiry_date},\
-                 Mass: {self._mass} g, Dispense method: {self._dispense_method}'
+        return f'Solid: {self.name}, Cartridge ID: {self.cartridge_id}, Expiry date: {self.expiry_date},\
+                 Mass: {self.mass} g, Dispense method: {self.dispense_method}'

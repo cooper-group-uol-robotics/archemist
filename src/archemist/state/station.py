@@ -1,8 +1,10 @@
+from bson.objectid import ObjectId
 from archemist.exceptions import exception
 from enum import Enum
 from datetime import datetime
+from archemist.persistence.dbObjProxy import DbObjProxy
 from archemist.util.location import Location
-#from archemist.state.batch import Batch, Sample
+from archemist.state.batch import Batch
 #import archemist.processing.stationSMs
 
 class StationState(Enum):
@@ -62,120 +64,142 @@ class StationOpDescriptor:
         self._timestamp = datetime.now()
 
 
-class Station:
-    def __init__(self, id: int, location:Location):
-        self._id = id
+class Station(DbObjProxy):
+    def __init__(self, db_name: str, station_document: dict):
 
-        self._operational = False
-        self._state = StationState.IDLE
-        self._location = location
+        if len(station_document) > 1:
+            
+            station_document['object'] = self.__class__.__name__
+            station_document['operational'] = False
 
-        self._assigned_batch = None
-        self._processed_batch = None
-        self._req_robot_job = None
+            station_document['state'] = StationState.IDLE.value
 
-        self._loaded_samples = 0        
-        
-        self._current_station_op = None
-        self._station_op_history = []
+            station_document['assigned_batch'] = None
+            station_document['processed_batch'] = None
+            station_document['req_robot_job'] = None
+
+            station_document['loaded_samples'] = 0        
+            
+            station_document['current_station_op'] = None
+            station_document['station_op_history'] = []
+            
+            super().__init__(db_name, 'stations', station_document)
+        else:
+            super().__init__(db_name, 'stations', station_document['object_id'])
+
+        @classmethod
+        def from_object_id(cls, db_name: str, object_id: ObjectId):
+            pass
 
     def set_station_op(self, stationOp: StationOpDescriptor):
-        self._current_station_op = stationOp
-        self._station_op_history = self._station_op_history.append(stationOp)
+        encodedStationOp = self.encode_object(stationOp)
+        self.update_field('current_station_op', encodedStationOp)
+        self.push_to_field_array('station_op_history',encodedStationOp)
 
     @property
     def state(self):
-            return self._state
+            return StationState(self.get_field('state'))
 
     @state.setter
     def state(self, new_state):
         if isinstance(new_state, StationState):
-            self._state = new_state
-            self._log_station(f'Current state changed to {self._state}')
+            self.update_field('state',new_state.value)
+            self._log_station(f'Current state changed to {new_state}')
         else:
             raise ValueError
 
     @property
     def id(self):
-        return self._id
+        return self.get_field('id')
 
     @property
     def operational(self):
-        return self._operational
-
-    @property
-    def location(self):
-        return self._location
+        return self.get_field('operational')
 
     @operational.setter
     def operational(self, value):
         if isinstance(value, bool):
-            self._operational = value
+            self.update_field('operational',value)
         else:
             raise ValueError
 
     @property
+    def location(self):
+        loc_dict = self.get_field('location')
+        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+
+    @property
     def station_op_history(self):
-        return self._station_op_history
+        en_op_history = self.get_field('station_op_history')
+        return [self.decode_object(op) for op in en_op_history]
+
+    @property
+    def process_sm_dict(self):
+        return self.get_field('process_state_machine')
 
     def load_sample(self):
-        self._loaded_samples += 1
+        self.increment_field('loaded_samples')
 
     def unload_sample(self):
-        self._loaded_samples -= 1
+        self.decrement_field('loaded_samples')
 
     @property
     def loaded_samples(self):
-        return self._loaded_samples
+        return self.get_field('loaded_samples')
 
     @property
     def assigned_batch(self):
-        return self._assigned_batch
+        batch_obj_id = self.get_field('assigned_batch')
+        return Batch.from_objectId(self.db_name, batch_obj_id)
 
 
     def add_batch(self, batch):
-        if(self._assigned_batch is None):
-            self._assigned_batch = batch
+        if(self.assigned_batch is None):
+            self.update_field('assigned_batch', batch.object_id)
             self._log_station(f'{batch} is assigned for processing.')
             station_stamp = str(self)
             batch.add_station_stamp(station_stamp)
-            self._state = StationState.PROCESSING
+            self.state = StationState.PROCESSING
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
     def has_processed_batch(self):
-        return self._processed_batch is not None
+        return self.assigned_batch is not None
 
     def process_assigned_batch(self):
-        self._processed_batch = self._assigned_batch
-        self._assigned_batch = None
-        self._log_station(f'Processing {self._processed_batch} is complete.')
+        self.update_field('processed_batch', self.get_field('assigned_batch'))
+        self.update_field('assigned_batch',None)
+        self._log_station(f'Processing batch is complete.')
         self.state = StationState.PROCESSING_COMPLETE
 
     def get_processed_batch(self):
-        batch = self._processed_batch
-        if self._processed_batch is not None: 
-            self._processed_batch = None
+        batch_obj_id = self.get_field('processed_batch')
+        if batch_obj_id is not None:
+            batch = Batch.from_objectId(self.db_name, batch_obj_id)
+            self.update_field('processed_batch', None)
             self._log_station(f'Processed id:{batch} is unassigned.')
-            self._state = StationState.IDLE
-        return batch
+            self.state = StationState.IDLE
+            return batch
 
     def has_robot_job(self):
         return self._req_robot_job is not None
     
     def get_robot_job(self):
-        self._log_station(f'Robot job request for ({self._req_robot_job}) is retrieved.')
-        self._state = StationState.WAITING_ON_ROBOT
-        return self._req_robot_job
+        encoded_robob_job = self.get_field('req_robot_job')
+        robot_job = DbObjProxy.decode_object(encoded_robob_job)
+        self._log_station(f'Robot job request for ({robot_job}) is retrieved.')
+        self.state = StationState.WAITING_ON_ROBOT
+        return robot_job
 
     def set_robot_job(self, robot_job):
-        self._req_robot_job = robot_job
-        self._log_station(f'Requesting robot job ({self._req_robot_job})')
+        encoded_robot_job = DbObjProxy.encode_object(robot_job)
+        self.update_field('req_robot_job', encoded_robot_job)
+        self._log_station(f'Requesting robot job ({robot_job})')
 
     def finish_robot_job(self):
-        self._req_robot_job = None
+        self.update_field('req_robot_job', None)
         self._log_station(f'Robot job request is fulfilled.')
-        self._state = StationState.PROCESSING
+        self.state = StationState.PROCESSING
 
     def create_location_from_frame(self, frame: str) -> Location:
         return Location(self._location.node_id, self._location.graph_id, frame)

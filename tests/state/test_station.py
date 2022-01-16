@@ -1,29 +1,54 @@
 import unittest
 from archemist.exceptions.exception import StationAssignedRackError, StationNoOutcomeError, StationUnAssignedRackError
+from archemist.state.material import Liquid
 
-from archemist.state.station import Location, Station, SolidDispensingStation
+from archemist.state.station import Station
+from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing
 from archemist.state.batch import Batch
 
 class StationTest(unittest.TestCase):
 
-    def test_location(self):
-        t_location = Location(name="newLoc", node_id=2, graph_id=3, map_id=4)
-        self.assertEqual(t_location.name, "newLoc")
-        with self.assertRaises(AttributeError):
-            t_location.name="somenewname"
-        self.assertEqual(t_location.node_id, 2)
-        with self.assertRaises(AttributeError):
-            t_location.node_id=10
-        self.assertEqual(t_location.graph_id, 3)
-        with self.assertRaises(AttributeError):
-            t_location.graph_id=10
-        self.assertEqual(t_location.map_id, 4)
-        with self.assertRaises(AttributeError):
-            t_location.map_id=10
+    # def test_location(self):
+    #     t_location = Location(name="newLoc", node_id=2, graph_id=3, map_id=4)
+    #     self.assertEqual(t_location.name, "newLoc")
+    #     with self.assertRaises(AttributeError):
+    #         t_location.name="somenewname"
+    #     self.assertEqual(t_location.node_id, 2)
+    #     with self.assertRaises(AttributeError):
+    #         t_location.node_id=10
+    #     self.assertEqual(t_location.graph_id, 3)
+    #     with self.assertRaises(AttributeError):
+    #         t_location.graph_id=10
+    #     self.assertEqual(t_location.map_id, 4)
+    #     with self.assertRaises(AttributeError):
+    #         t_location.map_id=10
 
     def test_station(self):
-        t_location = Location(name="newLoc", node_id=2, graph_id=3, map_id=4)
-        t_station = Station(name="newStation", id=1, location=t_location)
+        station_dict = {
+            'type': 'PeristalticLiquidDispensing',
+            'id': 23,
+            'location': {'node_id': 1, 'graph_id': 7},
+            'process_state_machine': 
+            {
+                'type': 'StationLoadingSm',
+                'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
+            },
+            'parameters':
+            {
+                'liquid_pump_map': {'water': 'pUmP1'}
+            }
+        }
+        liquid_dict = {
+            'name': 'water',
+            'amount_stored': 400,
+            'unit': 'ml',
+            'density': 997,
+            'pump_id': 'pUmP1',
+            'expiry_date': '2025-02-11'
+        }
+        liquids_list = []
+        liquids_list.append(Liquid('test', liquid_dict))
+        t_station = PeristalticLiquidDispensing.from_arguments()
 
         self.assertEqual(t_station.name, "newStation")
         with self.assertRaises(AttributeError):

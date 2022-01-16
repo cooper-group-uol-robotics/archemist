@@ -47,41 +47,37 @@ class Sample():
 
 class Batch(DbObjProxy):
 
-    def __init__(self, **kwargs):
-        if len(kwargs) > 2:
-            batch_document = dict()
+    def __init__(self, db_name: str, batch_document: dict):
+        
+        if len(batch_document) > 1:
             batch_document['object'] = self.__class__.__name__
-            batch_document['id'] = kwargs['batch_id']
-            
-            recipe_dict = kwargs['recipe_dict']
-            recipe_dict['current_state'] = 'start'
-            batch_document['recipe'] = recipe_dict
-
-            batch_document['location'] = kwargs['location'].to_dict()
+    
+            batch_document['recipe']['current_state'] = 'start'
             
             batch_document['samples'] = []
-            for indx in range(0,kwargs['num_samples']):
+            for indx in range(0,batch_document['num_samples']):
                 sample = Sample.from_index(indx)
                 batch_document['samples'].append(sample.to_dict())
 
-            batch_document['num_samples'] = kwargs['num_samples']
             batch_document['current_sample_index'] = 0
             batch_document['all_samples_processed'] = False
             batch_document['station_history'] = []
 
-            super().__init__(kwargs['db'], 'batches', batch_document)
+            super().__init__(db_name, 'batches', batch_document)
         else:
-            super().__init__(kwargs['db'], 'batches', kwargs['object_id'])
+            super().__init__(db_name, 'batches', batch_document['object_id'])
         
         self._recipe = Recipe(self.get_field('recipe'), self.get_db_proxy())
 
     @classmethod
     def from_arguments(cls, db: str, batch_id: int, recipe_dict: dict, num_samples: int, location:Location):
-        return cls(db=db, batch_id=batch_id, recipe_dict=recipe_dict, num_samples=num_samples, location=location)
+        batch_dict={'id':batch_id, 'recipe':recipe_dict, 'num_samples':num_samples, 'location':location.to_dict()}
+        return cls(db_name=db, batch_document=batch_dict)
 
     @classmethod
     def from_objectId(cls, db: str, object_id: ObjectId):
-        return cls(db=db, object_id=object_id)
+        batch_dict = {'object_id':object_id}
+        return cls(db_name=db, batch_document=batch_dict)
 
     @property
     def id(self):

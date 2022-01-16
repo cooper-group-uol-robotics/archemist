@@ -1,7 +1,5 @@
 import unittest
-
-from pymongo.message import _batched_op_msg
-
+from bson.objectid import ObjectId
 from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, StationOutputDescriptor, IKAStirringOpDescriptor
 from archemist.state.batch import Batch
 import yaml
@@ -9,7 +7,7 @@ import yaml
 from archemist.util.location import Location
 
 class BatchRecipeTest(unittest.TestCase):
-    def test_batch(self):
+    def test_batch_from_dict(self):
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
@@ -83,20 +81,27 @@ class BatchRecipeTest(unittest.TestCase):
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
         self.assertEqual(batch.recipe.current_state, 'IkaPlateRCTDigital.IKAStirringOpDescriptor')
-        op1 = batch.recipe.get_current_task_op()
-        self.assertEqual(op1.__class__.__name__, 'IKAStirringOpDescriptor')
-        self.assertEqual(op1.set_stirring_speed, 200)
-        self.assertEqual(op1.duration, 10)
+        op1_dict = batch.recipe.get_current_task_op_dict()
+        self.assertEqual(op1_dict['type'], 'IKAStirringOpDescriptor')
+        self.assertEqual(op1_dict['properties']['rpm'], 200)
+        self.assertEqual(op1_dict['properties']['duration'], 10)
         self.assertFalse(batch.recipe.is_complete())
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
         self.assertEqual(batch.recipe.current_state, 'FisherWeightingStation.FisherWeightStablepDescriptor')
-        op2 = batch.recipe.get_current_task_op()
-        self.assertEqual(op2.__class__.__name__, 'FisherWeightStablepDescriptor')
+        op2_dict = batch.recipe.get_current_task_op_dict()
+        self.assertEqual(op2_dict['type'], 'FisherWeightStablepDescriptor')
         self.assertFalse(batch.recipe.is_complete())
         # end state
         batch.recipe.advance_state(True)
         self.assertTrue(batch.recipe.is_complete())
+
+    def test_batch_from_objectId(self):
+        batch = Batch.from_objectId('test',ObjectId('61e1ac1f5fe4e76bcef6b975'))
+        self.assertEqual(batch.id, 31)
+        self.assertEqual(batch.location, Location(1,3,'chair_frame'))
+        self.assertEqual(len(batch.station_history), 2)
+        self.assertEqual(batch.recipe.current_state, 'start')
 
         
 
