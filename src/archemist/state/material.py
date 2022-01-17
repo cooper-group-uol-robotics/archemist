@@ -19,6 +19,10 @@ class Material(DbObjProxy):
         return self.get_field('name')
 
     @property
+    def id(self):
+        return self.get_field('id')
+
+    @property
     def expiry_date(self):
         return self.get_field('expiry_date')
 

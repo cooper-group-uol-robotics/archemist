@@ -6,22 +6,21 @@ from archemist.util.location import Location
 
 
 class PeristalticLiquidDispensing(Station):
-    def __init__(self, db_name: str, station_dict: dict,
-                 parameters: dict, liquids: list, solids: list):
+    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
 
         if len(station_dict) > 1:
-            self._pump_liquid_map = dict()
-            for _, pumpId in parameters['_pump_liquid_map'].items():
+            parameters = station_dict.pop('parameters')
+            station_dict['pump_liquid_map'] = dict()
+            for _, pumpId in parameters['liquid_pump_map'].items():
                 for liquid in liquids:
                     if liquid.pump_id == pumpId:
-                        station_dict['pump_liquid_map'].update({pumpId, liquid.object_id})
+                        station_dict['pump_liquid_map'].update({pumpId: liquid.object_id})
         
         super().__init__(db_name,station_dict)
 
     @classmethod
-    def from_arguments(cls, db_name: str, id: int, location_dict: dict, parameters: dict, liquids: list, solids: list):
-        station_dict = {'id': id, 'location': location_dict}
-        return cls(db_name, station_dict, parameters, liquids, solids)
+    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
+        return cls(db_name, station_dict, liquids, solids)
 
     @classmethod
     def from_object_id(cls, db_name: str, object_id: ObjectId):
@@ -30,13 +29,13 @@ class PeristalticLiquidDispensing(Station):
 
     def get_liquid(self, pumpId: str):
         liquid_obj_id = self.get_nested_field(f'pump_liquid_map.{pumpId}')
-        return Liquid(self.db_name, liquid_obj_id)
+        return Liquid.from_object_id(self.db_name, liquid_obj_id)
 
     def get_pump_id(self, liquid_name: str):
         # assuming only single liquid per pump
-        pump_liquid_map = self.get_field('_pump_liquid_map')
+        pump_liquid_map = self.get_field('pump_liquid_map')
         for pumpId, liquid_obj_id in pump_liquid_map.items():
-            if liquid_name == Liquid(self.db_name, liquid_obj_id).name:
+            if liquid_name == Liquid.from_object_id(self.db_name, liquid_obj_id).name:
                 return pumpId
             else:
                 raise InvalidLiquidError(self.__class__.__name__)

@@ -70,7 +70,7 @@ class Station(DbObjProxy):
         if len(station_document) > 1:
             
             station_document['object'] = self.__class__.__name__
-            station_document['operational'] = False
+            station_document['operational'] = True
 
             station_document['state'] = StationState.IDLE.value
 
@@ -90,11 +90,6 @@ class Station(DbObjProxy):
         @classmethod
         def from_object_id(cls, db_name: str, object_id: ObjectId):
             pass
-
-    def set_station_op(self, stationOp: StationOpDescriptor):
-        encodedStationOp = self.encode_object(stationOp)
-        self.update_field('current_station_op', encodedStationOp)
-        self.push_to_field_array('station_op_history',encodedStationOp)
 
     @property
     def state(self):
@@ -128,10 +123,21 @@ class Station(DbObjProxy):
         loc_dict = self.get_field('location')
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
 
+    def set_station_op(self, stationOp: StationOpDescriptor):
+        encodedStationOp = self.encode_object(stationOp)
+        self.update_field('current_station_op', encodedStationOp)
+        self.push_to_array_field('station_op_history',encodedStationOp)
+
     @property
     def station_op_history(self):
         en_op_history = self.get_field('station_op_history')
         return [self.decode_object(op) for op in en_op_history]
+
+    @property
+    def current_station_op(self):
+        encoded_op = self.get_field('current_station_op')
+        if encoded_op is not None:
+            return self.decode_object(encoded_op)
 
     @property
     def process_sm_dict(self):
@@ -150,7 +156,8 @@ class Station(DbObjProxy):
     @property
     def assigned_batch(self):
         batch_obj_id = self.get_field('assigned_batch')
-        return Batch.from_objectId(self.db_name, batch_obj_id)
+        if batch_obj_id is not None:
+            return Batch.from_objectId(self.db_name, batch_obj_id)
 
 
     def add_batch(self, batch):
@@ -164,7 +171,7 @@ class Station(DbObjProxy):
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
     def has_processed_batch(self):
-        return self.assigned_batch is not None
+        return self.get_field('processed_batch') is not None
 
     def process_assigned_batch(self):
         self.update_field('processed_batch', self.get_field('assigned_batch'))
@@ -182,14 +189,15 @@ class Station(DbObjProxy):
             return batch
 
     def has_robot_job(self):
-        return self._req_robot_job is not None
+        return self.get_field('req_robot_job') is not None
     
     def get_robot_job(self):
-        encoded_robob_job = self.get_field('req_robot_job')
-        robot_job = DbObjProxy.decode_object(encoded_robob_job)
-        self._log_station(f'Robot job request for ({robot_job}) is retrieved.')
-        self.state = StationState.WAITING_ON_ROBOT
-        return robot_job
+        encoded_robot_job = self.get_field('req_robot_job')
+        if encoded_robot_job is not None:
+            robot_job = DbObjProxy.decode_object(encoded_robot_job)
+            self._log_station(f'Robot job request for ({robot_job}) is retrieved.')
+            self.state = StationState.WAITING_ON_ROBOT
+            return robot_job
 
     def set_robot_job(self, robot_job):
         encoded_robot_job = DbObjProxy.encode_object(robot_job)
@@ -208,6 +216,6 @@ class Station(DbObjProxy):
         print(f'[{self}]: {message}')
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self._id}'
+        return f'{self.__class__.__name__}-{self.id}'
 
 
