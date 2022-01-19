@@ -22,12 +22,13 @@ class StationHandler:
         self._state.updateFromDB()
         self._station = self._state.getStation(self._station_name)
 
+        # you don't need to set the station anymore since the sm should have direct access to it
         self._station_sm.set_station(self._station)
         self._station_sm.process_state_transitions()
         if (self._station.state == StationState.WAITING_ON_OPERATION):
             station_op = self.process()
             self.update_station_batch(station_op)
-            self._station.state = StationState.OPERATION_COMPLETE
+            self._station.state.finish_station_operation()
         
         self._state.modifyObjectDB(self._station)
 

@@ -1,21 +1,17 @@
 from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
 from archemist.util.location import Location
+from bson.objectid import ObjectId
 
 
 class PandaFranka(armRobot):
-    def __init__(self, id: int, saved_frames: list):
-        super().__init__(id, saved_frames)
+    def __init__(self, db_name: str, robot_document: dict):
+        super().__init__(db_name, robot_document)
 
-''' ==== Robot Operation Descriptors ==== '''
+    @classmethod
+    def from_dict(cls, db_name: str, robot_document: dict):
+        return cls(db_name, robot_document)
 
-# class PandaMoveOpDescriptor(VialMoveOpDescriptor):
-#     def __init__(self, start_pos: Location, end_pos: Location):
-#         self.robot_name = PandaFranka.__name__
-#         super().__init__(start_pos=start_pos, 
-#                          end_pos=end_pos, output=PandaOutputtDescriptor(self.__class__.__name__))
-
-''' ==== Robot Output Descriptors ==== '''
-
-# class PandaOutputtDescriptor(RobotOutputDescriptor):
-#     def __init__(self):
-#         super().__init__()
+    @classmethod
+    def from_object_id(cls, db_name: str, object_id: ObjectId):
+        robot_dict = {'object_id':object_id}
+        return cls(db_name, robot_dict)

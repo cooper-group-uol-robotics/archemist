@@ -1,4 +1,6 @@
+from archemist.persistence.dbObjProxy import DbObjProxy
 from archemist.util.location import Location
+from archemist.util.station_robot_job import StationRobotJob
 from enum import Enum
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
 from datetime import datetime
@@ -132,119 +134,122 @@ class SpecialJobOpDescriptor(RobotOpDescriptor):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
 
-class Robot:
-    def __init__(self, id: int, saved_frames: list):
-        self._id = id
-        self._saved_frames = saved_frames
+class Robot(DbObjProxy):
+    def __init__(self, db_name: str, robot_document: dict):
 
-        self._available = False
-        self._operational = False
-        self._location = None
-        
-        self._assigned_job = None
-        self._complete_job = None
+        if len(robot_document) > 1:
+            robot_document['object'] = self.__class__.__name__
 
-        self._state = RobotState.IDLE
-        
-        self._robot_job_history = []
+            robot_document['operational'] = False
+            robot_document['location'] = None
+            
+            robot_document['assigned_job'] = None
+            robot_document['complete_job'] = None
+
+            robot_document['state'] = RobotState.IDLE.value
+            
+            robot_document['robot_job_history'] = []
+            super().__init__(db_name, 'robots', robot_document)
+        else:
+            super().__init__(db_name, 'robots', robot_document['object_id'])
 
     @property
     def id(self):
-        return self._id
+        return self.get_field('id')
 
     @property
     def saved_frames(self):
-        return self._saved_frames
-
-    @property
-    def available(self):
-        return self._available
-
-    @available.setter
-    def available(self, value):
-        if isinstance(value, bool):
-            self._available = value
-        else:
-            raise ValueError
+        return self.get_field('saved_frames')
 
     @property
     def operational(self):
-        return self._operational
+        return self.get_field('operational')
 
     @operational.setter
     def operational(self, value):
         if isinstance(value, bool):
-            self._operational = value
+            self.update_field('operational',value)
         else:
             raise ValueError
 
     @property
     def location(self):
-        return self._location
+        loc_dict = self.get_field('location')
+        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
 
     @location.setter
     def location(self, value):
         if isinstance(value, Location):
-            self._location = value
+            loc_dict = {'node_id':value.node_id, 'graph_id':value.graph_id, 'frame_name':value.frame_name}
+            self.update_field('location', loc_dict)
         else:
             raise ValueError
 
     @property
     def state(self):
-            return self._state
+            return RobotState(self.get_field('state'))
 
-    @property
-    def assigned_job(self):
-            return self._assigned_job
+    def get_assigned_job(self) -> StationRobotJob:
+            encoded_job = self.get_field('assigned_job')
+            return DbObjProxy.decode_object(encoded_job)
 
     @property
     def robot_job_history(self):
         return self._robot_job_history
 
-    def assign_job(self, object):
-        if(self._assigned_job is None):
-            self._assigned_job = object
-            self._log_robot(f'Job ({self._assigned_job[0]}) is assigned.')
-            self._state = RobotState.EXECUTING_JOB
-            self._log_robot(f'Current state changed to {self._state}')
+    def assign_job(self, station_robot_job: StationRobotJob):
+        if(self.assigned_job is None):
+            encoded_job = DbObjProxy.encode_object(station_robot_job)
+            self.update_field('assigned_job', encoded_job)
+            self._log_robot(f'Job ({station_robot_job.robot_op}) is assigned.')
+            self._update_state(RobotState.EXECUTING_JOB)
+
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
-    def complete_assigned_job(self):
-        self._complete_job = self._assigned_job
-        self._assigned_job = None
-        self._log_robot(f'Job ({self._complete_job[0]}) is complete.')
-        self._robot_job_history.append(self._complete_job)
-        self._state = RobotState.EXECUTION_COMPLETE
-        self._log_robot(f'Current state changed to {self._state}')
+    def complete_assigned_job(self, robot_op_output: RobotOutputDescriptor):
+        station_robot_job = self.get_assigned_job()
+        station_robot_job.robot_op.output = robot_op_output
+        encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
+        self.update_field('complete_job', encoded_station_robot_job)
+        self.update_field('assigned_job', None)
+        self._log_robot(f'Job ({station_robot_job.robot_op} is complete.')
+        self.push_to_array_field('robot_job_history', encoded_station_robot_job)
+        self._update_state(RobotState.EXECUTION_COMPLETE)
 
     def has_complete_job(self):
-        return self._complete_job is not None
+        return self.get_field('complete_job') is not None
 
     def get_complete_job(self):
-        obj = self._complete_job
-        if self._complete_job is not None: 
-            self._complete_job = None
-            self._log_robot(f'Job ({obj[0]}) is retrieved.')
-            self._state = RobotState.IDLE
-            self._log_robot(f'Current state changed to {self._state}')
-        return obj
+        encoded_station_robot_job = self.get_field('complete_job')
+        if encoded_station_robot_job is not None:
+            station_robot_job = DbObjProxy.decode_object(encoded_station_robot_job)
+            self.update_field('complete_job', None)
+            self._log_robot(f'Job ({station_robot_job.robot_op}) is retrieved.')
+            self._update_state(RobotState.IDLE)
+            return station_robot_job
 
     def _log_robot(self, message: str):
         print(f'[{self}]: {message}')
 
+    def _update_state(self, new_state: RobotState):
+        self.update_field('state',new_state.value)
+        self._log_station(f'Current state changed to {new_state}')
+
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self._id}'
+        return f'{self.__class__.__name__}-{self.id}'
 
 class mobileRobot(Robot):
-    def __init__(self, id: int, saved_frames: list):
-        super().__init__(id, saved_frames)
-        self._rack_holders = []
+    def __init__(self, db_name: str, robot_document: dict):
+        if len(robot_document) > 1:
+            robot_document['rack_holders'] = []
+        
+        super().__init__(db_name, robot_document)
 
     @property 
     def rack_holders(self):
         return self._rack_holders
 
 class armRobot(Robot):
-    def __init__(self, id: int, saved_frames: list):
-        super().__init__(id, saved_frames)
+    def __init__(self, db_name: str, robot_document: dict):
+        super().__init__(db_name, robot_document)

@@ -19,7 +19,7 @@ class RobotScheduler():
 class SimpleRobotScheduler(RobotScheduler):
     def __init__(self):
         super().__init__()
-
+    # TODO change tuple to StationRobotJob
     def schedule(self, job_station_queue: list, state: State):
         unassigned_jobs = list()
         while job_station_queue:

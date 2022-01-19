@@ -9,6 +9,7 @@ workflow:
   Materials:
     liquids:
       - name: water
+        id: 145
         amount_stored: 400
         unit: ml
         density: 997 #g/l
@@ -16,6 +17,7 @@ workflow:
         expiry_date: 2025-02-11
     solids:
       - name: sodium_chloride
+        id: 345
         amount_stored: 10000
         dispense_method: quantos
         cartridge_id: cat1

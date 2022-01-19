@@ -88,20 +88,16 @@ class Station(DbObjProxy):
             super().__init__(db_name, 'stations', station_document['object_id'])
 
         @classmethod
+        def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
+            pass
+
+        @classmethod
         def from_object_id(cls, db_name: str, object_id: ObjectId):
             pass
 
     @property
     def state(self):
             return StationState(self.get_field('state'))
-
-    @state.setter
-    def state(self, new_state):
-        if isinstance(new_state, StationState):
-            self.update_field('state',new_state.value)
-            self._log_station(f'Current state changed to {new_state}')
-        else:
-            raise ValueError
 
     @property
     def id(self):
@@ -166,7 +162,7 @@ class Station(DbObjProxy):
             self._log_station(f'{batch} is assigned for processing.')
             station_stamp = str(self)
             batch.add_station_stamp(station_stamp)
-            self.state = StationState.PROCESSING
+            self._update_state(StationState.PROCESSING)
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
@@ -177,7 +173,7 @@ class Station(DbObjProxy):
         self.update_field('processed_batch', self.get_field('assigned_batch'))
         self.update_field('assigned_batch',None)
         self._log_station(f'Processing batch is complete.')
-        self.state = StationState.PROCESSING_COMPLETE
+        self._update_state(StationState.PROCESSING_COMPLETE)
 
     def get_processed_batch(self):
         batch_obj_id = self.get_field('processed_batch')
@@ -185,7 +181,7 @@ class Station(DbObjProxy):
             batch = Batch.from_objectId(self.db_name, batch_obj_id)
             self.update_field('processed_batch', None)
             self._log_station(f'Processed id:{batch} is unassigned.')
-            self.state = StationState.IDLE
+            self._update_state(StationState.IDLE)
             return batch
 
     def has_robot_job(self):
@@ -196,7 +192,7 @@ class Station(DbObjProxy):
         if encoded_robot_job is not None:
             robot_job = DbObjProxy.decode_object(encoded_robot_job)
             self._log_station(f'Robot job request for ({robot_job}) is retrieved.')
-            self.state = StationState.WAITING_ON_ROBOT
+            self._update_state(StationState.WAITING_ON_ROBOT)
             return robot_job
 
     def set_robot_job(self, robot_job):
@@ -207,13 +203,20 @@ class Station(DbObjProxy):
     def finish_robot_job(self):
         self.update_field('req_robot_job', None)
         self._log_station(f'Robot job request is fulfilled.')
-        self.state = StationState.PROCESSING
+        self._update_state(StationState.PROCESSING)
+
+    def finish_station_operation(self):
+        self._update_state(StationState.OPERATION_COMPLETE)
 
     def create_location_from_frame(self, frame: str) -> Location:
         return Location(self._location.node_id, self._location.graph_id, frame)
 
     def _log_station(self, message: str):
         print(f'[{self}]: {message}')
+
+    def _update_state(self, new_state: StationState):
+        self.update_field('state',new_state.value)
+        self._log_station(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.id}'

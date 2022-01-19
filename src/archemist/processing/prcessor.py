@@ -74,6 +74,7 @@ class WorkflowManager:
             # process workflow stations
             for station in self._state.stations:
                 if station.state == StationState.PROCESSING and station.has_robot_job():
+                    #TODO change tuple to StationRobotJob
                     robot_job = station.get_robot_job()
                     job_station_tuple = tuple((robot_job, station.__class__.__name__))
                     self._log_processor(f'{job_station_tuple} is added to robot scheduling queue.')
