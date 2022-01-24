@@ -51,6 +51,13 @@ class RobotOpDescriptor:
     def output(self):
         return self._output
 
+    @output.setter
+    def output(self, value):
+        if isinstance(value, RobotOutputDescriptor):
+            self._output = value
+        else:
+            raise ValueError
+
     def add_timestamp(self):
         self._timestamp = datetime.now()
 
@@ -140,7 +147,7 @@ class Robot(DbObjProxy):
         if len(robot_document) > 1:
             robot_document['object'] = self.__class__.__name__
 
-            robot_document['operational'] = False
+            robot_document['operational'] = True
             robot_document['location'] = None
             
             robot_document['assigned_job'] = None
@@ -175,7 +182,8 @@ class Robot(DbObjProxy):
     @property
     def location(self):
         loc_dict = self.get_field('location')
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        if loc_dict is not None:
+            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
 
     @location.setter
     def location(self, value):
@@ -189,13 +197,16 @@ class Robot(DbObjProxy):
     def state(self):
             return RobotState(self.get_field('state'))
 
-    def get_assigned_job(self) -> StationRobotJob:
+    @property
+    def assigned_job(self) -> StationRobotJob:
             encoded_job = self.get_field('assigned_job')
-            return DbObjProxy.decode_object(encoded_job)
+            if encoded_job is not None:
+                return DbObjProxy.decode_object(encoded_job)
 
     @property
     def robot_job_history(self):
-        return self._robot_job_history
+        en_op_history = self.get_field('robot_job_history')
+        return [self.decode_object(op) for op in en_op_history]
 
     def assign_job(self, station_robot_job: StationRobotJob):
         if(self.assigned_job is None):
@@ -208,7 +219,7 @@ class Robot(DbObjProxy):
             raise RobotAssignedRackError(self.__class__.__name__)
 
     def complete_assigned_job(self, robot_op_output: RobotOutputDescriptor):
-        station_robot_job = self.get_assigned_job()
+        station_robot_job = self.assigned_job
         station_robot_job.robot_op.output = robot_op_output
         encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
         self.update_field('complete_job', encoded_station_robot_job)
@@ -234,7 +245,7 @@ class Robot(DbObjProxy):
 
     def _update_state(self, new_state: RobotState):
         self.update_field('state',new_state.value)
-        self._log_station(f'Current state changed to {new_state}')
+        self._log_robot(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.id}'
