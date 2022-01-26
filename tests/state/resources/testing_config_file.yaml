@@ -1,6 +1,6 @@
 workflow:
   Robots:
-    - type: PandaFranka
+    - class: PandaFranka
       id: 1
       saved_frames:
         - '/ikaStation/RackHolderFrame'
@@ -24,7 +24,7 @@ workflow:
         unit: mg
         expiry_date: 2025-02-11
   Stations:
-    - type: PeristalticLiquidDispensing
+    - class: PeristalticLiquidDispensing
       id: 23
       location:
         node_id: 1
@@ -37,7 +37,7 @@ workflow:
       parameters:
         liquid_pump_map:
           water: pUmP1
-    - type: IkaPlateRCTDigital
+    - class: IkaPlateRCTDigital
       id: 2
       location:
         node_id: 2
@@ -48,7 +48,7 @@ workflow:
             batch_mode: true
             load_frame: '/ikaStation/loadFrame'
       parameters:
-    - type: FisherWeightingStation
+    - class: FisherWeightingStation
       id: 5
       location:
         node_id: 3

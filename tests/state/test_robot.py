@@ -11,7 +11,7 @@ class RobotTest(unittest.TestCase):
 
     def test_robot(self):
         robot_dict = {
-            'type': 'PandaFranka',
+            'class': 'PandaFranka',
             'id': 187,
             'saved_frames': ['/ikaStation/RackHolderFrame','/ikaStation/loadFrame','/fisherScaleStation/loadFrame']
         }

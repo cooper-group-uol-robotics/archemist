@@ -69,7 +69,6 @@ class Station(DbObjProxy):
 
         if len(station_document) > 1:
             
-            station_document['object'] = self.__class__.__name__
             station_document['operational'] = True
 
             station_document['state'] = StationState.IDLE.value
@@ -153,7 +152,7 @@ class Station(DbObjProxy):
     def assigned_batch(self):
         batch_obj_id = self.get_field('assigned_batch')
         if batch_obj_id is not None:
-            return Batch.from_objectId(self.db_name, batch_obj_id)
+            return Batch.from_object_id(self.db_name, batch_obj_id)
 
 
     def add_batch(self, batch):
@@ -178,7 +177,7 @@ class Station(DbObjProxy):
     def get_processed_batch(self):
         batch_obj_id = self.get_field('processed_batch')
         if batch_obj_id is not None:
-            batch = Batch.from_objectId(self.db_name, batch_obj_id)
+            batch = Batch.from_object_id(self.db_name, batch_obj_id)
             self.update_field('processed_batch', None)
             self._log_station(f'Processed id:{batch} is unassigned.')
             self._update_state(StationState.IDLE)

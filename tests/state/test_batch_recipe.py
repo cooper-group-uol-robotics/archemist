@@ -65,6 +65,10 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(samples[0].operation_ops[0].set_temperature, ika_op1.set_temperature)
         self.assertEqual(samples[0].operation_ops[0].duration, ika_op1.duration)
 
+        # save batch obj id for later test
+        global batch_obj_id
+        batch_obj_id = batch.object_id
+
     def test_recipe(self):
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:
@@ -97,7 +101,8 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertTrue(batch.recipe.is_complete())
 
     def test_batch_from_objectId(self):
-        batch = Batch.from_objectId('test',ObjectId('61e1ac1f5fe4e76bcef6b975'))
+        global batch_obj_id
+        batch = Batch.from_object_id('test',batch_obj_id)
         self.assertEqual(batch.id, 31)
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
         self.assertEqual(len(batch.station_history), 2)

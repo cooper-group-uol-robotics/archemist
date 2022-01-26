@@ -8,12 +8,13 @@ from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLi
 from archemist.state.batch import Batch
 from archemist.util.location import Location
 import yaml
+from datetime import date
 
 class StationTest(unittest.TestCase):
 
     def test_station(self):
         station_dict = {
-            'type': 'PeristalticLiquidDispensing',
+            'class': 'PeristalticLiquidDispensing',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'process_state_machine': 
@@ -33,7 +34,7 @@ class StationTest(unittest.TestCase):
             'unit': 'ml',
             'density': 997,
             'pump_id': 'pUmP1',
-            'expiry_date': '2025-02-11'
+            'expiry_date': date.fromisoformat('2025-02-11')
         }
         liquids_list = []
         liquids_list.append(Liquid('test', liquid_dict))
@@ -122,7 +123,7 @@ class StationTest(unittest.TestCase):
 
     def test_specific_station(self):
         station_dict = {
-            'type': 'PeristalticLiquidDispensing',
+            'class': 'PeristalticLiquidDispensing',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'process_state_machine': 
@@ -142,7 +143,7 @@ class StationTest(unittest.TestCase):
             'unit': 'ml',
             'density': 997,
             'pump_id': 'pUmP1',
-            'expiry_date': '2025-02-11'
+            'expiry_date': date.fromisoformat('2025-02-11')
         }
         liquids_list = []
         liquids_list.append(Liquid('test', liquid_dict))

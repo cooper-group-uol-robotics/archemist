@@ -145,7 +145,6 @@ class Robot(DbObjProxy):
     def __init__(self, db_name: str, robot_document: dict):
 
         if len(robot_document) > 1:
-            robot_document['object'] = self.__class__.__name__
 
             robot_document['operational'] = True
             robot_document['location'] = None

@@ -9,7 +9,8 @@ class Material(DbObjProxy):
     def __init__(self, db_name: str, material_document: dict):
         
         if len(material_document) > 1:
-            material_document['object'] = self.__class__.__name__
+            material_document['class'] = self.__class__.__name__
+            material_document['expiry_date'] = date.isoformat(material_document['expiry_date'])
             super().__init__(db_name, 'materials', material_document)
         else:
             super().__init__(db_name, 'materials', material_document['object_id'])
@@ -24,7 +25,7 @@ class Material(DbObjProxy):
 
     @property
     def expiry_date(self):
-        return self.get_field('expiry_date')
+        return date.fromisoformat(self.get_field('expiry_date'))
 
     @property
     def mass(self):
@@ -101,14 +102,14 @@ class Liquid(Material):
 
 class Solid(Material):
     def __init__(self, db_name: str, solid_document: dict):
-        if solid_document['unit'] == 'g':
-            solid_document['mass'] = solid_document['amount_stored']
-        elif solid_document['unit'] == 'mg':
-            solid_document['mass'] = solid_document['amount_stored']/1000
-        elif solid_document['unit'] == 'ug':
-            solid_document['mass'] = solid_document['amount_stored']/1000000
-        solid_document.pop('amount_stored')
-        
+        if len(solid_document) > 1:
+            if solid_document['unit'] == 'g':
+                solid_document['mass'] = solid_document['amount_stored']
+            elif solid_document['unit'] == 'mg':
+                solid_document['mass'] = solid_document['amount_stored']/1000
+            elif solid_document['unit'] == 'ug':
+                solid_document['mass'] = solid_document['amount_stored']/1000000
+            solid_document.pop('amount_stored')
         super().__init__(db_name, solid_document)
 
     @classmethod

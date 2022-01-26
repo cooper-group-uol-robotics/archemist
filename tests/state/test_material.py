@@ -14,7 +14,7 @@ class MaterialTest(unittest.TestCase):
             'unit': 'ml',
             'density': 997,
             'pump_id': 'pUmP1',
-            'expiry_date': '2025-02-11'
+            'expiry_date': date.fromisoformat('2025-02-11')
         }
 
         t_liquid = Liquid.from_dict('test', liquid_dict)
@@ -28,7 +28,7 @@ class MaterialTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             t_liquid.volume = -2.0
         self.assertEqual(t_liquid.pump_id, 'pUmP1')
-        self.assertEqual(t_liquid.expiry_date, '2025-02-11')
+        self.assertEqual(t_liquid.expiry_date, date.fromisoformat('2025-02-11'))
     def test_solid(self):
 
         solid_dict = {
@@ -38,7 +38,7 @@ class MaterialTest(unittest.TestCase):
             'dispense_method': 'quantos',
             'cartridge_id': 'cAt1',
             'unit': 'ug',
-            'expiry_date': '2025-02-11'
+            'expiry_date': date.fromisoformat('2025-02-11')
         }
 
         t_solid = Solid.from_dict('test', solid_dict)
@@ -51,7 +51,7 @@ class MaterialTest(unittest.TestCase):
             t_solid.mass = -2.0
         self.assertEqual(t_solid.dispense_method, 'quantos')
         self.assertEqual(t_solid.cartridge_id, 'cAt1')
-        self.assertEqual(t_solid.expiry_date, '2025-02-11')
+        self.assertEqual(t_solid.expiry_date, date.fromisoformat('2025-02-11'))
         
 
 

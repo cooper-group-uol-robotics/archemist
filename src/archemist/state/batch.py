@@ -50,7 +50,7 @@ class Batch(DbObjProxy):
     def __init__(self, db_name: str, batch_document: dict):
         
         if len(batch_document) > 1:
-            batch_document['object'] = self.__class__.__name__
+            batch_document['class'] = self.__class__.__name__
     
             batch_document['recipe']['current_state'] = 'start'
             
@@ -75,7 +75,7 @@ class Batch(DbObjProxy):
         return cls(db_name=db, batch_document=batch_dict)
 
     @classmethod
-    def from_objectId(cls, db: str, object_id: ObjectId):
+    def from_object_id(cls, db: str, object_id: ObjectId):
         batch_dict = {'object_id':object_id}
         return cls(db_name=db, batch_document=batch_dict)
 
