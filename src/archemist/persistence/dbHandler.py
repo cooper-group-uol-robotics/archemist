@@ -19,7 +19,7 @@ class dbHandler:
         return db_name in db_list
 
     def is_database_populated(self, db_name: str):
-        if self.is_database_existing():
+        if self.is_database_existing(db_name):
             coll_list = self._client[db_name].list_collection_names()
             if len(coll_list) == 4:
                 return True

@@ -49,16 +49,16 @@ class State:
         batches = list()
         batches_cursor = self._batches.find({})
         for doc in batches_cursor:
-            batches.append(ObjectConstructor.construct_robot_from_object_id(self._db_name, doc))
+            batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
         return batches
 
     @property
     def completed_batches(self):
-        batches = list()
-        batches_cursor = self._batches.find({'recipe.current_state': 'end'})
+        processed_batches = list()
+        batches_cursor = self._batches.find({'processed': True})
         for doc in batches_cursor:
-            batches.append(ObjectConstructor.construct_robot_from_object_id(self._db_name, doc))
-        return batches
+            processed_batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
+        return processed_batches
 
     def get_station(self, object_id: ObjectId):
         station_doc = self._stations.find_one({'_id': object_id})

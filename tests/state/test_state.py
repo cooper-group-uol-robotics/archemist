@@ -1,6 +1,9 @@
 import unittest
 
 from archemist.persistence.persistenceManager import PersistenceManager
+from archemist.state.batch import Batch
+from archemist.util.location import Location
+import yaml
 
 class StateTest(unittest.TestCase):
 
@@ -31,6 +34,23 @@ class StateTest(unittest.TestCase):
         self.assertEqual(len(solids), 1)
         self.assertEqual(solids[0].name, 'sodium_chloride')
         self.assertEqual(solids[0].id, 345)
+
+        self.assertEqual(len(state.batches), 0)
+        recipe_doc = dict()
+        with open('/home/gilgamish/robot_chemist_ws/src/archemist/tests/state/resources/testing_recipe.yaml') as fs:
+            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+        batch1 = Batch.from_arguments('test',31,recipe_doc,2,Location(1,3,'table_frame'))
+        batch2 = Batch.from_arguments('test',77,recipe_doc,2,Location(1,3,'table_frame'))
+
+        batches = state.batches
+        self.assertEqual(len(batches), 2)
+
+        batch1.recipe.advance_state(True)
+        batch1.recipe.advance_state(True)
+        batch1.recipe.advance_state(True)
+        
+        processed_batches = state.completed_batches
+        self.assertEqual(len(processed_batches), 1)
 
     def test_state_db(self):
         pm = PersistenceManager('test')

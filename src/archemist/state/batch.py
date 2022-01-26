@@ -53,6 +53,7 @@ class Batch(DbObjProxy):
             batch_document['class'] = self.__class__.__name__
     
             batch_document['recipe']['current_state'] = 'start'
+            batch_document['processed'] = False
             
             batch_document['samples'] = []
             for indx in range(0,batch_document['num_samples']):
@@ -98,6 +99,10 @@ class Batch(DbObjProxy):
             self.update_field('location', location.to_dict())
         else:
             raise ValueError
+
+    @property
+    def processed(self):
+        return self.get_field('processed')
 
     # @property
     # def assigned(self):

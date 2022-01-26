@@ -17,6 +17,7 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
+        self.assertFalse(batch.processed)
         
         self.assertEqual(batch.num_samples, 2)
         self.assertFalse(batch.are_all_samples_processed())
@@ -81,6 +82,7 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(batch.recipe.solids[0], 'sodium_chloride')
         self.assertEqual(batch.recipe.current_state, 'start')
         self.assertFalse(batch.recipe.is_complete())
+        self.assertFalse(batch.processed)
 
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
@@ -99,6 +101,7 @@ class BatchRecipeTest(unittest.TestCase):
         # end state
         batch.recipe.advance_state(True)
         self.assertTrue(batch.recipe.is_complete())
+        self.assertTrue(batch.processed)
 
     def test_batch_from_objectId(self):
         global batch_obj_id

@@ -2,7 +2,7 @@ from archemist.persistence.dbObjProxy import DbObjProxy
 from transitions import Machine
 
 class Recipe:
-    def __init__(self, recipe_doc: dict, db_doc_proxy: DbObjProxy):
+    def __init__(self, recipe_doc: dict, batch_db_proxy: DbObjProxy):
         self._name = recipe_doc['name']
         self._id = recipe_doc['id']
         self._station_op_descriptors = [stationOp for station_dict in recipe_doc['stations'] for stationOp in station_dict['stationOps']]
@@ -13,7 +13,7 @@ class Recipe:
                         for state_dict in recipe_doc['workflowSM'] for trigger in ['onSuccess','onFail']]
         self._station_flow = Machine(states=states,initial=recipe_doc['current_state'], transitions=transitions)
         
-        self._db_proxy = db_doc_proxy
+        self._batch_db_proxy = batch_db_proxy
 
     @property
     def name(self):
@@ -33,7 +33,7 @@ class Recipe:
 
     @property
     def current_state(self):
-        return self._db_proxy.get_nested_field('recipe.current_state')
+        return self._batch_db_proxy.get_nested_field('recipe.current_state')
 
     def advance_state(self, success: bool):
         self._station_flow.state = self.current_state
@@ -41,7 +41,9 @@ class Recipe:
             self._station_flow.onSuccess()
         else:
             self._station_flow.onFail()
-        self._db_proxy.update_field('recipe.current_state', self._station_flow.state)
+        self._batch_db_proxy.update_field('recipe.current_state', self._station_flow.state)
+        if self._station_flow.state == 'end':
+            self._batch_db_proxy.update_field('processed', True)
         self._logRecipe('Current state advanced to ' + self._station_flow.state)
 
     def is_complete(self):
