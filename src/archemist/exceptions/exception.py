@@ -41,3 +41,7 @@ class QuantosRackLoadedError(Error):
 class QuantosCatridgeUnLoadError(Error):
     def __init__(self):
         self.message = f'Quantos station does not have a loaded catridge!!!'
+
+class DatabaseNotPopulatedError(Error):
+    def __init__(self):
+        self.message = f'The provided database is not existing or does not have any documents!!!'

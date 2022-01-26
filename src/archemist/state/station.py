@@ -161,7 +161,7 @@ class Station(DbObjProxy):
             self._log_station(f'{batch} is assigned for processing.')
             station_stamp = str(self)
             batch.add_station_stamp(station_stamp)
-            self._update_state(StationState.PROCESSING)
+            self.set_to_processing()
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
@@ -202,13 +202,19 @@ class Station(DbObjProxy):
     def finish_robot_job(self):
         self.update_field('req_robot_job', None)
         self._log_station(f'Robot job request is fulfilled.')
+        self.set_to_processing()
+
+    def set_to_processing(self):
         self._update_state(StationState.PROCESSING)
+
+    def request_station_operation(self):
+        self._update_state(StationState.WAITING_ON_OPERATION)
 
     def finish_station_operation(self):
         self._update_state(StationState.OPERATION_COMPLETE)
 
     def create_location_from_frame(self, frame: str) -> Location:
-        return Location(self._location.node_id, self._location.graph_id, frame)
+        return Location(self.location.node_id, self.location.graph_id, frame)
 
     def _log_station(self, message: str):
         print(f'[{self}]: {message}')

@@ -1,52 +1,72 @@
-from archemist.persistence.persistenceManager import persistenceManager
-from archemist.persistence.yParser import Parser
-from datetime import datetime
+from pymongo import MongoClient
+from archemist.persistence.objectConstructor import ObjectConstructor
+from bson.objectid import ObjectId
 
 
 class State:
-    def __init__(self):
-        self.startTime = datetime.now()
-        self.liquids = []
-        self.solids = []
-        self.stations = []
-        self.robots = []
-        self.processed_batches = []
+    def __init__(self, db_name: str):
+        self._mongo_client = MongoClient("mongodb://localhost:27017")
+        self._db_name = db_name
+        self._stations = self._mongo_client[db_name]['stations']
+        self._robots = self._mongo_client[db_name]['robots']
+        self._materials = self._mongo_client[db_name]['materials']
+        self._batches= self._mongo_client[db_name]['batches']
     
-    def initializeState(self, reset_db: bool):
-        self.persistence = persistenceManager()
-        config = self.persistence.loadConfig()
-        self.robots = config[0]
-        self.liquids = config[1]
-        self.solids = config[2]
-        self.stations = config[3]
-        if (reset_db):
-            self.storeToDB()
-        else:
-            self.updateFromDB()
-        #self.recipe = parser.loadRecipeYaml()
-        #parser = Parser()
+    @property
+    def liquids(self):
+        liquids = list()
+        liquids_cursor = self._materials.find({'class': 'Liquid'})
+        for doc in liquids_cursor:
+            liquids.append(ObjectConstructor.construct_material_from_object_id(self._db_name, doc))
+        return liquids
 
-    def getStation(self, stationName: str):
-        return next(station for station in self.stations if station.__class__.__name__ == stationName)
+    @property
+    def solids(self):
+        solids = list()
+        solids_cursor = self._materials.find({'class': 'Solid'})
+        for doc in solids_cursor:
+            solids.append(ObjectConstructor.construct_material_from_object_id(self._db_name, doc))
+        return solids
 
-    def getRobot(self, name: str, id: int):
-        return next(robot for robot in self.robots if (robot.__class__.__name__ == name and robot.id == id))
+    @property
+    def stations(self):
+        stations = list()
+        stations_cursor = self._stations.find({})
+        for doc in stations_cursor:
+            stations.append(ObjectConstructor.construct_station_from_object_id(self._db_name, doc))
+        return stations
 
-    def storeToDB(self):
-        self.persistence.push(self)
+    @property
+    def robots(self):
+        robots = list()
+        robots_cursor = self._robots.find({})
+        for doc in robots_cursor:
+            robots.append(ObjectConstructor.construct_robot_from_object_id(self._db_name, doc))
+        return robots
 
-    def updateFromDB(self):
-        state_dict = self.persistence.pull()
-        updated_stations = [state_dict[station.__class__.__name__] for station in self.stations]
-        self.stations = updated_stations
-        updated_robots = [state_dict[robot.__class__.__name__] for robot in self.robots]
-        self.robots = updated_robots
-        updated_solids = [state_dict[solid.name] for solid in self.solids]
-        self.solids = updated_solids
-        updated_liquids = [state_dict[liquid.name] for liquid in self.liquids]
-        self.liquids = updated_liquids
-        if 'processed_batches' in state_dict:
-            self.processed_batches = state_dict['processed_batches']
+    @property
+    def batches(self):
+        batches = list()
+        batches_cursor = self._batches.find({})
+        for doc in batches_cursor:
+            batches.append(ObjectConstructor.construct_robot_from_object_id(self._db_name, doc))
+        return batches
 
-    def modifyObjectDB(self, object):
-        self.persistence.updateObjectState(object)
+    @property
+    def completed_batches(self):
+        batches = list()
+        batches_cursor = self._batches.find({'recipe.current_state': 'end'})
+        for doc in batches_cursor:
+            batches.append(ObjectConstructor.construct_robot_from_object_id(self._db_name, doc))
+        return batches
+
+    def get_station(self, object_id: ObjectId):
+        station_doc = self._stations.find_one({'_id': object_id})
+        return ObjectConstructor.construct_station_from_object_id(self._db_name, station_doc)
+
+    def get_robot(self, object_id: ObjectId):
+        robot_doc = self._robots.find_one({'_id': object_id})
+        return ObjectConstructor.construct_robot_from_object_id(self._db_name, robot_doc)
+        
+        
+

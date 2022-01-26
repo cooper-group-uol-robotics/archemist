@@ -1,103 +1,128 @@
-from pickle import NONE
 import unittest
 from archemist.util import Location
-from archemist.state.state import State
-from archemist.persistence.persistenceManager import Parser
+from archemist.state.material import Liquid
+from archemist.state.stations import IkaPlateRCTDigital
+from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.batch import Batch
 from archemist.state.station import StationState
+from datetime import date
+import yaml
 
 class SMTestWithBatchMode(unittest.TestCase):
     def test_sm_progress(self):
-        parser = Parser()
-        state = State()
-        state.initializeState(True)
-        s1 = state.stations[0]
-        sm1 = parser.create_process_sm(s1.__class__.__name__)
-        sm1.set_station(s1)
-        self.assertEqual(s1.state, StationState.IDLE)
-        self.assertTrue(s1.assigned_batch is None)
-        self.assertEqual(s1.loaded_samples, 0)
-        
-        self.assertEqual(sm1.state, 'init_state')
-        self.assertFalse(sm1.process_state_transitions())
+        station_dict = {
+            'class': 'IkaPlateRCTDigital',
+            'id': 2,
+            'location': {'node_id': 2, 'graph_id': 7},
+            'process_state_machine': 
+            {
+                'type': 'StationLoadingSm',
+                'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
+            },
+            'parameters':{}
+        }
+        liquid_dict = {
+            'name': 'water',
+            'id': 1235,
+            'amount_stored': 400,
+            'unit': 'ml',
+            'density': 997,
+            'pump_id': 'pUmP1',
+            'expiry_date': date.fromisoformat('2025-02-11')
+        }
+        liquids_list = []
+        liquids_list.append(Liquid('test', liquid_dict))
+        t_station = IkaPlateRCTDigital.from_dict(db_name='test', station_dict=station_dict, 
+                        liquids=liquids_list, solids=[])
 
+        t_sm = ObjectConstructor.construct_process_sm_for_station(t_station)
         
-        recipe = parser.loadRecipeYaml()
-        bat = Batch(12, recipe, 2, Location(2,7,''))
-        s1.add_batch(bat)
-        self.assertEqual(s1.state, StationState.PROCESSING)
-        self.assertTrue(s1.assigned_batch is not None)
-        self.assertEqual(s1.loaded_samples, 0)
-        self.assertEqual(sm1.state, 'init_state')
+        self.assertEqual(t_station.state, StationState.IDLE)
+        self.assertTrue(t_station.assigned_batch is None)
+        self.assertEqual(t_station.loaded_samples, 0)
         
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'load_sample')
+        self.assertEqual(t_sm.state, 'init_state')
+        self.assertFalse(t_sm.process_state_transitions())
 
-        self.assertEqual(s1.state, StationState.PROCESSING)
-        self.assertTrue(s1.has_robot_job())
-        self.assertEqual(s1.loaded_samples, 1)
+        recipe_doc = dict()
+        with open('/home/gilgamish/robot_chemist_ws/src/archemist/tests/state/resources/testing_recipe.yaml') as fs:
+            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
-        job = s1.get_robot_job()
-        self.assertEqual(s1.state, StationState.WAITING_ON_ROBOT)
+        bat = Batch.from_arguments('test',31,recipe_doc,2,Location(2,7,'table_frame'))
+        t_station.add_batch(bat)
+        self.assertEqual(t_station.state, StationState.PROCESSING)
+        self.assertTrue(t_station.assigned_batch is not None)
+        self.assertEqual(t_station.loaded_samples, 0)
+        self.assertEqual(t_sm.state, 'init_state')
+        
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'load_sample')
+
+        self.assertEqual(t_station.state, StationState.PROCESSING)
+        self.assertTrue(t_station.has_robot_job())
+        self.assertEqual(t_station.loaded_samples, 1)
+        
+        job = t_station.get_robot_job()
+        self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 1)
-        self.assertFalse(sm1.process_state_transitions())
-        s1.finish_robot_job()
-        self.assertFalse(s1.has_robot_job())
-        self.assertEqual(s1.state, StationState.PROCESSING)
+        self.assertFalse(t_sm.process_state_transitions())
+        t_station.finish_robot_job()
+        self.assertFalse(t_station.has_robot_job())
+        self.assertEqual(t_station.state, StationState.PROCESSING)
 
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'load_sample')
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'load_sample')
 
-        self.assertTrue(s1.has_robot_job())
-        self.assertEqual(s1.loaded_samples, 2)
+        self.assertTrue(t_station.has_robot_job())
+        self.assertEqual(t_station.loaded_samples, 2)
 
-        job = s1.get_robot_job()
-        self.assertEqual(s1.state, StationState.WAITING_ON_ROBOT)
+        job = t_station.get_robot_job()
+        self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 2)
-        self.assertFalse(sm1.process_state_transitions())
-        s1.finish_robot_job()
-        self.assertFalse(s1.has_robot_job())
-        self.assertEqual(s1.state, StationState.PROCESSING)
+        self.assertFalse(t_sm.process_state_transitions())
+        t_station.finish_robot_job()
+        self.assertFalse(t_station.has_robot_job())
+        self.assertEqual(t_station.state, StationState.PROCESSING)
 
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'station_process')
-        self.assertEqual(s1.state, StationState.WAITING_ON_OPERATION)
-        self.assertFalse(s1.has_robot_job())
-        self.assertFalse(sm1.process_state_transitions())
-        s1.state = StationState.OPERATION_COMPLETE
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'station_process')
+        self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
+        self.assertFalse(t_station.has_robot_job())
+        self.assertFalse(t_sm.process_state_transitions())
+        t_station.finish_station_operation()
         
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'unload_sample')
-        self.assertEqual(s1.state, StationState.PROCESSING)
-        self.assertTrue(s1.has_robot_job())
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'unload_sample')
+        self.assertEqual(t_station.state, StationState.PROCESSING)
+        self.assertTrue(t_station.has_robot_job())
         
-        job = s1.get_robot_job()
-        self.assertEqual(s1.state, StationState.WAITING_ON_ROBOT)
+        job = t_station.get_robot_job()
+        self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 2)
-        self.assertFalse(sm1.process_state_transitions())
-        s1.finish_robot_job()
-        self.assertFalse(s1.has_robot_job())
-        self.assertEqual(s1.state, StationState.PROCESSING)
+        self.assertFalse(t_sm.process_state_transitions())
+        t_station.finish_robot_job()
+        self.assertFalse(t_station.has_robot_job())
+        self.assertEqual(t_station.state, StationState.PROCESSING)
 
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'unload_sample')
-        self.assertEqual(s1.state, StationState.PROCESSING)
-        self.assertTrue(s1.has_robot_job())
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'unload_sample')
+        self.assertEqual(t_station.state, StationState.PROCESSING)
+        self.assertTrue(t_station.has_robot_job())
         
-        job = s1.get_robot_job()
-        self.assertEqual(s1.state, StationState.WAITING_ON_ROBOT)
+        job = t_station.get_robot_job()
+        self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 1)
-        self.assertFalse(sm1.process_state_transitions())
-        s1.finish_robot_job()
-        self.assertFalse(s1.has_robot_job())
-        self.assertEqual(s1.state, StationState.PROCESSING)
+        self.assertFalse(t_sm.process_state_transitions())
+        t_station.finish_robot_job()
+        self.assertFalse(t_station.has_robot_job())
+        self.assertEqual(t_station.state, StationState.PROCESSING)
 
-        self.assertTrue(sm1.process_state_transitions())
-        self.assertEqual(sm1.state, 'init_state')
-        self.assertEqual(s1.state, StationState.PROCESSING_COMPLETE)
-        self.assertEqual(s1.loaded_samples, 0)
-        self.assertTrue(s1.has_processed_batch())
-        self.assertTrue(s1.assigned_batch is None)
+        self.assertTrue(t_sm.process_state_transitions())
+        self.assertEqual(t_sm.state, 'init_state')
+        self.assertEqual(t_station.state, StationState.PROCESSING_COMPLETE)
+        self.assertEqual(t_station.loaded_samples, 0)
+        self.assertTrue(t_station.has_processed_batch())
+        self.assertTrue(t_station.assigned_batch is None)
 
         print("all done here")
 

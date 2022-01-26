@@ -2,8 +2,6 @@ from bson.objectid import ObjectId
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Liquid
 from archemist.exceptions.exception import InvalidLiquidError
-from archemist.util.location import Location
-
 
 class PeristalticLiquidDispensing(Station):
     def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
@@ -24,8 +22,8 @@ class PeristalticLiquidDispensing(Station):
 
     @classmethod
     def from_object_id(cls, db_name: str, object_id: ObjectId):
-        batch_dict = {'object_id':object_id}
-        return cls(db_name, batch_dict, None, None, None)
+        station_dict = {'object_id':object_id}
+        return cls(db_name, station_dict, None, None)
 
     def get_liquid(self, pumpId: str):
         liquid_obj_id = self.get_nested_field(f'pump_liquid_map.{pumpId}')

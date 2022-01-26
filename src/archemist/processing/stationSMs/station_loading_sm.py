@@ -5,11 +5,13 @@ from archemist.util import Location
 
 class StationLoadingSm():
     
-    def __init__(self, args: dict):
+    def __init__(self, station: Station, args: dict):
+
+        self._station = station
         self.batch_mode = args['batch_mode']
         self._load_frame = args['load_frame']
 
-        self._station = None
+        
 
         ''' States '''
         states = [ State(name='init_state', on_enter='_print_state'), 
@@ -46,9 +48,6 @@ class StationLoadingSm():
             # unload_sample transitions
             self.machine.add_transition('process_state_transitions', source='unload_sample',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded', after='inc_samples_count')
             self.machine.add_transition('process_state_transitions', source='unload_sample',dest='final_state', conditions=['are_all_samples_loaded','is_station_job_ready'] , before='reset_station')
-        
-    def set_station(self, station:Station):
-        self._station = station
 
     def is_station_job_ready(self):
         return self._station.state == StationState.PROCESSING and not self._station.has_robot_job()
@@ -72,7 +71,7 @@ class StationLoadingSm():
         self._station.unload_sample()
 
     def set_station_to_processing(self):
-        self._station.state = StationState.PROCESSING
+        self._station.set_to_processing()
 
     def reset_station(self):
         while(self._station.loaded_samples > 0):
@@ -84,7 +83,7 @@ class StationLoadingSm():
         self._station.set_robot_job(MoveSampleOp(sample_index, self._station.assigned_batch.location, sample_target_location, RobotOutputDescriptor()))
 
     def start_operation(self):
-        self._station.state = StationState.WAITING_ON_OPERATION
+        self._station.request_station_operation()
 
     def request_unload_vial_job(self):
         sample_index = self._station.loaded_samples

@@ -9,7 +9,7 @@ class DbObjProxy:
         self._db_name = db
         self._collection_name = collection
         if isinstance(obj_data, dict):
-            stored_document = self._db_collection.find_one({'object': obj_data['object'], 'id': obj_data['id']})
+            stored_document = self._db_collection.find_one({'class': obj_data['class'], 'id': obj_data['id']})
             if stored_document is None:
                 self._object_id = self._db_collection.insert_one(obj_data).inserted_id
             else:
