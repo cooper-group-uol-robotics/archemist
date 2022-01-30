@@ -1,6 +1,4 @@
 from archemist.state.robot import Robot, RobotState, PickBatchToDeckOp, PlaceBatchFromDeckOp, PickAndPlaceBatchOp, MoveSampleOp
-from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
-from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.state import State
 
 
@@ -11,35 +9,31 @@ class RobotScheduler():
     def schedule(self, job_station_queue: list, state:State):
         pass
 
-    def _commit_robot_job(self, state: State, robot: Robot, job_station_tup: tuple):
-        robot.assign_job(job_station_tup)
-        state.modifyObjectDB(robot)
-
 
 class SimpleRobotScheduler(RobotScheduler):
     def __init__(self):
         super().__init__()
-    # TODO change tuple to StationRobotJob
+
     def schedule(self, job_station_queue: list, state: State):
         unassigned_jobs = list()
         while job_station_queue:
-            (robot_job, station) = job_station_queue.pop()
+            station_robot_job = job_station_queue.pop()
             job_assigned = False
+            robot_job = station_robot_job.robot_job
             if isinstance(robot_job, PickBatchToDeckOp) or isinstance(robot_job, PlaceBatchFromDeckOp) or isinstance(robot_job, PickAndPlaceBatchOp):
-                robot = self._state.getRobot('KukaLBRIIWA',1)
+                robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
                 if robot.state == RobotState.IDLE:
-                    job_station_tup = tuple((robot_job, station))
-                    self._commit_robot_job(state, robot, job_station_tup)
+                    robot.assign_job(station_robot_job)
                     job_assigned = True
             elif isinstance(robot_job, MoveSampleOp):
                 for robot in state.robots:
                     if robot.state == RobotState.IDLE:
                         if robot.location.get_map_coordinates() == robot_job.start_location.get_map_coordinates():
                             if robot_job.start_location.frame_name in robot.saved_frames and robot_job.target_location.frame_name in robot.saved_frames:
-                                job_station_tup = tuple((robot_job, station))
-                                self._commit_robot_job(state, robot, job_station_tup)
+                                robot.assign_job(station_robot_job)
                                 job_assigned = True
             if not job_assigned:
-                unassigned_jobs.append(tuple((robot_job, station)))
+                unassigned_jobs.append(station_robot_job)
+        
         job_station_queue.extend(unassigned_jobs)
             

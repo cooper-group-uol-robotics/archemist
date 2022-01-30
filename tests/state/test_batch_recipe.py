@@ -86,7 +86,10 @@ class BatchRecipeTest(unittest.TestCase):
 
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
-        self.assertEqual(batch.recipe.current_state, 'IkaPlateRCTDigital.IKAStirringOpDescriptor')
+        self.assertEqual(batch.recipe.current_state, 'IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor')
+        station_name, station_id = batch.recipe.get_current_station()
+        self.assertEqual(station_name, 'IkaPlateRCTDigital')
+        self.assertEqual(station_id, 2)
         op1_dict = batch.recipe.get_current_task_op_dict()
         self.assertEqual(op1_dict['type'], 'IKAStirringOpDescriptor')
         self.assertEqual(op1_dict['properties']['rpm'], 200)
@@ -94,7 +97,10 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertFalse(batch.recipe.is_complete())
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
-        self.assertEqual(batch.recipe.current_state, 'FisherWeightingStation.FisherWeightStablepDescriptor')
+        self.assertEqual(batch.recipe.current_state, 'FisherWeightingStation.id_5.FisherWeightStablepDescriptor')
+        station_name, station_id = batch.recipe.get_current_station()
+        self.assertEqual(station_name, 'FisherWeightingStation')
+        self.assertEqual(station_id, 5)
         op2_dict = batch.recipe.get_current_task_op_dict()
         self.assertEqual(op2_dict['type'], 'FisherWeightStablepDescriptor')
         self.assertFalse(batch.recipe.is_complete())

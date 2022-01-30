@@ -4,7 +4,7 @@ materials:
   liquids: [water]
   solids: [sodium_chloride]
 stations:
-  - name: IkaPlateRCTDigital
+  - name: IkaPlateRCTDigital.id_2
     stationOps:
       - type: IKAStirringOpDescriptor
         properties:
@@ -12,19 +12,19 @@ stations:
           duration: 10
           unit: seconds
         output: "IKAOutputDescriptor"
-  - name: FisherWeightingStation
+  - name: FisherWeightingStation.id_5
     stationOps:
       - type: FisherWeightStablepDescriptor
         properties:
         output: "FisherOutputDescriptor"
 workflowSM:
   - state_name: start
-    onSuccess: "IkaPlateRCTDigital.IKAStirringOpDescriptor"
+    onSuccess: "IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor"
     onFail: "end"
-  - state_name: IkaPlateRCTDigital.IKAStirringOpDescriptor
-    onSuccess: "FisherWeightingStation.FisherWeightStablepDescriptor"
+  - state_name: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+    onSuccess: "FisherWeightingStation.id_5.FisherWeightStablepDescriptor"
     onFail: "end"
-  - state_name: FisherWeightingStation.FisherWeightStablepDescriptor
+  - state_name: FisherWeightingStation.id_5.FisherWeightStablepDescriptor
     onSuccess: "end"
     onFail: "end"
   - state_name: end

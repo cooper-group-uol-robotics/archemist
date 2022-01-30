@@ -104,16 +104,9 @@ class Batch(DbObjProxy):
     def processed(self):
         return self.get_field('processed')
 
-    # @property
-    # def assigned(self):
-    #     return self._assigned
-
-    # @assigned.setter
-    # def assigned(self, value):
-    #     if isinstance(value, bool):
-    #         self._assigned = value
-    #     else:
-    #         raise ValueError
+    @property
+    def num_samples(self):
+        return self.get_field('num_samples')
 
     @property
     def current_sample_index(self):
@@ -155,10 +148,6 @@ class Batch(DbObjProxy):
     def reset_samples_processing(self):
         return self.update_field('all_samples_processed', False)
 
-
-    @property
-    def num_samples(self):
-        return self.get_field('num_samples')
 
     def _log_batch(self, message: str):
         print(f'[{self}]: {message}')

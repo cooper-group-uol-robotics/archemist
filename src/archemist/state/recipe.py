@@ -51,10 +51,18 @@ class Recipe:
 
     def get_current_task_op_dict(self):
         if not self.is_complete():
-            self._station_flow.state = self.current_state
-            _, current_op_name = self._station_flow.state.split('.')
+            self._station_flow.state = self.current_state # to set the state machine state to the current state stored on the db
+            _,_, current_op_name = self._station_flow.state.split('.')
             current_op_dict = next(op_dict for op_dict in self._station_op_descriptors if op_dict['type'] == current_op_name)
             return current_op_dict
+
+    def get_current_station(self):
+        if not self.is_complete():
+            self._station_flow.state = self.current_state
+            current_station_name,current_station_id, _ = self._station_flow.state.split('.')
+            current_station_id = int(current_station_id.strip('id_'))
+            return current_station_name, current_station_id
+
         
     def _logRecipe(self, message: str):
         print(f'Recipe [{self._id}]: ' + message)

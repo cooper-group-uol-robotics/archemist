@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from archemist.persistence.objectConstructor import ObjectConstructor
 from bson.objectid import ObjectId
+from multipledispatch import dispatch
 
 
 class State:
@@ -60,12 +61,24 @@ class State:
             processed_batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
         return processed_batches
 
+    @dispatch(ObjectId)
     def get_station(self, object_id: ObjectId):
         station_doc = self._stations.find_one({'_id': object_id})
         return ObjectConstructor.construct_station_from_object_id(self._db_name, station_doc)
 
+    @dispatch(str, int)
+    def get_station(self, station_class: str, station_id: int):
+        station_doc = self._stations.find_one({'class': station_class, 'id': station_id})
+        return ObjectConstructor.construct_station_from_object_id(self._db_name, station_doc)
+
+    @dispatch(ObjectId)
     def get_robot(self, object_id: ObjectId):
         robot_doc = self._robots.find_one({'_id': object_id})
+        return ObjectConstructor.construct_robot_from_object_id(self._db_name, robot_doc)
+
+    @dispatch(str, int)
+    def get_robot(self, robot_class: str, robot_id: int):
+        robot_doc = self._robots.find_one({'class': robot_class, 'id': robot_id})
         return ObjectConstructor.construct_robot_from_object_id(self._db_name, robot_doc)
         
         
