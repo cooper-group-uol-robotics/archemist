@@ -12,6 +12,10 @@ class State:
         self._robots = self._mongo_client[db_name]['robots']
         self._materials = self._mongo_client[db_name]['materials']
         self._batches= self._mongo_client[db_name]['batches']
+
+    @property
+    def db_name(self):
+        return self._db_name
     
     @property
     def liquids(self):

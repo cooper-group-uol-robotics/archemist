@@ -20,6 +20,12 @@ class ObjectConstructor:
         return station_cls.from_object_id(db_name, station_document['_id'])
 
     @staticmethod
+    def construct_station_op_from_dict(station_op_dict: dict):
+        station_op_cls = getattr(archemist.state.stations, station_op_dict['type'])
+        station_output_cls = getattr(archemist.state.stations, station_op_dict['output'])
+        return station_op_cls(station_op_dict['properties'], station_output_cls())
+
+    @staticmethod
     def construct_material_from_document(db_name: str, material_class: str, material_dict: dict):
         material_cls = getattr(archemist.state.material, material_class)
         return material_cls.from_dict(db_name, material_dict)

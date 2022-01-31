@@ -1,3 +1,4 @@
+from archemist.state.robot import Robot
 import rospy
 from archemist_msgs.msg import HandlerBusMessage, PandaCommand
 from kmriiwa_chemist_msgs.msg import TaskStatus
@@ -9,15 +10,15 @@ from archemist.processing.handler import RobotHandler
 from rospy.core import is_shutdown
 
 class PandaHandler(RobotHandler):
-    def __init__(self, robot_id: int):
-        super.__init__('PandaFranka', robot_id)
-        rospy.init_node(self._robot_name + f"_{robot_id}_handler")
+    def __init__(self, robot: Robot):
+        super().__init__(robot)
+        rospy.init_node( f'{self._robot}_handler')
         self._pandaCmdPub = rospy.Publisher('/panda1/commands', PandaCommand, queue_size=1)
         rospy.Subscriber('/panda1/task_status', TaskStatus, self.panda_task_cb, queue_size=2)
         self._panda_task = ''
         self._panda_done = False
 
-        rospy.loginfo(self._robot_name + f" with id:{robot_id} handler is running")
+        rospy.loginfo(f'{self._robot}_handler is running')
         while (not rospy.is_shutdown()):
             self.handle()
             rospy.sleep(3)
@@ -52,19 +53,22 @@ class PandaHandler(RobotHandler):
         return None
 
     def execute_job(self):
-        (assigned_job, station) = self._robot.assigned_job
-        assigned_job.add_timestamp()
-        pandaJob = self.process_op(assigned_job) # this has to be changed to convert vial job to a good message to panda
+        station_robot_job = self._robot.assigned_job
+        station_robot_job.robot_op.add_timestamp()
+        # this has to be changed to convert vial job to a good message to panda
+        pandaJob = self.process_op(station_robot_job.robot_op)
         self._panda_task = str(pandaJob.panda_command)
         rospy.loginfo('executing ' + self._panda_task)
         self._pandaCmdPub.publish(pandaJob)
         self.wait_for_panda()
 
-        assigned_job.output.has_result = True
-        assigned_job.output.success = True
-        assigned_job.output.add_timestamp()
+        station_robot_job.robot_op.output.has_result = True
+        station_robot_job.robot_op.output.success = True
+        station_robot_job.robot_op.output.add_timestamp()
 
-        #self._pandaState._processed_batch.getCurrentSample().location = Location(8,7,opDescriptor.end_pos.frame_name)
+        return station_robot_job
+
+
 
 if __name__ == '__main__':
     panad_handler = PandaHandler(1)

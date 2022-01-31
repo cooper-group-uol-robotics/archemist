@@ -101,9 +101,16 @@ class IkaPlateRCTDigital(Station):
 
     def set_station_op(self, stationOp: StationOpDescriptor):
         self.mode = stationOp.mode
-        self.set_temperature = stationOp.set_temperature
-        self.set_stirring_speed = stationOp.set_stirring_speed
-        self.set_duration = stationOp.duration
+        if self.mode == IKAMode.HEATINGSTIRRING:
+            self.set_temperature = stationOp.set_temperature
+            self.set_stirring_speed = stationOp.set_stirring_speed
+            self.set_duration = stationOp.duration
+        elif self.mode == IKAMode.HEATING:
+            self.set_temperature = stationOp.set_temperature
+            self.set_duration = stationOp.duration
+        elif self.mode == IKAMode.STIRRING:
+            self.set_stirring_speed = stationOp.set_stirring_speed
+            self.set_duration = stationOp.duration
         super().set_station_op(stationOp)
 
     def finish_station_operation(self):

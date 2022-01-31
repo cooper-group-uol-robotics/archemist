@@ -47,11 +47,10 @@ class RobotTest(unittest.TestCase):
 
         # complete robot job
         self.assertFalse(t_robot.has_complete_job())
-        robot_output = RobotOutputDescriptor()
-        robot_output.has_result = True
-        robot_output.success = True
-        robot_output.add_timestamp()
-        t_robot.complete_assigned_job(robot_output)
+        stn_robot_job.robot_op.output.has_result = True
+        stn_robot_job.robot_op.output.success = True
+        stn_robot_job.robot_op.output.add_timestamp()
+        t_robot.complete_assigned_job(stn_robot_job)
         self.assertTrue(t_robot.assigned_job is None)
         self.assertEqual(t_robot.state, RobotState.EXECUTION_COMPLETE)
         self.assertTrue(t_robot.has_complete_job())

@@ -4,6 +4,7 @@ from archemist.state.robot import Robot, RobotState
 from archemist.state.batch import Batch
 from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
+from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from archemist.processing.scheduler import SimpleRobotScheduler
 from collections import deque
@@ -26,7 +27,23 @@ class WorkflowManager:
 
     def start_processor(self):
         self._running = True
-        self._processor_thread = Thread(target=self.process, daemon=True)
+        self._processor_thread = Thread(target=self._process, daemon=True)
+        self._processor_thread.start()
+        self._log_processor('processor thread is started')
+
+    def stop_processor(self):
+        self._running = False
+        self._processor_thread.join(1)
+        self._log_processor('processor thread is terminated')
+
+    def add_batch(self, batch_id, recipe_file_path, num_samples, location):
+        recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
+        new_batch = Batch.from_arguments(self._workflow_state.db_name, batch_id, recipe_dict, 
+                                        num_samples, location)
+        new_batch.recipe.advance_state(True) # to move out of start state
+        self._unassigned_batches.append(new_batch)
+
+
 
     def initializeWorkflow(self):
         # kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
@@ -45,11 +62,8 @@ class WorkflowManager:
         #     except:
         #         print("Couldn't launch node: " + stationHandlerName)
 
-    def createBatch(self, batch_id, num_sample, location):
-        self._unassigned_batches.append(Batch(batch_id, parser.loadRecipeYaml(), num_sample, location))
-
     # this can keep track of the batches on the robot deck
-    def process(self):
+    def _process(self):
         while (self._running):
             # process unassigned batches
             while self._unassigned_batches:
@@ -78,7 +92,7 @@ class WorkflowManager:
                     self._job_station_queue.append(station_robot_job)
                 elif station.has_processed_batch():
                     processed_batch = station.get_processed_batch()
-                    processed_batch.recipe.advance_recipe_state(True)
+                    processed_batch.recipe.advance_state(True)
                     self._log_processor(f'Processing {processed_batch} is complete. Adding to the unassigned list.')
                     self._unassigned_batches.append(processed_batch)
 

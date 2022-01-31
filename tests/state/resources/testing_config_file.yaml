@@ -30,34 +30,34 @@ workflow:
         node_id: 1
         graph_id: 7
       process_state_machine:
-        - type: StationLoadingSm
-          args:
-            batch_mode: true
-            load_frame: '/liquidStation/loadFrame'
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/liquidStation/loadFrame'
       parameters:
         liquid_pump_map:
           water: pUmP1
     - class: IkaPlateRCTDigital
       id: 2
       location:
-        node_id: 2
+        node_id: 1
         graph_id: 7
       process_state_machine:
-        - type: StationLoadingSm
-          args:
-            batch_mode: true
-            load_frame: '/ikaStation/loadFrame'
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/ikaStation/loadFrame'
       parameters:
     - class: FisherWeightingStation
       id: 5
       location:
-        node_id: 3
+        node_id: 1
         graph_id: 7
       process_state_machine:
-        - type: StationLoadingSm
-          args:
-            batch_mode: true
-            load_frame: '/fisherScaleStation/loadFrame'
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/fisherScaleStation/loadFrame'
       parameters:
   name: solubility_workflow
   timestamp: 08/26/2021, 15:28:26

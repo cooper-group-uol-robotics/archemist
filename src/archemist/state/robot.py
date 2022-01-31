@@ -217,9 +217,7 @@ class Robot(DbObjProxy):
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
-    def complete_assigned_job(self, robot_op_output: RobotOutputDescriptor):
-        station_robot_job = self.assigned_job
-        station_robot_job.robot_op.output = robot_op_output
+    def complete_assigned_job(self, station_robot_job: StationRobotJob):
         encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
         self.update_field('complete_job', encoded_station_robot_job)
         self.update_field('assigned_job', None)

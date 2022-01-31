@@ -4,6 +4,7 @@ from enum import Enum
 from datetime import datetime
 from archemist.persistence.dbObjProxy import DbObjProxy
 from archemist.util.location import Location
+from archemist.util.station_robot_job import StationRobotJob
 from archemist.state.batch import Batch
 #import archemist.processing.stationSMs
 
@@ -195,8 +196,9 @@ class Station(DbObjProxy):
             return robot_job
 
     def set_robot_job(self, robot_job):
-        encoded_robot_job = DbObjProxy.encode_object(robot_job)
-        self.update_field('req_robot_job', encoded_robot_job)
+        station_robot_job = StationRobotJob(robot_job, self.object_id) 
+        encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
+        self.update_field('req_robot_job', encoded_station_robot_job)
         self._log_station(f'Requesting robot job ({robot_job})')
 
     def finish_robot_job(self):
