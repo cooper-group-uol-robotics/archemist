@@ -5,17 +5,10 @@ from archemist.persistence.persistenceManager import PersistenceManager
 from archemist.util.location import Location
 from archemist.processing.handler import RobotHandler
 import time
+
 class EmuPandaHandler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
-        print(f'{self._robot}_handler is running')
-        try:
-            while True:
-                self.handle()
-                time.sleep(2)
-        except KeyboardInterrupt:
-            print('Terminating!!!')
-            pass
 
     def execute_job(self):
         station_robot_job = self._robot.assigned_job
@@ -28,10 +21,18 @@ class EmuPandaHandler(RobotHandler):
 
         return station_robot_job
 
+    def run(self):
+        print(f'{self._robot}_handler is running')
+        try:
+            while True:
+                self.handle()
+                time.sleep(2)
+        except KeyboardInterrupt:
+            print(f'{self._robot}_handler is terminating!!!')
+
 
 if __name__ == '__main__':
     p_manager = PersistenceManager('test')
     state = p_manager.construct_state_from_db()
     robot = state.get_robot('PandaFranka', 1)
-    robot.location = Location(1, 7, 'neutral')
     panad_handler = EmuPandaHandler(robot)

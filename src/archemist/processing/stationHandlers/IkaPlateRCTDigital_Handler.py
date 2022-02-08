@@ -16,11 +16,17 @@ class IkaPlateRCTDigital_Handler(StationHandler):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
         self.pubIka = rospy.Publisher("/IKA_Commands", IKACommand, queue_size=1)
+        rospy.sleep(1)
         
-        print(f'{self._station }_handler is running')
-        while (not rospy.is_shutdown()):
-            self.handle()
-            rospy.sleep(3)
+
+    def run(self):
+        rospy.loginfo(f'{self._station}_handler is running')
+        try:
+            while True:
+                self.handle()
+                rospy.sleep(2)
+        except KeyboardInterrupt:
+            rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
     def process(self):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()

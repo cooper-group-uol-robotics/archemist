@@ -147,7 +147,8 @@ class Robot(DbObjProxy):
         if len(robot_document) > 1:
 
             robot_document['operational'] = True
-            robot_document['location'] = None
+            if 'location' not in robot_document:
+                robot_document['location'] = None
             
             robot_document['assigned_job'] = None
             robot_document['complete_job'] = None

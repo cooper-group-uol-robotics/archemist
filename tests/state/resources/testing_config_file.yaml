@@ -2,6 +2,10 @@ workflow:
   Robots:
     - class: PandaFranka
       id: 1
+      location:
+        node_id: 1
+        graph_id: 7
+        frame_name: neutral
       saved_frames:
         - '/ikaStation/RackHolderFrame'
         - '/ikaStation/loadFrame'

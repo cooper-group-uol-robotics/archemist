@@ -8,14 +8,6 @@ import time
 class EmuIkaPlateRCTDigital_Handler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
-        print(f'{self._station}_handler is running')
-        try:
-            while True:
-                self.handle()
-                time.sleep(2)
-        except KeyboardInterrupt:
-            print('Terminating!!!')
-            pass
 
     def process(self):
         print('doing operation')
@@ -28,6 +20,15 @@ class EmuIkaPlateRCTDigital_Handler(StationHandler):
         current_op.output.add_timestamp()
 
         return current_op
+
+    def run(self):
+        print(f'{self._station}_handler is running')
+        try:
+            while True:
+                self.handle()
+                time.sleep(2)
+        except KeyboardInterrupt:
+            print(f'{self._station}_handler is terminating!!!')
 
 if __name__ == '__main__':
     p_manager = PersistenceManager('test')

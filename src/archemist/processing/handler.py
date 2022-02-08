@@ -29,6 +29,9 @@ class StationHandler:
             self._station.assigned_batch.add_station_op_to_current_sample(operation_op)
             self._station.assigned_batch.process_current_sample()
 
+    def run(self):
+        pass
+
 class RobotHandler:
     def __init__(self, robot: Robot):
         self._robot = robot
@@ -41,3 +44,6 @@ class RobotHandler:
         if (self._robot.state == RobotState.EXECUTING_JOB):
             station_robot_job = self.execute_job()
             self._robot.complete_assigned_job(station_robot_job)
+
+    def run(self):
+        pass

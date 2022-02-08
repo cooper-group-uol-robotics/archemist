@@ -3,8 +3,10 @@ from archemist.persistence.dbHandler import dbHandler
 import archemist.state.robots
 import archemist.state.stations
 from archemist.state.station import Station
+from archemist.state.robot import Robot
 import archemist.state.material
 import archemist.processing.stationSMs
+import archemist.processing.robotHandlers
 
 
 class ObjectConstructor:
@@ -54,3 +56,15 @@ class ObjectConstructor:
         sm_dict = station.process_sm_dict
         station_sm_cls = getattr(archemist.processing.stationSMs, sm_dict['type'])
         return station_sm_cls(station, sm_dict['args'])
+
+    @staticmethod
+    def construct_robot_handler(robot: Robot):
+        handler_name = f'{robot.__class__.__name__}_Handler'
+        handler_cls = getattr(archemist.processing.robotHandlers, handler_name)
+        return handler_cls(robot)
+
+    @staticmethod
+    def construct_station_handler(station: Station):
+        handler_name = f'{station.__class__.__name__}_Handler'
+        handler_cls = getattr(archemist.processing.robotHandlers, handler_name)
+        return handler_cls(station)

@@ -9,8 +9,6 @@ from archemist.util.location import Location
 from archemist.processing.scheduler import SimpleRobotScheduler
 from collections import deque
 from threading import Thread
-import rospy
-import roslaunch
 from time import sleep
 
 
@@ -42,25 +40,6 @@ class WorkflowManager:
                                         num_samples, location)
         new_batch.recipe.advance_state(True) # to move out of start state
         self._unassigned_batches.append(new_batch)
-
-
-
-    def initializeWorkflow(self):
-        # kuka1 = self._state.getRobot('KukaLBRIIWA',1) 
-        # kuka1.location = Location(5,7,'drive_frame')
-        # self._state.modifyObjectDB(kuka1)
-        panda = self._state.getRobot('PandaFranka',1)
-        panda.location = Location(1,7,'neutral')
-        self._state.modifyObjectDB(panda)
-        # launch = roslaunch.scriptapi.ROSLaunch()
-        # launch.start()
-        # for station in self._state.stations:
-        #     stationHandlerName = station.__class__.__name__ + "_Handler"
-        #     try:
-        #         node = roslaunch.core.Node('archemist', stationHandlerName)
-        #         process = launch.launch(node)
-        #     except:
-        #         print("Couldn't launch node: " + stationHandlerName)
 
     # this can keep track of the batches on the robot deck
     def _process(self):
