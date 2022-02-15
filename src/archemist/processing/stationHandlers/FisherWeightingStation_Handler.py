@@ -4,7 +4,7 @@ import rospy
 from archemist.state.station import Station
 from archemist.state.stations.fisher_weighing_station import FisherWeightingStation
 from archemist.persistence.objectConstructor import ObjectConstructor
-from fisherbrand_pps4102_balance.msg import BalanceCommand, BalanceReading
+from fisherbrand_pps4102_balance_msgs.msg import BalanceCommand, BalanceReading
 from archemist.processing.handler import StationHandler
 
 class FisherWeightingStation_Handler(StationHandler):
@@ -17,7 +17,7 @@ class FisherWeightingStation_Handler(StationHandler):
     def run(self):
         rospy.loginfo(f'{self._station}_handler is running')
         try:
-            while True:
+            while not rospy.is_shutdown():
                 self.handle()
                 rospy.sleep(2)
         except KeyboardInterrupt:
@@ -27,7 +27,7 @@ class FisherWeightingStation_Handler(StationHandler):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
         current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
         current_op.add_timestamp()
-        print('reading stable weight')
+        rospy.loginfo('reading stable weight')
         self.pubFisherScale.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
         balance_reading = rospy.wait_for_message('/Balance_Weights',BalanceReading)
         
