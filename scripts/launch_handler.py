@@ -3,16 +3,16 @@ from archemist.persistence.persistenceManager import PersistenceManager
 from archemist.persistence.objectConstructor import ObjectConstructor
 import multiprocessing as mp
 from time import sleep
-import os
+from pathlib import Path
 
 from collections import namedtuple
 
-HanlderDescriptor = namedtuple('HanlderArgs', ['type','class_name', 'id'])
+HandlerArgs = namedtuple('HandlerArgs', ['type','class_name', 'id'])
 
-def run_handler(handler_discriptor: HanlderDescriptor):
+def run_handler(handler_discriptor: HandlerArgs):
     p_manager = PersistenceManager('test')
     state = p_manager.construct_state_from_db()
-    
+    print(handler_discriptor)
     if handler_discriptor.type == 'stn':
         station = state.get_station(handler_discriptor.class_name, handler_discriptor.id)
         handler = ObjectConstructor.construct_station_handler(station)
@@ -23,14 +23,16 @@ def run_handler(handler_discriptor: HanlderDescriptor):
 
 if __name__ == '__main__':
     
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    config_file_path = os.path.abspath(os.path.join(current_dir, '../state/resources/testing_config_file.yaml'))
+    current_dir = Path.cwd()
+    config_file_path = current_dir.joinpath('config_files/solubility_screening_config.yaml')
 
     try:
         # get config dict
-        config_dict = YamlHandler.loadYamlFile(config_file_path)
-        handlers_discrptors = [('stn', station['class'], station['id']) for station in config_dict['Stations']]
-        handlers_discrptors.extend([('rob', robot['class'], robot['id']) for robot in config_dict['Robots']])
+        config_dict = YamlHandler.loadYamlFile(config_file_path.absolute())
+
+        handlers_discrptors = [HandlerArgs('stn', station['class'], station['id']) for station in config_dict['workflow']['Stations']]
+        handlers_discrptors.extend([HandlerArgs('rob', robot['class'], robot['id']) for robot in config_dict['workflow']['Robots']])
+
         # launch handlers this assumes the state was constructed from a config file before hand
         procs = [mp.Process(target=run_handler, args=(desciptor,)) for desciptor in handlers_discrptors]
         for proc in procs:
@@ -42,5 +44,3 @@ if __name__ == '__main__':
         for proc in procs:
             proc.terminate()
             proc.join()
-    finally:
-        print('All processes terminated')
