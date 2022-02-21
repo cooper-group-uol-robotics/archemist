@@ -1,13 +1,13 @@
 from archemist.processing.prcessor import WorkflowManager
 from archemist.persistence.persistenceManager import PersistenceManager
 from archemist.util.location import Location
-import os
+from pathlib import Path
 from time import sleep
 
 if __name__ == '__main__':
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    config_file_path = os.path.abspath(os.path.join(current_dir, '../state/resources/testing_config_file.yaml'))
-    recipe_file_path = os.path.abspath(os.path.join(current_dir, '../state/resources/testing_recipe.yaml'))
+    resources_dir = Path.cwd().parent.joinpath('state/resources')
+    config_file_path = resources_dir.joinpath('testing_config_file.yaml')
+    recipe_file_path = resources_dir.joinpath('testing_recipe.yaml')
 
     try:
         
@@ -22,6 +22,4 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         wm_manager.stop_processor()
-    finally:
-        print('workmanager process is terminated')
 

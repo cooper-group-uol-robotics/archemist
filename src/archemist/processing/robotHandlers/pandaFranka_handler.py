@@ -1,6 +1,6 @@
 from archemist.state.robot import Robot, MoveSampleOp
 import rospy
-from franka_msgs_archemist.msg import PandaTask, TaskStatus
+from panda_archemist_msgs.msg import PandaTask, PandaTaskStatus
 from kmriiwa_chemist_msgs.msg import TaskStatus
 from archemist.processing.handler import RobotHandler
 
@@ -9,7 +9,7 @@ class PandaFranka_Handler(RobotHandler):
         super().__init__(robot)
         rospy.init_node( f'{self._robot}_handler')
         self._pandaCmdPub = rospy.Publisher('/panda1/commands', PandaTask, queue_size=1)
-        rospy.Subscriber('/panda1/task_status', TaskStatus, self.panda_task_cb, queue_size=2)
+        rospy.Subscriber('/panda1/task_status', PandaTaskStatus, self.panda_task_cb, queue_size=2)
         self._panda_task = ''
         self._panda_done = False
         self._task_counter = 0
@@ -39,8 +39,7 @@ class PandaFranka_Handler(RobotHandler):
         if isinstance(robotOp, MoveSampleOp):
             return PandaTask(task_type=PandaTask.MOVE_VIAL_TASK, 
                              task_name=f'MOVE_VIAL_TASK_{self._task_counter}', 
-                             start_frame=robotOp.start_location.frame_name,
-                             target_frame=robotOp.target_location.frame_name)
+                             task_parameters=[robotOp.start_location.frame_name,robotOp.target_location.frame_name])
         else:
             rospy.logerr('unknown robot op')    
         return None
