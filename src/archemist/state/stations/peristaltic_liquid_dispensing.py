@@ -40,7 +40,7 @@ class PeristalticLiquidDispensing(Station):
 
     def add_to_pump_liquid_level(self, pumpId: str, added_value: float):
         modified_liquid = self.get_liquid(pumpId)
-        modified_liquid.volume = modified_liquid.volume + added_value
+        modified_liquid.volume = modified_liquid.volume + added_value/1000 #assume value in ml
 
     def add_liquid(self, liquid_nam: str, added_volume: float):
         pumpId = self.get_pump_id(liquid_nam)
@@ -48,7 +48,7 @@ class PeristalticLiquidDispensing(Station):
 
     def reduce_pump_liquid_level(self, pumpId: str, value: float):
         modified_liquid = self.get_liquid(pumpId)
-        modified_liquid.volume = modified_liquid.volume - value
+        modified_liquid.volume = modified_liquid.volume - value/1000 # assume value in ml
 
     def dispense_liquid(self, liquid_nam: str, dispensed_volume: float):
         pumpId = self.get_pump_id(liquid_nam)

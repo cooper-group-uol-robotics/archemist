@@ -246,7 +246,7 @@ class Robot(DbObjProxy):
         self._log_robot(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self.id}'
+        return f'{self.__class__.__name__}_{self.id}'
 
 class mobileRobot(Robot):
     def __init__(self, db_name: str, robot_document: dict):

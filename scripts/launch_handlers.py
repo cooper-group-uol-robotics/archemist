@@ -1,6 +1,8 @@
 from archemist.persistence.yamlHandler import YamlHandler
 from archemist.persistence.persistenceManager import PersistenceManager
 from archemist.persistence.objectConstructor import ObjectConstructor
+import archemist.processing.robotHandlers
+import archemist.processing.stationHandlers
 import multiprocessing as mp
 from time import sleep
 from pathlib import Path
@@ -10,16 +12,25 @@ from collections import namedtuple
 HandlerArgs = namedtuple('HandlerArgs', ['type','class_name', 'id'])
 
 def run_handler(handler_discriptor: HandlerArgs):
-    p_manager = PersistenceManager('test')
+    p_manager = PersistenceManager('solubility_screening')
     state = p_manager.construct_state_from_db()
-    print(handler_discriptor)
     if handler_discriptor.type == 'stn':
         station = state.get_station(handler_discriptor.class_name, handler_discriptor.id)
-        handler = ObjectConstructor.construct_station_handler(station)
+        handler = construct_station_handler(station)
     elif handler_discriptor.type == 'rob':
         robot = state.get_robot(handler_discriptor.class_name, handler_discriptor.id)
-        handler = ObjectConstructor.construct_robot_handler(robot)
+        handler = construct_robot_handler(robot)
     handler.run()
+
+def construct_robot_handler(robot):
+    handler_name = f'{robot.__class__.__name__}_Handler'
+    handler_cls = getattr(archemist.processing.robotHandlers, handler_name)
+    return handler_cls(robot)
+
+def construct_station_handler(station):
+    handler_name = f'{station.__class__.__name__}_Handler'
+    handler_cls = getattr(archemist.processing.stationHandlers, handler_name)
+    return handler_cls(station)
 
 if __name__ == '__main__':
     

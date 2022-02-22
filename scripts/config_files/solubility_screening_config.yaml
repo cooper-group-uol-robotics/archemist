@@ -8,12 +8,9 @@ workflow:
         graph_id: 7
         frame_name: neutral
       saved_frames:
-        - '/Panda1Station/Home/Vial0'
-        - '/Panda1Station/RackHolderFrame/Vial1'
-        - '/Panda1Station/ChangeoverFrame/Vial1'
-        - '/Panda1Station/PumpFrame/Vial1'
-        - '/Panda1Station/IKAFrame/Vial1'
-        - '/Panda1Station/RecordIKAFrame/Vial1'
+        - 'home_frame'
+        - 'ika_frame'
+        - 'pump_frame'
   Materials:
     liquids:
       - name: water
@@ -21,7 +18,7 @@ workflow:
         amount_stored: 400
         unit: ml
         density: 997 #g/l
-        pump_id: p1
+        pump_id: pUmP1
         expiry_date: 2025-02-11
     solids:
       - name: sodium_chloride
@@ -41,7 +38,7 @@ workflow:
         type: StationLoadingSm
         args:
           batch_mode: true
-          load_frame: '/Panda1Station/PumpFrame'
+          load_frame: 'pump_frame'
       parameters:
         liquid_pump_map:
           water: pUmP1
@@ -54,5 +51,5 @@ workflow:
         type: StationLoadingSm
         args:
           batch_mode: true
-          load_frame: '/Panda1Station/IKAFrame'
+          load_frame: 'ika_frame'
       parameters:

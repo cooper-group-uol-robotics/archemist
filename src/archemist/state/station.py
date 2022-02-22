@@ -226,6 +226,6 @@ class Station(DbObjProxy):
         self._log_station(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self.id}'
+        return f'{self.__class__.__name__}_{self.id}'
 
 

@@ -1,5 +1,4 @@
 from archemist.state.robot import Robot, RobotState
-from archemist.state.state import State
 from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.station import Station, StationState
 
