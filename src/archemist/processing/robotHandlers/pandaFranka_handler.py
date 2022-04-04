@@ -8,7 +8,7 @@ class PandaFranka_Handler(RobotHandler):
         super().__init__(robot)
         rospy.init_node( f'{self._robot}_handler')
         self._pandaCmdPub = rospy.Publisher('/panda1/task', PandaTask, queue_size=1)
-        rospy.Subscriber('/panda1/task_status', PandaTaskStatus, self.panda_task_cb, queue_size=2)
+        rospy.Subscriber('/panda1/task_status', PandaTaskStatus, self._panda_task_cb, queue_size=2)
         self._panda_task = ''
         self._panda_done = False
         self._task_counter = 0
@@ -24,12 +24,12 @@ class PandaFranka_Handler(RobotHandler):
 
 
 
-    def panda_task_cb(self, msg):
+    def _panda_task_cb(self, msg):
         if msg.task_name == self._panda_task and msg.task_state == PandaTaskStatus.FINISHED:
             self._panda_task = ''
             self._panda_done = True
 
-    def wait_for_panda(self):
+    def _wait_for_panda(self):
         while(not self._panda_done):
             rospy.sleep(0.1)
         self._panda_done = False
@@ -51,7 +51,7 @@ class PandaFranka_Handler(RobotHandler):
         self._panda_task = pandaJob.task_name
         rospy.loginfo('executing ' + self._panda_task)
         self._pandaCmdPub.publish(pandaJob)
-        self.wait_for_panda()
+        self._wait_for_panda()
 
         station_robot_job.robot_op.output.has_result = True
         station_robot_job.robot_op.output.success = True

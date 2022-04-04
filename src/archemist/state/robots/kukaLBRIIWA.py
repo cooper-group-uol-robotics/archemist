@@ -3,6 +3,11 @@ from archemist.util import Location
 from bson.objectid import ObjectId
 
 
+class KukaLBRTask(SpecialJobOpDescriptor):
+    def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
+        super().__init__(job_name, job_params, job_location, output=output)
+
+
 
 class KukaLBRIIWA(mobileRobot):
     def __init__(self, db_name: str, robot_document: dict):

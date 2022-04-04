@@ -125,14 +125,19 @@ class PlaceBatchFromDeckOp(RobotOpDescriptor):
         return f'{self.__class__.__name__} robot_deck -> {self._place_location}'
 
 class SpecialJobOpDescriptor(RobotOpDescriptor):
-    def __init__(self, job_name: str, target_location: Location, output: RobotOutputDescriptor):
+    def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
         self._job_name = job_name
-        self._job_location = target_location
+        self._job_params = job_params
+        self._job_location = job_location
 
     @property
     def job_name(self):
         return self._job_name
+
+    @property
+    def job_params(self):
+        return self._job_params
 
     @property
     def job_location(self):
