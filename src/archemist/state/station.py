@@ -119,11 +119,6 @@ class Station(DbObjProxy):
         loc_dict = self.get_field('location')
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
 
-    def set_station_op(self, stationOp: StationOpDescriptor):
-        encodedStationOp = self.encode_object(stationOp)
-        self.update_field('current_station_op', encodedStationOp)
-        self.push_to_array_field('station_op_history',encodedStationOp)
-
     @property
     def station_op_history(self):
         en_op_history = self.get_field('station_op_history')
@@ -204,6 +199,28 @@ class Station(DbObjProxy):
     def finish_robot_job(self):
         self.update_field('req_robot_job', None)
         self._log_station(f'Robot job request is fulfilled.')
+        self.set_to_processing()
+
+    def has_station_op(self):
+        return self.get_field('current_station_op') is not None
+
+    def get_station_op(self):
+        encoded_op = self.get_field('current_station_op')
+        if encoded_op is not None:
+            station_op = DbObjProxy.decode_object(encoded_op)
+            return station_op
+
+    def set_station_op(self, stationOp: StationOpDescriptor):
+        encodedStationOp = DbObjProxy.encode_object(stationOp)
+        self.update_field('current_station_op', encodedStationOp)
+        self.request_station_operation()
+        self._log_station(f'Requesting station job ({stationOp})')
+
+    def finish_station_op(self, complete_station_op: StationOpDescriptor):
+        encodedStationOp = DbObjProxy.encode_object(complete_station_op)
+        self.update_field('current_station_op', None)
+        self._log_station(f'Station op is complete.')
+        self.push_to_array_field('station_op_history',encodedStationOp)
         self.set_to_processing()
 
     def set_to_processing(self):

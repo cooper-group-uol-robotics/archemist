@@ -1,6 +1,6 @@
 from archemist.state.robot import Robot, RobotState
 from archemist.persistence.objectConstructor import ObjectConstructor
-from archemist.state.station import Station, StationState
+from archemist.state.station import Station, StationState, StationOpDescriptor
 
 
 class StationHandler:
@@ -15,8 +15,7 @@ class StationHandler:
         self._station_sm.process_state_transitions()
         if (self._station.state == StationState.WAITING_ON_OPERATION):
             station_op = self.process()
-            self.update_station_batch(station_op)
-            self._station.finish_station_operation()
+            self._station.finish_station_op(station_op)
         
     def update_station_batch(self, operation_op):
         self._station.set_station_op(operation_op)

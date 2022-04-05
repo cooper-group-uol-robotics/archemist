@@ -93,7 +93,7 @@ class StationTest(unittest.TestCase):
         robot_op = MoveSampleOp(1, Location(1,7,'frame_A'), Location(1,7,'frame_B'), RobotOutputDescriptor())
         t_station.set_robot_job(robot_op)
         self.assertTrue(t_station.has_robot_job())
-        ret_robot_job = t_station.get_robot_job()
+        ret_robot_job, station_obj_id = t_station.get_robot_job()
         self.assertTrue(ret_robot_job is not None)
         self.assertEqual(robot_op.sample_index, ret_robot_job.sample_index)
         self.assertEqual(robot_op.start_location, ret_robot_job.start_location)
@@ -106,16 +106,28 @@ class StationTest(unittest.TestCase):
 
         # Station op
         self.assertEqual(len(t_station.station_op_history), 0)
+        self.assertFalse(t_station.has_station_op())
+        self.assertEqual(t_station.state,StationState.PROCESSING)
         station_op1 = PeristalticPumpOpDescriptor({'liquid': 'water', 'volume': 0.01},PeristalticPumpOutputDescriptor())
         t_station.set_station_op(station_op1)
-        station_history = t_station.station_op_history
-        current_op = t_station.current_station_op
-        self.assertEqual(len(station_history), 1)
+        self.assertTrue(t_station.has_station_op())
+        self.assertEqual(t_station.state,StationState.WAITING_ON_OPERATION)
+        
+        current_op = t_station.get_station_op()
         self.assertEqual(current_op.liquid_name, station_op1.liquid_name)
         self.assertEqual(current_op.dispense_volume, station_op1.dispense_volume)
+        t_station.finish_station_op(current_op)
+        self.assertFalse(t_station.has_station_op())
+        self.assertEqual(t_station.state,StationState.PROCESSING)
+        station_history = t_station.station_op_history
+        self.assertEqual(len(station_history), 1)
+        
 
         station_op2 = PeristalticPumpOpDescriptor({'liquid': 'water', 'volume': 0.005},PeristalticPumpOutputDescriptor())
         t_station.set_station_op(station_op2)
+        self.assertTrue(t_station.has_station_op())
+        t_station.finish_station_op(station_op2)
+
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 2)
         self.assertEqual(station_history[-1].liquid_name, station_op2.liquid_name)
@@ -158,9 +170,9 @@ class StationTest(unittest.TestCase):
         pump_id = t_station.get_pump_id('water')
         self.assertEqual(pump_id, 'pUmP1')
         t_station.add_liquid('water', 0.05)
-        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.45)
+        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.40005)
         t_station.dispense_liquid('water', 0.1)
-        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.35)
+        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.39995)
         
 
 
