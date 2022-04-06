@@ -2,7 +2,7 @@
 
 import rospy
 from archemist.state.station import Station
-from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSJobOutputDescriptor,CSStartJobOpDescriptor
+from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSJobOutputDescriptor,CSProcessingOpDescriptor
 from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 from chemspeed_flex_msgs.msg import CSFlexCommand,CSFlexStatus
@@ -38,7 +38,7 @@ class ChemSpeedFlexStation_Handler(StationHandler):
             rospy.loginfo('closing chemspeed door')
             self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
             self._wait_for_status(CSFlexStatus.DOOR_CLOSED)
-        elif (isinstance(current_op,CSStartJobOpDescriptor)):
+        elif (isinstance(current_op,CSProcessingOpDescriptor)):
             rospy.loginfo('starting chemspeed job')
             self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
             self._wait_for_status(CSFlexStatus.JOB_COMPLETE)

@@ -41,17 +41,16 @@ class ChemSpeedFlexStation(Station):
 ''' ==== Station Operation Descriptors ==== '''
 
 class CSOpenDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self):
-        output = StationOutputDescriptor()
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
         super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
 
 class CSCloseDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self):
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
         output = StationOutputDescriptor()
         super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
 
-class CSStartJobOpDescriptor(StationOpDescriptor):
-    def __init__(self):
+class CSProcessingOpDescriptor(StationOpDescriptor):
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
         output = StationOutputDescriptor()
         super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
 

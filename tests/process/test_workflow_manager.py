@@ -7,7 +7,7 @@ from time import sleep
 if __name__ == '__main__':
     resources_dir = Path.cwd().parent.joinpath('state/resources')
     config_file_path = resources_dir.joinpath('testing_config_file.yaml')
-    recipe_file_path = resources_dir.joinpath('testing_recipe.yaml')
+    recipe_file_path = resources_dir.joinpath('testing_chemspeed_recipe.yaml')
 
     try:
         

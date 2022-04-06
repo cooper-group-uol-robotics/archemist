@@ -1,18 +1,18 @@
 from archemist.state.robot import Robot
-from archemist.state.robots import PandaFranka
+from archemist.state.robots import KukaLBRIIWA
 from archemist.state.state import State
 from archemist.persistence.persistenceManager import PersistenceManager
 from archemist.util.location import Location
 from archemist.processing.handler import RobotHandler
 import time
 
-class EmuPandaHandler(RobotHandler):
+class EmuKukaLBRIIWA_Handler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
 
     def execute_job(self):
         station_robot_job = self._robot.assigned_job
-        print('executing robot job')
+        print(f'executing robot job {station_robot_job.robot_op}')
         time.sleep(3)
         station_robot_job.robot_op.add_timestamp()
         station_robot_job.robot_op.output.has_result = True
@@ -34,5 +34,5 @@ class EmuPandaHandler(RobotHandler):
 if __name__ == '__main__':
     p_manager = PersistenceManager('test')
     state = p_manager.construct_state_from_db()
-    robot = state.get_robot('PandaFranka', 99)
-    panad_handler = EmuPandaHandler(robot)
+    robot = state.get_robot('KukaLBRIIWA', 1)
+    kuka_handler = EmuKukaLBRIIWA_Handler(robot)
