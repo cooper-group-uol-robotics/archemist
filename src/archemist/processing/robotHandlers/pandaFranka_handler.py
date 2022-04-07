@@ -25,7 +25,7 @@ class PandaFranka_Handler(RobotHandler):
 
 
     def _panda_task_cb(self, msg):
-        if msg.task_name == self._panda_task and msg.task_state == PandaTaskStatus.FINISHED:
+        if msg.task_name != '' and msg.task_name == self._panda_task and msg.task_state == PandaTaskStatus.FINISHED:
             self._panda_task = ''
             self._panda_done = True
 

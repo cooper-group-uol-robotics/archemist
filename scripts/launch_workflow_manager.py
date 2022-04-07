@@ -5,13 +5,13 @@ from pathlib import Path
 
 if __name__ == '__main__':
     current_dir = Path.cwd()
-    config_file_path = current_dir.joinpath('config_files/solubility_screening_config.yaml')
-    recipe_file_path = current_dir.joinpath('recipes/solubility_screening_recipe.yaml')
+    config_file_path = current_dir.joinpath('config_files/chemspeed_testing_config_file.yaml')
+    recipe_file_path = current_dir.joinpath('recipes/chemspeed_test_recipe.yaml')
 
     try:
         
         # Construct state from config file
-        pers_manager = PersistenceManager('solubility_screening')
+        pers_manager = PersistenceManager('chemspeed_testing')
         state = pers_manager.construct_state_from_config_file(config_file_path)
         # construct the state manager
         wm_manager = WorkflowManager(state)

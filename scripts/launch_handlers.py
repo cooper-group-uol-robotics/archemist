@@ -12,7 +12,7 @@ from collections import namedtuple
 HandlerArgs = namedtuple('HandlerArgs', ['type','class_name', 'id'])
 
 def run_handler(handler_discriptor: HandlerArgs):
-    p_manager = PersistenceManager('solubility_screening')
+    p_manager = PersistenceManager('chemspeed_testing')
     state = p_manager.construct_state_from_db()
     if handler_discriptor.type == 'stn':
         station = state.get_station(handler_discriptor.class_name, handler_discriptor.id)
@@ -35,7 +35,7 @@ def construct_station_handler(station):
 if __name__ == '__main__':
     
     current_dir = Path.cwd()
-    config_file_path = current_dir.joinpath('config_files/solubility_screening_config.yaml')
+    config_file_path = current_dir.joinpath('config_files/chemspeed_testing_config_file.yaml')
 
     try:
         # get config dict

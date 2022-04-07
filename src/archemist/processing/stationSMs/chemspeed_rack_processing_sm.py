@@ -44,7 +44,7 @@ class ChemSpeedRackProcessingSm():
         self.machine.add_transition('process_state_transitions', source='load_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_station')
 
         # process batch after closing door
-        self.machine.add_transition('process_state_transitions', source='close_chemspeed_door',dest='chemspeed_process', conditions='is_station_job_ready')
+        self.machine.add_transition('process_state_transitions', source='close_chemspeed_door',dest='chemspeed_process', unless='is_station_operation_complete', conditions='is_station_job_ready')
 
         # open door after processing
         self.machine.add_transition('process_state_transitions', source='chemspeed_process',dest='open_chemspeed_door', conditions='is_station_job_ready', before='process_batch')
@@ -52,8 +52,11 @@ class ChemSpeedRackProcessingSm():
         # unload after openning door
         self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='unload_rack', conditions=['is_station_operation_complete','is_station_job_ready'])
 
+        # close door after unloading
+        self.machine.add_transition('process_state_transitions', source='unload_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_robot')
+
         # complete
-        self.machine.add_transition('process_state_transitions', source='unload_rack',dest='final_state', conditions='is_station_job_ready', before='update_batch_loc_to_robot')
+        self.machine.add_transition('process_state_transitions', source='close_chemspeed_door',dest='final_state', conditions=['is_station_job_ready','is_station_operation_complete'])
 
 
 
@@ -79,10 +82,10 @@ class ChemSpeedRackProcessingSm():
         self._station.set_station_op(CSCloseDoorOpDescriptor(dict(), CSJobOutputDescriptor()))
 
     def request_load_rack(self):
-        self._station.set_robot_job(KukaLBRTask('LoadChemSpeed',['false','1'], self._station.location, RobotOutputDescriptor())) #TODO rack index can be passed
+        self._station.set_robot_job(KukaLBRTask('LoadChemSpeed',[False,1], self._station.location, RobotOutputDescriptor())) #TODO rack index can be passed
 
     def request_unload_rack(self):
-        self._station.set_robot_job(KukaLBRTask('UnloadChemSpeed',['false','1'], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('UnloadChemSpeed',[False,1], self._station.location, RobotOutputDescriptor()))
 
     def request_process_operation(self):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()

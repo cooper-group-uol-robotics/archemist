@@ -35,7 +35,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
             rospy.loginfo(f'{self._robot}_handler is terminating!!!')
 
     def _kmr_task_cb(self, msg):
-        if msg.task_name == self._kmr_task and msg.task_state == TaskStatus.FINISHED:
+        if msg.task_name != '' and msg.task_name == self._kmr_task and msg.task_state == TaskStatus.FINISHED:
             self._kmr_task = ''
             self._kmr_done = True
 
@@ -45,7 +45,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
         self._kmr_done = False
 
     def _lbr_task_cb(self, msg):
-        if msg.task_name == self._lbr_task and msg.task_state == TaskStatus.FINISHED:
+        if msg.task_name != '' and msg.task_name == self._lbr_task and msg.task_state == TaskStatus.FINISHED:
             self._lbr_task = ''
             self._lbr_done = True
 
@@ -64,7 +64,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
                 robotOp.job_params[0] = True # Six point calibration is needed
             else:
                 robotOp.job_params[0] = False
-            lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=robotOp.job_params)
+            lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
             return lbr_task, nav_task
         else:
             rospy.logerr('unknown KUKAIIWA robot op')
@@ -89,11 +89,11 @@ class KukaLBRIIWA_Handler(RobotHandler):
         rospy.loginfo('executing ' + self._lbr_task)
         self._lbrCmdPub.publish(lbr_job)
         self._wait_for_lbr()
+        rospy.loginfo('completed executing ' + self._lbr_task)
 
         station_robot_job.robot_op.output.has_result = True
         station_robot_job.robot_op.output.success = True
         station_robot_job.robot_op.output.add_timestamp()
-        self._task_counter += 1
         return station_robot_job
 
 
