@@ -5,6 +5,7 @@ from datetime import datetime
 from archemist.persistence.dbObjProxy import DbObjProxy
 from archemist.util.location import Location
 from archemist.util.station_robot_job import StationRobotJob
+from archemist.state.robot import RobotOpDescriptor
 from archemist.state.batch import Batch
 #import archemist.processing.stationSMs
 
@@ -82,6 +83,7 @@ class Station(DbObjProxy):
             
             station_document['current_station_op'] = None
             station_document['station_op_history'] = []
+            station_document['requested_robot_op_history'] = []
             
             super().__init__(db_name, 'stations', station_document)
         else:
@@ -122,6 +124,11 @@ class Station(DbObjProxy):
     @property
     def station_op_history(self):
         en_op_history = self.get_field('station_op_history')
+        return [self.decode_object(op) for op in en_op_history]
+
+    @property
+    def requested_robot_op_history(self):
+        en_op_history = self.get_field('requested_robot_op_history')
         return [self.decode_object(op) for op in en_op_history]
 
     @property
@@ -196,9 +203,11 @@ class Station(DbObjProxy):
         self.update_field('req_robot_job', encoded_station_robot_job)
         self._log_station(f'Requesting robot job ({robot_job})')
 
-    def finish_robot_job(self):
+    def finish_robot_job(self, complete_robot_op: RobotOpDescriptor):
+        encodedRobotOp = DbObjProxy.encode_object(complete_robot_op)
         self.update_field('req_robot_job', None)
         self._log_station(f'Robot job request is fulfilled.')
+        self.push_to_array_field('requested_robot_op_history',encodedRobotOp)
         self.set_to_processing()
 
     def has_station_op(self):

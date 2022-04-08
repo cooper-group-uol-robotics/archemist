@@ -16,6 +16,7 @@ class RobotOutputDescriptor:
         self._success = False
         self._has_result = False
         self._timestamp = None
+        self._executing_robot = None
 
     @property
     def success(self):
@@ -41,6 +42,14 @@ class RobotOutputDescriptor:
 
     def add_timestamp(self):
         self._timestamp = datetime.now()
+
+    @property
+    def executing_robot(self):
+        return self._executing_robot
+
+    @executing_robot.setter
+    def executing_robot(self, robot_stamp):
+        self._executing_robot = robot_stamp
 
 class RobotOpDescriptor:
     def __init__(self, output: RobotOutputDescriptor):

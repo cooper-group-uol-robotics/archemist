@@ -66,7 +66,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 1)
         self.assertFalse(t_sm.process_state_transitions())
-        t_station.finish_robot_job()
+        t_station.finish_robot_job(job)
         self.assertFalse(t_station.has_robot_job())
         self.assertEqual(t_station.state, StationState.PROCESSING)
 
@@ -80,7 +80,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 2)
         self.assertFalse(t_sm.process_state_transitions())
-        t_station.finish_robot_job()
+        t_station.finish_robot_job(job)
         self.assertFalse(t_station.has_robot_job())
         self.assertEqual(t_station.state, StationState.PROCESSING)
 
@@ -100,7 +100,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 2)
         self.assertFalse(t_sm.process_state_transitions())
-        t_station.finish_robot_job()
+        t_station.finish_robot_job(job)
         self.assertFalse(t_station.has_robot_job())
         self.assertEqual(t_station.state, StationState.PROCESSING)
 
@@ -113,7 +113,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
         self.assertEqual(job.sample_index, 1)
         self.assertFalse(t_sm.process_state_transitions())
-        t_station.finish_robot_job()
+        t_station.finish_robot_job(job)
         self.assertFalse(t_station.has_robot_job())
         self.assertEqual(t_station.state, StationState.PROCESSING)
 

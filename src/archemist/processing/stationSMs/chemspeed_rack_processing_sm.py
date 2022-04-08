@@ -73,7 +73,8 @@ class ChemSpeedRackProcessingSm():
         self._station.assigned_batch.location = self._station.location
 
     def update_batch_loc_to_robot(self):
-        self._station.assigned_batch.location = Location(-1,-1,'Robot_Deck') #TODO assign it to the actual robot deck
+        last_executed_robot_op = self._station.requested_robot_op_history[-1]
+        self._station.assigned_batch.location = Location(-1,-1,f'{last_executed_robot_op.output.executing_robot}/Deck')
 
     def request_open_door(self):
         self._station.set_station_op(CSOpenDoorOpDescriptor(dict(), CSJobOutputDescriptor()))

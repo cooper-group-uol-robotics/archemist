@@ -100,7 +100,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(robot_op.target_location, ret_robot_job.target_location)
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
 
-        t_station.finish_robot_job()
+        t_station.finish_robot_job(robot_op)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         self.assertFalse(t_station.has_robot_job())
 

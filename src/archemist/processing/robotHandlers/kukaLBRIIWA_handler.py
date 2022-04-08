@@ -94,6 +94,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
         station_robot_job.robot_op.output.has_result = True
         station_robot_job.robot_op.output.success = True
         station_robot_job.robot_op.output.add_timestamp()
+        station_robot_job.robot_op.output.executing_robot = str(self._robot)
         return station_robot_job
 
 

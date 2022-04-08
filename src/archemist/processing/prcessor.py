@@ -1,9 +1,6 @@
 from archemist.state.state import State
-from archemist.state.station import Station, StationState
-from archemist.state.robot import Robot, RobotState
+from archemist.state.station import StationState
 from archemist.state.batch import Batch
-from archemist.state.robots.pandaFranka import PandaFranka
-from archemist.state.robots.kukaLBRIIWA import KukaLBRIIWA
 from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from archemist.processing.scheduler import SimpleRobotScheduler
@@ -83,7 +80,7 @@ class WorkflowManager:
                     # todo check the robot job matches
                     station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
                     self._log_processor(f'Notifying {station_to_notify}')
-                    station_to_notify.finish_robot_job()
+                    station_to_notify.finish_robot_job(station_robot_job.robot_op)
 
             if self._job_station_queue:
                 self._robot_scheduler.schedule(self._job_station_queue, self._workflow_state)
