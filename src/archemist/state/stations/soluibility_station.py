@@ -1,22 +1,32 @@
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
-from archemist.util.location import Location
+from bson.objectid import ObjectId
 
 
 ''' ==== Station Description ==== '''
 class SolubilityStation(Station):
-    def __init__(self, id: int, location: Location,
-                 parameters: dict, liquids: list, solids: list):
-        super().__init__(id, location)
-        self._recording = False
+    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
+        if len(station_dict) > 1:
+            station_dict.pop('parameters')
+            station_dict['recording'] = False
+        super().__init__(db_name, station_dict)
+
+    @classmethod
+    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
+        return cls(db_name, station_dict, liquids, solids)
+
+    @classmethod
+    def from_object_id(cls, db_name: str, object_id: ObjectId):
+        station_dict = {'object_id':object_id}
+        return cls(db_name, station_dict, None, None)
 
     @property
     def recording(self):
-        return self._recording
+        return self.get_field('recording')
 
     @recording.setter
     def recording(self, value):
         if (isinstance(value, bool)):
-            self._recording = value
+            self.update_field('recording', value)
         else:
             raise ValueError
 

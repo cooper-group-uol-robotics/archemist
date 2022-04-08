@@ -1,20 +1,36 @@
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
 from archemist.state.material import Solid
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
-from archemist.util.location import Location
+from bson.objectid import ObjectId
+
 
 class QuantosCatridge():
-    def __init__(self, solid: Solid, remaining_dosages: int, hotel_id: str):
-        self._solid = solid
-        self._remaining_dosages = remaining_dosages
-        self._blocked = False
-        self._consumed = False
-        self._loaded_to_quantos = False
-        self._hotel_id = hotel_id
+    def __init__(self, catridge_dict: dict):
+        self._solid_name = catridge_dict['solid_name']
+        self._solid_obj_id = catridge_dict['solid_obj_id']
+        self._db_name = catridge_dict['db_name']
+        self._remaining_dosages = catridge_dict['remaining_dosages']
+        self._blocked = catridge_dict['blocked']
+        self._consumed = catridge_dict['consumed']
+        self._hotel_id = catridge_dict['hotel_id']
+
+    @classmethod
+    def from_dict(cls, catridge_dict: dict):
+        return cls(catridge_dict)
+
+    @classmethod
+    def from_config_dict(cls, catridge_dict: dict):
+        catridge_dict.update({'blocked': False, 'consumed': False})
+        return cls(catridge_dict)
+
+
+    @property
+    def solid_name(self):
+        return self._solid_name
 
     @property
     def solid(self):
-        return self._solid
+        return Solid.from_object_id(self._db_name, self._solid_obj_id)
 
     @property
     def hotel_id(self):
@@ -28,103 +44,119 @@ class QuantosCatridge():
     def blocked(self):
         return self._blocked
 
-    @blocked.setter
-    def blocked(self, value):
-        if isinstance(value, bool):
-            self._blocked = value
-        else:
-            raise ValueError
-
-    @property
-    def loaded_to_quantos(self):
-        return self._loaded_to_quantos
-
-    @loaded_to_quantos.setter
-    def loaded_to_quantos(self, value):
-        if isinstance(value, bool):
-            self._loaded_to_quantos = value
-        else:
-            raise ValueError
-
     @property
     def remaining_dosages(self):
         return self._remaining_dosages
 
-    def dispense(self, dispensed_solid: Solid):
-        if (not self._consumed):
-            self._solid.mass = self._solid.mass - dispensed_solid.mass
-            self._remaining_dosages -= 1
-            if (self._remaining_dosages <= 0):
-                self._consumed = True
-        else:
-            raise UsingConsumedCatridgeError(self._hotel_id)
+    def to_dict(self):
+        return{
+            'solid_name': self._solid_name,
+            'solid_obj_id': self._solid_obj_id,
+            'db_name': self._db_name,
+            'remaining_dosages': self._remaining_dosages,
+            'blocked': self._blocked,
+            'consumed': self._consumed,
+            'hotel_id': self._hotel_id
+        }
+
+    # def dispense(self, dispensed_solid: Solid):
+    #     if (not self._consumed):
+    #         self._solid.mass = self._solid.mass - dispensed_solid.mass
+    #         self._remaining_dosages -= 1
+    #         if (self._remaining_dosages <= 0):
+    #             self._consumed = True
+    #     else:
+    #         raise UsingConsumedCatridgeError(self._hotel_id)
 
 
 
 
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, location: Location, id: int,
-                 parameters: dict, liquids: list, solids: list):
-        super().__init__(id, location)
-        self._carousel_pos = -1
-        self._catridges = list()
-        for cat in parameters['catridges']:
-            for solid in solids:
-                if (solid.cartridge_id == cat):
-                    self._catridges.append(QuantosCatridge(solid,parameters['catridges'][cat]['remaining_dosages'],solid.cartridge_id))
-        self._current_catridge = None
-        self._doors_open = True
+    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
+        if len(station_dict) > 1:
+            parameters = station_dict.pop('parameters')
+            station_dict['carousel_pos'] = -1
+            station_dict['catridges'] = dict()
+            for cat in parameters['catridges']:
+                for solid in solids:
+                    if (solid.cartridge_id == cat['hotel_id']):
+                        cat['solid_obj_id'] = solid.object_id
+                        cat['db_name'] = solid.db_name
+                        catridge = QuantosCatridge.from_config_dict(cat)
+                        station_dict['catridges'].update({cat['hotel_id']: catridge.to_dict()})
+            station_dict['current_loaded_catridge'] = None
+            station_dict['doors_open'] = False
+
+        super().__init__(db_name,station_dict)
+
+    @classmethod
+    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
+        return cls(db_name, station_dict, liquids, solids)
+
+    @classmethod
+    def from_object_id(cls, db_name: str, object_id: ObjectId):
+        station_dict = {'object_id':object_id}
+        return cls(db_name, station_dict, None, None)
 
     @property
     def carousel_pos(self):
-        return self._carousel_pos
+        return self.get_field('carousel_pos')
 
     @carousel_pos.setter
     def carousel_pos(self, value: int):
         if (value <= 20 and value >= 1):
-            self._carousel_pos = value
+            self.update_field('carousel_pos', value)
         else:
             raise ValueError
 
     @property
     def current_catridge(self):
-        return self._current_catridge
+        cat_id = self.get_field('current_loaded_catridge')
+        if cat_id is not None:
+            catridge_dict = self.get_nested_field(f'catridges.{cat_id}')
+            return QuantosCatridge.from_dict(catridge_dict)
 
     @property
     def doors_open(self):
-        return self._doors_open
+        return self.get_field('doors_open')
 
     @doors_open.setter
     def doors_open(self, value):
         if isinstance(value, bool):
-            self._doors_open = value
+            self.update_field('doors_open', value)
         else:
             raise ValueError
 
-    def load_catridge(self, catridge: QuantosCatridge):
-        if (self._current_catridge is None):
-            catridge.loaded_to_quantos = False
-            self._current_catridge = None
+    def get_catridge_id(self, solid_name: str):
+        catridges = self.get_field('catridges')
+        for cat_id, cat_dict in catridges.items():
+            if cat_dict['solid_name'] == solid_name:
+                return cat_id
+
+    def load_catridge(self, catridge_id: str):
+        if (self.current_catridge is None):
+            self.update_field('current_loaded_catridge', catridge_id)
         else:
             raise QuantosCatridgeLoadedError()
 
     def unload_current_catridge(self):
-        if (self._current_catridge is not None):
-            for catridge in self._catridges:
-                if (catridge == self._current_catridge):
-                    catridge.loaded = False
-                    break
-            self._current_catridge = None
+        if (self.current_catridge is not None):
+            self.update_field('current_loaded_catridge', None)
         else:
             print('unloading catridge when no catridge is loaded!!!')
 
-    def set_station_op(self, stationOp: StationOpDescriptor):
-        if (stationOp.stationName == self.__class__):
-            temp_solid = Solid(stationOp.solid_name, None, None, stationOp.dispense_mass,'quantos')
-            self._current_catridge.dispense(temp_solid)
+    def dispense(self, catridge_id: str, dispense_amount: float):
+        current_catridge = self.current_catridge
+        if not current_catridge.consumed and not current_catridge.blocked:
+            current_solid = self.current_catridge.solid
+            current_solid.mass = current_solid.mass - dispense_amount
+            self.decrement_field(f'catridges.{catridge_id}.remaining_dosages')
+            if self.get_nested_field(f'catridges.{catridge_id}.remaining_dosages') == 0:
+                self._log_station(f'the catridge {catridge_id} does not have any dosages left anymore. Please replace it.')
+                self.update_field(f'catridges.{catridge_id}.consumed', True)
         else:
-            raise ValueError
+            self._log_station(f'Current catridge {catridge_id} is either consumed or blocked. Cannot Dispense solid!!!')
 
 
 ''' ==== Station Operation Descriptors ==== '''

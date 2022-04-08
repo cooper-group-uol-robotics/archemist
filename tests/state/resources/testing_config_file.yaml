@@ -1,0 +1,84 @@
+workflow:
+  Robots:
+    - class: PandaFranka
+      id: 99
+      location:
+        node_id: 1
+        graph_id: 7
+        frame_name: neutral
+      saved_frames:
+        - '/ikaStation/RackHolderFrame'
+        - '/ikaStation/loadFrame'
+        - '/fisherScaleStation/loadFrame'
+    - class: KukaLBRIIWA
+      id: 1
+      location:
+        node_id: 7
+        graph_id: 7
+        frame_name: neutral
+      saved_frames:
+  Materials:
+    liquids:
+      - name: water
+        id: 145
+        amount_stored: 400
+        unit: ml
+        density: 997 #g/l
+        pump_id: p1
+        expiry_date: 2025-02-11
+    solids:
+      - name: sodium_chloride
+        id: 345
+        amount_stored: 10000
+        dispense_method: quantos
+        cartridge_id: cat1
+        unit: mg
+        expiry_date: 2025-02-11
+  Stations:
+    - class: PeristalticLiquidDispensing
+      id: 23
+      location:
+        node_id: 1
+        graph_id: 7
+      process_state_machine:
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/liquidStation/loadFrame'
+      parameters:
+        liquid_pump_map:
+          water: pUmP1
+    - class: IkaPlateRCTDigital
+      id: 2
+      location:
+        node_id: 1
+        graph_id: 7
+      process_state_machine:
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/ikaStation/loadFrame'
+      parameters:
+    - class: FisherWeightingStation
+      id: 5
+      location:
+        node_id: 1
+        graph_id: 7
+      process_state_machine:
+        type: StationLoadingSm
+        args:
+          batch_mode: true
+          load_frame: '/fisherScaleStation/loadFrame'
+      parameters:
+    - class: ChemSpeedFlexStation
+      id: 9
+      location:
+        node_id: 3
+        graph_id: 7
+      process_state_machine:
+        type: ChemSpeedRackProcessingSm
+        args:
+          batch_mode: true
+      parameters:
+  name: solubility_workflow
+  timestamp: 08/26/2021, 15:28:26

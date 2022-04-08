@@ -6,3 +6,4 @@ from .pxrd_analyser import pxrd_analyser
 from .solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor, QuantosOutputDescriptor
 from .soluibility_station import SolubilityStation, SolubilityOpDescriptor, SolubilityDescriptor
 from .fisher_weighing_station import FisherWeightingStation,FisherWeightStablepDescriptor, FisherWeightNowpDescriptor, FisherOutputDescriptor
+from .chemspeed_flex_station import ChemSpeedFlexStation, CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSProcessingOpDescriptor, CSJobOutputDescriptor

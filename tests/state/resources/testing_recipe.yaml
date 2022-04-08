@@ -1,0 +1,32 @@
+name: test_archemist_recipe
+id: 198
+materials:
+  liquids: [water]
+  solids: [sodium_chloride]
+stations:
+  - name: IkaPlateRCTDigital.id_2
+    stationOps:
+      - type: IKAStirringOpDescriptor
+        properties:
+          rpm: 200
+          duration: 10
+          unit: seconds
+        output: "IKAOutputDescriptor"
+  - name: FisherWeightingStation.id_5
+    stationOps:
+      - type: FisherWeightStablepDescriptor
+        properties:
+        output: "FisherOutputDescriptor"
+workflowSM:
+  - state_name: start
+    onSuccess: "IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor"
+    onFail: "end"
+  - state_name: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+    onSuccess: "FisherWeightingStation.id_5.FisherWeightStablepDescriptor"
+    onFail: "end"
+  - state_name: FisherWeightingStation.id_5.FisherWeightStablepDescriptor
+    onSuccess: "end"
+    onFail: "end"
+  - state_name: end
+    onSuccess:
+    onFail:

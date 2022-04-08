@@ -1,70 +1,60 @@
 #!/usr/bin/env python3
 
 import rospy
-from archemist_msgs.msg import HandlerBusMessage
-from archemist.util.rosMsgCoder import rosMsgCoder
-from archemist.state.state import State
-from archemist.state.stations.solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor, QuantosOutputDescriptor
-from archemist.persistence.dbHandler import dbHandler
-from archemist_msgs.msg import QuantosCommand
-from archemist.state.material import Solid
-from datetime import datetime
-from rospy.core import is_shutdown
+from archemist.state.station import Station
+from mettler_toledo_quantos_q2_msgs.msg import QuantosCommand
+from archemist.persistence.objectConstructor import ObjectConstructor
+from archemist.processing.handler import StationHandler
 from std_msgs.msg import String
 
-class QuantosSolidDispenserQS2_Handler:
-    def __init__(self):
-        # self.persistence = persistenceManager()
-        # self.state = persistenceManager().pull()
-        # self.stationState = None
-        # for station in self.state
-        #     if (self.state[station] == "QuantosSolidDispenserQS2"):
-        #         self.stationState = station
-        rospy.init_node("QuantosDispensingHandler")
-        print("Quantos Handler Running")
-        self.state = State()
-        self.state.initializeState(False)
-        self._ackpub = rospy.Publisher("/processing/HandlerReturnBus", HandlerBusMessage, queue_size=1)
+class QuantosSolidDispenserQS2_Handler(StationHandler):
+    def __init__(self, station: Station):
+        super().__init__(station)
+        rospy.init_node(f'{self._station}_handler')
         self._pubQuantos = rospy.Publisher("/Quantos_Commands", QuantosCommand, queue_size=1)
-        # put quantos in the correct place before robot
-        rospy.sleep(3)
-        self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
-        rospy.wait_for_message("/Quantos_Done", String)
-        rospy.Subscriber("/processing/HandlerBus", HandlerBusMessage, self.handler_cb)
-
-        while (not rospy.is_shutdown()):
-            self.handle()
-            rospy.sleep(3)
-
-    def handler_cb(self):
-        pass
-
-
-    def handle(self):
-        self.state.updateFromDB()
-        self.quantos = self.state.getStation('QuantosSolidDispenserQS2')
         
-        if self.quantos._assigned_batch is not None:
-            print ('got work to do')
-            current_op = self.quantos._assigned_batch.getCurrentOp()
-            current_op.add_timestamp()
+        # put quantos in the correct place before robott
+        rospy.sleep(3)
+        self._pubQuantos.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
+        rospy.wait_for_message("/Quantos_Done", String)
+        self._station.carousel_pos = 20
 
-            # self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
-            # rospy.wait_for_message("/Quantos_Done", String)
-            #Well 5 exposed to KUKA, load in empty vial
+    def run(self):
+        rospy.loginfo(f'{self._station}_handler is running')
+        try:
+            while not rospy.is_shutdown():
+                self.handle()
+                rospy.sleep(2)
+        except KeyboardInterrupt:
+            rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-            #Dispense solid
-            self._pubQuantos.publish(quantos_command=20, quantos_int= 5, quantos_float= 200.0)
-            rospy.wait_for_message("/Quantos_Done", String)
-            
-            self._pubQuantos.publish(quantos_command=8, quantos_int= 20)
-            rospy.wait_for_message("/Quantos_Done", String)
-            #Well 5 exposed to KUKA, unload filed vial
 
-            self.quantos._assigned_batch.advanceProcessState()
-            self.quantos._processed_batch = self.quantos._assigned_batch
-            self.quantos._assigned_batch = None
-            self.state.modifyObjectDB(self.quantos)
 
-if __name__ == '__main__':
-    ika_handler = QuantosSolidDispenserQS2_Handler()
+    def process(self):
+        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
+        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
+        current_op.add_timestamp()
+
+        #Dispense solid
+        self._pubQuantos.publish(quantos_command=QuantosCommand.DISPENSESOLID, quantos_int= 5, quantos_float= 200.0)
+        self._station.carousel_pos = 5
+        rospy.wait_for_message("/Quantos_Done", String)
+        
+        #Move carousel back to the start position
+        self._pubQuantos.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
+        rospy.wait_for_message("/Quantos_Done", String)
+        self._station.carousel_pos = 20
+        #Well 5 exposed to KUKA, unload filed vial
+        catridge_id = self._station.get_catridge_id(current_op.solid_name)
+        self._station.dispense(catridge_id, current_op.dispense_mass)
+
+        current_op.output.has_result = True
+        current_op.output.success = True
+        current_op.output.add_timestamp()
+
+        return current_op
+
+        
+
+# if __name__ == '__main__':
+#     ika_handler = QuantosSolidDispenserQS2_Handler()

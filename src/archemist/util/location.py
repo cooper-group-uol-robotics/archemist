@@ -24,3 +24,6 @@ class Location:
 
     def __str__(self):
         return 'node_id:{0}, graph_id{1}, frame_name:{2}'.format(self.node_id, self.graph_id, self.frame_name)
+
+    def to_dict(self):
+        return {'node_id':self._node_id, 'graph_id':self._graph_id, 'frame_name':self._frame_name}

@@ -6,58 +6,53 @@ from datetime import date, timedelta
 
 class MaterialTest(unittest.TestCase):
 
-    def test_material(self):
-        t_material = Material(name='Some_Material', id=1234,
-                              expiry_date=date.today(), mass=1.5)
-        self.assertEqual(t_material.name, 'Some_Material')
-        with self.assertRaises(AttributeError):
-            t_material.name = 'stupid_name'
-        self.assertEqual(t_material.id, 1234)
-        with self.assertRaises(AttributeError):
-            t_material.id = 6789
-        self.assertEqual(t_material.expiry_date, date.today())
-        with self.assertRaises(AttributeError):
-            t_material.expiry_date = date.today() - timedelta(days=1)
-        self.assertEqual(t_material.mass, 1.5)
-        t_material.mass = 2.0
-        self.assertEqual(t_material.mass, 2.0)
-        with self.assertRaises(ValueError):
-            t_material.mass = -2.0
-        self.assertEqual(t_material.mass, 2.0)
-
     def test_liquid(self):
-        t_liquid = Liquid(name='some_liquid', id=2222,
-                          expiry_date=date.today(), mass=1.0,
-                          density=1.0, volume=1.0)
-        self.assertEqual(t_liquid.density, 1)
-        t_liquid.density = 1.1
-        self.assertEqual(t_liquid.density, 1.1)
-        with self.assertRaises(ValueError):
-            t_liquid.density = -2.0
-        self.assertEqual(t_liquid.volume, 1.0)
+        liquid_dict = {
+            'name': 'water',
+            'id': 1254,
+            'amount_stored': 400,
+            'unit': 'ml',
+            'density': 997,
+            'pump_id': 'pUmP1',
+            'expiry_date': date.fromisoformat('2025-02-11')
+        }
+
+        t_liquid = Liquid.from_dict('test', liquid_dict)
+        self.assertEqual(t_liquid.name, 'water')
+        self.assertEqual(t_liquid.id, 1254)
+        self.assertEqual(t_liquid.density, 997)
+        self.assertEqual(t_liquid.volume, 0.4)
+        self.assertEqual(t_liquid.mass, 997*0.4)
         t_liquid.volume = 1.1
         self.assertEqual(t_liquid.volume, 1.1)
         with self.assertRaises(ValueError):
             t_liquid.volume = -2.0
-        t_liquid_str = str(t_liquid)
-        self.assertEqual(t_liquid_str, 'Liquid: {0}, ID: {1}, Expiry date: {2},\
-                 Mass: {3} g, Volume: {4} L,\
-                 Density: {5} g/L'.format(t_liquid.name,
-                        t_liquid.id, t_liquid.expiry_date, t_liquid.mass,
-                        t_liquid.volume, t_liquid.density))
-
+        self.assertEqual(t_liquid.pump_id, 'pUmP1')
+        self.assertEqual(t_liquid.expiry_date, date.fromisoformat('2025-02-11'))
     def test_solid(self):
-        t_solid = Solid(name='some_solid', id=3333,
-                        expiry_date=date.today(), mass=5.0,
-                        dispense_method='quantos')
+
+        solid_dict = {
+            'name': 'sodium_chloride',
+            'id': 133,
+            'amount_stored': 10000,
+            'dispense_method': 'quantos',
+            'cartridge_id': 'cAt1',
+            'unit': 'ug',
+            'expiry_date': date.fromisoformat('2025-02-11')
+        }
+
+        t_solid = Solid.from_dict('test', solid_dict)
+        self.assertEqual(t_solid.name, 'sodium_chloride')
+        self.assertEqual(t_solid.id, 133)
+        self.assertEqual(t_solid.mass, 0.01)
+        t_solid.mass = 0.1
+        self.assertEqual(t_solid.mass, 0.1)
+        with self.assertRaises(ValueError):
+            t_solid.mass = -2.0
         self.assertEqual(t_solid.dispense_method, 'quantos')
-        t_solid.dispense_method = 'new_method'
-        self.assertEqual(t_solid.dispense_method, 'new_method')
-        t_solid_str = str(t_solid)
-        self.assertEqual(t_solid_str, 'Solid: {0}, ID: {1}, Expiry date: {2},\
-                 Mass: {3} g, Dispense method: {4}'.format(t_solid.name,
-                        t_solid.id, t_solid.expiry_date, t_solid.mass,
-                        t_solid.dispense_method))
+        self.assertEqual(t_solid.cartridge_id, 'cAt1')
+        self.assertEqual(t_solid.expiry_date, date.fromisoformat('2025-02-11'))
+        
 
 
 if __name__ == '__main__':

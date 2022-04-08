@@ -1,51 +1,19 @@
-from archemist.state.material import Liquid, Solid
-from archemist.state.station import Station, StationOpDescriptor
-from typing import List
-
-class StationFlowNode:
-    def __init__(self, node: str, station: Station, task: list, onsuccess: str, onfail: str):
-        self.node_name = node
-        self.station = station
-        self.task = task
-        self.on_success = onsuccess
-        self.on_fail = onfail
-
-class StationFlow:
-    def __init__(self, stationFlowNodes: List[StationFlowNode]):
-        self.nodes = stationFlowNodes
-        self.current_node = self.nodes[0]
-
-    def advance_node_success(self):
-        nextNode = self.current_node.on_success
-        for node in self.nodes:
-            if (nextNode == node.node_name):
-                self.current_node = node
-                return
-    
-    def advance_node_fail(self):
-        nextNode = self.current_node.on_fail
-        for node in self.nodes:
-            if (nextNode == node.node_name):
-                self.current_node = node
-                return
-
-    def has_ended(self):
-        return self.current_node.node_name == 'end'
-
-    def get_upcoming_node(self):
-        nextNode = self.current_node.on_success
-        for node in self.nodes:
-            if (nextNode == node.node_name):
-                return node
+from archemist.persistence.dbObjProxy import DbObjProxy
+from transitions import Machine
 
 class Recipe:
-    def __init__(self, name: str, id: int, stationOpDescriptors: List[StationOpDescriptor], stationFlow: StationFlow, solids: List[Solid], liquids: List[Liquid]):
-        self._name = name
-        self._id = id
-        self._station_op_descriptors = stationOpDescriptors
-        self._solids = solids
-        self._liquids = liquids
-        self._station_flow = stationFlow
+    def __init__(self, recipe_doc: dict, batch_db_proxy: DbObjProxy):
+        self._name = recipe_doc['name']
+        self._id = recipe_doc['id']
+        self._station_op_descriptors = [stationOp for station_dict in recipe_doc['stations'] for stationOp in station_dict['stationOps']]
+        self._solids = recipe_doc['materials']['solids']
+        self._liquids = recipe_doc['materials']['liquids']
+        states = [state_dict['state_name'] for state_dict in recipe_doc['workflowSM']]
+        transitions = [{'trigger': trigger, 'source': state_dict['state_name'], 'dest': state_dict[trigger]} 
+                        for state_dict in recipe_doc['workflowSM'] for trigger in ['onSuccess','onFail']]
+        self._station_flow = Machine(states=states,initial=recipe_doc['current_state'], transitions=transitions)
+        
+        self._batch_db_proxy = batch_db_proxy
 
     @property
     def name(self):
@@ -56,10 +24,6 @@ class Recipe:
         return self._id
 
     @property
-    def station_op_descriptors (self):
-        return self._station_op_descriptors
-
-    @property
     def solids (self):
         return self._solids
 
@@ -68,27 +32,38 @@ class Recipe:
         return self._liquids
 
     @property
-    def station_flow (self):
-        return self._station_flow
+    def current_state(self):
+        return self._batch_db_proxy.get_nested_field('recipe.current_state')
 
-    def get_current_recipe_state(self):
-        return self._station_flow.current_node
-
-    def advance_recipe_state(self, success: bool):
+    def advance_state(self, success: bool):
+        self._station_flow.state = self.current_state
         if success:
-            self._station_flow.advance_node_success()
+            self._station_flow.onSuccess()
         else:
-            self._station_flow.advance_node_fail()
-        self._logRecipe('Current state advanced to ' + self.station_flow.current_node.node_name)
+            self._station_flow.onFail()
+        self._batch_db_proxy.update_field('recipe.current_state', self._station_flow.state)
+        if self._station_flow.state == 'end':
+            self._batch_db_proxy.update_field('processed', True)
+        self._logRecipe('Current state advanced to ' + self._station_flow.state)
 
     def is_complete(self):
-        return self._station_flow.has_ended()
+        return self.current_state == 'end'
 
-    def get_current_task_op(self):
-        for taskOp in self._station_op_descriptors:
-            if taskOp.__class__.__name__ == self._station_flow.current_node.task:
-                return taskOp
+    def get_current_task_op_dict(self):
+        if not self.is_complete():
+            self._station_flow.state = self.current_state # to set the state machine state to the current state stored on the db
+            _,_, current_op_name = self._station_flow.state.split('.')
+            current_op_dict = next(op_dict for op_dict in self._station_op_descriptors if op_dict['type'] == current_op_name)
+            return current_op_dict
 
+    def get_current_station(self):
+        if not self.is_complete():
+            self._station_flow.state = self.current_state
+            current_station_name,current_station_id, _ = self._station_flow.state.split('.')
+            current_station_id = int(current_station_id.strip('id_'))
+            return current_station_name, current_station_id
+
+        
     def _logRecipe(self, message: str):
         print(f'Recipe [{self._id}]: ' + message)
 

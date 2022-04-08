@@ -1,4 +1,5 @@
-from archemist.state.station import Station, Location
+from archemist.state.station import Station
+from archemist.util import Location
 
 
 class fume_hood(Station):
