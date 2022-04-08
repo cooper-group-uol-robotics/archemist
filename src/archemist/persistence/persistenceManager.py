@@ -14,16 +14,22 @@ class PersistenceManager:
         self._dbhandler.clear_database(self._db_name)
         
         config_dict = YamlHandler.loadYamlFile(config_file_path)
-        for robot_dict in config_dict['workflow']['Robots']:
-            ObjectConstructor.construct_robot_from_document(self._db_name, robot_dict)
+        if 'Robots' in config_dict['workflow']:
+            for robot_dict in config_dict['workflow']['Robots']:
+                ObjectConstructor.construct_robot_from_document(self._db_name, robot_dict)
 
         liquids = list()
-        for liquid_doc in config_dict['workflow']['Materials']['liquids']:
-            liquids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Liquid', liquid_doc))
-
         solids = list()
-        for solid_doc in config_dict['workflow']['Materials']['solids']:
-            solids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Solid', solid_doc))
+        
+        if config_dict['workflow']['Materials'] is not None:
+            if 'liquids' in config_dict['workflow']['Materials']:
+                for liquid_doc in config_dict['workflow']['Materials']['liquids']:
+                    liquids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Liquid', liquid_doc))
+
+            
+            if 'solids' in config_dict['workflow']['Materials']:
+                for solid_doc in config_dict['workflow']['Materials']['solids']:
+                    solids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Solid', solid_doc))
 
         for station_dict in config_dict['workflow']['Stations']:
             ObjectConstructor.construct_station_from_document(self._db_name, station_dict, liquids, solids)
