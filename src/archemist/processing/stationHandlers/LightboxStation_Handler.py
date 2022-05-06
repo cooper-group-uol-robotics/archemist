@@ -29,13 +29,12 @@ class LightboxStaion_Handler:
         current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
         current_op.add_timestamp()
 
-        #Wake the station 
+        # Process Sample 
         self.pubCamera.publish(lightbox_command=LightboxCommand.PROCESS_SAMPLE)
-        rospy.wait_for_message(";/", LightboxCommand)
+        message = rospy.wait_for_message("/lightboxPi/result", LightboxCommand)
 
-        #Vial Is ready 
-        self.pubCamera.publish(lightbox_command=LightboxCommand.)
-        rospy.wait_for_message("/VIAL_DONE", LightboxCommand)
+        current_op.output.has_result = True
+        current_op.output.success = True
+        current_op.output.add_timestamp()
 
-        #Batch is done 
-        self.pubCamera.publish(lightbox_command=LightboxCommand.SLEEP)
+        return current_op

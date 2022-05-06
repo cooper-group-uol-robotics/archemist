@@ -15,31 +15,31 @@ class LightBoxSM():
         self.operation_complete = False
 
         ''' States '''
-        states = [ State(name='init_state', on_enter='_print_state'), 
-            State(name='station_off', on_enter=['waiting_station_on', '_print_state']), 
-            State(name='stand_by', on_enter=['request_stand_by', '_print_state']),
-            State(name='take_image', on_enter=['request_take_image', '_print_state'])]
-          
-        
+        states = [State(name='init_state', on_enter='_print_state'), 
+            State(name='load_vial', on_enter=['request_load_vial_job', '_print_state']),
+            State(name='unload_vial', on_enter=['request_unload_vial_job', '_print_state']),
+            State(name='process_sample', on_enter=['request_process_data_job','_print_state']),
+            State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
+            
+            
         self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
 
-        # init_state wake up station transition
-        self.machine.add_transition('process_state_transitions',source='station_off',dest='stand_by', conditions='is_batch_assigned')
+        # load_vial transition
+        self.machine.add.transition('process_state_transitions', source='init_state', dest='load_vial', conditions='request_load_vial_job')
+        
+        # process_Sample
+        self.machine.add.transition('processs_state_transitions', source='load_vial', dest='process_sample', condition=['is_station_job_ready','is_sample_loaded'])
 
-        # turn on camera for imaging
-        self.machine.add_transition('process_state_transitions', source='stand_by',dest='take_image', before='update_batch_loc_to_station' ,conditions='is_station_job_ready')
-
-        # Prepare for the next vial 
-        self.machine.add_transition('process_state_transitions', source='take_image',dest='stand_by', conditions='is_station_operation_complete', before='update_batch_loc_to_robot')
-
-        # back to init_state sleep state 
-        self.machine.add_transition('process_state_transitions', source='stand_by',dest='station_off', conditions='is_station_operation_complete')
-
+        # unload_vial transition
+        self.machine.add.transition('process_state_transitions', source='process_sample', dest='final_state', before='process_batch', condition='is_station_operation_complete')
 
     def is_station_job_ready(self):
         return not self._station.has_station_op() and not self._station.has_robot_job()
+
+    def is_sample_loaded(self):
+        return self._station.loaded_samples == self._station.assigned_batch.num_samples
 
     def is_station_operation_complete(self):
         return self.operation_complete
@@ -47,12 +47,24 @@ class LightBoxSM():
     def is_batch_assigned(self):
         return self._station.assigned_batch is not None
 
-    def update_batch_loc_to_station(self):
-        self._station.assigned_batch.location = self._station.location
+    def reset_station(self):
+        while(self._station.loaded_samples > 0):
+          self._station.unload_sample()
+   
+    def process_batch(self):
+        last_operation_op = self._station.station_op_history[-1]
+        self.operation_complete = True
 
-    def update_batch_loc_to_robot(self):
-        last_executed_robot_op = self._station.requested_robot_op_history[-1]
-        self._station.assigned_batch.location = Location(-1,-1,f'{last_executed_robot_op.output.executing_robot}/Deck')
+    def request_load_vial_job(self):
+        sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero
+        sample_target_location = self._station.create_location_from_frame(self._load_frame)
+        self._station.set_robot_job(MoveSampleOp(sample_index, self._station.assigned_batch.location, sample_target_location, RobotOutputDescriptor()))
+
+    def request_unload_vial_job(self):
+        sample_index = self._station.loaded_samples
+        sample_start_location = self._station.create_location_from_frame(self._load_frame)
+        self._station.set_robot_job(MoveSampleOp(sample_index, sample_start_location, self._station.assigned_batch.location, RobotOutputDescriptor()))
+
 
     
 
