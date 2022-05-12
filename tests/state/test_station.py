@@ -63,7 +63,8 @@ class StationTest(unittest.TestCase):
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
-        batch = Batch.from_arguments('test',31,recipe_doc,2,Location(1,3,'table_frame'))
+        batch = Batch.from_arguments('test',31,2,Location(1,3,'table_frame'))
+        batch.attach_recipe(recipe_doc)
         t_station.add_batch(batch)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         with self.assertRaises(StationAssignedRackError):

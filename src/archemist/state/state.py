@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from archemist.persistence.objectConstructor import ObjectConstructor
 from bson.objectid import ObjectId
 from multipledispatch import dispatch
+from archemist.util import Location
 
 
 class State:
@@ -57,13 +58,33 @@ class State:
             batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
         return batches
 
-    @property
-    def completed_batches(self):
+    def add_clean_batch(self, batch_id: int, num_samples: int, location:Location):
+        batch_dict={'id':batch_id, 'num_samples':num_samples, 'location':location}
+        return ObjectConstructor.construct_batch_from_dict(self._db_name, batch_dict)
+
+    def get_completed_batches(self):
         processed_batches = list()
         batches_cursor = self._batches.find({'processed': True})
         for doc in batches_cursor:
             processed_batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
         return processed_batches
+
+    def get_clean_batches(self):
+        clean_batches = list()
+        batches_cursor = self._batches.find({'recipe_attached': False})
+        for doc in batches_cursor:
+            clean_batches.append(ObjectConstructor.construct_batch_from_object_id(self._db_name, doc))
+        return clean_batches
+
+    @dispatch(ObjectId)
+    def get_batch(self, object_id: ObjectId):
+        batch_doc = self._batches.find_one({'_id': object_id})
+        return ObjectConstructor.construct_batch_from_object_id(self._db_name, batch_doc)
+
+    @dispatch(int)
+    def get_batch(self, batch_id: int):
+        batch_doc = self._batches.find_one({'id': batch_id})
+        return ObjectConstructor.construct_batch_from_object_id(self._db_name, batch_doc)
 
     @dispatch(ObjectId)
     def get_station(self, object_id: ObjectId):

@@ -51,9 +51,9 @@ class Batch(DbObjProxy):
         
         if len(batch_document) > 1:
             batch_document['class'] = self.__class__.__name__
-    
-            batch_document['recipe']['current_state'] = 'start'
+
             batch_document['processed'] = False
+            batch_document['recipe_attached'] = False
             
             batch_document['samples'] = []
             for indx in range(0,batch_document['num_samples']):
@@ -68,11 +68,14 @@ class Batch(DbObjProxy):
         else:
             super().__init__(db_name, 'batches', batch_document['object_id'])
         
-        self._recipe = Recipe(self.get_field('recipe'), self.get_db_proxy())
+        if self.recipe_attached:
+            self._recipe = Recipe(self.get_field('recipe'), self.get_db_proxy())
+        else:
+            self._recipe = None
 
     @classmethod
-    def from_arguments(cls, db: str, batch_id: int, recipe_dict: dict, num_samples: int, location:Location):
-        batch_dict={'id':batch_id, 'recipe':recipe_dict, 'num_samples':num_samples, 'location':location.to_dict()}
+    def from_arguments(cls, db: str, batch_id: int, num_samples: int, location:Location):
+        batch_dict={'id':batch_id, 'num_samples':num_samples, 'location':location.to_dict()}
         return cls(db_name=db, batch_document=batch_dict)
 
     @classmethod
@@ -85,8 +88,21 @@ class Batch(DbObjProxy):
         return self.get_field('id')
 
     @property
+    def recipe_attached(self):
+        return self.get_field('recipe_attached')
+
+    @property
     def recipe(self):
         return self._recipe
+
+    def attach_recipe(self, recipe_dict: dict):
+        if isinstance(recipe_dict, dict):
+            recipe_dict['current_state'] = 'start'
+            self.update_field('recipe', recipe_dict)
+            self._recipe = Recipe(self.get_field('recipe'), self.get_db_proxy())
+            self.update_field('recipe_attached', True)
+        else:
+            raise ValueError
 
     @property
     def location(self):
