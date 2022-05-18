@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
         # add clean batch
         batch_id = 0
-        state.add_clean_batch(batch_id, 6, clean_batch_location)
+        state.add_clean_batch(batch_id, 2, clean_batch_location)
         # queue recipe 
         recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
         wm_manager.queue_recipe(recipe_dict)

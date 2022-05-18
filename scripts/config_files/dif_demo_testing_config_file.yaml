@@ -41,5 +41,19 @@ workflow:
         type: InputStationSm
         args:
       parameters:
+    - class: IkaPlateRCTDigital
+      id: 2
+      location:
+        node_id: 3
+        graph_id: 1
+      process_state_machine:
+        type: StationLoadingSm
+        args:
+          batch_mode: false
+          rack_load_task: LoadPandaStation
+          rack_unload_task:
+          vial_load_task: LoadIKAPlate
+          vial_unload_task: UnloadIKAPlate
+      parameters:
   name: dif_demo_workflow
   timestamp: 08/26/2021, 15:28:26

@@ -1,3 +1,4 @@
+from .GenericStation_Handler import GenericStation_Handler
 from .IkaPlateRCTDigital_Handler import IkaPlateRCTDigital_Handler
 from .FisherWeightingStation_Handler import FisherWeightingStation_Handler
 from .InputStation_Handler import InputStation_Handler

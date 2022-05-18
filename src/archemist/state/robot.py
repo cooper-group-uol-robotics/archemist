@@ -80,6 +80,10 @@ class MoveSampleOp(RobotOpDescriptor):
     def task_name(self):
         return self._task_name
 
+    @property
+    def sample_index(self):
+        return self._sample_index
+
     def __str__(self) -> str:
         return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
 

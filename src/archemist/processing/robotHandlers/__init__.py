@@ -1,2 +1,3 @@
 from .pandaFranka_handler import PandaFranka_Handler
 from .kukaLBRIIWA_handler import KukaLBRIIWA_Handler
+from .genericRobot_handler import GenericRobot_Handler

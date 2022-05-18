@@ -7,6 +7,9 @@ class KukaLBRTask(SpecialJobOpDescriptor):
     def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
         super().__init__(job_name, job_params, job_location, output=output)
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
+
 
 
 class KukaLBRIIWA(mobileRobot):
