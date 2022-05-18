@@ -15,7 +15,8 @@ class StationHandler:
         self._station_sm.process_state_transitions()
         if (self._station.state == StationState.WAITING_ON_OPERATION):
             station_op = self.process()
-            self._station.finish_station_op(station_op)
+            if station_op is not None:
+                self._station.finish_station_op(station_op)
         
     def update_station_batch(self, operation_op):
         self._station.set_station_op(operation_op)

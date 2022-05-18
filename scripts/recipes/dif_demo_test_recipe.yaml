@@ -1,0 +1,21 @@
+name: dif_demo_recipe
+id: 198
+materials:
+  liquids: [water]
+  solids: [sodium_chloride]
+stations:
+  - name: InputStation.id_1
+    stationOps:
+      - type: InputStationPickupOp
+        properties:
+        output: InputStationResultDescriptor
+workflowSM:
+  - state_name: start
+    onSuccess: InputStation.id_1.InputStationPickupOp
+    onFail: end
+  - state_name: InputStation.id_1.InputStationPickupOp
+    onSuccess: end
+    onFail: end
+  - state_name: end
+    onSuccess:
+    onFail:

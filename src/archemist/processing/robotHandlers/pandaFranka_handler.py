@@ -1,6 +1,6 @@
 from archemist.state.robot import Robot, MoveSampleOp
 import rospy
-from panda_archemist_msgs.msg import PandaTask, PandaTaskStatus
+from franka_msgs_archemist.msg import PandaTask, TaskStatus
 from archemist.processing.handler import RobotHandler
 
 class PandaFranka_Handler(RobotHandler):
@@ -8,7 +8,7 @@ class PandaFranka_Handler(RobotHandler):
         super().__init__(robot)
         rospy.init_node( f'{self._robot}_handler')
         self._pandaCmdPub = rospy.Publisher('/panda1/task', PandaTask, queue_size=1)
-        rospy.Subscriber('/panda1/task_status', PandaTaskStatus, self._panda_task_cb, queue_size=2)
+        rospy.Subscriber('/panda1/task_status', TaskStatus, self._panda_task_cb, queue_size=2)
         self._panda_task = ''
         self._panda_done = False
         self._task_counter = 0

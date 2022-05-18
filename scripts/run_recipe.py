@@ -7,10 +7,10 @@ from pathlib import Path
 from datetime import datetime
 
 if __name__ == '__main__':
-    config_file_name = 'chemspeed_testing_config_file.yaml'
-    recipe_file_name = 'chemspeed_test_recipe.yaml'
-    db_name = 'chemspeed_testing'
-    clean_batch_location = Location(-1,-1,'KukaLBRIIWA_1/Deck')
+    config_file_name = 'dif_demo_testing_config_file.yaml'
+    recipe_file_name = 'dif_demo_test_recipe.yaml'
+    db_name = 'dif_demo'
+    clean_batch_location = Location(2,1,'InputStation/RackHolder')
     
     current_dir = Path.cwd()
     config_file_path = current_dir.joinpath(f'config_files/{config_file_name}')
@@ -27,6 +27,7 @@ if __name__ == '__main__':
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
         print(f'[{current_time}] starting workflow')
+        input('press enter to start')
 
         # add clean batch
         batch_id = 0
