@@ -79,10 +79,14 @@ class KukaLBRIIWA_Handler(RobotHandler):
         lbr_job, kmr_job = self._process_lbriiwa_task_op(station_robot_job.robot_op)
         
         if kmr_job is not None:
-            self._kmr_task = f'nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
+            if kmr_job.fine_localization:
+                self._kmr_task = f'fine_nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
+            else:
+                self._kmr_task = f'nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
             rospy.loginfo('executing ' + self._kmr_task)
             self._kmrCmdPub.publish(kmr_job)
             self._wait_for_kmr()
+            print('done with navigation')
             self._robot.location = Location(node_id=kmr_job.node_id, graph_id=kmr_job.graph_id,frame_name='')
         
         self._lbr_task = lbr_job.task_name
