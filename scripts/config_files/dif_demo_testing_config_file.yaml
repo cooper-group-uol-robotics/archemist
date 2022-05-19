@@ -3,7 +3,7 @@ workflow:
     - class: KukaLBRIIWA
       id: 1
       location:
-        node_id: 2
+        node_id: 3
         graph_id: 1
         frame_name: neutral
       saved_frames:
@@ -50,7 +50,7 @@ workflow:
         type: StationLoadingSm
         args:
           batch_mode: false
-          rack_load_task: LoadPandaStation
+          rack_load_task: LoadPandaRack
           rack_unload_task:
           vial_load_task: LoadIKAPlate
           vial_unload_task: UnloadIKAPlate

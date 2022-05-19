@@ -111,7 +111,7 @@ class StationLoadingSm():
     def request_load_rack_job(self):
         self._station.set_robot_job(KukaLBRTask(self._rack_load_task,[False,self._rack_index], self._station.location, RobotOutputDescriptor()))
 
-    def request_load_rack_job(self):
+    def request_unload_rack_job(self):
         self._station.set_robot_job(KukaLBRTask(self._rack_unload_task,[False,self._rack_index], self._station.location, RobotOutputDescriptor()))
 
     def request_operation(self):
