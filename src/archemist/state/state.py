@@ -86,6 +86,9 @@ class State:
         batch_doc = self._batches.find_one({'id': batch_id})
         return ObjectConstructor.construct_batch_from_object_id(self._db_name, batch_doc)
 
+    def is_batch_complete(self, batch_id: int):
+        return self._batches.find_one({'id': batch_id, 'processed': True}) is not None
+
     @dispatch(ObjectId)
     def get_station(self, object_id: ObjectId):
         station_doc = self._stations.find_one({'_id': object_id})

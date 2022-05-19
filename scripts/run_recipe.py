@@ -5,6 +5,8 @@ from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from pathlib import Path
 from datetime import datetime
+from archemist.state.robots.kukaLBRIIWA import KukaNAVTask
+from archemist.state.robot import RobotOutputDescriptor
 
 if __name__ == '__main__':
     config_file_name = 'dif_demo_testing_config_file.yaml'
@@ -28,7 +30,7 @@ if __name__ == '__main__':
         current_time = now.strftime("%H:%M:%S")
         print(f'[{current_time}] starting workflow')
         input('press enter to start')
-
+        
         # add clean batch
         batch_id = 0
         state.add_clean_batch(batch_id, 2, clean_batch_location)
@@ -39,6 +41,9 @@ if __name__ == '__main__':
         # spin
         while True:
             sleep(1)
+            if state.is_batch_complete(batch_id):
+                wm_manager.queue_robot_op(KukaNAVTask(Location(1,1,''), False, RobotOutputDescriptor()))
+                break
 
 
     except KeyboardInterrupt:

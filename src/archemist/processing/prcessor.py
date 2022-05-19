@@ -2,6 +2,7 @@ from archemist.state.state import State
 from archemist.state.station import StationState
 from archemist.state.batch import Batch
 from archemist.util.location import Location
+from archemist.util.station_robot_job import StationRobotJob
 from archemist.processing.scheduler import SimpleRobotScheduler
 from collections import deque
 from threading import Thread
@@ -32,6 +33,11 @@ class WorkflowManager:
 
     def queue_recipe(self, recipe_dict):
         self._queued_recipes.append(recipe_dict)
+
+    def queue_robot_op(self, robot_op):
+        queued_job = StationRobotJob(robot_op=robot_op, station_obj_id=None)
+        self._job_station_queue.append(queued_job)
+
 
     # this can keep track of the batches on the robot deck
     def _process(self):
@@ -85,9 +91,10 @@ class WorkflowManager:
                     station_robot_job = robot.get_complete_job()
                     self._log_processor(f'{robot} finished executing job {station_robot_job.robot_op}')
                     # todo check the robot job matches
-                    station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
-                    self._log_processor(f'Notifying {station_to_notify}')
-                    station_to_notify.finish_robot_job(station_robot_job.robot_op)
+                    if station_robot_job.station_obj_id is not None:
+                        station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
+                        self._log_processor(f'Notifying {station_to_notify}')
+                        station_to_notify.finish_robot_job(station_robot_job.robot_op)
 
             if self._job_station_queue:
                 self._robot_scheduler.schedule(self._job_station_queue, self._workflow_state)

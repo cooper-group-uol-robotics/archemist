@@ -1,5 +1,5 @@
 from archemist.state.robot import Robot, RobotState, PickBatchToDeckOp, PlaceBatchFromDeckOp, PickAndPlaceBatchOp, MoveSampleOp
-from archemist.state.robots.kukaLBRIIWA import KukaLBRTask
+from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask
 from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.state import State
 
@@ -22,7 +22,7 @@ class SimpleRobotScheduler(RobotScheduler):
             station_robot_job = job_station_queue.pop()
             job_assigned = False
             robot_job = station_robot_job.robot_op
-            if isinstance(robot_job, PickBatchToDeckOp) or isinstance(robot_job, PlaceBatchFromDeckOp) or isinstance(robot_job, PickAndPlaceBatchOp) or isinstance(robot_job, KukaLBRTask):
+            if isinstance(robot_job, PickBatchToDeckOp) or isinstance(robot_job, PlaceBatchFromDeckOp) or isinstance(robot_job, KukaNAVTask) or isinstance(robot_job, KukaLBRTask):
                 robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
                 if robot.state == RobotState.IDLE:
                     robot.assign_job(station_robot_job)

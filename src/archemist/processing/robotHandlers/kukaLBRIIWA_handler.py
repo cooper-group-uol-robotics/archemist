@@ -1,6 +1,6 @@
 import rospy
 from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand
-from archemist.state.robots.kukaLBRIIWA import KukaLBRTask
+from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask
 from archemist.state.robot import Robot
 from archemist.util.location import Location
 from archemist.processing.handler import RobotHandler
@@ -66,6 +66,12 @@ class KukaLBRIIWA_Handler(RobotHandler):
                 robotOp.job_params[0] = False
             lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
             return lbr_task, nav_task
+        elif isinstance(robotOp, KukaNAVTask):
+            lbr_task = None
+            nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
+                                        node_id=robotOp.target_location.node_id,
+                                        fine_localization=robotOp.fine_localisation)
+            return lbr_task, nav_task
         else:
             rospy.logerr('unknown KUKAIIWA robot op')
         return None
@@ -89,11 +95,12 @@ class KukaLBRIIWA_Handler(RobotHandler):
             print('done with navigation')
             self._robot.location = Location(node_id=kmr_job.node_id, graph_id=kmr_job.graph_id,frame_name='')
         
-        self._lbr_task = lbr_job.task_name
-        rospy.loginfo('executing ' + self._lbr_task)
-        self._lbrCmdPub.publish(lbr_job)
-        self._wait_for_lbr()
-        rospy.loginfo('completed executing ' + self._lbr_task)
+        if lbr_job is not None:
+            self._lbr_task = lbr_job.task_name
+            rospy.loginfo('executing ' + self._lbr_task)
+            self._lbrCmdPub.publish(lbr_job)
+            self._wait_for_lbr()
+            rospy.loginfo('completed executing ' + self._lbr_task)
 
         station_robot_job.robot_op.output.has_result = True
         station_robot_job.robot_op.output.success = True
