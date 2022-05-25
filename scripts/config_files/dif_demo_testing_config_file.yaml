@@ -1,0 +1,59 @@
+workflow:
+  Robots:
+    - class: KukaLBRIIWA
+      id: 1
+      location:
+        node_id: 3
+        graph_id: 1
+        frame_name: neutral
+      saved_frames:
+    - class: PandaFranka
+      id: 2
+      location:
+        node_id: 3
+        graph_id: 1
+        frame_name: neutral
+      saved_frames:
+  Materials:
+    liquids:
+      - name: water
+        id: 145
+        amount_stored: 400
+        unit: ml
+        density: 997 #g/l
+        pump_id: pUmP1
+        expiry_date: 2025-02-11
+    solids:
+      - name: sodium_chloride
+        id: 345
+        amount_stored: 10000
+        dispense_method: quantos
+        cartridge_id: cat1
+        unit: mg
+        expiry_date: 2025-02-11
+  Stations:
+    - class: InputStation
+      id: 1
+      location:
+        node_id: 2
+        graph_id: 1
+      process_state_machine:
+        type: InputStationSm
+        args:
+      parameters:
+    - class: IkaPlateRCTDigital
+      id: 2
+      location:
+        node_id: 3
+        graph_id: 1
+      process_state_machine:
+        type: StationLoadingSm
+        args:
+          batch_mode: false
+          rack_load_task: LoadPandaRack
+          rack_unload_task:
+          vial_load_task: LoadIKAPlate
+          vial_unload_task: UnloadIKAPlate
+      parameters:
+  name: dif_demo_workflow
+  timestamp: 08/26/2021, 15:28:26

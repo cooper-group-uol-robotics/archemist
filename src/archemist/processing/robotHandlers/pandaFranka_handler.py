@@ -1,6 +1,6 @@
 from archemist.state.robot import Robot, MoveSampleOp
 import rospy
-from panda_archemist_msgs.msg import PandaTask, PandaTaskStatus
+from franka_msgs_archemist.msg import PandaTask, TaskStatus
 from archemist.processing.handler import RobotHandler
 
 class PandaFranka_Handler(RobotHandler):
@@ -8,7 +8,7 @@ class PandaFranka_Handler(RobotHandler):
         super().__init__(robot)
         rospy.init_node( f'{self._robot}_handler')
         self._pandaCmdPub = rospy.Publisher('/panda1/task', PandaTask, queue_size=1)
-        rospy.Subscriber('/panda1/task_status', PandaTaskStatus, self._panda_task_cb, queue_size=2)
+        rospy.Subscriber('/panda1/task_status', TaskStatus, self._panda_task_cb, queue_size=2)
         self._panda_task = ''
         self._panda_done = False
         self._task_counter = 0
@@ -25,7 +25,7 @@ class PandaFranka_Handler(RobotHandler):
 
 
     def _panda_task_cb(self, msg):
-        if msg.task_name != '' and msg.task_name == self._panda_task and msg.task_state == PandaTaskStatus.FINISHED:
+        if msg.task_name != '' and msg.task_name == self._panda_task and msg.task_state == TaskStatus.FINISHED and msg.task_seq == self._task_counter:
             self._panda_task = ''
             self._panda_done = True
 
@@ -36,9 +36,8 @@ class PandaFranka_Handler(RobotHandler):
 
     def _process_op(self, robotOp):
         if isinstance(robotOp, MoveSampleOp):
-            return PandaTask(task_type=PandaTask.MOVE_VIAL_TASK, 
-                             task_name=f'MOVE_VIAL_TASK_{self._task_counter}', 
-                             task_parameters=[robotOp.start_location.frame_name,robotOp.target_location.frame_name, str(robotOp.sample_index)])
+            return PandaTask(task_name=f'{robotOp.task_name}', task_seq=self._task_counter,
+                             task_parameters=[str(robotOp.sample_index)])
         else:
             rospy.logerr('unknown robot op')    
         return None

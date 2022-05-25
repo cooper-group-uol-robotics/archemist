@@ -1,8 +1,8 @@
 from archemist.state.state import State
 from archemist.state.station import StationState
 from archemist.state.batch import Batch
-from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
+from archemist.util.station_robot_job import StationRobotJob
 from archemist.processing.scheduler import SimpleRobotScheduler
 from collections import deque
 from threading import Thread
@@ -17,8 +17,8 @@ class WorkflowManager:
         self._running = False
         
         self._job_station_queue = list()
+        self._queued_recipes = deque()
         self._unassigned_batches = deque()
-        self._completed_batches = []
 
     def start_processor(self):
         self._running = True
@@ -31,16 +31,29 @@ class WorkflowManager:
         self._processor_thread.join(1)
         self._log_processor('processor thread is terminated')
 
-    def add_batch(self, batch_id, recipe_file_path, num_samples, location):
-        recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
-        new_batch = Batch.from_arguments(self._workflow_state.db_name, batch_id, recipe_dict, 
-                                        num_samples, location)
-        new_batch.recipe.advance_state(True) # to move out of start state
-        self._unassigned_batches.append(new_batch)
+    def queue_recipe(self, recipe_dict):
+        self._queued_recipes.append(recipe_dict)
+
+    def queue_robot_op(self, robot_op):
+        queued_job = StationRobotJob(robot_op=robot_op, station_obj_id=None)
+        self._job_station_queue.append(queued_job)
+
 
     # this can keep track of the batches on the robot deck
     def _process(self):
         while (self._running):
+            # process queued recipes
+            if self._queued_recipes:
+                clean_batches = self._workflow_state.get_clean_batches()
+                while self._queued_recipes:
+                        recipe = self._queued_recipes.pop()
+                        new_batch = clean_batches.pop()
+                        new_batch.attach_recipe(recipe)
+                        new_batch.recipe.advance_state(True) # to move out of start state
+                        self._unassigned_batches.append(new_batch)
+                        if not clean_batches:
+                            break
+
             # process unassigned batches
             while self._unassigned_batches:
                 batch = self._unassigned_batches.popleft()
@@ -78,9 +91,10 @@ class WorkflowManager:
                     station_robot_job = robot.get_complete_job()
                     self._log_processor(f'{robot} finished executing job {station_robot_job.robot_op}')
                     # todo check the robot job matches
-                    station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
-                    self._log_processor(f'Notifying {station_to_notify}')
-                    station_to_notify.finish_robot_job(station_robot_job.robot_op)
+                    if station_robot_job.station_obj_id is not None:
+                        station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
+                        self._log_processor(f'Notifying {station_to_notify}')
+                        station_to_notify.finish_robot_job(station_robot_job.robot_op)
 
             if self._job_station_queue:
                 self._robot_scheduler.schedule(self._job_station_queue, self._workflow_state)

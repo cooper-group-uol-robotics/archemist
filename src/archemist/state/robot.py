@@ -71,26 +71,21 @@ class RobotOpDescriptor:
         self._timestamp = datetime.now()
 
 class MoveSampleOp(RobotOpDescriptor):
-    def __init__(self, sample_index: int , start_location: Location, target_location: Location, output: RobotOutputDescriptor):
+    def __init__(self, task_name: str ,sample_index: int , output: RobotOutputDescriptor):
         super().__init__(output=output)
+        self._task_name = task_name
         self._sample_index = sample_index
-        self._start_location = start_location
-        self._target_location = target_location
+
+    @property
+    def task_name(self):
+        return self._task_name
 
     @property
     def sample_index(self):
         return self._sample_index
 
-    @property
-    def start_location(self):
-        return self._start_location
-
-    @property
-    def target_location(self):
-        return self._target_location
-
     def __str__(self) -> str:
-        return f'{self.__class__.__name__} {self._start_location.frame_name} -> {self._target_location.frame_name}, sample_index: {self._sample_index}'
+        return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
 
 class PickAndPlaceBatchOp(RobotOpDescriptor):
     def __init__(self, pick_location: Location, place_location: Location, output: RobotOutputDescriptor):

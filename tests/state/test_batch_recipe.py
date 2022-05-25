@@ -12,16 +12,23 @@ class BatchRecipeTest(unittest.TestCase):
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
-        batch = Batch.from_arguments('test',31,recipe_doc,2,Location(1,3,'table_frame'))
+        batch = Batch.from_arguments('test',31,2,Location(1,3,'table_frame'))
         self.assertEqual(batch.id, 31)
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
         self.assertFalse(batch.processed)
+        self.assertFalse(batch.recipe_attached)
+        self.assertIsNone(batch.recipe)
         
         self.assertEqual(batch.num_samples, 2)
         self.assertFalse(batch.are_all_samples_processed())
         self.assertEqual(len(batch.station_history), 0)
+        ''' add recipe '''
+        batch.attach_recipe(recipe_doc)
+        self.assertTrue(batch.recipe_attached)
+        self.assertIsNotNone(batch.recipe)
+
         ''' First operation '''
         # process first sample
         self.assertEqual(batch.current_sample_index, 0)
@@ -75,7 +82,13 @@ class BatchRecipeTest(unittest.TestCase):
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
-        batch = Batch.from_arguments('test',31,recipe_doc,2,Location(1,3,'table_frame'))
+        batch = Batch.from_arguments('test',31,2,Location(1,3,'table_frame'))
+        self.assertFalse(batch.recipe_attached)
+        self.assertIsNone(batch.recipe)
+        '''add recipe'''
+        batch.attach_recipe(recipe_doc)
+        self.assertTrue(batch.recipe_attached)
+        
         self.assertEqual(batch.recipe.id, 198)
         self.assertEqual(batch.recipe.name, 'test_archemist_recipe')
         self.assertEqual(batch.recipe.liquids[0], 'water')

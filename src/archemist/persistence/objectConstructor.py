@@ -46,6 +46,10 @@ class ObjectConstructor:
         return robot_cls.from_object_id(db_name, robot_document['_id'])
 
     @staticmethod
+    def construct_batch_from_dict(db_name: str, batch_dict: dict):
+        return Batch.from_arguments(db_name, batch_dict['id'], batch_dict['num_samples'], batch_dict['location'])
+
+    @staticmethod
     def construct_batch_from_object_id(db_name: str, batch_document: dict):
         return Batch.from_object_id(db_name, batch_document['_id'])
 

@@ -13,6 +13,7 @@ if __name__ == '__main__':
         # Construct state from config file
         pers_manager = PersistenceManager('chemspeed_testing')
         state = pers_manager.construct_state_from_config_file(config_file_path)
+        #TODO add recipe file watcher to see new recipes added and add batches accordingly
         # construct the state manager
         wm_manager = WorkflowManager(state)
         wm_manager.start_processor()

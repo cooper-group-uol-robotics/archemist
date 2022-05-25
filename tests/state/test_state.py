@@ -15,7 +15,7 @@ class StateTest(unittest.TestCase):
         state = pm.construct_state_from_config_file(config_dir)
 
         stations = state.stations
-        self.assertEqual(len(stations), 3)
+        self.assertEqual(len(stations), 4)
         self.assertEqual(stations[0].__class__.__name__, 'PeristalticLiquidDispensing')
         self.assertEqual(stations[0].id, 23)
         obj_id_station = state.get_station(stations[0].object_id)
@@ -30,15 +30,15 @@ class StateTest(unittest.TestCase):
         self.assertEqual(stations[2].id, 5)
 
         robots = state.robots
-        self.assertEqual(len(robots), 1)
+        self.assertEqual(len(robots), 2)
         self.assertEqual(robots[0].__class__.__name__, 'PandaFranka')
-        self.assertEqual(robots[0].id, 1)
-        obj_id_robot = state.get_station(robots[0].object_id)
+        self.assertEqual(robots[0].id, 99)
+        obj_id_robot = state.get_robot(robots[0].object_id)
         self.assertEqual(obj_id_robot.__class__.__name__, 'PandaFranka')
-        self.assertEqual(obj_id_robot.id, 1)
-        string_id_robot = state.get_station('PandaFranka', 1)
+        self.assertEqual(obj_id_robot.id, 99)
+        string_id_robot = state.get_robot('PandaFranka', 99)
         self.assertEqual(string_id_robot.__class__.__name__, 'PandaFranka')
-        self.assertEqual(string_id_robot.id, 1)
+        self.assertEqual(string_id_robot.id, 99)
 
         liquids = state.liquids
         self.assertEqual(len(liquids), 1)
@@ -55,25 +55,44 @@ class StateTest(unittest.TestCase):
         recipe_dir = os.path.join(dir_path, 'resources/testing_recipe.yaml')
         with open(recipe_dir) as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
-        batch1 = Batch.from_arguments('test',31,recipe_doc,2,Location(1,3,'table_frame'))
-        batch2 = Batch.from_arguments('test',77,recipe_doc,2,Location(1,3,'table_frame'))
+        batch1 = state.add_clean_batch(31,2,Location(1,3,'table_frame'))
+        state.add_clean_batch(77,2,Location(1,3,'table_frame'))
 
         batches = state.batches
         self.assertEqual(len(batches), 2)
 
+        clean_batches = state.get_clean_batches()
+        self.assertEqual(len(clean_batches), 2)
+
+        batch1.attach_recipe(recipe_doc)
+
+        clean_batches = state.get_clean_batches()
+        self.assertEqual(len(clean_batches), 1)
+
         batch1.recipe.advance_state(True)
         batch1.recipe.advance_state(True)
         batch1.recipe.advance_state(True)
+
+        obj_id_batch = state.get_batch(batch1.object_id)
+        self.assertEqual(obj_id_batch.id,batch1.id)
+        self.assertTrue(obj_id_batch.processed)
+
+        only_id_batch = state.get_batch(77)
+        self.assertFalse(only_id_batch.processed)
+        self.assertFalse(only_id_batch.recipe_attached)
         
-        processed_batches = state.completed_batches
+        processed_batches = state.get_completed_batches()
         self.assertEqual(len(processed_batches), 1)
+
+        batches = state.batches
+        self.assertEqual(len(batches), 2)
 
     def test_state_db(self):
         pm = PersistenceManager('test')
         state = pm.construct_state_from_db()
 
         stations = state.stations
-        self.assertEqual(len(stations), 3)
+        self.assertEqual(len(stations), 4)
         self.assertEqual(stations[0].__class__.__name__, 'PeristalticLiquidDispensing')
         self.assertEqual(stations[0].id, 23)
         self.assertEqual(stations[1].__class__.__name__, 'IkaPlateRCTDigital')
@@ -82,9 +101,9 @@ class StateTest(unittest.TestCase):
         self.assertEqual(stations[2].id, 5)
 
         robots = state.robots
-        self.assertEqual(len(robots), 1)
+        self.assertEqual(len(robots), 2)
         self.assertEqual(robots[0].__class__.__name__, 'PandaFranka')
-        self.assertEqual(robots[0].id, 1)
+        self.assertEqual(robots[0].id, 99)
 
         liquids = state.liquids
         self.assertEqual(len(liquids), 1)
