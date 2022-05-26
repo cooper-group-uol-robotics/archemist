@@ -1,4 +1,5 @@
 from multiprocessing import Condition
+from unittest import TestCase
 from transitions import Machine, State
 from archemist.state.station import Station, StationState
 from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor
@@ -26,14 +27,18 @@ class LightBoxSM():
 
         ''' Transitions '''
 
-        # load_vial transition
-        self.machine.add.transition('process_state_transitions', source='init_state', dest='load_vial', conditions='request_load_vial_job')
-        
-        # process_Sample
-        self.machine.add.transition('processs_state_transitions', source='load_vial', dest='process_sample', condition=['is_station_job_ready','is_sample_loaded'])
+        if self.batch_mode:
+            # load_sample transitions
+            self.machine.add_transition('process_state_transitions', source='load_sample',dest='=', after='inc_samples_count', conditions='is_station_job_ready', unless='are_all_samples_loaded')
+            self.machine.add_transition('process_state_transitions', source='load_sample',dest='station_process', conditions=['are_all_samples_loaded','is_station_job_ready'])
 
-        # unload_vial transition
-        self.machine.add.transition('process_state_transitions', source='process_sample', dest='final_state', before='process_batch', condition='is_station_operation_complete')
+            # station_process transitions
+            self.machine.add_transition('process_state_transitions', source='station_process',dest='unload_sample',conditions='is_station_job_ready', before='process_batch', after='dec_samples_count')
+
+            # unload_sample transitions
+            self.machine.add_transition('process_state_transitions', source='unload_sample',dest='=', conditions='is_station_job_ready', unless='are_all_samples_unloaded', after='dec_samples_count')
+
+
 
     def is_station_job_ready(self):
         return not self._station.has_station_op() and not self._station.has_robot_job()
@@ -44,8 +49,15 @@ class LightBoxSM():
     def is_station_operation_complete(self):
         return self.operation_complete
 
+    def are_all_samples_loaded(self):
+        return self._station.loaded_samples == self._station.assigned_batch.num_samples
+
     def is_batch_assigned(self):
         return self._station.assigned_batch is not None
+
+    
+    def dec_samples_count(self):
+        self._station.unload_sample()
 
     def reset_station(self):
         while(self._station.loaded_samples > 0):
@@ -64,6 +76,8 @@ class LightBoxSM():
         sample_index = self._station.loaded_samples
         sample_start_location = self._station.create_location_from_frame(self._load_frame)
         self._station.set_robot_job(MoveSampleOp(sample_index, sample_start_location, self._station.assigned_batch.location, RobotOutputDescriptor()))
+
+    #Test 
 
 
     
