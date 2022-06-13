@@ -3,7 +3,7 @@
 import rospy
 from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.station import Station
-from lightbox_msgs.msg import LightboxCommand
+#from lightbox_msgs.msg import LightboxCommand
 
 from rospy.core import is_shutdown
 
