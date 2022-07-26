@@ -1,0 +1,31 @@
+- git:
+    uri: https://github.com/cooper-group-uol-robotics/franka_msgs_archemist.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/ika_plate_rct_digital.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/chemspeed_flex_driver.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/kmriiwa_chemist_msgs.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/pi4_peristaltic_pump.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/fisherbrand_pps4102_balance.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/mettler_toledo_quantos_q2.git
+    version: master
+
+-git:
+    uri: https://github.com/cooper-group-uol-robotics/kern_pcb_balance.git
+    version: master
