@@ -3,8 +3,8 @@ workflow:
     - class: KukaLBRIIWA
       id: 1
       location:
-        node_id: 25
-        graph_id: 7
+        node_id: 24
+        graph_id: 1
         frame_name: neutral
       saved_frames:
   Materials:
@@ -22,18 +22,37 @@ workflow:
         amount_stored: 10000
         dispense_method: quantos
         cartridge_id: cat1
-        unit: mgS
+        unit: mg
         expiry_date: 2025-02-11
   Stations:
+    - class: InputStation
+      id: 11
+      location:
+        node_id: 25
+        graph_id: 1
+      process_state_machine:
+        type: InputStationSm
+        args:
+      parameters:
+    - class: ChemSpeedFlexStation
+      id: 12
+      location:
+        node_id: 27
+        graph_id: 1
+      process_state_machine:
+        type: ChemSpeedRackProcessingSm
+        args:
+          batch_mode: true
+      parameters:
     - class: LightBoxStation
-      id: 9
+      id: 13
       location: 
         node_id: 25
-        graph_id: 7
+        graph_id: 1
       process_state_machine: 
         type: LightBoxSM
         args: 
           batch_mode: true
       parameters:
-  name: lightbox_test_workflow
+  name: algae_bot_workflow
   timestamp: 08/26/2021, 15:28:26

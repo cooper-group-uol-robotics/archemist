@@ -67,11 +67,11 @@ class LightBoxSM():
 
     def request_load_vial_job(self):
         sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero
-        self._station.set_robot_job(KukaLBRTask('loadVial',[False,sample_index], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('PresentVial',[False,self.rack_index,sample_index], self._station.location, RobotOutputDescriptor()))
 
     def request_unload_vial_job(self):
         sample_index = self._station.loaded_samples
-        self._station.set_robot_job(KukaLBRTask('unloadVial',[False,sample_index], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('ReturnVial',[False,self.rack_index,sample_index], self._station.location, RobotOutputDescriptor()))
 
     def inc_samples_count(self):
         self._station.load_sample()

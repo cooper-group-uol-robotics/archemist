@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
 import rospy
+from archemist.processing.handler import StationHandler
 from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.station import Station
-#from lightbox_msgs.msg import LightboxCommand
+from colorimetry_msgs.msg import ColorimetryCommand,ColorimetryResult
 
 from rospy.core import is_shutdown
 
-class LightboxStaion_Handler:
+class LightBoxStation_Handler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self.pubCamera = rospy.Publisher("/lightboxPi/commands", LightboxCommand, queue_size=2)
+        self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=2)
         rospy.sleep(1)
         
 
@@ -30,11 +31,17 @@ class LightboxStaion_Handler:
         current_op.add_timestamp()
 
         # Process Sample 
-        self.pubCamera.publish(lightbox_command=LightboxCommand.PROCESS_SAMPLE)
-        message = rospy.wait_for_message("/lightboxPi/result", LightboxCommand)
+        op_msg = ColorimetryCommand()
+        op_msg.op_name = 'take_pic'
+        self.pubCamera.publish(op_msg)
+        message = rospy.wait_for_message("/colorimetry_station/result", ColorimetryResult)
 
         current_op.output.has_result = True
         current_op.output.success = True
         current_op.output.add_timestamp()
+        current_op.output.file_name = message.result_file_name
+        current_op.output.red_value = message.red
+        current_op.output.blue_value = message.blue
+        current_op.output.green_value = message.green
 
         return current_op

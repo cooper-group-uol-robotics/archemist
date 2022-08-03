@@ -1,0 +1,37 @@
+name: algae_bot_recipe
+id: 198
+materials:
+  liquids: [water]
+  solids: [sodium_chloride]
+stations:
+  - name: InputStation.id_11
+    stationOps:
+      - type: InputStationPickupOp
+        properties:
+        output: InputStationResultDescriptor
+  - name: ChemSpeedFlexStation.id_12
+    stationOps:
+      - type: CSProcessingOpDescriptor
+        properties:
+        output: "CSJobOutputDescriptor"
+  - name: LightBoxStation.id_13
+    stationOps:
+      - type: VialProcessingOpDescriptor
+        properties:
+        output: ColourDescriptor
+workflowSM:
+  - state_name: start
+    onSuccess: InputStation.id_11.InputStationPickupOp
+    onFail: end
+  - state_name: InputStation.id_11.InputStationPickupOp
+    onSuccess: ChemSpeedFlexStation.id_12.CSProcessingOpDescriptor
+    onFail: end
+  - state_name: ChemSpeedFlexStation.id_12.CSProcessingOpDescriptor
+    onSuccess: LightBoxStation.id_13.VialProcessingOpDescriptor
+    onFail: end
+  - state_name: LightBoxStation.id_13.VialProcessingOpDescriptor
+    onSuccess: end
+    onFail: end
+  - state_name: end
+    onSuccess:
+    onFail: 

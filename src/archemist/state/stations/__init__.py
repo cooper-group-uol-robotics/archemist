@@ -7,4 +7,4 @@ from .solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispe
 from .soluibility_station import SolubilityStation, SolubilityOpDescriptor, SolubilityDescriptor
 from .fisher_weighing_station import FisherWeightingStation,FisherWeightStablepDescriptor, FisherWeightNowpDescriptor, FisherOutputDescriptor
 from .chemspeed_flex_station import ChemSpeedFlexStation, CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSProcessingOpDescriptor, CSJobOutputDescriptor
-from .light_box_station import LightBoxStation
+from .light_box_station import LightBoxStation,VialProcessingOpDescriptor,ColourDescriptor
