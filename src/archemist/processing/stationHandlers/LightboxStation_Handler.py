@@ -12,7 +12,7 @@ class LightBoxStation_Handler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=2)
+        self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=1)
         rospy.sleep(1)
         
 
@@ -33,7 +33,8 @@ class LightBoxStation_Handler(StationHandler):
         # Process Sample 
         op_msg = ColorimetryCommand()
         op_msg.op_name = 'take_pic'
-        self.pubCamera.publish(op_msg)
+        for i in range(10):
+            self.pubCamera.publish(op_msg)
         message = rospy.wait_for_message("/colorimetry_station/result", ColorimetryResult)
 
         current_op.output.has_result = True

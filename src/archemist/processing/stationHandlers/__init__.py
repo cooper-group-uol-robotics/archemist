@@ -7,3 +7,4 @@ from .LightboxStation_Handler import LightBoxStation_Handler
 from .ChemSpeedFlexStation_Handler import ChemSpeedFlexStation_Handler
 # from .QuantosSolidDispenserQS2_Handler import QuantosSolidDispenserQS2_Handler
 # from .SolubilityStation_Handler import SolubilityStation_Handler
+from .OutputStation_Handler import OutputStation_Handler

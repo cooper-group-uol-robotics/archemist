@@ -8,3 +8,4 @@ from .soluibility_station import SolubilityStation, SolubilityOpDescriptor, Solu
 from .fisher_weighing_station import FisherWeightingStation,FisherWeightStablepDescriptor, FisherWeightNowpDescriptor, FisherOutputDescriptor
 from .chemspeed_flex_station import ChemSpeedFlexStation, CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSProcessingOpDescriptor, CSJobOutputDescriptor
 from .light_box_station import LightBoxStation,VialProcessingOpDescriptor,ColourDescriptor
+from .output_station import OutputStation, OutputStationPlaceOp, OutputStationResultDescriptor
