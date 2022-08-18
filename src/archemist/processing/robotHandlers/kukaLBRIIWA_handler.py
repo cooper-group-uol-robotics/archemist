@@ -1,5 +1,5 @@
 import rospy
-from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand
+from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand, KMRStatus, LBRStatus
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask
 from archemist.state.robot import Robot
 from archemist.util.location import Location
@@ -11,16 +11,18 @@ class KukaLBRIIWA_Handler(RobotHandler):
         rospy.init_node(f'{self._robot}_handler')
         self._kmrCmdPub = rospy.Publisher('/kuka2/kmr/nav_commands', NavCommand, queue_size=1)
         self._lbrCmdPub = rospy.Publisher('/kuka2/lbr/command', LBRCommand, queue_size=1)
-        rospy.Subscriber('/kuka2/kmr/task_status', TaskStatus, self._kmr_task_cb, queue_size=2)
-        rospy.Subscriber('/kuka2/lbr/task_status', TaskStatus, self._lbr_task_cb, queue_size=2)
+        rospy.Subscriber('/kuka2/kmr/task_status', TaskStatus, self._kmr_task_cb, queue_size=1)
+        rospy.Subscriber('/kuka2/lbr/task_status', TaskStatus, self._lbr_task_cb, queue_size=1)
         
         # TODO add callbacks to check on the robot status so that charging or other operations can 
         # performed to run the process smoothly.
-        #rospy.Subscriber('/kuka2/lbr/robot_status', TaskStatus, self.update_lbr_status_cb, queue_size=2)
-        #rospy.Subscriber('/kuka2/kmr/robot_status', TaskStatus, self.update_lbr_kmr_status_cb, queue_size=2)
+        rospy.Subscriber('/kuka2/lbr/robot_status', LBRStatus, self._update_lbr_status_cb, queue_size=2)
+        #rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_lbr_kmr_status_cb, queue_size=2)
         
+        #self._kmr_current_status = ''
         self._kmr_task = ''
         self._kmr_done = False
+        self._lbr_current_op_state = ''
         self._lbr_task = ''
         self._lbr_done = False
         rospy.sleep(3)
@@ -43,6 +45,14 @@ class KukaLBRIIWA_Handler(RobotHandler):
         while(not self._kmr_done):
             rospy.sleep(0.2)
         self._kmr_done = False
+
+    def _update_lbr_status_cb(self, msg):
+        if msg.robot_op_state != self._lbr_current_op_state:
+            self._lbr_current_op_state = msg.robot_op_state
+            if self._lbr_current_op_state == 'IDLE':
+                self._robot.operational = True
+            elif self._lbr_current_op_state != 'BUSY':
+                self._robot.operational = False
 
     def _lbr_task_cb(self, msg):
         if msg.task_name != '' and msg.task_name == self._lbr_task and msg.task_state == TaskStatus.FINISHED:
@@ -90,7 +100,8 @@ class KukaLBRIIWA_Handler(RobotHandler):
             else:
                 self._kmr_task = f'nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
             rospy.loginfo('executing ' + self._kmr_task)
-            self._kmrCmdPub.publish(kmr_job)
+            for i in range(10):
+                self._kmrCmdPub.publish(kmr_job)
             self._wait_for_kmr()
             print('done with navigation')
             self._robot.location = Location(node_id=kmr_job.node_id, graph_id=kmr_job.graph_id,frame_name='')
@@ -98,7 +109,8 @@ class KukaLBRIIWA_Handler(RobotHandler):
         if lbr_job is not None:
             self._lbr_task = lbr_job.task_name
             rospy.loginfo('executing ' + self._lbr_task)
-            self._lbrCmdPub.publish(lbr_job)
+            for i in range(10):
+                self._lbrCmdPub.publish(lbr_job)
             self._wait_for_lbr()
             rospy.loginfo('completed executing ' + self._lbr_task)
 
