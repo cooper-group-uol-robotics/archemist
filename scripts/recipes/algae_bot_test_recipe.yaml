@@ -11,25 +11,33 @@ stations:
         output: InputStationResultDescriptor
   - name: ChemSpeedFlexStation.id_12
     stationOps:
-      - type: CSProcessingOpDescriptor
-        properties:
+      - type: CSCSVJobOpDescriptor
+        properties: '2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n'
         output: "CSJobOutputDescriptor"
   - name: LightBoxStation.id_13
     stationOps:
       - type: VialProcessingOpDescriptor
         properties:
         output: ColourDescriptor
+  - name: OutputStation.id_14
+    stationOps:
+      - type: OutputStationPlaceOp
+        properties:
+        output: OutputStationResultDescriptor
 workflowSM:
   - state_name: start
     onSuccess: InputStation.id_11.InputStationPickupOp
     onFail: end
   - state_name: InputStation.id_11.InputStationPickupOp
-    onSuccess: ChemSpeedFlexStation.id_12.CSProcessingOpDescriptor
+    onSuccess: ChemSpeedFlexStation.id_12.CSCSVJobOpDescriptor
     onFail: end
-  - state_name: ChemSpeedFlexStation.id_12.CSProcessingOpDescriptor
+  - state_name: ChemSpeedFlexStation.id_12.CSCSVJobOpDescriptor
     onSuccess: LightBoxStation.id_13.VialProcessingOpDescriptor
     onFail: end
   - state_name: LightBoxStation.id_13.VialProcessingOpDescriptor
+    onSuccess: OutputStation.id_14.OutputStationPlaceOp
+    onFail: end
+  - state_name: OutputStation.id_14.OutputStationPlaceOp
     onSuccess: end
     onFail: end
   - state_name: end

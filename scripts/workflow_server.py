@@ -27,12 +27,10 @@ if __name__ == '__main__':
     state = pers_manager.construct_state_from_config_file(config_file_path)
     # construct the state manager
     wm_manager = WorkflowManager(state)
-    wm_manager.start_processor()
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
-    print(f'[{current_time}] starting workflow')
-    input('press enter to start')
+    print(f'[{current_time}] starting workflow Processor')
     
     # add clean batch
     batch_id = 0
@@ -43,8 +41,12 @@ if __name__ == '__main__':
 
     # spin
     while True:
+        if state.is_batch_complete(batch_id):
+            batch_id += 1
+            state.add_clean_batch(batch_id, 6, clean_batch_location)
+            wm_manager.queue_recipe(recipe_dict)
         try:
-            msg = socket.recv_string(flag=zmq.NOBLOCK)
+            msg = socket.recv_string(flags=zmq.NOBLOCK)
             if msg == 'start':
                 if not wm_manager._running:
                     wm_manager.start_processor()
@@ -54,8 +56,6 @@ if __name__ == '__main__':
                 wm_manager.pause_workflow_processing()
             elif msg == 'charge':
                 wm_manager.queue_robot_op(KukaLBRTask('ChargeRobot',[False,85],Location(-1,-1,''),RobotOutputDescriptor()))
-            elif msg == 'stop_charge':
-                wm_manager.queue_robot_op(KukaLBRTask('StopCharge',[False],Location(-1,-1,''),RobotOutputDescriptor()))
             elif msg == 'stop_charge':
                 wm_manager.queue_robot_op(KukaLBRTask('StopCharge',[False],Location(-1,-1,''),RobotOutputDescriptor()))
             elif msg == 'resume_app':

@@ -23,7 +23,9 @@ class ChemSpeedRackProcessingSm():
 
         ''' States '''
         states = [ State(name='init_state', on_enter='_print_state'), 
-            State(name='open_chemspeed_door', on_enter=['request_open_door', '_print_state']), 
+            State(name='open_chemspeed_door', on_enter=['request_open_door', '_print_state']),
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']), 
             State(name='chemspeed_process', on_enter=['request_process_operation', '_print_state']),
             State(name='load_rack', on_enter=['request_load_rack', '_print_state']),
             State(name='close_chemspeed_door', on_enter=['request_close_door', '_print_state']), 
@@ -87,6 +89,12 @@ class ChemSpeedRackProcessingSm():
 
     def request_unload_rack(self):
         self._station.set_robot_job(KukaLBRTask('UnloadChemSpeed',[False,1], self._station.location, RobotOutputDescriptor()))
+
+    def request_disable_auto_functions(self):
+        self._station.set_robot_job(KukaLBRTask('DiableAutoFunctions',[False,1], self._station.location, RobotOutputDescriptor()))
+
+    def request_enable_auto_functions(self):
+        self._station.set_robot_job(KukaLBRTask('EnableAutoFunctions',[False,1], self._station.location, RobotOutputDescriptor()))
 
     def request_process_operation(self):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()

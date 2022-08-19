@@ -28,11 +28,9 @@ class WorkflowManager:
         self._log_processor('processor thread is started')
 
     def pause_workflow_processing(self):
-        if self._running:
             self._pause = True
 
     def resume_workflow_processing(self):
-        if self._running:
             self._pause = False
 
     def stop_processor(self):

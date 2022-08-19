@@ -67,7 +67,9 @@ class KukaLBRIIWA_Handler(RobotHandler):
     def _process_lbriiwa_task_op(self, robotOp):
         if isinstance(robotOp, KukaLBRTask):
             nav_task = None
-            if robotOp.job_location.get_map_coordinates() != self._robot.location.get_map_coordinates():
+            if (robotOp.job_name == 'ChargeRobot' or robotOp.job_name == 'StopCharge' or robotOp.job_name == 'resumeLBRApp'):
+                pass
+            elif robotOp.job_location.get_map_coordinates() != self._robot.location.get_map_coordinates():
                 nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.job_location.graph_id,
                                         node_id=robotOp.job_location.node_id,
                                         fine_localization=True)

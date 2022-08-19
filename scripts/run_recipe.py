@@ -41,9 +41,10 @@ if __name__ == '__main__':
         # spin
         while True:
             sleep(1)
-            # if state.is_batch_complete(batch_id):
-            #     wm_manager.queue_robot_op(KukaNAVTask(Location(1,1,''), False, RobotOutputDescriptor()))
-            #     break
+            if state.is_batch_complete(batch_id):
+                batch_id += 1
+                state.add_clean_batch(batch_id, 6, clean_batch_location)
+                wm_manager.queue_recipe(recipe_dict)
 
 
     except KeyboardInterrupt:
