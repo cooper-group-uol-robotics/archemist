@@ -67,11 +67,18 @@ class LightBoxSM():
 
     def request_load_vial_job(self):
         sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero
-        self._station.set_robot_job(KukaLBRTask('PresentVial',[False,self.rack_index,sample_index], self._station.location, RobotOutputDescriptor()))
+        perform_6p = False # this will be later evaluated by the KMRiiwa handler
+        allow_auto_func = False # to stop auto charing and calibration when presentig the vial
+        self._station.set_robot_job(KukaLBRTask('PresentVial',[perform_6p,self.rack_index,sample_index,allow_auto_func], self._station.location, RobotOutputDescriptor()))
 
     def request_unload_vial_job(self):
         sample_index = self._station.loaded_samples
-        self._station.set_robot_job(KukaLBRTask('ReturnVial',[False,self.rack_index,sample_index], self._station.location, RobotOutputDescriptor()))
+        perform_6p = False
+        if self.are_all_samples_loaded():
+            allow_auto_func = True # enable auto charge and calibration since we are done un/loading samples
+        else:
+            allow_auto_func = False
+        self._station.set_robot_job(KukaLBRTask('ReturnVial',[perform_6p,self.rack_index,sample_index,allow_auto_func], self._station.location, RobotOutputDescriptor()))
 
     def inc_samples_count(self):
         self._station.load_sample()
