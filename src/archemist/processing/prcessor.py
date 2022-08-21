@@ -15,23 +15,28 @@ class WorkflowManager:
         self._robot_scheduler = SimpleRobotScheduler()
         self._processor_thread = None
         self._running = False
-        self._pause = False
+        self._pause_workflow = False
         
         self._job_station_queue = list()
         self._queued_recipes = deque()
         self._unassigned_batches = deque()
+
+    @property
+    def pause_workflow(self):
+        return self._pause_workflow
+
+    @pause_workflow.setter
+    def pause_workflow(self, value):
+        if isinstance(value, bool):
+            self._pause_workflow = value
+        else:
+            raise ValueError
 
     def start_processor(self):
         self._running = True
         self._processor_thread = Thread(target=self._process, daemon=True)
         self._processor_thread.start()
         self._log_processor('processor thread is started')
-
-    def pause_workflow_processing(self):
-            self._pause = True
-
-    def resume_workflow_processing(self):
-            self._pause = False
 
     def stop_processor(self):
         self._running = False
@@ -49,7 +54,7 @@ class WorkflowManager:
     # this can keep track of the batches on the robot deck
     def _process(self):
         while (self._running):
-            if not self._pause:
+            if not self._pause_workflow:
                 # process queued recipes
                 if self._queued_recipes:
                     clean_batches = self._workflow_state.get_clean_batches()

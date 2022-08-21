@@ -86,13 +86,6 @@ class MoveSampleOp(RobotOpDescriptor):
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
-
-class PickAndPlaceBatchOp(RobotOpDescriptor):
-    def __init__(self, pick_location: Location, place_location: Location, output: RobotOutputDescriptor):
-        super().__init__(output=output)
-        self._pick_location = pick_location
-        self._place_location = place_location
-
     @property
     def pick_location(self):
         return self._pick_location
@@ -128,7 +121,7 @@ class PlaceBatchFromDeckOp(RobotOpDescriptor):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} robot_deck -> {self._place_location}'
 
-class SpecialJobOpDescriptor(RobotOpDescriptor):
+class RobotTaskOpDescriptor(RobotOpDescriptor):
     def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
         self._job_name = job_name

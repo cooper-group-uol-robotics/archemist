@@ -5,7 +5,7 @@ from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from pathlib import Path
 from datetime import datetime
-from archemist.state.robots.kukaLBRIIWA import KukaNAVTask, KukaLBRTask
+from archemist.state.robots.kukaLBRIIWA import KukaNAVTask, KukaLBRTask, KukaLBRMaintenanceTask
 from archemist.state.robot import RobotOutputDescriptor
 import zmq
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     state.add_clean_batch(batch_id, 6, clean_batch_location)
     # queue recipe 
     recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
-    wm_manager.queue_recipe(recipe_dict)
+    wm_manager.queue_recipe(recipe_dict) #TODO this can be done using a watchdog for folder check https://michaelcho.me/article/using-pythons-watchdog-to-monitor-changes-to-a-directory
 
     # spin
     while True:
@@ -51,15 +51,15 @@ if __name__ == '__main__':
                 if not wm_manager._running:
                     wm_manager.start_processor()
                 else:
-                    wm_manager.resume_workflow_processing()
+                    wm_manager.pause_workflow = False
             elif msg == 'pause':
-                wm_manager.pause_workflow_processing()
+                wm_manager.pause_workflow = True
             elif msg == 'charge':
-                wm_manager.queue_robot_op(KukaLBRTask('ChargeRobot',[False,85],Location(-1,-1,''),RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('ChargeRobot',[False,85],RobotOutputDescriptor()))
             elif msg == 'stop_charge':
-                wm_manager.queue_robot_op(KukaLBRTask('StopCharge',[False],Location(-1,-1,''),RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('StopCharge',[False],RobotOutputDescriptor()))
             elif msg == 'resume_app':
-                wm_manager.queue_robot_op(KukaLBRTask('resumeLBRApp',[False],Location(-1,-1,''),RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('resumeLBRApp',[False],RobotOutputDescriptor()))
             elif msg == 'terminate':
                 if wm_manager._running:
                     wm_manager.stop_processor()

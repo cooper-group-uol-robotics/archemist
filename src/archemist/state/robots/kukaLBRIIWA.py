@@ -1,14 +1,21 @@
-from archemist.state.robot import mobileRobot, SpecialJobOpDescriptor, RobotOutputDescriptor, RobotOpDescriptor
+from archemist.state.robot import mobileRobot, RobotTaskOpDescriptor, RobotOutputDescriptor, RobotOpDescriptor
 from archemist.util import Location
 from bson.objectid import ObjectId
 
 
-class KukaLBRTask(SpecialJobOpDescriptor):
+class KukaLBRTask(RobotTaskOpDescriptor):
     def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
         super().__init__(job_name, job_params, job_location, output=output)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
+
+class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
+    def __init__(self, job_name: str, job_params: list, output: RobotOutputDescriptor):
+        super().__init__(job_name, job_params, Location(-1,-1,''), output=output)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} with task: {self._job_name}'
 
 class KukaNAVTask(RobotOpDescriptor):
     def __init__(self, target_location: Location, fine_localisation: bool, output: RobotOutputDescriptor):

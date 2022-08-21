@@ -1,6 +1,6 @@
 import rospy
 from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand, KMRStatus, LBRStatus
-from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask
+from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.state.robot import Robot
 from archemist.util.location import Location
 from archemist.processing.handler import RobotHandler
@@ -65,11 +65,12 @@ class KukaLBRIIWA_Handler(RobotHandler):
         self._lbr_done = False
 
     def _process_lbriiwa_task_op(self, robotOp):
-        if isinstance(robotOp, KukaLBRTask):
-            nav_task = None
-            if (robotOp.job_name == 'ChargeRobot' or robotOp.job_name == 'StopCharge' or robotOp.job_name == 'resumeLBRApp'):
-                pass
-            elif robotOp.job_location.get_map_coordinates() != self._robot.location.get_map_coordinates():
+        lbr_task = None
+        nav_task = None
+        if isinstance(robotOp, KukaLBRMaintenanceTask):
+            lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
+        elif isinstance(robotOp, KukaLBRTask):
+            if robotOp.job_location.get_map_coordinates() != self._robot.location.get_map_coordinates():
                 nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.job_location.graph_id,
                                         node_id=robotOp.job_location.node_id,
                                         fine_localization=True)
@@ -77,16 +78,14 @@ class KukaLBRIIWA_Handler(RobotHandler):
             else:
                 robotOp.job_params[0] = False
             lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
-            return lbr_task, nav_task
         elif isinstance(robotOp, KukaNAVTask):
             lbr_task = None
             nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
                                         node_id=robotOp.target_location.node_id,
                                         fine_localization=robotOp.fine_localisation)
-            return lbr_task, nav_task
         else:
             rospy.logerr('unknown KUKAIIWA robot op')
-        return None
+        return lbr_task, nav_task
 
     def _handle_robot_status(self):
         pass
