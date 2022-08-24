@@ -34,15 +34,22 @@ class StationHandler:
 class RobotHandler:
     def __init__(self, robot: Robot):
         self._robot = robot
+        self._handled_robot_op = None
 
     def execute_job(self):
         pass
 
+    def is_job_execution_complete(self):
+        return False
+
 
     def handle(self):
-        if (self._robot.state == RobotState.EXECUTING_JOB):
-            station_robot_job = self.execute_job()
-            self._robot.complete_assigned_job(station_robot_job)
+        if self._robot.state == RobotState.JOB_ASSIGNED:
+            self.execute_job()
+        elif self._robot.state == RobotState.EXECUTING_JOB:
+            if self.is_job_execution_complete():
+                self._robot.complete_assigned_job(self._handled_robot_op)
+                self._handled_robot_op = None
 
     def run(self):
         pass

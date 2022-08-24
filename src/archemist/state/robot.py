@@ -6,10 +6,11 @@ from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssign
 from datetime import datetime
 
 class RobotState(Enum):
-    EXECUTING_JOB = 0
-    EXECUTION_COMPLETE = 1
+    JOB_ASSIGNED = 0
+    EXECUTING_JOB = 1
+    EXECUTION_COMPLETE = 2
     #WAITING_ON_STATION = 1
-    IDLE = 2
+    IDLE = 3
 
 class RobotOutputDescriptor:
     def __init__(self):
@@ -215,10 +216,13 @@ class Robot(DbObjProxy):
             encoded_job = DbObjProxy.encode_object(station_robot_job)
             self.update_field('assigned_job', encoded_job)
             self._log_robot(f'Job ({station_robot_job.robot_op}) is assigned.')
-            self._update_state(RobotState.EXECUTING_JOB)
+            self._update_state(RobotState.JOB_ASSIGNED)
 
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
+
+    def start_job_execution(self):
+        self._update_state(RobotState.EXECUTING_JOB)
 
     def complete_assigned_job(self, station_robot_job: StationRobotJob):
         encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)

@@ -20,10 +20,15 @@ class KukaLBRIIWA_Handler(RobotHandler):
         #rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_lbr_kmr_status_cb, queue_size=2)
         
         #self._kmr_current_status = ''
-        self._kmr_task = ''
+        self._kmr_cmd_seq = 0
+        self._kmr_task = None
+        self._kmr_task_name = ''
         self._kmr_done = False
+        
         self._lbr_current_op_state = ''
-        self._lbr_task = ''
+        self._lbr_cmd_seq = 0
+        self._lbr_task = None
+        self._lbr_task_name = ''
         self._lbr_done = False
         rospy.sleep(3)
 
@@ -37,8 +42,9 @@ class KukaLBRIIWA_Handler(RobotHandler):
             rospy.loginfo(f'{self._robot}_handler is terminating!!!')
 
     def _kmr_task_cb(self, msg):
-        if msg.task_name != '' and msg.task_name == self._kmr_task and msg.task_state == TaskStatus.FINISHED:
-            self._kmr_task = ''
+        #TODO if published task sequence != 0, while local task counter == 0 it means we restarted and thus set local task counter = published task counter 
+        if msg.task_name != '' and msg.task_name == self._kmr_task_name and msg.task_state == TaskStatus.FINISHED:
+            self._kmr_task_name = ''
             self._kmr_done = True
 
     def _wait_for_kmr(self):
@@ -55,8 +61,8 @@ class KukaLBRIIWA_Handler(RobotHandler):
                 self._robot.operational = False
 
     def _lbr_task_cb(self, msg):
-        if msg.task_name != '' and msg.task_name == self._lbr_task and msg.task_state == TaskStatus.FINISHED:
-            self._lbr_task = ''
+        if msg.task_name != '' and msg.task_name == self._lbr_task_name and msg.task_state == TaskStatus.FINISHED:
+            self._lbr_task_name = ''
             self._lbr_done = True
 
     def _wait_for_lbr(self):
@@ -64,63 +70,71 @@ class KukaLBRIIWA_Handler(RobotHandler):
             rospy.sleep(0.1)
         self._lbr_done = False
 
-    def _process_lbriiwa_task_op(self, robotOp):
+    def _process_kmriiwa_task_op(self, robotOp):
         lbr_task = None
-        nav_task = None
+        kmr_task = None
         if isinstance(robotOp, KukaLBRMaintenanceTask):
-            lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
+            self._lbr_cmd_seq += 1
+            lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
         elif isinstance(robotOp, KukaLBRTask):
             if robotOp.job_location.get_map_coordinates() != self._robot.location.get_map_coordinates():
-                nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.job_location.graph_id,
+                self._kmr_cmd_seq += 1
+                kmr_task = NavCommand(cmd_seq=self._kmr_cmd_seq, priority_task=False,robot_id=self._robot.id,graph_id=robotOp.job_location.graph_id,
                                         node_id=robotOp.job_location.node_id,
                                         fine_localization=True)
                 robotOp.job_params[0] = True # Six point calibration is needed
             else:
                 robotOp.job_params[0] = False
-            lbr_task = LBRCommand(task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
+            self._lbr_cmd_seq += 1
+            lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=False,task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
         elif isinstance(robotOp, KukaNAVTask):
-            lbr_task = None
-            nav_task = NavCommand(robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
+            self._kmr_cmd_seq += 1
+            kmr_task = NavCommand(cmd_seq=self._kmr_cmd_seq, priority_task=False,robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
                                         node_id=robotOp.target_location.node_id,
                                         fine_localization=robotOp.fine_localisation)
         else:
             rospy.logerr('unknown KUKAIIWA robot op')
-        return lbr_task, nav_task
+        return kmr_task, lbr_task
 
     def _handle_robot_status(self):
         pass
 
     def execute_job(self):
-        station_robot_job = self._robot.assigned_job
-        station_robot_job.robot_op.add_timestamp()
-        lbr_job, kmr_job = self._process_lbriiwa_task_op(station_robot_job.robot_op)
+        self._handled_robot_op = self._robot.assigned_job
+        self._handled_robot_op.robot_op.add_timestamp()
         
-        if kmr_job is not None:
-            if kmr_job.fine_localization:
-                self._kmr_task = f'fine_nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
+        self._kmr_task, self._lbr_task = self._process_kmriiwa_task_op(self._handled_robot_op.robot_op)
+        if self._kmr_task is not None:
+            if self._kmr_task.fine_localization:
+                self._kmr_task_name = f'fine_nav to n:{self._kmr_task.node_id} g:{self._kmr_task.graph_id}'
             else:
-                self._kmr_task = f'nav to n:{kmr_job.node_id} g:{kmr_job.graph_id}'
-            rospy.loginfo('executing ' + self._kmr_task)
+                self._kmr_task_name = f'nav to n:{self._kmr_task.node_id} g:{self._kmr_task.graph_id}'
+            rospy.loginfo('executing ' + self._kmr_task_name)
             for i in range(10):
-                self._kmrCmdPub.publish(kmr_job)
-            self._wait_for_kmr()
-            print('done with navigation')
-            self._robot.location = Location(node_id=kmr_job.node_id, graph_id=kmr_job.graph_id,frame_name='')
+                self._kmrCmdPub.publish(self._kmr_task)        
+        elif self._lbr_task is not None:
+            self._lbr_task_name = self._lbr_task.task_name
+            rospy.loginfo('executing ' + self._lbr_task_name)
+            for i in range(10):
+                self._lbrCmdPub.publish(self._lbr_task)
         
-        if lbr_job is not None:
-            self._lbr_task = lbr_job.task_name
-            rospy.loginfo('executing ' + self._lbr_task)
-            for i in range(10):
-                self._lbrCmdPub.publish(lbr_job)
-            self._wait_for_lbr()
-            rospy.loginfo('completed executing ' + self._lbr_task)
+        self._robot.start_job_execution()
 
-        station_robot_job.robot_op.output.has_result = True
-        station_robot_job.robot_op.output.success = True
-        station_robot_job.robot_op.output.add_timestamp()
-        station_robot_job.robot_op.output.executing_robot = str(self._robot)
-        return station_robot_job
-
-
-# if __name__ == '__main__':
-#     kuka_handler = KukaHandler()
+    def is_job_execution_complete(self):
+        if self._kmr_task is not None and self._kmr_done:
+            self._kmr_task = None
+            self._kmr_done = False
+            rospy.loginfo('KMR task complete')
+            self._robot.location = Location(node_id=self._kmr_task.node_id, graph_id=self._kmr_task.graph_id,frame_name='')
+            if self._lbr_task is not None:
+                rospy.loginfo('executing ' + self._lbr_task.task_name)
+                for i in range(10):
+                    self._lbrCmdPub.publish(self._lbr_task)
+        
+        if self._lbr_task is not None and self._lbr_done:
+            self._lbr_task = None
+            self._lbr_done = False
+            self._handled_robot_op.robot_op.output.has_result = True
+            self._handled_robot_op.robot_op.output.success = True
+            self._handled_robot_op.robot_op.output.add_timestamp()
+            self._handled_robot_op.robot_op.output.executing_robot = str(self._robot)
