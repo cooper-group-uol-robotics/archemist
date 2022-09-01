@@ -34,6 +34,11 @@ class KukaLBRIIWA_Handler(RobotHandler):
 
     def run(self):
         try:
+            #update local counter since robot cmd counter is ahead while we restarted (self._lbr_cmd_seq = 0)
+            if self._lbr_cmd_seq == 0:
+                latest_task_msg = rospy.wait_for_message('/kuka2/lbr/task_status', TaskStatus,timeout=5)
+                if latest_task_msg.cmd_seq > self._lbr_cmd_seq:
+                    self._lbr_cmd_seq = latest_task_msg.cmd_seq
             rospy.loginfo(f'{self._robot}_handler is running')
             while (not rospy.is_shutdown()):
                 self.handle()
@@ -122,19 +127,28 @@ class KukaLBRIIWA_Handler(RobotHandler):
 
     def is_job_execution_complete(self):
         if self._kmr_task is not None and self._kmr_done:
-            self._kmr_task = None
-            self._kmr_done = False
             rospy.loginfo('KMR task complete')
             self._robot.location = Location(node_id=self._kmr_task.node_id, graph_id=self._kmr_task.graph_id,frame_name='')
+            self._kmr_task = None
+            self._kmr_done = False
             if self._lbr_task is not None:
+                self._lbr_task_name = self._lbr_task.task_name
                 rospy.loginfo('executing ' + self._lbr_task.task_name)
                 for i in range(10):
                     self._lbrCmdPub.publish(self._lbr_task)
+                return False
+            else:
+                return True
         
         if self._lbr_task is not None and self._lbr_done:
+            if (self._lbr_task.task_name == 'ChargeRobot'):
+                self._robot.location = Location(node_id=3, graph_id=1,frame_name='') #TODO need to set robot location automatically
             self._lbr_task = None
             self._lbr_done = False
             self._handled_robot_op.robot_op.output.has_result = True
             self._handled_robot_op.robot_op.output.success = True
             self._handled_robot_op.robot_op.output.add_timestamp()
             self._handled_robot_op.robot_op.output.executing_robot = str(self._robot)
+            return True
+        else:
+            return False

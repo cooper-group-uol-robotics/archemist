@@ -12,7 +12,8 @@ stations:
   - name: ChemSpeedFlexStation.id_12
     stationOps:
       - type: CSCSVJobOpDescriptor
-        properties: '2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n'
+        properties:
+          csv_string: '2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n2,8,1\n'
         output: "CSJobOutputDescriptor"
   - name: LightBoxStation.id_13
     stationOps:

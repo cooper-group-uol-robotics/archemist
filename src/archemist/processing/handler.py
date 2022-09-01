@@ -40,7 +40,7 @@ class RobotHandler:
         pass
 
     def is_job_execution_complete(self):
-        return False
+        pass
 
 
     def handle(self):
