@@ -38,6 +38,7 @@ class KukaLBRIIWA(mobileRobot):
 
     @classmethod
     def from_dict(cls, db_name: str, robot_document: dict):
+        robot_document['location'] = {'node_id':-1, 'graph_id':-1, 'frame_name':''}
         return cls(db_name, robot_document)
 
     @classmethod

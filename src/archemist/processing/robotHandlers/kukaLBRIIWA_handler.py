@@ -17,7 +17,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
         # TODO add callbacks to check on the robot status so that charging or other operations can 
         # performed to run the process smoothly.
         rospy.Subscriber('/kuka2/lbr/robot_status', LBRStatus, self._update_lbr_status_cb, queue_size=2)
-        #rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_lbr_kmr_status_cb, queue_size=2)
+        rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_kmr_status_cb, queue_size=2)
         
         #self._kmr_current_status = ''
         self._kmr_cmd_seq = 0
@@ -46,6 +46,10 @@ class KukaLBRIIWA_Handler(RobotHandler):
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._robot}_handler is terminating!!!')
 
+    def _update_kmr_status_cb(self, msg):
+        if self._robot.location.node_id != msg.last_graph_node_id: 
+            self._robot.location = Location(node_id=msg.last_graph_node_id, graph_id=1, frame_name='') #TODO pull graph id from config file
+    
     def _kmr_task_cb(self, msg):
         #TODO if published task sequence != 0, while local task counter == 0 it means we restarted and thus set local task counter = published task counter 
         if msg.task_name != '' and msg.task_name == self._kmr_task_name and msg.task_state == TaskStatus.FINISHED:
@@ -141,8 +145,6 @@ class KukaLBRIIWA_Handler(RobotHandler):
                 return True
         
         if self._lbr_task is not None and self._lbr_done:
-            if (self._lbr_task.task_name == 'ChargeRobot'):
-                self._robot.location = Location(node_id=3, graph_id=1,frame_name='') #TODO need to set robot location automatically
             self._lbr_task = None
             self._lbr_done = False
             self._handled_robot_op.robot_op.output.has_result = True

@@ -2,10 +2,6 @@ workflow:
   Robots:
     - class: KukaLBRIIWA
       id: 1
-      location:
-        node_id: 24
-        graph_id: 1
-        frame_name: neutral
       saved_frames:
   Materials:
     liquids:
