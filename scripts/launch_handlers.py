@@ -55,9 +55,9 @@ if __name__ == '__main__':
                     help='run the given recipe continously in test mode')
     args = parser.parse_args()
     
-    current_dir = Path.cwd()
-    config_file_path = current_dir.joinpath('config_files/algae_bot_config_file.yaml')
-    db_name = 'algae_bot_test'
+    working_dir = Path('/home/gilgamish/algae_bot_workflow')
+    config_file_path = working_dir.joinpath('config_files/chemspeed_testing_config_file.yaml')
+    db_name = 'chemspeed_testing'
 
     try:
         # get config dict

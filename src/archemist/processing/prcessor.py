@@ -16,6 +16,8 @@ class WorkflowManager:
         self._processor_thread = None
         self._running = False
         self._pause_workflow = False
+        self._current_batch_processing_count = 0
+        self._max_batch_processing_capacity = 1
         
         self._job_station_queue = list()
         self._queued_recipes = deque()
@@ -31,6 +33,10 @@ class WorkflowManager:
             self._pause_workflow = value
         else:
             raise ValueError
+
+    @property
+    def recipes_queue(self):
+        return self._queued_recipes
 
     def start_processor(self):
         self._running = True
@@ -59,19 +65,24 @@ class WorkflowManager:
                 if self._queued_recipes:
                     clean_batches = self._workflow_state.get_clean_batches()
                     while self._queued_recipes:
+                        if clean_batches and self._current_batch_processing_count < self._max_batch_processing_capacity: 
                             recipe = self._queued_recipes.pop()
                             new_batch = clean_batches.pop()
                             new_batch.attach_recipe(recipe)
+                            self._current_batch_processing_count += 1
                             new_batch.recipe.advance_state(True) # to move out of start state
                             self._unassigned_batches.append(new_batch)
-                            if not clean_batches:
-                                break
+                            #if not clean_batches:
+                                #break
+                        else:
+                            break
 
                 # process unassigned batches
                 while self._unassigned_batches:
                     batch = self._unassigned_batches.popleft()
                     if batch.recipe.is_complete():
                         self._log_processor(f'{batch} recipe is complete. The batch is added to the complete batches list')
+                        self._current_batch_processing_count -= 1
                 
                     else:
                         station_name, station_id = batch.recipe.get_current_station()

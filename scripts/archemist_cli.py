@@ -8,7 +8,7 @@ main_menu = [
         'type': 'list',
         'name': 'main_menu',
         'message': 'Please select from one of the options below:',
-        'choices': ['Start/Resume', 'Pause','Start charging', 'Stop charging', 'Resume LBR app', 'Terminate']
+        'choices': ['Start/Resume', 'Pause','Add clean batch','Start charging', 'Stop charging', 'Resume LBR app', 'Terminate']
     }
 ]
 
@@ -25,6 +25,9 @@ def main():
             elif selection['main_menu'] == 'Pause':
                 print('Pausing workflow')
                 socket.send_string('pause')
+            elif selection['main_menu'] == 'Add clean batch':
+                print('Adding clean batch to the workflow')
+                socket.send_string('add_batch')
             elif selection['main_menu'] == 'Start charging':
                 print('Order manual charge')
                 socket.send_string('charge')
