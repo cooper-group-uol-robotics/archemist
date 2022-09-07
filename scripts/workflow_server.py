@@ -11,26 +11,32 @@ from archemist.state.robot import RobotOutputDescriptor
 import zmq
 
 if __name__ == '__main__':
-    # working_dir = Path('C:\\Users\\ACL_KUKA2\\algae_bot_workflow')
-    working_dir = Path('/home/gilgamish/algae_bot_workflow')
-    config_file_name = 'chemspeed_testing_config_file.yaml'
-    db_name = 'chemspeed_testing'
-    clean_batch_location = Location(25,1,'/InputStation')
-    loop_recipe = False
-    recipe_to_loop = None
-    loop_batch = False
-    batch_id = 0
-    loop_batch_added = False
+    current_dir = Path.cwd()
+    server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
+    server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
+
+    workflow_dir = Path(server_setttings['workflow_dir_path'])
+    workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
+    recipes_dir_path = workflow_dir.joinpath(f'recipes')
+
+    db_name = server_setttings['db_name']
+    batch_addition_location = Location(server_setttings['batch_addition']['location']['node_id'],
+                                        server_setttings['batch_addition']['location']['graph_id'], 
+                                        server_setttings['batch_addition']['location']['frame_name'])
+    batch_num_vials = server_setttings['batch_addition']['num_vials']
+    recipe_loop_mode = server_setttings['recipe_loop_mode']
+    auto_batch_addition = server_setttings['auto_batch_addition']
     
-    config_file_path = working_dir.joinpath(f'config_files/{config_file_name}')
-    recipes_dir_path = working_dir.joinpath(f'recipes')
+    batch_id = 0
+    recipe_to_loop = None
+    loop_batch_added = False
 
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
     socket.bind('tcp://127.0.0.1:5555')
     # Construct state from config file
     pers_manager = PersistenceManager(db_name)
-    state = pers_manager.construct_state_from_config_file(config_file_path)
+    state = pers_manager.construct_state_from_config_file(workflow_config_file_path)
     # construct the state manager
     wm_manager = WorkflowManager(state)
 
@@ -48,7 +54,7 @@ if __name__ == '__main__':
     # spin
     while True:
 
-        if loop_recipe:
+        if recipe_loop_mode:
             if recipe_to_loop is None:
                 if recipes_watcher.recipes_queue:
                     recipe_file_path = recipes_watcher.recipes_queue.pop()
@@ -62,40 +68,15 @@ if __name__ == '__main__':
                 wm_manager.queue_recipe(recipe_dict)
                 print(f'new recipe file queued')
 
-        if loop_batch:
+        if auto_batch_addition:
             if not loop_batch_added:
-                state.add_clean_batch(batch_id, 6, clean_batch_location)
+                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
                 print(f'Batch (id: {batch_id}) is added')
                 loop_batch_added = True
             elif state.is_batch_complete(batch_id):
                 batch_id += 1
-                state.add_clean_batch(batch_id, 6, clean_batch_location)
+                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
                 print(f'Batch (id: {batch_id}) is added')
-
-
-        # if init:
-        #     recipe_file_path = Path(f'C:\\Users\\ACL_KUKA2\\algae_recipes\\algae_bot_recipe_{recipe_index}.yaml')
-        #     recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
-        #     wm_manager.queue_recipe(recipe_dict)
-        #     print(f'Recipe number {recipe_index} is being processed')
-        #     state.add_clean_batch(batch_id, 6, clean_batch_location)
-        #     print(f'Batch (id: {batch_id}) is added')
-        #     init = False
-        # if state.is_batch_complete(batch_id):
-        #     recipe_index += 1
-        #     batch_id += 1
-        #     recipe_file_path = Path(f'C:\\Users\\ACL_KUKA2\\algae_recipes\\algae_bot_recipe_{recipe_index}.yaml')   
-        #     recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
-        #     input('Enter to continue a letter and then press enter to continue')
-        #     wm_manager.queue_recipe(recipe_dict)
-        #     print(f'Recipe number {recipe_index} is being processed')
-        #     state.add_clean_batch(batch_id, 6, clean_batch_location)
-        #     print(f'Batch (id: {batch_id}) is added')
-        # if recipe_index == 10:
-        #     print('resetting recipe index back to 0')
-        #     recipe_index = 0
-        #     batch_id += 1
-        #     init = True
 
         try:
             msg = socket.recv_string(flags=zmq.NOBLOCK)
@@ -108,7 +89,7 @@ if __name__ == '__main__':
             elif msg == 'pause':
                 wm_manager.pause_workflow = True
             elif msg == 'add_batch':
-                state.add_clean_batch(batch_id, 6, clean_batch_location)
+                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
                 batch_id += 1
             elif msg == 'charge':
                 wm_manager.queue_robot_op(KukaLBRMaintenanceTask('ChargeRobot',[False,85],RobotOutputDescriptor()))
