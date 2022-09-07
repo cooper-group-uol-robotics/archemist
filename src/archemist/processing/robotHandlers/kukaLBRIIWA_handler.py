@@ -97,10 +97,12 @@ class KukaLBRIIWA_Handler(RobotHandler):
             self._lbr_cmd_seq += 1
             lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=False,task_name=robotOp.job_name, task_parameters=[str(param) for param in robotOp.job_params])
         elif isinstance(robotOp, KukaNAVTask):
-            self._kmr_cmd_seq += 1
-            kmr_task = NavCommand(cmd_seq=self._kmr_cmd_seq, priority_task=False,robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
-                                        node_id=robotOp.target_location.node_id,
-                                        fine_localization=robotOp.fine_localisation)
+            robot_at_location = robotOp.target_location.get_map_coordinates() == self._robot.location.get_map_coordinates()
+            if not robot_at_location or (robot_at_location and robotOp.fine_localisation):
+                self._kmr_cmd_seq += 1
+                kmr_task = NavCommand(cmd_seq=self._kmr_cmd_seq, priority_task=False,robot_id=self._robot.id,graph_id=robotOp.target_location.graph_id,
+                                            node_id=robotOp.target_location.node_id,
+                                            fine_localization=robotOp.fine_localisation)
         else:
             rospy.logerr('unknown KUKAIIWA robot op')
         return kmr_task, lbr_task
@@ -130,6 +132,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
         self._robot.start_job_execution()
 
     def is_job_execution_complete(self):
+        job_complete = False
         if self._kmr_task is not None and self._kmr_done:
             rospy.loginfo('KMR task complete')
             self._robot.location = Location(node_id=self._kmr_task.node_id, graph_id=self._kmr_task.graph_id,frame_name='')
@@ -140,9 +143,8 @@ class KukaLBRIIWA_Handler(RobotHandler):
                 rospy.loginfo('executing ' + self._lbr_task.task_name)
                 for i in range(10):
                     self._lbrCmdPub.publish(self._lbr_task)
-                return False
             else:
-                return True
+                job_complete = True
         
         if self._lbr_task is not None and self._lbr_done:
             self._lbr_task = None
@@ -151,6 +153,6 @@ class KukaLBRIIWA_Handler(RobotHandler):
             self._handled_robot_op.robot_op.output.success = True
             self._handled_robot_op.robot_op.output.add_timestamp()
             self._handled_robot_op.robot_op.output.executing_robot = str(self._robot)
-            return True
-        else:
-            return False
+            job_complete = True
+        
+        return job_complete

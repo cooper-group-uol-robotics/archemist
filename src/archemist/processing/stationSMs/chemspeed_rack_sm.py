@@ -6,7 +6,7 @@ from archemist.state.stations.chemspeed_flex_station import CSCloseDoorOpDescrip
 from archemist.util import Location
 import archemist.persistence.objectConstructor
 
-class ChemSpeedRackProcessingSm():
+class ChemSpeedRackSm():
     
     def __init__(self, station: Station, args: dict):
 
@@ -26,6 +26,7 @@ class ChemSpeedRackProcessingSm():
             State(name='open_chemspeed_door', on_enter=['request_open_door', '_print_state']),
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
             State(name='navigate_to_chemspeed', on_enter=['request_navigate_to_chemspeed', '_print_state']),
+            State(name='retreat_from_chemspeed', on_enter=['request_navigate_to_chemspeed', '_print_state']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']), 
             State(name='chemspeed_process', on_enter=['request_process_operation', '_print_state']),
             State(name='load_rack', on_enter=['request_load_rack', '_print_state']),
@@ -37,14 +38,48 @@ class ChemSpeedRackProcessingSm():
 
         ''' Transitions '''
 
+        # # init_state transitions
+        # self.machine.add_transition('process_state_transitions',source='init_state',dest='disable_auto_functions', conditions='is_batch_assigned')
+
+        # # disable autofunctions and navigate to the station
+        # self.machine.add_transition('process_state_transitions',source='disable_auto_functions',dest='navigate_to_chemspeed', conditions='is_station_job_ready')
+
+        # # open chemspeed door
+        # self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_station_job_ready')
+
+        # # load rack into the chemspeed
+        # self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='load_rack', unless='is_station_operation_complete' ,conditions='is_station_job_ready')
+
+        # # close door after loading rack
+        # self.machine.add_transition('process_state_transitions', source='load_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_station')
+
+        # # enable autofunctions
+        # self.machine.add_transition('process_state_transitions',source='close_chemspeed_door',dest='enable_auto_functions', unless='is_station_operation_complete', conditions='is_station_job_ready')
+
+        # # process batch after closing door and enabling autofunctions
+        # self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='chemspeed_process', unless='is_station_operation_complete', conditions='is_station_job_ready')
+
+        # # navigate to the chemspeed
+        # self.machine.add_transition('process_state_transitions', source='chemspeed_process',dest='open_chemspeed_door', conditions='is_station_job_ready', before='process_batch')
+
+        # # unload after openning door
+        # self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='unload_rack', conditions=['is_station_operation_complete','is_station_job_ready'])
+        
+
+        # # close door after unloading
+        # self.machine.add_transition('process_state_transitions', source='unload_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_robot')
+        
+        # # complete
+        # self.machine.add_transition('process_state_transitions', source='close_chemspeed_door',dest='final_state', conditions=['is_station_job_ready','is_station_operation_complete'])
+
         # init_state transitions
         self.machine.add_transition('process_state_transitions',source='init_state',dest='disable_auto_functions', conditions='is_batch_assigned')
 
         # disable autofunctions and navigate to the station
-        self.machine.add_transition('process_state_transitions',source='disable_auto_functions',dest='navigate_to_chemspeed', conditions='is_batch_assigned')
+        self.machine.add_transition('process_state_transitions',source='disable_auto_functions',dest='navigate_to_chemspeed', conditions='is_station_job_ready')
 
         # open chemspeed door
-        self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_batch_assigned')
+        self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_station_job_ready')
 
         # load rack into the chemspeed
         self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='load_rack', unless='is_station_operation_complete' ,conditions='is_station_job_ready')
@@ -53,10 +88,12 @@ class ChemSpeedRackProcessingSm():
         self.machine.add_transition('process_state_transitions', source='load_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_station')
 
         # enable autofunctions
-        self.machine.add_transition('process_state_transitions',source='close_chemspeed_door',dest='enable_auto_functions', conditions='is_batch_assigned')
+        self.machine.add_transition('process_state_transitions',source='close_chemspeed_door',dest='enable_auto_functions', conditions='is_station_job_ready')
 
         # process batch after closing door and enabling autofunctions
-        self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='chemspeed_process', unless='is_station_operation_complete', conditions='is_station_job_ready')
+        self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='retreat_from_chemspeed', unless='is_station_operation_complete', conditions='is_station_job_ready')
+        
+        self.machine.add_transition('process_state_transitions', source='retreat_from_chemspeed',dest='chemspeed_process', conditions='is_station_job_ready')
 
         # navigate to the chemspeed
         self.machine.add_transition('process_state_transitions', source='chemspeed_process',dest='disable_auto_functions', conditions='is_station_job_ready', before='process_batch')
@@ -78,6 +115,9 @@ class ChemSpeedRackProcessingSm():
 
     def is_station_operation_complete(self):
         return self.operation_complete
+
+    def is_rack_loaded(self):
+        return self.rack_loaded
 
     def is_batch_assigned(self):
         return self._station.assigned_batch is not None
