@@ -2,7 +2,7 @@
 
 import rospy
 from archemist.state.station import Station
-from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSJobOutputDescriptor,CSProcessingOpDescriptor
+from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSJobOutputDescriptor,CSProcessingOpDescriptor,CSCSVJobOpDescriptor
 from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 from chemspeed_flex_msgs.msg import CSFlexCommand,CSFlexStatus
@@ -14,7 +14,7 @@ class ChemSpeedFlexStation_Handler(StationHandler):
         self._cs_status = CSFlexStatus.DOOR_CLOSED
         rospy.init_node(f'{self._station}_handler')
         self.pubCS_Flex = rospy.Publisher("/ChemSpeed_Flex_commands", CSFlexCommand, queue_size=1)
-        rospy.Subscriber('/ChemSpeed_Flex_status', CSFlexStatus, self._cs_state_update, queue_size=2)
+        rospy.Subscriber('/ChemSpeed_Flex_status', CSFlexStatus, self._cs_state_update, queue_size=1)
         rospy.sleep(1)
         
 
@@ -32,15 +32,26 @@ class ChemSpeedFlexStation_Handler(StationHandler):
         current_op.add_timestamp()
         if (isinstance(current_op,CSOpenDoorOpDescriptor)):
             rospy.loginfo('opening chemspeed door')
-            self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.OPEN_DOOR)
+            for i in range(10):
+                self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.OPEN_DOOR)
             self._wait_for_status(CSFlexStatus.DOOR_OPEN)
         elif (isinstance(current_op,CSCloseDoorOpDescriptor)):
             rospy.loginfo('closing chemspeed door')
-            self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
+            for i in range(10):
+                self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
             self._wait_for_status(CSFlexStatus.DOOR_CLOSED)
         elif (isinstance(current_op,CSProcessingOpDescriptor)):
             rospy.loginfo('starting chemspeed job')
-            self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
+            for i in range(10):
+                self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
+            self._wait_for_status(CSFlexStatus.JOB_COMPLETE)
+        elif (isinstance(current_op,CSCSVJobOpDescriptor)):
+            rospy.loginfo('uploading csv file to rosparam server')
+            rospy.set_param('chemspeed_input_csv', current_op.csv_string)
+            rospy.sleep(3) # wait for csv to be uploaded
+            rospy.loginfo('starting chemspeed job')
+            for i in range(10):
+                self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
             self._wait_for_status(CSFlexStatus.JOB_COMPLETE)
         
         current_op.output.has_result = True

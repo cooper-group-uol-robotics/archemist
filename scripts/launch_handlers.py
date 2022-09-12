@@ -56,12 +56,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     current_dir = Path.cwd()
-    config_file_path = current_dir.joinpath('config_files/dif_demo_testing_config_file.yaml')
-    db_name = 'dif_demo'
+    server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
+    server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
+
+    workflow_dir = Path(server_setttings['workflow_dir_path'])
+    workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
+    db_name = server_setttings['db_name']
 
     try:
         # get config dict
-        config_dict = YamlHandler.loadYamlFile(config_file_path.absolute())
+        config_dict = YamlHandler.loadYamlFile(workflow_config_file_path.absolute())
 
         handlers_discrptors = [HandlerArgs(db_name, args.test_mode, 'stn', station['class'], station['id']) for station in config_dict['workflow']['Stations']]
         handlers_discrptors.extend([HandlerArgs(db_name, args.test_mode, 'rob', robot['class'], robot['id']) for robot in config_dict['workflow']['Robots']])

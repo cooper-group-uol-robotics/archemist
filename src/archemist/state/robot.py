@@ -6,10 +6,11 @@ from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssign
 from datetime import datetime
 
 class RobotState(Enum):
-    EXECUTING_JOB = 0
-    EXECUTION_COMPLETE = 1
+    JOB_ASSIGNED = 0
+    EXECUTING_JOB = 1
+    EXECUTION_COMPLETE = 2
     #WAITING_ON_STATION = 1
-    IDLE = 2
+    IDLE = 3
 
 class RobotOutputDescriptor:
     def __init__(self):
@@ -86,13 +87,6 @@ class MoveSampleOp(RobotOpDescriptor):
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
-
-class PickAndPlaceBatchOp(RobotOpDescriptor):
-    def __init__(self, pick_location: Location, place_location: Location, output: RobotOutputDescriptor):
-        super().__init__(output=output)
-        self._pick_location = pick_location
-        self._place_location = place_location
-
     @property
     def pick_location(self):
         return self._pick_location
@@ -128,7 +122,7 @@ class PlaceBatchFromDeckOp(RobotOpDescriptor):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} robot_deck -> {self._place_location}'
 
-class SpecialJobOpDescriptor(RobotOpDescriptor):
+class RobotTaskOpDescriptor(RobotOpDescriptor):
     def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
         super().__init__(output=output)
         self._job_name = job_name
@@ -222,10 +216,13 @@ class Robot(DbObjProxy):
             encoded_job = DbObjProxy.encode_object(station_robot_job)
             self.update_field('assigned_job', encoded_job)
             self._log_robot(f'Job ({station_robot_job.robot_op}) is assigned.')
-            self._update_state(RobotState.EXECUTING_JOB)
+            self._update_state(RobotState.JOB_ASSIGNED)
 
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
+
+    def start_job_execution(self):
+        self._update_state(RobotState.EXECUTING_JOB)
 
     def complete_assigned_job(self, station_robot_job: StationRobotJob):
         encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)

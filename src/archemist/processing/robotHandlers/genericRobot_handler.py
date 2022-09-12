@@ -16,12 +16,15 @@ class GenericRobot_Handler(RobotHandler):
             print(f'{self._robot}_handler is terminating!!!')
 
     def execute_job(self):
-        station_robot_job = self._robot.assigned_job
-        station_robot_job.robot_op.add_timestamp()
-        print(f'executing {station_robot_job.robot_op}')
+        self._handled_robot_op = self._robot.assigned_job
+        self._handled_robot_op.robot_op.add_timestamp()
+        print(f'executing {self._handled_robot_op.robot_op}')
         time.sleep(1)
-        station_robot_job.robot_op.output.has_result = True
-        station_robot_job.robot_op.output.success = True
-        station_robot_job.robot_op.output.add_timestamp()
-        station_robot_job.robot_op.output.executing_robot = str(self._robot)
-        return station_robot_job
+        self._robot.start_job_execution()
+
+    def is_job_execution_complete(self):
+        self._handled_robot_op.robot_op.output.has_result = True
+        self._handled_robot_op.robot_op.output.success = True
+        self._handled_robot_op.robot_op.output.add_timestamp()
+        self._handled_robot_op.robot_op.output.executing_robot = str(self._robot)
+        return True

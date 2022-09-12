@@ -1,0 +1,63 @@
+workflow:
+  Robots:
+    - class: KukaLBRIIWA
+      id: 1
+      saved_frames:
+  Materials:
+    liquids:
+      - name: water
+        id: 145
+        amount_stored: 400
+        unit: ml
+        density: 997 #g/l
+        pump_id: pUmP1
+        expiry_date: 2025-02-11
+    solids:
+      - name: sodium_chloride
+        id: 345
+        amount_stored: 10000
+        dispense_method: quantos
+        cartridge_id: cat1
+        unit: mg
+        expiry_date: 2025-02-11
+  Stations:
+    - class: InputStation
+      id: 11
+      location:
+        node_id: 25
+        graph_id: 1
+      process_state_machine:
+        type: InputStationSm
+        args:
+      parameters:
+    - class: ChemSpeedFlexStation
+      id: 12
+      location:
+        node_id: 27
+        graph_id: 1
+      process_state_machine:
+        type: ChemSpeedRackProcessingSm
+        args:
+          batch_mode: true
+      parameters:
+    - class: LightBoxStation
+      id: 13
+      location: 
+        node_id: 25
+        graph_id: 1
+      process_state_machine: 
+        type: LightBoxSM
+        args: 
+          batch_mode: true
+      parameters:
+    - class: OutputStation
+      id: 14
+      location:
+        node_id: 25
+        graph_id: 1
+      process_state_machine:
+        type: OutputStationSm
+        args:
+      parameters:
+  name: algae_bot_workflow
+  timestamp: 08/26/2021, 15:28:26

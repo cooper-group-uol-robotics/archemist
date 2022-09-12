@@ -54,6 +54,16 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
         output = StationOutputDescriptor()
         super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
 
+class CSCSVJobOpDescriptor(StationOpDescriptor):
+    def __init__(self, properties: dict, output: StationOutputDescriptor):
+        output = StationOutputDescriptor()
+        super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
+        self._csv_string = properties['csv_string']
+
+    @property
+    def csv_string(self):
+        return self._csv_string
+
 ''' ==== Station Output Descriptors ==== '''
 
 class CSJobOutputDescriptor(StationOutputDescriptor):
