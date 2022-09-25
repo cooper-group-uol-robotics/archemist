@@ -2,10 +2,6 @@ workflow:
   Robots:
     PandaFranka:
       id: 1
-      saved_frames:
-        - '/ikaStation/RackHolderFrame'
-        - '/ikaStation/loadFrame'
-        - '/fisherScaleStation/loadFrame'
   Materials:
     liquids:
       water:

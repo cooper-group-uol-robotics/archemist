@@ -2,7 +2,6 @@ workflow:
   Robots:
     - class: KukaLBRIIWA
       id: 1
-      saved_frames:
   Materials:
     liquids:
       - name: water

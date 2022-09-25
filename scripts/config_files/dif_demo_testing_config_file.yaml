@@ -6,14 +6,12 @@ workflow:
         node_id: 3
         graph_id: 1
         frame_name: neutral
-      saved_frames:
     - class: PandaFranka
       id: 2
       location:
         node_id: 3
         graph_id: 1
         frame_name: neutral
-      saved_frames:
   Materials:
     liquids:
       - name: water

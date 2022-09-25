@@ -7,10 +7,6 @@ workflow:
         node_id: 1
         graph_id: 7
         frame_name: neutral
-      saved_frames:
-        - 'home_frame'
-        - 'ika_frame'
-        - 'pump_frame'
   Materials:
     liquids:
       - name: water

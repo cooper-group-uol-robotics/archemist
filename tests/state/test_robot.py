@@ -12,14 +12,11 @@ class RobotTest(unittest.TestCase):
     def test_robot(self):
         robot_dict = {
             'class': 'PandaFranka',
-            'id': 187,
-            'saved_frames': ['/ikaStation/RackHolderFrame','/ikaStation/loadFrame','/fisherScaleStation/loadFrame']
+            'id': 187
         }
 
         t_robot = PandaFranka.from_dict('test', robot_dict)
         self.assertEqual(t_robot.id, 187)
-        self.assertEqual(len(t_robot.saved_frames), 3)
-        self.assertEqual(t_robot.saved_frames[0], '/ikaStation/RackHolderFrame')
         self.assertEqual(t_robot.location, None)
         t_robot.location = Location(node_id=1, graph_id=7, frame_name='neutral_frame')
         self.assertEqual(t_robot.location, Location(node_id=1, graph_id=7, frame_name='neutral_frame'))
