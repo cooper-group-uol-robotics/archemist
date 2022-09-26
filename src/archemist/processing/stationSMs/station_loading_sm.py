@@ -1,6 +1,6 @@
 from transitions import Machine, State
 from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
-from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor
+from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor,RobotTaskType
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask
 from archemist.util import Location
 import archemist.persistence.objectConstructor
@@ -109,10 +109,10 @@ class StationLoadingSm():
         self._station.set_robot_job(MoveSampleOp(self._vial_load_task, sample_index, RobotOutputDescriptor()))
 
     def request_load_rack_job(self):
-        self._station.set_robot_job(KukaLBRTask(self._rack_load_task,[False,self._rack_index], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask(self._rack_load_task,[False,self._rack_index],RobotTaskType.UNLOAD_FROM_ROBOT,self._station.location))
 
     def request_unload_rack_job(self):
-        self._station.set_robot_job(KukaLBRTask(self._rack_unload_task,[False,self._rack_index], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask(self._rack_unload_task,[False,self._rack_index],RobotTaskType.LOAD_TO_ROBOT, self._station.location))
 
     def request_operation(self):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()

@@ -3,7 +3,7 @@ from unittest import TestCase
 from transitions import Machine, State
 from archemist.state.station import Station, StationState
 from archemist.state.stations.light_box_station import VialProcessingOpDescriptor,ColourDescriptor
-from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor
+from archemist.state.robot import RobotTaskType
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask
 from archemist.util import Location
 import archemist.persistence.objectConstructor
@@ -69,7 +69,7 @@ class LightBoxSM():
         sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         allow_auto_func = False # to stop auto charing and calibration when presentig the vial
-        self._station.set_robot_job(KukaLBRTask('PresentVial',[perform_6p,self.rack_index,sample_index,allow_auto_func], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('PresentVial',[perform_6p,self.rack_index,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location))
 
     def request_unload_vial_job(self):
         sample_index = self._station.loaded_samples
@@ -78,7 +78,7 @@ class LightBoxSM():
             allow_auto_func = True # enable auto charge and calibration since we are done un/loading samples
         else:
             allow_auto_func = False
-        self._station.set_robot_job(KukaLBRTask('ReturnVial',[perform_6p,self.rack_index,sample_index,allow_auto_func], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('ReturnVial',[perform_6p,self.rack_index,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location))
 
     def inc_samples_count(self):
         self._station.load_sample()

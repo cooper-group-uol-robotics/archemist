@@ -1,6 +1,6 @@
 from transitions import Machine, State
 from archemist.state.station import Station, StationState
-from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor
+from archemist.state.robot import RobotTaskType
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from archemist.state.stations.chemspeed_flex_station import CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSJobOutputDescriptor
 from archemist.util import Location
@@ -37,40 +37,6 @@ class ChemSpeedRackSm():
         self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
-
-        # # init_state transitions
-        # self.machine.add_transition('process_state_transitions',source='init_state',dest='disable_auto_functions', conditions='is_batch_assigned')
-
-        # # disable autofunctions and navigate to the station
-        # self.machine.add_transition('process_state_transitions',source='disable_auto_functions',dest='navigate_to_chemspeed', conditions='is_station_job_ready')
-
-        # # open chemspeed door
-        # self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_station_job_ready')
-
-        # # load rack into the chemspeed
-        # self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='load_rack', unless='is_station_operation_complete' ,conditions='is_station_job_ready')
-
-        # # close door after loading rack
-        # self.machine.add_transition('process_state_transitions', source='load_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_station')
-
-        # # enable autofunctions
-        # self.machine.add_transition('process_state_transitions',source='close_chemspeed_door',dest='enable_auto_functions', unless='is_station_operation_complete', conditions='is_station_job_ready')
-
-        # # process batch after closing door and enabling autofunctions
-        # self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='chemspeed_process', unless='is_station_operation_complete', conditions='is_station_job_ready')
-
-        # # navigate to the chemspeed
-        # self.machine.add_transition('process_state_transitions', source='chemspeed_process',dest='open_chemspeed_door', conditions='is_station_job_ready', before='process_batch')
-
-        # # unload after openning door
-        # self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='unload_rack', conditions=['is_station_operation_complete','is_station_job_ready'])
-        
-
-        # # close door after unloading
-        # self.machine.add_transition('process_state_transitions', source='unload_rack',dest='close_chemspeed_door', conditions='is_station_job_ready', before='update_batch_loc_to_robot')
-        
-        # # complete
-        # self.machine.add_transition('process_state_transitions', source='close_chemspeed_door',dest='final_state', conditions=['is_station_job_ready','is_station_operation_complete'])
 
         # init_state transitions
         self.machine.add_transition('process_state_transitions',source='init_state',dest='disable_auto_functions', conditions='is_batch_assigned')
@@ -136,19 +102,19 @@ class ChemSpeedRackSm():
         self._station.set_station_op(CSCloseDoorOpDescriptor(dict(), CSJobOutputDescriptor()))
 
     def request_load_rack(self):
-        self._station.set_robot_job(KukaLBRTask('LoadChemSpeed',[True,1], self._station.location, RobotOutputDescriptor())) #TODO rack index can be passed
+        self._station.set_robot_job(KukaLBRTask('LoadChemSpeed',[True,1], RobotTaskType.UNLOAD_FROM_ROBOT, self._station.location)) #TODO rack index can be passed
 
     def request_unload_rack(self):
-        self._station.set_robot_job(KukaLBRTask('UnloadChemSpeed',[False,1], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('UnloadChemSpeed',[False,1],RobotTaskType.LOAD_TO_ROBOT, self._station.location))
 
     def request_navigate_to_chemspeed(self):
-        self._station.set_robot_job(KukaNAVTask(Location(26,1,''), True, RobotOutputDescriptor())) #TODO get this property from the config
+        self._station.set_robot_job(KukaNAVTask(Location(26,1,''), True)) #TODO get this property from the config
 
     def request_disable_auto_functions(self):
-        self._station.set_robot_job(KukaLBRMaintenanceTask('DiableAutoFunctions',[False],RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRMaintenanceTask('DiableAutoFunctions',[False]))
 
     def request_enable_auto_functions(self):
-        self._station.set_robot_job(KukaLBRMaintenanceTask('EnableAutoFunctions',[False],RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRMaintenanceTask('EnableAutoFunctions',[False]))
 
     def request_process_operation(self):
         current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()

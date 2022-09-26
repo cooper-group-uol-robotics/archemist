@@ -1,6 +1,6 @@
 from transitions import Machine, State
 from archemist.state.station import Station, StationState
-from archemist.state.robot import RobotOutputDescriptor
+from archemist.state.robot import RobotTaskType
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask
 from archemist.state.stations.input_station import InputStationPickupOp, InputStationResultDescriptor
 from archemist.util import Location
@@ -40,7 +40,7 @@ class OutputStationSm():
         self._station.assigned_batch.location = self._station.location
 
     def request_place_rack(self):
-        self._station.set_robot_job(KukaLBRTask('PlaceRack',[False,1], self._station.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(KukaLBRTask('PlaceRack',[False,1],RobotTaskType.UNLOAD_FROM_ROBOT, self._station.location))
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batch()

@@ -1,6 +1,6 @@
 from transitions import Machine, State
 from archemist.state.station import Station, StationState
-from archemist.state.robot import PickBatchToDeckOp, PlaceBatchFromDeckOp, MoveSampleOp, RobotOutputDescriptor
+from archemist.state.robot import RobotTaskType,RobotTaskOpDescriptor, MoveSampleOp, RobotOutputDescriptor
 from archemist.util import Location
 
 '''
@@ -97,10 +97,10 @@ class RackOnStationSm():
           self._station.unload_sample()
 
     def request_retrieve_job(self):
-        self._station.set_robot_job(PickBatchToDeckOp(self._station.assigned_batch.location, RobotOutputDescriptor()))
+        self._station.set_robot_job(RobotTaskOpDescriptor('PlaceBatchToDeck',[], RobotTaskType.LOAD_TO_ROBOT, self._station.assigned_batch.location, RobotOutputDescriptor()))
 
     def request_place_rack_job(self):
-        self._station.set_robot_job(PlaceBatchFromDeckOp(self._station.create_location_from_frame(self._place_frame), RobotOutputDescriptor()))
+        self._station.set_robot_job(RobotTaskOpDescriptor('PlaceBatchFromDeckOp', [], RobotTaskType.UNLOAD_FROM_ROBOT,self._station.create_location_from_frame(self._place_frame), RobotOutputDescriptor()))
 
     def request_load_vial_job(self):
         sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero

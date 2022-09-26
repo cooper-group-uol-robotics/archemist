@@ -1,24 +1,24 @@
-from archemist.state.robot import mobileRobot, RobotTaskOpDescriptor, RobotOutputDescriptor, RobotOpDescriptor
+from archemist.state.robot import MobileRobot, RobotTaskOpDescriptor, RobotOutputDescriptor, RobotOpDescriptor,RobotTaskType
 from archemist.util import Location
 from bson.objectid import ObjectId
 
 
 class KukaLBRTask(RobotTaskOpDescriptor):
-    def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
-        super().__init__(job_name, job_params, job_location, output=output)
+    def __init__(self, job_name: str, job_params: list, job_type: RobotTaskType, job_location: Location,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
+        super().__init__(job_name, job_params, job_type, job_location, output)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
 
 class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
-    def __init__(self, job_name: str, job_params: list, output: RobotOutputDescriptor):
-        super().__init__(job_name, job_params, Location(-1,-1,''), output=output)
+    def __init__(self, job_name: str, job_params: list,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
+        super().__init__(job_name, job_params, RobotTaskType.OTHER, Location(-1,-1,''), output)
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self._job_name}'
 
 class KukaNAVTask(RobotOpDescriptor):
-    def __init__(self, target_location: Location, fine_localisation: bool, output: RobotOutputDescriptor):
+    def __init__(self, target_location: Location, fine_localisation: bool,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
         super().__init__(output)
         self._target_location = target_location
         self._fine_localisation =  fine_localisation
@@ -32,7 +32,7 @@ class KukaNAVTask(RobotOpDescriptor):
         return self._fine_localisation
 
 
-class KukaLBRIIWA(mobileRobot):
+class KukaLBRIIWA(MobileRobot):
     def __init__(self, db_name: str, robot_document: dict):
         super().__init__(db_name, robot_document)
 

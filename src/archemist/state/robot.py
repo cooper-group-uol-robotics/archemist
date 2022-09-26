@@ -12,6 +12,12 @@ class RobotState(Enum):
     #WAITING_ON_STATION = 1
     IDLE = 3
 
+class RobotTaskType(Enum):
+    LOAD_TO_ROBOT = 0
+    UNLOAD_FROM_ROBOT = 1
+    MANIPULATION = 2
+    OTHER = 3
+
 class RobotOutputDescriptor:
     def __init__(self):
         self._success = False
@@ -98,40 +104,21 @@ class MoveSampleOp(RobotOpDescriptor):
     def __str__(self) -> str:
         return f'{self.__class__.__name__} {self._pick_location} -> {self._place_location}'
 
-class PickBatchToDeckOp(RobotOpDescriptor):
-    def __init__(self, pick_location: Location, output: RobotOutputDescriptor):
-        super().__init__(output=output)
-        self._pick_location = pick_location
-
-    @property
-    def pick_location(self):
-        return self._pick_location
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} {self._pick_location} -> robot_deck'
-
-class PlaceBatchFromDeckOp(RobotOpDescriptor):
-    def __init__(self, place_location: Location, output: RobotOutputDescriptor):
-        super().__init__(output=output)
-        self._place_location = place_location
-
-    @property
-    def place_location(self):
-        return self._place_location
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} robot_deck -> {self._place_location}'
-
 class RobotTaskOpDescriptor(RobotOpDescriptor):
-    def __init__(self, job_name: str, job_params: list, job_location: Location, output: RobotOutputDescriptor):
+    def __init__(self, job_name: str, job_params: list, job_type: RobotTaskType, job_location: Location, output: RobotOutputDescriptor = RobotOutputDescriptor()):
         super().__init__(output=output)
         self._job_name = job_name
+        self._job_type = job_type
         self._job_params = job_params
         self._job_location = job_location
 
     @property
     def job_name(self):
         return self._job_name
+
+    @property
+    def job_type(self):
+        return self._job_type
 
     @property
     def job_params(self):
@@ -166,10 +153,6 @@ class Robot(DbObjProxy):
     @property
     def id(self):
         return self.get_field('id')
-
-    @property
-    def saved_frames(self):
-        return self.get_field('saved_frames')
 
     @property
     def operational(self):
@@ -254,16 +237,32 @@ class Robot(DbObjProxy):
     def __str__(self) -> str:
         return f'{self.__class__.__name__}_{self.id}'
 
-class mobileRobot(Robot):
+class MobileRobot(Robot):
     def __init__(self, db_name: str, robot_document: dict):
         if len(robot_document) > 1:
-            robot_document['rack_holders'] = []
+            robot_document['onboard_batches'] = []
         
         super().__init__(db_name, robot_document)
 
+    @property
+    def batch_capacity(self):
+        return self.get_field('batch_capacity')
+
     @property 
-    def rack_holders(self):
-        return self._rack_holders
+    def onboard_batches(self):
+        return self.get_field('onboard_batches')
+
+    def add_to_onboard_batches(self, batch_id: int):
+        if len(self.onboard_batches) < self.batch_capacity:
+            self.push_to_array_field('onboard_batches',batch_id)
+        else:
+            self._log_robot(f'Cannot add batch {batch_id} to deck. Batch capacity exceeded')
+
+    def remove_from_onboard_batches(self, batch_id:int):
+        self.delete_element_from_array_field('onboard_batches',batch_id)
+
+    def is_onboard_capacity_full(self):
+        return len(self.onboard_batches) == self.batch_capacity
 
 class armRobot(Robot):
     def __init__(self, db_name: str, robot_document: dict):
