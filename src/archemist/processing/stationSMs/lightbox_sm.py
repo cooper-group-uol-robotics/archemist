@@ -13,7 +13,8 @@ class LightBoxSM():
     def __init__(self, station: Station, args: dict):
 
         self._station = station
-        self.rack_index = 1
+        self._current_rack_index = 0
+        self._processed_racks = 0
         self.operation_complete = False
         self.batch_mode = args['batch_mode']
         #self.rack_load_task = args['rack_load_task']
@@ -25,8 +26,9 @@ class LightBoxSM():
         ''' States '''
         states = [State(name='init_state', on_enter='_print_state'), 
             State(name='load_sample', on_enter=['request_load_vial_job','_print_state']),
-            State(name='unload_sample', on_enter='request_unload_vial_job'),
+            State(name='unload_sample', on_enter=['request_unload_vial_job','_print_state']),
             State(name='station_process', on_enter=['request_process_data_job', '_print_state']),
+            State(name='update_rack_index', on_enter=['request_rack_index_update', '_print_state']),
             State(name='final_state', on_enter='finalize_batch_processing')]
             
             
@@ -34,7 +36,7 @@ class LightBoxSM():
 
         ''' Transitions '''
 
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='load_sample', conditions='is_batch_assigned', after='inc_samples_count')
+        self.machine.add_transition('process_state_transitions',source='init_state',dest='load_sample', conditions='all_batches_assigned')
 
         # load_sample transitions
         self.machine.add_transition('process_state_transitions', source='load_sample',dest='station_process', conditions='is_station_job_ready')
@@ -43,48 +45,58 @@ class LightBoxSM():
         self.machine.add_transition('process_state_transitions', source='station_process',dest='unload_sample', conditions='is_station_job_ready', before='process_sample')
 
         # unload_sample transitions
-        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded', after='inc_samples_count')
+        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded')
+        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='update_rack_index', conditions=['are_all_samples_loaded','is_station_job_ready'], before='reset_station')
+        
+        self.machine.add_transition('process_state_transitions', source='update_rack_index',dest='load_sample', conditions='is_station_job_ready', unless='are_all_racks_processed')
 
-        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='final_state', conditions=['are_all_samples_loaded','is_station_job_ready'] , before='reset_station')
+        self.machine.add_transition('process_state_transitions', source='update_rack_index',dest='final_state', conditions=['are_all_racks_processed','is_station_job_ready'])
 
 
     def is_station_job_ready(self):
         return not self._station.has_station_op() and not self._station.has_robot_job()
 
     def are_all_samples_loaded(self):
-        return self._station.loaded_samples == self._station.assigned_batch.num_samples
+        return self._station.loaded_samples == self._station.assigned_batches[self._current_rack_index].num_samples
 
-    def is_batch_assigned(self):
-        return self._station.assigned_batch is not None
+    def are_all_racks_processed(self):
+        return self._processed_racks == self._station.batch_capacity
+
+    def all_batches_assigned(self):
+        return not self._station.has_free_batch_capacity()
 
     def reset_station(self):
         while(self._station.loaded_samples > 0):
           self._station.unload_sample()
-   
-    def process_batch(self):
-        last_operation_op = self._station.station_op_history[-1]
-        self.operation_complete = True
 
     def request_load_vial_job(self):
-        sample_index = self._station.loaded_samples + 1 # because on_enter is before 'after' thus this we add 1 to start from 1 instad of zero
+        self._station.load_sample()
+        sample_index = self._station.loaded_samples
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         allow_auto_func = False # to stop auto charing and calibration when presentig the vial
-        self._station.set_robot_job(KukaLBRTask('PresentVial',[perform_6p,self.rack_index,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location))
+        robot_job = KukaLBRTask('PresentVial',[perform_6p,self._current_rack_index+1,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location)
+        current_batch_id = self._station.assigned_batches[self._current_rack_index].id
+        self._station.set_robot_job(robot_job,current_batch_id)
 
     def request_unload_vial_job(self):
         sample_index = self._station.loaded_samples
         perform_6p = False
-        if self.are_all_samples_loaded():
+        if self.are_all_samples_loaded() and (self._processed_racks - 1) == self._station.batch_capacity:
             allow_auto_func = True # enable auto charge and calibration since we are done un/loading samples
         else:
             allow_auto_func = False
-        self._station.set_robot_job(KukaLBRTask('ReturnVial',[perform_6p,self.rack_index,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location))
+        robot_job = KukaLBRTask('ReturnVial',[perform_6p,self._current_rack_index+1,sample_index,allow_auto_func],RobotTaskType.MANIPULATION, self._station.location)
+        current_batch_id = self._station.assigned_batches[self._current_rack_index].id
+        self._station.set_robot_job(robot_job,current_batch_id)
 
-    def inc_samples_count(self):
-        self._station.load_sample()
+    def request_rack_index_update(self):
+        self._current_rack_index += 1
+        self._processed_racks += 1
 
     def finalize_batch_processing(self):
-        self._station.process_assigned_batch()
+        self._station.process_assigned_batches()
+        self._current_rack_index = 0
+        self._processed_racks = 0
         self.to_init_state()
         
     def request_process_data_job(self):
@@ -92,8 +104,8 @@ class LightBoxSM():
 
     def process_sample(self):
         last_operation_op = self._station.station_op_history[-1]
-        self._station.assigned_batch.add_station_op_to_current_sample(last_operation_op)
-        self._station.assigned_batch.process_current_sample()
+        self._station.assigned_batches[self._current_rack_index].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._current_rack_index].process_current_sample()
 
     def _print_state(self):
         print(f'[{self.__class__.__name__}]: current state is {self.state}')

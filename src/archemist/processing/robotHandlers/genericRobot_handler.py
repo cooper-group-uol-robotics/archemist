@@ -1,4 +1,4 @@
-from archemist.state.robot import Robot, MoveSampleOp
+from archemist.state.robot import Robot
 from archemist.processing.handler import RobotHandler
 import time
 
@@ -18,7 +18,7 @@ class GenericRobot_Handler(RobotHandler):
     def execute_job(self):
         self._handled_robot_op = self._robot.assigned_job
         self._handled_robot_op.robot_op.add_timestamp()
-        print(f'executing {self._handled_robot_op.robot_op}')
+        print(f'[{self.__class__.__name__}] executing {str(self._handled_robot_op.robot_op)}')
         time.sleep(1)
         self._robot.start_job_execution()
 

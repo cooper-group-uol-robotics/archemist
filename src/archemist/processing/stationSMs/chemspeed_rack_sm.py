@@ -118,11 +118,11 @@ class ChemSpeedRackSm():
         self._station.set_robot_job(robot_job,current_batch_id)
 
     def request_unload_rack(self):
-        self._current_rack_index -= 1
-        self._loaded_racks -= 1
         robot_job = KukaLBRTask('UnloadChemSpeed',[False,self._current_rack_index+1],RobotTaskType.LOAD_TO_ROBOT, self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_rack_index].id
         self._station.set_robot_job(robot_job,current_batch_id)
+        self._current_rack_index -= 1
+        self._loaded_racks -= 1
         
 
     def request_navigate_to_chemspeed(self):

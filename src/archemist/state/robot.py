@@ -129,7 +129,7 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         return self._job_location
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
+        return f'{self.__class__.__name__} with task: {self._job_name}, params: {self.job_params} @{self._job_location.get_map_coordinates()}'
 
 class Robot(DbObjProxy):
     def __init__(self, db_name: str, robot_document: dict):

@@ -7,9 +7,6 @@ class KukaLBRTask(RobotTaskOpDescriptor):
     def __init__(self, job_name: str, job_params: list, job_type: RobotTaskType, job_location: Location,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
         super().__init__(job_name, job_params, job_type, job_location, output)
 
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} with task: {self._job_name} @{self._job_location}'
-
 class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
     def __init__(self, job_name: str, job_params: list,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
         super().__init__(job_name, job_params, RobotTaskType.OTHER, Location(-1,-1,''), output)
