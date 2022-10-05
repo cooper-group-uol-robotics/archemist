@@ -92,7 +92,7 @@ class Batch(DbObjProxy):
         return self.get_field('recipe_attached')
 
     @property
-    def recipe(self):
+    def recipe(self) -> Recipe:
         return self._recipe
 
     def attach_recipe(self, recipe_dict: dict):

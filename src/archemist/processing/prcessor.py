@@ -3,7 +3,7 @@ from archemist.state.station import StationState
 from archemist.state.batch import Batch
 from archemist.util.location import Location
 from archemist.util.station_robot_job import StationRobotJob
-from archemist.processing.scheduler import SimpleRobotScheduler
+from archemist.processing.scheduler import SimpleRobotScheduler,MultiBatchRobotScheduler
 from collections import deque
 from threading import Thread
 from time import sleep
@@ -12,12 +12,12 @@ from time import sleep
 class WorkflowManager:
     def __init__(self, workflow_state: State):
         self._workflow_state = workflow_state
-        self._robot_scheduler = SimpleRobotScheduler()
+        self._robot_scheduler = MultiBatchRobotScheduler()
         self._processor_thread = None
         self._running = False
         self._pause_workflow = False
         self._current_batch_processing_count = 0
-        self._max_batch_processing_capacity = 1
+        self._max_batch_processing_capacity = 2
         
         self._job_station_queue = list()
         self._queued_recipes = deque()
@@ -66,34 +66,30 @@ class WorkflowManager:
                     clean_batches = self._workflow_state.get_clean_batches()
                     while self._queued_recipes:
                         if clean_batches and self._current_batch_processing_count < self._max_batch_processing_capacity: 
-                            recipe = self._queued_recipes.pop()
-                            new_batch = clean_batches.pop()
+                            recipe = self._queued_recipes.popleft()
+                            new_batch = clean_batches.pop(0)
                             new_batch.attach_recipe(recipe)
                             self._current_batch_processing_count += 1
                             new_batch.recipe.advance_state(True) # to move out of start state
                             self._unassigned_batches.append(new_batch)
-                            #if not clean_batches:
-                                #break
                         else:
                             break
 
                 # process unassigned batches
-                while self._unassigned_batches:
-                    batch = self._unassigned_batches.popleft()
+                for batch in list(self._unassigned_batches): # here the list gets copied
                     if batch.recipe.is_complete():
                         self._log_processor(f'{batch} recipe is complete. The batch is added to the complete batches list')
                         self._current_batch_processing_count -= 1
-                
+                        self._unassigned_batches.remove(batch)
                     else:
                         station_name, station_id = batch.recipe.get_current_station()
                         current_station = self._workflow_state.get_station(station_name, station_id)
                         self._log_processor(f'Trying to assign ({batch}) to {current_station}')
-                        if current_station.state == StationState.IDLE:
+                        if current_station.state == StationState.IDLE and current_station.has_free_batch_capacity():
                             current_station.add_batch(batch)
+                            self._unassigned_batches.remove(batch)
                         else:
                             self._log_processor(f'{batch} could not be assigned to {current_station}.')
-                            # put unassigned batch back to the list since station is busy
-                            self._unassigned_batches.append(batch)
 
 
                 # process workflow stations

@@ -63,6 +63,20 @@ class Recipe:
             current_station_id = int(current_station_id.strip('id_'))
             return current_station_name, current_station_id
 
+    def get_next_station(self, success: bool):
+        self._station_flow.state = self.current_state
+        if success:
+            self._station_flow.onSuccess()
+        else:
+            self._station_flow.onFail()
+        
+        if self._station_flow.state != 'end':
+            next_station_name,next_station_id, _ = self._station_flow.state.split('.')
+            next_station_id = int(next_station_id.strip('id_'))
+            return next_station_name, next_station_id
+        else:
+            return 'end',None
+
         
     def _logRecipe(self, message: str):
         print(f'Recipe [{self._id}]: ' + message)

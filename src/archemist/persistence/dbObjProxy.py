@@ -56,7 +56,10 @@ class DbObjProxy:
         self._db_collection.update_one({'_id': self._object_id}, {'$push': {arrary_key: value}})
 
     def pop_from_array_field(self, arrary_key:str):
-        self._db_collection.update_one({'_id': self._object_id}, {'$pop': {arrary_key: 1}})
+        self._db_collection.update_one({'_id': self._object_id}, {'$pop': {arrary_key: -1}})
+    
+    def delete_element_from_array_field(self, arrary_key:str, value):
+        self._db_collection.update_one({'_id': self._object_id}, {'$pull': {arrary_key: value}})
 
     def update_doc_in_array_field(self, array_key:str, index:int, doc_field: str, value):
         self._db_collection.update_one({'_id': self._object_id}, {'$set': {f'{array_key}.{index}.{doc_field}': value}})

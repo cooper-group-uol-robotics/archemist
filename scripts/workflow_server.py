@@ -6,7 +6,7 @@ from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from pathlib import Path
 from datetime import datetime
-from archemist.state.robots.kukaLBRIIWA import KukaNAVTask, KukaLBRTask, KukaLBRMaintenanceTask
+from archemist.state.robots.kukaLBRIIWA import KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.state.robot import RobotOutputDescriptor
 import zmq
 

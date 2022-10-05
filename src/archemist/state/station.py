@@ -75,8 +75,8 @@ class Station(DbObjProxy):
 
             station_document['state'] = StationState.IDLE.value
 
-            station_document['assigned_batch'] = None
-            station_document['processed_batch'] = None
+            station_document['assigned_batches'] = []
+            station_document['processed_batches'] = []
             station_document['req_robot_job'] = None
 
             station_document['loaded_samples'] = 0        
@@ -141,6 +141,10 @@ class Station(DbObjProxy):
     def process_sm_dict(self):
         return self.get_field('process_state_machine')
 
+    @property
+    def batch_capacity(self):
+        return self.get_field('batch_capacity')
+
     def load_sample(self):
         self.increment_field('loaded_samples')
 
@@ -152,38 +156,48 @@ class Station(DbObjProxy):
         return self.get_field('loaded_samples')
 
     @property
-    def assigned_batch(self):
-        batch_obj_id = self.get_field('assigned_batch')
-        if batch_obj_id is not None:
-            return Batch.from_object_id(self.db_name, batch_obj_id)
+    def assigned_batches(self):
+        batch_obj_id_list = self.get_field('assigned_batches')
+        if len(batch_obj_id_list) > 0:
+            return [Batch.from_object_id(self.db_name, batch_obj_id) for batch_obj_id in batch_obj_id_list]
+        else:
+            return []
+
+    def has_free_batch_capacity(self):
+        return len(self.get_field('assigned_batches')) < self.batch_capacity
 
 
     def add_batch(self, batch):
-        if(self.assigned_batch is None):
-            self.update_field('assigned_batch', batch.object_id)
-            self._log_station(f'{batch} is assigned for processing.')
+        if len(self.get_field('assigned_batches')) < self.batch_capacity:
+            self.push_to_array_field('assigned_batches', batch.object_id)
+            self._log_station(f'{batch} is added for processing.')
             station_stamp = str(self)
             batch.add_station_stamp(station_stamp)
-            self.set_to_processing()
+            if len(self.get_field('assigned_batches')) == self.batch_capacity:
+                self.set_to_processing()
         else:
             raise exception.StationAssignedRackError(self.__class__.__name__)
 
     def has_processed_batch(self):
-        return self.get_field('processed_batch') is not None
+        return len(self.get_field('processed_batches')) > 0
 
-    def process_assigned_batch(self):
-        self.update_field('processed_batch', self.get_field('assigned_batch'))
-        self.update_field('assigned_batch',None)
-        self._log_station(f'Processing batch is complete.')
-        self._update_state(StationState.PROCESSING_COMPLETE)
+    def process_assigned_batches(self):
+        batch_obj_id_list = self.get_field('assigned_batches')
+        for batch_obj_id in batch_obj_id_list:
+            self.push_to_array_field('processed_batches',batch_obj_id)
+            self.delete_element_from_array_field('assigned_batches',batch_obj_id)
+            self._log_station(f'Processing batch is complete.')
+        if len(self.get_field('processed_batches')) == self.batch_capacity:
+            self._update_state(StationState.PROCESSING_COMPLETE)
 
     def get_processed_batch(self):
-        batch_obj_id = self.get_field('processed_batch')
+        batch_obj_id = self.get_doc_from_array_field('processed_batches', 0)
         if batch_obj_id is not None:
             batch = Batch.from_object_id(self.db_name, batch_obj_id)
-            self.update_field('processed_batch', None)
+            self.delete_element_from_array_field('processed_batches', batch_obj_id)
             self._log_station(f'Processed id:{batch} is unassigned.')
-            self._update_state(StationState.IDLE)
+            if len(self.get_field('processed_batches')) == 0:
+                self._update_state(StationState.IDLE)
             return batch
 
     def has_robot_job(self):
@@ -197,8 +211,8 @@ class Station(DbObjProxy):
             self._update_state(StationState.WAITING_ON_ROBOT)
             return robot_job
 
-    def set_robot_job(self, robot_job):
-        station_robot_job = StationRobotJob(robot_job, self.object_id) 
+    def set_robot_job(self, robot_job, current_batch_id = -1):
+        station_robot_job = StationRobotJob(robot_job, current_batch_id, self.object_id) 
         encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
         self.update_field('req_robot_job', encoded_station_robot_job)
         self._log_station(f'Requesting robot job ({robot_job})')

@@ -264,6 +264,25 @@ class MobileRobot(Robot):
     def is_onboard_capacity_full(self):
         return len(self.onboard_batches) == self.batch_capacity
 
+    def is_batch_onboard(self, batch_id: int):
+        return batch_id in self.onboard_batches
+
+    def get_complete_job(self):
+        encoded_station_robot_job = self.get_field('complete_job')
+        if encoded_station_robot_job is not None:
+            station_robot_job = DbObjProxy.decode_object(encoded_station_robot_job)
+            robot_op = station_robot_job.robot_op
+            batch_id = station_robot_job.batch_id
+            if isinstance(robot_op, RobotTaskOpDescriptor):
+                if robot_op.job_type == RobotTaskType.LOAD_TO_ROBOT:
+                    self.add_to_onboard_batches(batch_id)
+                elif robot_op.job_type == RobotTaskType.UNLOAD_FROM_ROBOT:
+                    self.remove_from_onboard_batches(batch_id)
+            self.update_field('complete_job', None)
+            self._log_robot(f'Job ({station_robot_job.robot_op}) is retrieved.')
+            self._update_state(RobotState.IDLE)
+            return station_robot_job
+
 class armRobot(Robot):
     def __init__(self, db_name: str, robot_document: dict):
         super().__init__(db_name, robot_document)
