@@ -1,134 +1,149 @@
-from datetime import date
-
+from datetime import datetime
 from bson.objectid import ObjectId
-
+from pymodm import MongoModel, fields
 from archemist.persistence.dbObjProxy import DbObjProxy
 
+class MaterialModel(MongoModel):
+    name = fields.CharField()
+    id = fields.IntegerField()
+    expiry_date = fields.DateTimeField()
+    mass = fields.FloatField(min_value=0)
 
-class Material(DbObjProxy):
-    def __init__(self, db_name: str, material_document: dict):
-        
-        if len(material_document) > 1:
-            material_document['class'] = self.__class__.__name__
-            material_document['expiry_date'] = date.isoformat(material_document['expiry_date'])
-            super().__init__(db_name, 'materials', material_document)
-        else:
-            super().__init__(db_name, 'materials', material_document['object_id'])
+    class Meta:
+        collection_name = 'materials'
+        connection_alias = 'archemist_connection'
 
-    @property
-    def name(self):
-        return self.get_field('name')
 
-    @property
-    def id(self):
-        return self.get_field('id')
+class Material:
+    def __init__(self, material_model: MaterialModel) -> None:
+        self._model = material_model
 
     @property
-    def expiry_date(self):
-        return date.fromisoformat(self.get_field('expiry_date'))
+    def model(self) -> MaterialModel:
+        return self._model
+    
+    @property
+    def name(self) -> str:
+        return self._model.name
 
     @property
-    def mass(self):
-        return self.get_field('mass')
+    def id(self) -> int:
+        return self._model.id
+
+    @property
+    def expiry_date(self) -> datetime:
+        return self._model.expiry_date
+
+    @property
+    def mass(self) -> float:
+        return self._model.mass
 
     @mass.setter
     def mass(self, value):
-        if value >= 0:
-            self.update_field('mass', value)
-        else:
-            raise ValueError
+        self._model.mass = value
+        self._model.save()
+
+class LiquidMaterialModel(MaterialModel):
+    pump_id = fields.CharField()
+    volume = fields.FloatField(min_value=0)
+    density = fields.FloatField(min_value=0)
 
 
 class Liquid(Material):
-    def __init__(self, db_name:str, liquid_document: dict):
-        
-        if len(liquid_document) > 1:
+    def __init__(self, material_model: LiquidMaterialModel) -> None:
+        self._model = material_model
+
+    @classmethod
+    def from_dict(cls, liquid_document: dict):
+        model = LiquidMaterialModel()
+        model.name = liquid_document['name']
+        model.id = liquid_document['id']
+        model.pump_id = liquid_document['pump_id']
+        model.expiry_date = datetime.isoformat(liquid_document['expiry_date'])
+        model.density = liquid_document['density']
+        if liquid_document['unit'] in ['l','ml','ul']:
             if liquid_document['unit'] == 'l':
-                liquid_document['volume'] = liquid_document['amount_stored']
-                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
+                unit_modifier = 1
             elif liquid_document['unit'] == 'ml':
-                liquid_document['volume'] = liquid_document['amount_stored']/1000
-                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
+                unit_modifier = 1000
             elif liquid_document['unit'] == 'ul':
-                liquid_document['volume'] = liquid_document['amount_stored']/1000000
-                liquid_document['mass'] = liquid_document['density'] * liquid_document['volume']
-            elif liquid_document['unit'] == 'g':
-                liquid_document['mass'] = liquid_document['amount_stored']
-                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
+                unit_modifier = 1000000
+            model.volume = liquid_document['amount_stored']/unit_modifier
+            model.mass = model.density * model.volume
+        elif liquid_document['unit'] in ['g','mg','ug']:
+            if liquid_document['unit'] == 'g':
+                unit_modifier = 1
             elif liquid_document['unit'] == 'mg':
-                liquid_document['mass'] = liquid_document['amount_stored']/1000
-                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
+                unit_modifier = 1000
             elif liquid_document['unit'] == 'ug':
-                liquid_document['mass'] = liquid_document['amount_stored']/1000000
-                liquid_document['volume'] = liquid_document['mass'] / liquid_document['density']
-            liquid_document.pop('amount_stored')
-        super().__init__(db_name, liquid_document)
+                unit_modifier = 1000000
+            model.mass = liquid_document['amount_stored']/unit_modifier
+            model.volume = model.mass/model.density
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_dict(cls, db_name:str, liquid_document: dict):
-        return cls(db_name, liquid_document)
+    def from_object_id(cls, object_id: ObjectId):
+        model = MaterialModel.objects.get({'_id':object_id})
+        return cls(model)
 
-    @classmethod
-    def from_object_id(cls, db_name:str, object_id: ObjectId):
-        liquid_document = {'object_id': object_id}
-        return cls(db_name, liquid_document)
-
-    @property
-    def density(self):
-        #return in g/l which is equivalent to kg/m3
-        return self.get_field('density')
+    @property #return in g/l which is equivalent to kg/m3
+    def density(self) -> float:
+        return self._model.density
 
     @property
-    def pump_id(self):
-        return self.get_field('pump_id')
+    def pump_id(self) -> str:
+        return self._model.pump_id
 
-    @property
-    def volume(self):
-        # return in l
-        return self.get_field('volume')
+    @property # return in l
+    def volume(self) -> float:
+        return self._model.volume
 
     @volume.setter
-    def volume(self, value):
-        if value >= 0:
-            self.update_field('volume', value)
-        else:
-            raise ValueError
+    def volume(self, new_volume):
+        self._model.volume = new_volume
+        self._model.save()
 
     def __str__(self):
         return f'Liquid: {self.name}, Pump ID: {self.pump_id}, Expiry date: {self.expiry_date},\
                  Mass: {self.mass} g, Volume: {self.volume} L,\
                  Density: {self.density} g/L'
 
+class SolidMaterialModel(MaterialModel):
+    dispense_src = fields.CharField()
 
 class Solid(Material):
-    def __init__(self, db_name: str, solid_document: dict):
-        if len(solid_document) > 1:
-            if solid_document['unit'] == 'g':
-                solid_document['mass'] = solid_document['amount_stored']
-            elif solid_document['unit'] == 'mg':
-                solid_document['mass'] = solid_document['amount_stored']/1000
-            elif solid_document['unit'] == 'ug':
-                solid_document['mass'] = solid_document['amount_stored']/1000000
-            solid_document.pop('amount_stored')
-        super().__init__(db_name, solid_document)
+    def __init__(self, material_model: SolidMaterialModel) -> None:
+        self._model = material_model
 
     @classmethod
-    def from_dict(cls, db_name:str, solid_document: dict):
-        return cls(db_name, solid_document)
+    def from_dict(cls, solid_document: dict):
+        model = SolidMaterialModel()
+        model.name = solid_document['name']
+        model.id = solid_document['id']
+        model.dispense_src = solid_document['dispense_method']
+        model.expiry_date = datetime.isoformat(solid_document['expiry_date'])
+        if solid_document['unit'] == 'g':
+            unit_modifier = 1
+            model.mass = solid_document['amount_stored']/unit_modifier
+        elif solid_document['unit'] == 'mg':
+            unit_modifier = 1000
+            model.mass = solid_document['amount_stored']/unit_modifier
+        elif solid_document['unit'] == 'ug':
+            unit_modifier = 1000000
+            model.mass = solid_document['amount_stored']/unit_modifier
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name:str, object_id: ObjectId):
-        solid_document = {'object_id': object_id}
-        return cls(db_name, solid_document)
+    def from_object_id(cls, object_id: ObjectId):
+        model = MaterialModel.objects.get({'_id':object_id})
+        return cls(model)
     
     @property
-    def dispense_method(self):
-        return self.get_field('dispense_method')
-
-    @property
-    def cartridge_id(self):
-        return self.get_field('cartridge_id')
+    def dispense_src(self):
+        return self._model.dispense_src
 
     def __str__(self):
-        return f'Solid: {self.name}, Cartridge ID: {self.cartridge_id}, Expiry date: {self.expiry_date},\
-                 Mass: {self.mass} g, Dispense method: {self.dispense_method}'
+        return f'Solid: {self.name}, Expiry date: {self.expiry_date},\
+                 Mass: {self.mass} g, Dispense method: {self.dispense_src}'
