@@ -3,7 +3,7 @@ from bson.objectid import ObjectId
 from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, StationOutputDescriptor, IKAStirringOpDescriptor
 from archemist.state.batch import Batch
 import yaml
-
+from pymodm import connect
 from archemist.util.location import Location
 
 class BatchRecipeTest(unittest.TestCase):
@@ -12,17 +12,15 @@ class BatchRecipeTest(unittest.TestCase):
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
-        batch = Batch.from_arguments('test',31,2,Location(1,3,'table_frame'))
+        batch = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
         self.assertEqual(batch.id, 31)
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
-        self.assertFalse(batch.processed)
         self.assertFalse(batch.recipe_attached)
         self.assertIsNone(batch.recipe)
         
         self.assertEqual(batch.num_samples, 2)
-        self.assertFalse(batch.are_all_samples_processed())
         self.assertEqual(len(batch.station_history), 0)
         ''' add recipe '''
         batch.attach_recipe(recipe_doc)
@@ -31,34 +29,30 @@ class BatchRecipeTest(unittest.TestCase):
 
         ''' First operation '''
         # process first sample
-        self.assertEqual(batch.current_sample_index, 0)
+        self.assertEqual(batch._model.current_sample_index, 0)
         ika_op1 = IKAHeatingOpDescriptor({'temperature':50, 'duration':10},StationOutputDescriptor())
         batch.add_station_op_to_current_sample(ika_op1)
         batch.add_material_to_current_sample('heat - 50')
         batch.process_current_sample()
         # process second sample
-        self.assertEqual(batch.current_sample_index, 1)
+        self.assertEqual(batch._model.current_sample_index, 1)
         batch.add_station_op_to_current_sample(ika_op1)
         batch.add_material_to_current_sample('heat - 50')
         batch.process_current_sample()
-        self.assertTrue(batch.are_all_samples_processed())
         batch.add_station_stamp('IkaRCTDigital-31')
         self.assertEqual(len(batch.station_history), 1)
         ''' Second operation '''
-        batch.reset_samples_processing()
-        self.assertFalse(batch.are_all_samples_processed())
         # process first sample
-        self.assertEqual(batch.current_sample_index, 0)
+        self.assertEqual(batch._model.current_sample_index, 0)
         ika_op2 = IKAStirringOpDescriptor({'rpm':50, 'duration':10},StationOutputDescriptor())
         batch.add_station_op_to_current_sample(ika_op2)
         batch.add_material_to_current_sample('rpm - 50')
         batch.process_current_sample()
         # process second sample
-        self.assertEqual(batch.current_sample_index, 1)
+        self.assertEqual(batch._model.current_sample_index, 1)
         batch.add_station_op_to_current_sample(ika_op2)
         batch.add_material_to_current_sample('rpm - 50')
         batch.process_current_sample()
-        self.assertTrue(batch.are_all_samples_processed())
         batch.add_station_stamp('IkaRCTDigital-31')
         self.assertEqual(len(batch.station_history), 2)
 
@@ -75,14 +69,14 @@ class BatchRecipeTest(unittest.TestCase):
 
         # save batch obj id for later test
         global batch_obj_id
-        batch_obj_id = batch.object_id
+        batch_obj_id = batch._model._id
 
     def test_recipe(self):
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
-        batch = Batch.from_arguments('test',31,2,Location(1,3,'table_frame'))
+        batch = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
         self.assertFalse(batch.recipe_attached)
         self.assertIsNone(batch.recipe)
         '''add recipe'''
@@ -95,7 +89,6 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(batch.recipe.solids[0], 'sodium_chloride')
         self.assertEqual(batch.recipe.current_state, 'start')
         self.assertFalse(batch.recipe.is_complete())
-        self.assertFalse(batch.processed)
 
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
@@ -120,11 +113,10 @@ class BatchRecipeTest(unittest.TestCase):
         # end state
         batch.recipe.advance_state(True)
         self.assertTrue(batch.recipe.is_complete())
-        self.assertTrue(batch.processed)
 
     def test_batch_from_objectId(self):
         global batch_obj_id
-        batch = Batch.from_object_id('test',batch_obj_id)
+        batch = Batch.from_object_id(batch_obj_id)
         self.assertEqual(batch.id, 31)
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
         self.assertEqual(len(batch.station_history), 2)
@@ -133,4 +125,5 @@ class BatchRecipeTest(unittest.TestCase):
         
 
 if __name__ == '__main__':
+    connect(mongodb_uri='mongodb://localhost:27017/archemist_test', alias='archemist_connection')
     unittest.main()
