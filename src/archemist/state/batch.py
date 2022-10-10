@@ -12,7 +12,7 @@ class SampleModel(EmbeddedMongoModel):
     capped = fields.BooleanField()
     operation_ops = fields.ListField(fields.BinaryField())
 
-class Sample():
+class Sample:
     def __init__(self, sample_model: SampleModel):
         self._model = sample_model
 
@@ -64,7 +64,7 @@ class BatchModel(MongoModel):
     station_history = fields.ListField(fields.CharField(), blank=True)
 
     class Meta:
-        collection_name = 'Batches'
+        collection_name = 'batches'
         connection_alias = 'archemist_connection'
 
 
@@ -87,6 +87,10 @@ class Batch:
     def from_object_id(cls, object_id: ObjectId):
         model = BatchModel.objects.get({'_id': object_id})
         return cls(model)
+
+    @property
+    def model(self) -> BatchModel:
+        return self._model
 
     @property
     def id(self) -> int:
