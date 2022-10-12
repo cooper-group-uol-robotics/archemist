@@ -1,17 +1,14 @@
-from datetime import datetime
+from datetime import date
 from bson.objectid import ObjectId
-from pymodm import MongoModel, fields
-from archemist.persistence.dbObjProxy import DbObjProxy
+from mongoengine import Document, fields
 
-class MaterialModel(MongoModel):
-    name = fields.CharField()
-    id = fields.IntegerField()
+class MaterialModel(Document):
+    name = fields.StringField(required=True)
+    exp_id = fields.IntField(required=True)
     expiry_date = fields.DateTimeField()
     mass = fields.FloatField(min_value=0)
 
-    class Meta:
-        collection_name = 'materials'
-        connection_alias = 'archemist_connection'
+    meta = {'collection': 'materials', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
 
 class Material:
@@ -20,6 +17,7 @@ class Material:
 
     @property
     def model(self) -> MaterialModel:
+        self._model.reload()
         return self._model
     
     @property
@@ -28,23 +26,23 @@ class Material:
 
     @property
     def id(self) -> int:
-        return self._model.id
+        return self._model.exp_id
 
     @property
-    def expiry_date(self) -> datetime:
-        return self._model.expiry_date
+    def expiry_date(self) -> date:
+        return date.fromisoformat(self._model.expiry_date)
 
     @property
     def mass(self) -> float:
+        self._model.reload('mass')
         return self._model.mass
 
     @mass.setter
     def mass(self, value):
-        self._model.mass = value
-        self._model.save()
+        self._model.update(mass=value)
 
 class LiquidMaterialModel(MaterialModel):
-    pump_id = fields.CharField()
+    pump_id = fields.StringField()
     volume = fields.FloatField(min_value=0)
     density = fields.FloatField(min_value=0)
 
@@ -57,9 +55,9 @@ class Liquid(Material):
     def from_dict(cls, liquid_document: dict):
         model = LiquidMaterialModel()
         model.name = liquid_document['name']
-        model.id = liquid_document['id']
+        model.exp_id = liquid_document['id']
         model.pump_id = liquid_document['pump_id']
-        model.expiry_date = datetime.isoformat(liquid_document['expiry_date'])
+        model.expiry_date = date.isoformat(liquid_document['expiry_date'])
         model.density = liquid_document['density']
         if liquid_document['unit'] in ['l','ml','ul']:
             if liquid_document['unit'] == 'l':
@@ -84,7 +82,7 @@ class Liquid(Material):
 
     @classmethod
     def from_object_id(cls, object_id: ObjectId):
-        model = MaterialModel.objects.get({'_id':object_id})
+        model = MaterialModel.objects.get(id=object_id)
         return cls(model)
 
     @property #return in g/l which is equivalent to kg/m3
@@ -97,12 +95,12 @@ class Liquid(Material):
 
     @property # return in l
     def volume(self) -> float:
+        self._model.reload('volume')
         return self._model.volume
 
     @volume.setter
     def volume(self, new_volume):
-        self._model.volume = new_volume
-        self._model.save()
+        self._model.update(volume=new_volume)
 
     def __str__(self):
         return f'Liquid: {self.name}, Pump ID: {self.pump_id}, Expiry date: {self.expiry_date},\
@@ -110,7 +108,7 @@ class Liquid(Material):
                  Density: {self.density} g/L'
 
 class SolidMaterialModel(MaterialModel):
-    dispense_src = fields.CharField()
+    dispense_src = fields.StringField()
 
 class Solid(Material):
     def __init__(self, material_model: SolidMaterialModel) -> None:
@@ -120,9 +118,9 @@ class Solid(Material):
     def from_dict(cls, solid_document: dict):
         model = SolidMaterialModel()
         model.name = solid_document['name']
-        model.id = solid_document['id']
+        model.exp_id = solid_document['id']
         model.dispense_src = solid_document['dispense_method']
-        model.expiry_date = datetime.isoformat(solid_document['expiry_date'])
+        model.expiry_date = date.isoformat(solid_document['expiry_date'])
         if solid_document['unit'] == 'g':
             unit_modifier = 1
             model.mass = solid_document['amount_stored']/unit_modifier
@@ -137,7 +135,7 @@ class Solid(Material):
 
     @classmethod
     def from_object_id(cls, object_id: ObjectId):
-        model = MaterialModel.objects.get({'_id':object_id})
+        model = MaterialModel.objects.get(id=object_id)
         return cls(model)
     
     @property
