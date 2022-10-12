@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import Any, List
-from pymodm import MongoModel, EmbeddedMongoModel, fields
+from mongoengine import Document, EmbeddedDocument, fields
 from bson.objectid import ObjectId
 from pickle import loads,dumps
 from archemist.state.recipe import Recipe,RecipeModel
 from archemist.util import Location
 
-class SampleModel(EmbeddedMongoModel):
-    rack_index = fields.IntegerField(min_value=0)
-    materials = fields.ListField(fields.CharField())
-    capped = fields.BooleanField()
-    operation_ops = fields.ListField(fields.BinaryField())
+class SampleModel(EmbeddedDocument):
+    rack_index = fields.IntField(min_value=0, required=True)
+    materials = fields.ListField(fields.StringField(), default=[])
+    capped = fields.BooleanField(default=False)
+    operation_ops = fields.ListField(fields.BinaryField(), default=[])
 
 class Sample:
     def __init__(self, sample_model: SampleModel):
@@ -54,19 +54,16 @@ class Sample:
             'operation_ops': self.operation_ops
         }
 
-class BatchModel(MongoModel):
-    id = fields.IntegerField()
-    num_samples = fields.IntegerField(min_value=1)
+class BatchModel(Document):
+    exp_id = fields.IntField(required=True)
+    num_samples = fields.IntField(min_value=1, required=True)
     location = fields.DictField()
-    recipe = fields.ReferenceField(RecipeModel, blank=True)
+    recipe = fields.ReferenceField(RecipeModel, null=True)
     samples = fields.EmbeddedDocumentListField(SampleModel)
-    current_sample_index = fields.IntegerField(min_value=0, default=0)
-    station_history = fields.ListField(fields.CharField(), blank=True)
+    current_sample_index = fields.IntField(min_value=0, default=0)
+    station_history = fields.ListField(fields.StringField(), default=[])
 
-    class Meta:
-        collection_name = 'batches'
-        connection_alias = 'archemist_connection'
-
+    meta = {'collection': 'batches', 'db_alias': 'archemist_state'}
 
 class Batch:
     def __init__(self, batch_model: BatchModel) -> None:
@@ -75,7 +72,7 @@ class Batch:
     @classmethod
     def from_arguments(cls, batch_id: int, num_samples: int, location:Location):
         model = BatchModel()
-        model.id = batch_id
+        model.exp_id = batch_id
         model.num_samples = num_samples
         model.location = location.to_dict()
         for i in range(0,num_samples):
@@ -85,44 +82,46 @@ class Batch:
 
     @classmethod
     def from_object_id(cls, object_id: ObjectId):
-        model = BatchModel.objects.get({'_id': object_id})
+        model = BatchModel.objects.get(id=object_id)
         return cls(model)
 
     @property
     def model(self) -> BatchModel:
+        self._model.reload()
         return self._model
 
     @property
     def id(self) -> int:
-        return self._model.id
+        return self._model.exp_id
 
     @property
     def recipe_attached(self) -> bool:
+        self._model.reload('recipe')
         return self._model.recipe is not None
 
     @property
     def recipe(self) -> Recipe:
-        if self._model.recipe is not None:
+        if self.recipe_attached:
             return Recipe(self._model.recipe)
 
     def attach_recipe(self, recipe_dict: dict):
         if isinstance(recipe_dict, dict):
             recipe_dict['current_state'] = 'start'
-            self._model.recipe = Recipe.from_dict(recipe_dict).model
-            self._model.save()
+            new_recipe = Recipe.from_dict(recipe_dict).model
+            self._model.update(recipe=new_recipe)
         else:
             raise ValueError
 
     @property
     def location(self) -> Location:
+        self._model.reload('location')
         loc_dict = self._model.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
 
     @location.setter
     def location(self, location):
         if isinstance(location, Location):
-            self._model.location = location.to_dict()
-            self._model.save()
+            self._model.update(location=location.to_dict())
         else:
             raise ValueError
 
@@ -130,39 +129,45 @@ class Batch:
     def num_samples(self) -> int:
         return self._model.num_samples
 
+    @property
+    def current_sample_index(self):
+        self._model.reload('current_sample_index')
+        return self._model.current_sample_index
+
     def get_current_sample(self) -> Sample:
         samples = self.get_samples_list()
-        current_index = self._model.current_sample_index
+        current_index = self.current_sample_index
         return samples[current_index]
 
     def get_samples_list(self) -> List[Sample]:
+        self._model.reload('samples')
         return [Sample(model) for model in self._model.samples]
 
     def process_current_sample(self):
-        self._model.current_sample_index += 1
-        if (self._model.current_sample_index == self.num_samples):
-            self._model.current_sample_index = 0
+        self._model.update(inc__current_sample_index=1)
+        if (self.current_sample_index == self.num_samples):
+            self._model.update(current_sample_index=0)
             self._log_batch('All samples have been processed. Batch index is reset to 0.')
-        self._model.save()
 
     def add_station_op_to_current_sample(self, station_op: Any):
         current_sample = self.get_current_sample()
         current_sample.add_operation_op(station_op)
-        self._model.save()
+        self._model.update(**{f'samples__{self.current_sample_index}':current_sample.model}) #https://stackoverflow.com/questions/2932648/how-do-i-use-a-string-as-a-keyword-argument
+        #self._model.update(samples=self._model.samples) alternatively but the whole list will be updated
 
     def add_material_to_current_sample(self, material: str):
         current_sample = self.get_current_sample()
         current_sample.add_material(material)
-        self._model.save()
+        self._model.update(**{f'samples__{self.current_sample_index}':current_sample.model})
 
     @property
     def station_history(self):
+        self._model.reload('station_history')
         return self._model.station_history
 
     def add_station_stamp(self, station_stamp: str):
         timed_stamp = f'{datetime.now()} , {station_stamp}'
-        self._model.station_history.append(timed_stamp)
-        self._model.save()
+        self._model.update(push__station_history=timed_stamp)
         self._log_batch(f'({station_stamp}) stamp is added.')
 
     def _log_batch(self, message: str):

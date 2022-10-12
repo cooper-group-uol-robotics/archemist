@@ -1,21 +1,18 @@
 from bson.objectid import ObjectId
-from pymodm import MongoModel, fields
-from archemist.persistence.dbObjProxy import DbObjProxy
+from mongoengine import Document, fields
 from transitions import Machine
 
-class RecipeModel(MongoModel):
-    name = fields.CharField()
-    id = fields.IntegerField()
-    station_op_descriptors = fields.ListField(fields.DictField())
-    solids = fields.ListField(fields.CharField())
-    liquids = fields.ListField(fields.CharField())
-    states = fields.ListField(fields.CharField())
-    transitions = fields.ListField(fields.DictField())
-    current_state = fields.CharField()
+class RecipeModel(Document):
+    name = fields.StringField(required=True)
+    exp_id = fields.IntField(required=True)
+    station_op_descriptors = fields.ListField(fields.DictField(), default=[])
+    solids = fields.ListField(fields.StringField(), default=[])
+    liquids = fields.ListField(fields.StringField(), default=[])
+    states = fields.ListField(fields.StringField(),default=[])
+    transitions = fields.ListField(fields.DictField(), default=[])
+    current_state = fields.StringField(required=True)
 
-    class Meta:
-        collection_name = 'Recipes'
-        connection_alias = 'archemist_connection'
+    meta = {'collection': 'recipes' , 'db_alias': 'archemist_state'}
 
 class Recipe:
     def __init__(self, recipe_model: RecipeModel):
@@ -26,7 +23,7 @@ class Recipe:
     def from_dict(cls, recipe_document: dict):
         model = RecipeModel()
         model.name = recipe_document['name']
-        model.id = recipe_document['id']
+        model.exp_id = recipe_document['id']
         model.station_op_descriptors = [stationOp for station_dict in recipe_document['stations'] for stationOp in station_dict['stationOps']]
         model.solids = recipe_document['materials']['solids']
         model.liquids = recipe_document['materials']['liquids']
@@ -39,7 +36,7 @@ class Recipe:
 
     @classmethod
     def from_object_id(cls, object_id: ObjectId):
-        model = RecipeModel.objects.get({'_id': object_id})
+        model = RecipeModel.objects.get(id=object_id)
         return cls(model)
         
     @property
@@ -48,22 +45,26 @@ class Recipe:
 
     @property
     def id(self):
-        return self._model.id
+        return self._model.exp_id
 
     @property
     def solids (self):
+        self._model.reload('solids')
         return self._model.solids
 
     @property
     def liquids (self):
+        self._model.reload('liquids')
         return self._model.liquids
 
     @property
     def model(self):
+        self._model.reload()
         return self._model
 
     @property
     def current_state(self):
+        self._model.reload('current_state')
         return self._model.current_state
 
     def advance_state(self, success: bool):
@@ -72,13 +73,13 @@ class Recipe:
             self._station_sm.onSuccess()
         else:
             self._station_sm.onFail()
-        self._model.current_state = self._station_sm.state
+        self._model.update(current_state=self._station_sm.state)
         # if self._station_sm.state == 'end':
         #     self._batch_db_proxy.update_field('processed', True)
         self._logRecipe('Current state advanced to ' + self._station_sm.state)
 
     def is_complete(self):
-        return self._model.current_state == 'end'
+        return self.current_state == 'end'
 
     def get_current_task_op_dict(self):
         if not self.is_complete():
@@ -109,7 +110,7 @@ class Recipe:
             return 'end',None
 
     def _update_recipe_sm_state(self):
-        self._station_sm.state = self._model.current_state # update state machine state to be inline with db
+        self._station_sm.state = self.current_state # update state machine state to be inline with db
         
     def _logRecipe(self, message: str):
         print(f'Recipe [{self.id}]: ' + message)
