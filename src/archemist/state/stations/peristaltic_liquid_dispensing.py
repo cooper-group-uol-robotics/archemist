@@ -1,39 +1,44 @@
 from bson.objectid import ObjectId
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
-from archemist.state.material import Liquid
+from archemist.state.station import StationModel, Station, StationOpDescriptorModel, StationOpDescriptor
+from archemist.state.material import Liquid, Solid
+from mongoengine import fields
+from typing import List, Any
 from archemist.exceptions.exception import InvalidLiquidError
 
-class PeristalticLiquidDispensing(Station):
-    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
+class PeristalticPumpStationModel(StationModel):
+    pump_liquid_map = fields.DictField(required=True)
 
-        if len(station_dict) > 1:
-            parameters = station_dict.pop('parameters')
-            station_dict['pump_liquid_map'] = dict()
-            for _, pumpId in parameters['liquid_pump_map'].items():
+class PeristalticLiquidDispensing(Station):
+    def __init__(self, station_model: PeristalticPumpStationModel) -> None:
+        self._model = station_model
+
+    @classmethod
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = PeristalticPumpStationModel()
+        cls._set_model_common_fields(station_document, model)
+        parameters = station_document['parameters']
+        for _, pumpId in parameters['liquid_pump_map'].items():
                 for liquid in liquids:
                     if liquid.pump_id == pumpId:
-                        station_dict['pump_liquid_map'].update({pumpId: liquid.object_id})
-        
-        super().__init__(db_name,station_dict)
+                        model.pump_liquid_map[pumpId] = liquid.model.id
+        model.save()
+        return cls(model)
+
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
-
-    @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
+    def from_object_id(cls, object_id: ObjectId):
+        model = PeristalticPumpStationModel.objects.get(id=object_id)
+        return cls(model)
 
     def get_liquid(self, pumpId: str):
-        liquid_obj_id = self.get_nested_field(f'pump_liquid_map.{pumpId}')
-        return Liquid.from_object_id(self.db_name, liquid_obj_id)
+        liquid_obj_id = self._model.pump_liquid_map[pumpId]
+        return Liquid.from_object_id(liquid_obj_id)
 
     def get_pump_id(self, liquid_name: str):
         # assuming only single liquid per pump
-        pump_liquid_map = self.get_field('pump_liquid_map')
+        pump_liquid_map = self._model.pump_liquid_map
         for pumpId, liquid_obj_id in pump_liquid_map.items():
-            if liquid_name == Liquid.from_object_id(self.db_name, liquid_obj_id).name:
+            if liquid_name == Liquid.from_object_id(liquid_obj_id).name:
                 return pumpId
             else:
                 raise InvalidLiquidError(self.__class__.__name__)
@@ -56,24 +61,41 @@ class PeristalticLiquidDispensing(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 
+class PeristalticPumpOpDescriptorModel(StationOpDescriptorModel):
+    liquid_name = fields.StringField(required=True)
+    dispense_volume = fields.FloatField(min_value=0, required=True)
+    actual_dispensed_volume = fields.FloatField(min_value=0)
+
 class PeristalticPumpOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=PeristalticLiquidDispensing.__name__, output=output)
-        self._liquid_name = properties['liquid']
-        self._dispense_volume = properties['volume']
+    def __init__(self, op_model: PeristalticPumpOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_model(cls, op_model: PeristalticPumpOpDescriptorModel):
+        return cls(op_model)
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = PeristalticPumpOpDescriptorModel()
+        model.type = cls.__name__
+        model.module = cls.__module__
+        model.liquid_name = kwargs['liquid']
+        model.dispense_volume = kwargs['volume']
+        return cls(model)
+        
 
     @property
     def liquid_name(self):
-        return self._liquid_name
+        return self._model.liquid_name
 
     @property
     def dispense_volume(self):
-        return self._dispense_volume
+        return self._model.dispense_volume
 
+    @property
+    def actual_dispensed_volume(self):
+        return self._model.actual_dispensed_volume
 
-
-''' ==== Station Output Descriptors ==== '''
-
-class PeristalticPumpOutputDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        super().__init__()
+    @actual_dispensed_volume.setter
+    def actual_dispensed_volume(self, dispensed_volume: float):
+        self._model.actual_dispensed_volume = dispensed_volume

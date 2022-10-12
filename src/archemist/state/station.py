@@ -1,13 +1,16 @@
+from email.policy import default
 from bson.objectid import ObjectId
-from archemist.exceptions import exception
+from mongoengine import Document, EmbeddedDocument, fields
 from enum import Enum
+from pickle import loads, dumps
+from typing import List, Any
 from datetime import datetime
-from archemist.persistence.dbObjProxy import DbObjProxy
+from archemist.state.material import Liquid,Solid
 from archemist.util.location import Location
 from archemist.util.station_robot_job import StationRobotJob
 from archemist.state.robot import RobotOpDescriptor
-from archemist.state.batch import Batch
-#import archemist.processing.stationSMs
+from archemist.state.batch import Batch, BatchModel
+from archemist.persistence.object_factory import ObjectFactory
 
 class StationState(Enum):
     IDLE = 0
@@ -16,6 +19,48 @@ class StationState(Enum):
     WAITING_ON_OPERATION = 3
     OPERATION_COMPLETE = 4
     PROCESSING_COMPLETE = 5
+
+class StationOpDescriptorModel(EmbeddedDocument):
+    type = fields.StringField(required=True)
+    module = fields.StringField(required=True)
+    has_result = fields.BooleanField(default=False)
+    was_successful = fields.BooleanField(default=False)
+    start_timestamp = fields.ComplexDateTimeField()
+    end_timestamp = fields.ComplexDateTimeField()
+
+    meta = {'allow_inheritance': True}
+
+class StationOpDescriptor:
+    def __init__(self, stationOpModel: StationOpDescriptorModel) -> None:
+        self._model = stationOpModel
+
+    @property
+    def model(self):
+        return self._model
+
+    @property
+    def has_result(self):
+        return self._model.has_result
+
+    @property
+    def was_successful(self):
+        return self._model.was_successful
+
+    @property
+    def start_timestamp(self):
+        return self._model.start_timestamp
+
+    @property
+    def end_timestamp(self):
+        return self._model.end_timestamp
+
+    def add_start_timestamp(self):
+        self._model.start_timestamp = datetime.now()
+
+    def complete_op(self, success: bool):
+        self._model.has_result = True
+        self.was_successful = success
+        self._model.end_timestamp = datetime.now()
 
 class StationOutputDescriptor:
     def __init__(self):
@@ -48,212 +93,215 @@ class StationOutputDescriptor:
     def add_timestamp(self):
         self._timestamp = datetime.now()
 
-class StationOpDescriptor:
-    def __init__(self, stationName: str, output: StationOutputDescriptor):
-        self._stationName = stationName
-        self._output = output
-        self._timestamp = None
+# class StationOpDescriptor:
+#     def __init__(self, stationName: str, output: StationOutputDescriptor):
+#         self._stationName = stationName
+#         self._output = output
+#         self._timestamp = None
+
+#     @property
+#     def stationName(self):
+#         return self._stationName
+
+#     @property
+#     def output(self):
+#         return self._output
+
+#     def add_timestamp(self):
+#         self._timestamp = datetime.now()
+
+
+class StationModel(Document):
+    exp_id = fields.IntField(required=True)
+    location = fields.DictField()
+    batch_capacity = fields.IntField(min_value=1, default=1)
+    process_state_machine = fields.DictField(required=True)
+    operational = fields.BooleanField(default=True)
+    state = fields.EnumField(StationState, default=StationState.IDLE)
+    loaded_samples = fields.IntField(default=0) # cannot use min value, breaks dec__ operator
+    assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
+    processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
+    requested_robot_op = fields.BinaryField(null=True)
+    current_station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel,null=True)
+    station_op_history = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
+    requested_robot_op_history = fields.ListField(fields.BinaryField(), default=[])
+
+    meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}
+
+class Station:
+    def __init__(self, station_model: StationModel) -> None:
+        self._model = station_model
+
+    @classmethod
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        pass
+
+    @classmethod
+    def from_object_id(cls, object_id: ObjectId):
+        pass
+
+    @classmethod
+    def _set_model_common_fields(cls, station_document: dict, station_model: StationModel):
+        station_model.exp_id = station_document['id']
+        station_model.location = station_document['location']
+        station_model.batch_capacity = station_document['batch_capacity']
+        station_model.process_state_machine = station_document['process_state_machine']
 
     @property
-    def stationName(self):
-        return self._stationName
+    def model(self) -> StationModel:
+        self._model.reload()
+        return self._model
+
 
     @property
-    def output(self):
-        return self._output
-
-    def add_timestamp(self):
-        self._timestamp = datetime.now()
-
-
-class Station(DbObjProxy):
-    def __init__(self, db_name: str, station_document: dict):
-
-        if len(station_document) > 1:
-            
-            station_document['operational'] = True
-
-            station_document['state'] = StationState.IDLE.value
-
-            station_document['assigned_batches'] = []
-            station_document['processed_batches'] = []
-            station_document['req_robot_job'] = None
-
-            station_document['loaded_samples'] = 0        
-            
-            station_document['current_station_op'] = None
-            station_document['station_op_history'] = []
-            station_document['requested_robot_op_history'] = []
-            
-            super().__init__(db_name, 'stations', station_document)
-        else:
-            super().__init__(db_name, 'stations', station_document['object_id'])
-
-        @classmethod
-        def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-            pass
-
-        @classmethod
-        def from_object_id(cls, db_name: str, object_id: ObjectId):
-            pass
+    def state(self) -> StationState:
+        self._model.reload('state')
+        return self._model.state
 
     @property
-    def state(self):
-            return StationState(self.get_field('state'))
+    def id(self) -> int:
+        return self._model.exp_id
 
     @property
-    def id(self):
-        return self.get_field('id')
-
-    @property
-    def operational(self):
-        return self.get_field('operational')
+    def operational(self) -> bool:
+        self._model.reload('operational')
+        return self.model.operational
 
     @operational.setter
     def operational(self, value):
-        if isinstance(value, bool):
-            self.update_field('operational',value)
-        else:
-            raise ValueError
+        self._model.update(operational=value)
 
     @property
-    def location(self):
-        loc_dict = self.get_field('location')
+    def location(self) -> Location:
+        loc_dict = self._model.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
 
     @property
-    def station_op_history(self):
-        en_op_history = self.get_field('station_op_history')
-        return [self.decode_object(op) for op in en_op_history]
+    def station_op_history(self) -> List[StationOpDescriptor]:
+        self._model.reload('station_op_history')
+        return [ObjectFactory.construct_station_op_from_model(op_model) for op_model in self._model.station_op_history]
 
     @property
-    def requested_robot_op_history(self):
-        en_op_history = self.get_field('requested_robot_op_history')
-        return [self.decode_object(op) for op in en_op_history]
+    def requested_robot_op_history(self) -> List[Any]:
+        self._model.reload('requested_robot_op_history')
+        return [loads(encoded_robob_job) for encoded_robob_job in self._model.requested_robot_op_history]
 
     @property
-    def current_station_op(self):
-        encoded_op = self.get_field('current_station_op')
-        if encoded_op is not None:
-            return self.decode_object(encoded_op)
+    def process_sm_dict(self) -> dict:
+        return self._model.process_state_machine
 
     @property
-    def process_sm_dict(self):
-        return self.get_field('process_state_machine')
-
-    @property
-    def batch_capacity(self):
-        return self.get_field('batch_capacity')
+    def batch_capacity(self) -> int:
+        return self._model.batch_capacity
 
     def load_sample(self):
-        self.increment_field('loaded_samples')
+        self._model.update(inc__loaded_samples=1)
 
     def unload_sample(self):
-        self.decrement_field('loaded_samples')
+        self._model.update(dec__loaded_samples=1)
+
 
     @property
-    def loaded_samples(self):
-        return self.get_field('loaded_samples')
+    def loaded_samples(self) -> int:
+        self._model.reload('loaded_samples')
+        return self._model.loaded_samples
 
     @property
-    def assigned_batches(self):
-        batch_obj_id_list = self.get_field('assigned_batches')
-        if len(batch_obj_id_list) > 0:
-            return [Batch.from_object_id(self.db_name, batch_obj_id) for batch_obj_id in batch_obj_id_list]
-        else:
-            return []
+    def assigned_batches(self) -> List[Batch]:
+        self._model.reload('assigned_batches')
+        assigned_batches_list = []
+        if self._model.assigned_batches:
+            assigned_batches_list = [Batch(batch_model) for batch_model in self._model.assigned_batches]
+        return assigned_batches_list
 
-    def has_free_batch_capacity(self):
-        return len(self.get_field('assigned_batches')) < self.batch_capacity
+    @property
+    def processed_batches(self) -> List[Batch]:
+        self._model.reload('processed_batches')
+        processed_batches_list = []
+        if self._model.processed_batches:
+            processed_batches_list = [Batch(batch_model) for batch_model in self._model.processed_batches]
+        return processed_batches_list 
+
+    def has_free_batch_capacity(self) -> bool:
+        return len(self.assigned_batches) < self.batch_capacity
 
 
-    def add_batch(self, batch):
-        if len(self.get_field('assigned_batches')) < self.batch_capacity:
-            self.push_to_array_field('assigned_batches', batch.object_id)
+    def add_batch(self, batch: Batch):
+        if self.has_free_batch_capacity():
+            self._model.update(push__assigned_batches=batch.model)
             self._log_station(f'{batch} is added for processing.')
             station_stamp = str(self)
             batch.add_station_stamp(station_stamp)
-            if len(self.get_field('assigned_batches')) == self.batch_capacity:
-                self.set_to_processing()
+            if len(self.assigned_batches) == self.batch_capacity:
+                self._update_state(StationState.PROCESSING)
         else:
-            raise exception.StationAssignedRackError(self.__class__.__name__)
+            self._log_station(f'Cannot add {batch}, no batch capacity is available')
 
-    def has_processed_batch(self):
-        return len(self.get_field('processed_batches')) > 0
+    def has_processed_batch(self) -> bool:
+        self._model.reload('processed_batches')
+        return True if self._model.processed_batches else False
 
     def process_assigned_batches(self):
-        batch_obj_id_list = self.get_field('assigned_batches')
-        for batch_obj_id in batch_obj_id_list:
-            self.push_to_array_field('processed_batches',batch_obj_id)
-            self.delete_element_from_array_field('assigned_batches',batch_obj_id)
-            self._log_station(f'Processing batch is complete.')
-        if len(self.get_field('processed_batches')) == self.batch_capacity:
+        self._model.reload('assigned_batches')
+        self._model.update(processed_batches=self._model.assigned_batches)
+        self._model.update(unset__assigned_batches=True)
+        self._log_station(f'all assigned batches processing complete.')
+        if len(self.processed_batches) == self.batch_capacity:
             self._update_state(StationState.PROCESSING_COMPLETE)
 
-    def get_processed_batch(self):
-        batch_obj_id = self.get_doc_from_array_field('processed_batches', 0)
-        if batch_obj_id is not None:
-            batch = Batch.from_object_id(self.db_name, batch_obj_id)
-            self.delete_element_from_array_field('processed_batches', batch_obj_id)
+    def get_processed_batch(self) -> Batch:
+        processed_batches = self.processed_batches
+        if processed_batches:
+            batch = processed_batches.pop(0)
+            self._model.update(pop__processed_batches=-1)
             self._log_station(f'Processed id:{batch} is unassigned.')
-            if len(self.get_field('processed_batches')) == 0:
+            if len(self.processed_batches) == 0:
                 self._update_state(StationState.IDLE)
             return batch
 
-    def has_robot_job(self):
-        return self.get_field('req_robot_job') is not None
+    def has_robot_job(self) -> bool:
+        self._model.reload('requested_robot_op')
+        return self._model.requested_robot_op is not None
     
-    def get_robot_job(self):
-        encoded_robot_job = self.get_field('req_robot_job')
-        if encoded_robot_job is not None:
-            robot_job = DbObjProxy.decode_object(encoded_robot_job)
-            self._log_station(f'Robot job request for ({robot_job}) is retrieved.')
+    def get_robot_job(self) -> StationRobotJob:
+        if self.has_robot_job():
+            robot_op = loads(self._model.requested_robot_op)
+            self._log_station(f'Robot job request for ({robot_op}) is retrieved.')
             self._update_state(StationState.WAITING_ON_ROBOT)
-            return robot_job
+            return robot_op
 
     def set_robot_job(self, robot_job, current_batch_id = -1):
-        station_robot_job = StationRobotJob(robot_job, current_batch_id, self.object_id) 
-        encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
-        self.update_field('req_robot_job', encoded_station_robot_job)
+        station_robot_job = StationRobotJob(robot_job, current_batch_id, self._model.id) 
+        encoded_station_robot_job = dumps(station_robot_job)
+        self._model.update(requested_robot_op=encoded_station_robot_job)
         self._log_station(f'Requesting robot job ({robot_job})')
 
     def finish_robot_job(self, complete_robot_op: RobotOpDescriptor):
-        encodedRobotOp = DbObjProxy.encode_object(complete_robot_op)
-        self.update_field('req_robot_job', None)
+        encodedRobotOp = dumps(complete_robot_op)
+        self._model.update(unset__requested_robot_op=True)
+        self._model.update(push__requested_robot_op_history=encodedRobotOp)
         self._log_station(f'Robot job request is fulfilled.')
-        self.push_to_array_field('requested_robot_op_history',encodedRobotOp)
-        self.set_to_processing()
-
-    def has_station_op(self):
-        return self.get_field('current_station_op') is not None
-
-    def get_station_op(self):
-        encoded_op = self.get_field('current_station_op')
-        if encoded_op is not None:
-            station_op = DbObjProxy.decode_object(encoded_op)
-            return station_op
-
-    def set_station_op(self, stationOp: StationOpDescriptor):
-        encodedStationOp = DbObjProxy.encode_object(stationOp)
-        self.update_field('current_station_op', encodedStationOp)
-        self.request_station_operation()
-        self._log_station(f'Requesting station job ({stationOp})')
-
-    def finish_station_op(self, complete_station_op: StationOpDescriptor):
-        encodedStationOp = DbObjProxy.encode_object(complete_station_op)
-        self.update_field('current_station_op', None)
-        self._log_station(f'Station op is complete.')
-        self.push_to_array_field('station_op_history',encodedStationOp)
-        self.set_to_processing()
-
-    def set_to_processing(self):
         self._update_state(StationState.PROCESSING)
 
-    def request_station_operation(self):
-        self._update_state(StationState.WAITING_ON_OPERATION)
+    def has_station_op(self):
+        self._model.reload('current_station_op')
+        return self._model.current_station_op is not None
 
-    def finish_station_operation(self):
-        self._update_state(StationState.OPERATION_COMPLETE)
+    def get_station_op(self):
+        if self.has_station_op():
+            return ObjectFactory.construct_station_op_from_model(self._model.current_station_op)
+
+    def set_station_op(self, station_op: StationOpDescriptor):
+        self._model.update(current_station_op=station_op.model)
+        self._update_state(StationState.WAITING_ON_OPERATION)
+        self._log_station(f'Requesting station job ({station_op})')
+        
+
+    def finish_station_op(self, complete_station_op: StationOpDescriptor):
+        self._model.update(unset__current_station_op=True)
+        self._model.update(push__station_op_history=complete_station_op.model)
+        self._log_station(f'Station op is complete.')
+        self._update_state(StationState.PROCESSING)
 
     def create_location_from_frame(self, frame: str) -> Location:
         return Location(self.location.node_id, self.location.graph_id, frame)
@@ -262,7 +310,7 @@ class Station(DbObjProxy):
         print(f'[{self}]: {message}')
 
     def _update_state(self, new_state: StationState):
-        self.update_field('state',new_state.value)
+        self._model.update(state=new_state)
         self._log_station(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
