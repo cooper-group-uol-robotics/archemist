@@ -21,8 +21,8 @@ class StationState(Enum):
     PROCESSING_COMPLETE = 5
 
 class StationOpDescriptorModel(EmbeddedDocument):
-    type = fields.StringField(required=True)
-    module = fields.StringField(required=True)
+    _type = fields.StringField(required=True)
+    _module = fields.StringField(required=True)
     has_result = fields.BooleanField(default=False)
     was_successful = fields.BooleanField(default=False)
     start_timestamp = fields.ComplexDateTimeField()
@@ -112,6 +112,7 @@ class StationOutputDescriptor:
 
 
 class StationModel(Document):
+    _type = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
     location = fields.DictField()
     batch_capacity = fields.IntField(min_value=1, default=1)
@@ -168,8 +169,8 @@ class Station:
         return self.model.operational
 
     @operational.setter
-    def operational(self, value):
-        self._model.update(operational=value)
+    def operational(self, new_state: bool):
+        self._model.update(operational=new_state)
 
     @property
     def location(self) -> Location:

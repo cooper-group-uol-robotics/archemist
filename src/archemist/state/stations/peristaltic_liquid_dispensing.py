@@ -16,6 +16,7 @@ class PeristalticLiquidDispensing(Station):
     def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
         model = PeristalticPumpStationModel()
         cls._set_model_common_fields(station_document, model)
+        model._type = cls.__name__
         parameters = station_document['parameters']
         for _, pumpId in parameters['liquid_pump_map'].items():
                 for liquid in liquids:
@@ -77,8 +78,8 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = PeristalticPumpOpDescriptorModel()
-        model.type = cls.__name__
-        model.module = cls.__module__
+        model._type = cls.__name__
+        model._module = cls.__module__
         model.liquid_name = kwargs['liquid']
         model.dispense_volume = kwargs['volume']
         return cls(model)
