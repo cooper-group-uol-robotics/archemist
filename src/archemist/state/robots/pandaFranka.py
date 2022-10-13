@@ -1,17 +1,20 @@
-from archemist.state.robot import armRobot, RobotOpDescriptor, RobotOutputDescriptor
-from archemist.util.location import Location
+from archemist.state.robot import Robot, RobotModel
 from bson.objectid import ObjectId
 
 
-class PandaFranka(armRobot):
-    def __init__(self, db_name: str, robot_document: dict):
-        super().__init__(db_name, robot_document)
+class PandaFranka(Robot):
+    def __init__(self, robot_model: RobotModel) -> None:
+        self._model = robot_model
 
     @classmethod
-    def from_dict(cls, db_name: str, robot_document: dict):
-        return cls(db_name, robot_document)
+    def from_dict(cls, robot_document: dict):
+        model = RobotModel()
+        model._type = cls.__name__
+        cls._set_model_common_fields(robot_document, model)
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        robot_dict = {'object_id':object_id}
-        return cls(db_name, robot_dict)
+    def from_object_id(cls, object_id: ObjectId):
+        model = RobotModel.objects.get(id=object_id)
+        return cls(model)

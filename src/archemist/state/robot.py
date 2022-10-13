@@ -4,12 +4,15 @@ from archemist.util.station_robot_job import StationRobotJob
 from enum import Enum
 from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
 from datetime import datetime
+from mongoengine import Document, EmbeddedDocument, fields
+from bson.objectid import ObjectId
+from typing import List, Any
+from archemist.persistence.object_factory import ObjectFactory
 
 class RobotState(Enum):
     JOB_ASSIGNED = 0
     EXECUTING_JOB = 1
     EXECUTION_COMPLETE = 2
-    #WAITING_ON_STATION = 1
     IDLE = 3
 
 class RobotTaskType(Enum):
@@ -58,24 +61,64 @@ class RobotOutputDescriptor:
     def executing_robot(self, robot_stamp):
         self._executing_robot = robot_stamp
 
+class RobotOpDescriptorModel(EmbeddedDocument):
+    _type = fields.StringField(required=True)
+    _module = fields.StringField(required=True)
+    origin_station = fields.ObjectIdField(null=True)
+    related_batch_id = fields.IntField(null=True)
+
+    has_result = fields.BooleanField(default=False)
+    was_successful = fields.BooleanField(default=False)
+    robot_stamp = fields.StringField()
+    start_timestamp = fields.ComplexDateTimeField()
+    end_timestamp = fields.ComplexDateTimeField()
+
+    meta = {'allow_inheritance':True}
+
 class RobotOpDescriptor:
-    def __init__(self, output: RobotOutputDescriptor):
-        self._output = output
-        self._timestamp = None
+    def __init__(self, op_model: RobotOpDescriptorModel) -> None:
+        self._model = op_model
 
     @property
-    def output(self):
-        return self._output
+    def model(self) -> RobotOpDescriptorModel:
+        return self._model
 
-    @output.setter
-    def output(self, value):
-        if isinstance(value, RobotOutputDescriptor):
-            self._output = value
-        else:
-            raise ValueError
+    @property
+    def origin_station(self) -> ObjectId:
+        return self._model.origin_station
 
-    def add_timestamp(self):
-        self._timestamp = datetime.now()
+    @property
+    def related_batch_id(self) -> ObjectId:
+        return self._model.related_batch_id
+
+    @property
+    def has_result(self) -> bool:
+        return self._model.has_result
+
+    @property
+    def was_successful(self) -> bool:
+        return self._model.was_successful
+
+    @property
+    def start_timestamp(self) -> datetime:
+        return self._model.start_timestamp
+
+    @property
+    def end_timestamp(self) -> datetime:
+        return self._model.end_timestamp
+
+    @property
+    def robot_stamp(self):
+        self._model.robot_stamp
+
+    def add_start_timestamp(self):
+        self._model.start_timestamp = datetime.now()
+
+    def complete_op(self, robot_stamp: str, success: bool):
+        self._model.has_result = True
+        self._model.was_successful = success
+        self._model.robot_stamp = robot_stamp
+        self._model.end_timestamp = datetime.now()
 
 class MoveSampleOp(RobotOpDescriptor):
     def __init__(self, task_name: str ,sample_index: int , output: RobotOutputDescriptor):
@@ -93,112 +136,135 @@ class MoveSampleOp(RobotOpDescriptor):
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
-    @property
-    def pick_location(self):
-        return self._pick_location
 
-    @property
-    def place_location(self):
-        return self._place_location
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} {self._pick_location} -> {self._place_location}'
+class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
+    name = fields.StringField(required=True)
+    task_type = fields.EnumField(RobotTaskType, required=True)
+    parameters = fields.ListField(fields.StringField(), default=True)
+    location = fields.DictField()
 
 class RobotTaskOpDescriptor(RobotOpDescriptor):
-    def __init__(self, job_name: str, job_params: list, job_type: RobotTaskType, job_location: Location, output: RobotOutputDescriptor = RobotOutputDescriptor()):
-        super().__init__(output=output)
-        self._job_name = job_name
-        self._job_type = job_type
-        self._job_params = job_params
-        self._job_location = job_location
+    def __init__(self, op_model: RobotTaskOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, name: str, type: RobotTaskType, parametrs: List[str], location: Location):
+        model = RobotTaskOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.name = name
+        model.task_type = type
+        model.parameters = parametrs
+        model.location = location.to_dict()
+        return cls(model)
+    
+    @property
+    def name(self):
+        return self._model.name
 
     @property
-    def job_name(self):
-        return self._job_name
+    def task_type(self):
+        return self._model.task_type
 
     @property
-    def job_type(self):
-        return self._job_type
-
-    @property
-    def job_params(self):
-        return self._job_params
-
-    @property
-    def job_location(self):
-        return self._job_location
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} with task: {self._job_name}, params: {self.job_params} @{self._job_location.get_map_coordinates()}'
-
-class Robot(DbObjProxy):
-    def __init__(self, db_name: str, robot_document: dict):
-
-        if len(robot_document) > 1:
-
-            robot_document['operational'] = True
-            if 'location' not in robot_document:
-                robot_document['location'] = None
-            
-            robot_document['assigned_job'] = None
-            robot_document['complete_job'] = None
-
-            robot_document['state'] = RobotState.IDLE.value
-            
-            robot_document['robot_job_history'] = []
-            super().__init__(db_name, 'robots', robot_document)
-        else:
-            super().__init__(db_name, 'robots', robot_document['object_id'])
-
-    @property
-    def id(self):
-        return self.get_field('id')
-
-    @property
-    def operational(self):
-        return self.get_field('operational')
-
-    @operational.setter
-    def operational(self, value):
-        if isinstance(value, bool):
-            self.update_field('operational',value)
-        else:
-            raise ValueError
+    def params(self):
+        return self._model.parameters
 
     @property
     def location(self):
-        loc_dict = self.get_field('location')
+        loc_dict = self._model.location
+        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} with task: {self.name}, params: {self.params} @{self.location.get_map_coordinates()}'
+
+class RobotModel(Document):
+    _type = fields.StringField(required=True)
+    exp_id = fields.IntField(required=True)
+    operational = fields.BooleanField(default=True)
+    batch_capacity = fields.IntField(min_value=1, default=1)
+    location = fields.DictField()
+    assigned_job = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
+    complete_job = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
+    state = fields.EnumField(RobotState, default=RobotState.IDLE)
+    robot_job_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
+
+    meta = {'collection': 'robots', 'db_alias': 'archemist_state', 'allow_inheritance': True}
+
+
+class Robot:
+    def __init__(self, robot_model: RobotModel) -> None:
+        self._model = robot_model
+
+    @classmethod
+    def from_dict(cls, robot_document: dict):
+        pass
+
+    @classmethod
+    def from_object_id(cls, object_id: ObjectId):
+        pass
+
+    @classmethod
+    def _set_model_common_fields(cls, robot_document: dict, robot_model: RobotModel):
+        robot_model.exp_id = robot_document['id']
+        if 'location' in robot_document:
+            robot_model.location = robot_document['location']
+        if 'batch_capacity' in robot_document:
+            robot_model.batch_capacity = robot_document['batch_capacity']
+
+    @property
+    def id(self) -> int:
+        return self._model.exp_id
+
+    @property
+    def operational(self) -> bool:
+        self._model.reload('operational')
+        return self._model.operational
+
+    @operational.setter
+    def operational(self, new_state: bool):
+        self._model.update(operational=new_state)
+
+    @property
+    def batch_capacity(self):
+        return self._model.batch_capacity
+
+    @property
+    def location(self) -> Location:
+        self._model.reload('location')
+        loc_dict = self._model.location
         if loc_dict is not None:
             return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
 
     @location.setter
-    def location(self, value):
-        if isinstance(value, Location):
-            loc_dict = {'node_id':value.node_id, 'graph_id':value.graph_id, 'frame_name':value.frame_name}
-            self.update_field('location', loc_dict)
+    def location(self, new_location: Location):
+        if isinstance(new_location, Location):
+            loc_dict = {'node_id':new_location.node_id, 'graph_id':new_location.graph_id, 'frame_name':new_location.frame_name}
+            self._model.update(location=loc_dict)
         else:
             raise ValueError
 
     @property
-    def state(self):
-            return RobotState(self.get_field('state'))
+    def state(self) -> RobotState:
+        self._model.reload('state')
+        return self._model.state
 
     @property
-    def assigned_job(self) -> StationRobotJob:
-            encoded_job = self.get_field('assigned_job')
-            if encoded_job is not None:
-                return DbObjProxy.decode_object(encoded_job)
+    def assigned_job(self) -> RobotOpDescriptor:
+        self._model.reload('assigned_job')
+        op_model = self._model.assigned_job
+        if op_model is not None:
+            return ObjectFactory.construct_robot_op_from_model(op_model)
 
     @property
-    def robot_job_history(self):
-        en_op_history = self.get_field('robot_job_history')
-        return [self.decode_object(op) for op in en_op_history]
+    def robot_job_history(self) -> List[Any]:
+        self._model.reload('robot_job_history')
+        return [ObjectFactory.construct_robot_op_from_model(op) for op in self._model.robot_job_history] 
 
-    def assign_job(self, station_robot_job: StationRobotJob):
+    def assign_job(self, robot_op: RobotOpDescriptor):
         if(self.assigned_job is None):
-            encoded_job = DbObjProxy.encode_object(station_robot_job)
-            self.update_field('assigned_job', encoded_job)
-            self._log_robot(f'Job ({station_robot_job.robot_op}) is assigned.')
+            self._model.update(assigned_job=robot_op.model)
+            self._log_robot(f'Job ({robot_op}) is assigned.')
             self._update_state(RobotState.JOB_ASSIGNED)
 
         else:
@@ -207,59 +273,63 @@ class Robot(DbObjProxy):
     def start_job_execution(self):
         self._update_state(RobotState.EXECUTING_JOB)
 
-    def complete_assigned_job(self, station_robot_job: StationRobotJob):
-        encoded_station_robot_job = DbObjProxy.encode_object(station_robot_job)
-        self.update_field('complete_job', encoded_station_robot_job)
-        self.update_field('assigned_job', None)
-        self._log_robot(f'Job ({station_robot_job.robot_op} is complete.')
-        self.push_to_array_field('robot_job_history', encoded_station_robot_job)
+    def complete_assigned_job(self, success: bool):
+        robot_stamp = f'{self._model._type}-{self.id}'
+        job = self.assigned_job
+        job.complete_op(robot_stamp, success)
+        self._model.update(complete_job=job.model)
+        self._model.update(push__robot_job_history=job.model)
+        self._model.update(unset__assigned_job=True)
+        complete_job = ObjectFactory.construct_robot_op_from_model(job.model)
+        self._log_robot(f'Job ({complete_job} is complete.')
         self._update_state(RobotState.EXECUTION_COMPLETE)
 
-    def has_complete_job(self):
-        return self.get_field('complete_job') is not None
+    def has_complete_job(self) -> bool:
+        self._model.reload('complete_job')
+        return self._model.complete_job is not None
 
-    def get_complete_job(self):
-        encoded_station_robot_job = self.get_field('complete_job')
-        if encoded_station_robot_job is not None:
-            station_robot_job = DbObjProxy.decode_object(encoded_station_robot_job)
-            self.update_field('complete_job', None)
-            self._log_robot(f'Job ({station_robot_job.robot_op}) is retrieved.')
+    def get_complete_job(self) -> Any:
+        if self.has_complete_job():
+            complete_op = ObjectFactory.construct_robot_op_from_model(self._model.complete_job)
+            self._model.update(unset__complete_job=True)
+            self._log_robot(f'Job ({complete_op}) is retrieved.')
             self._update_state(RobotState.IDLE)
-            return station_robot_job
+            return complete_op
 
     def _log_robot(self, message: str):
         print(f'[{self}]: {message}')
 
     def _update_state(self, new_state: RobotState):
-        self.update_field('state',new_state.value)
+        self._model.update(state=new_state)
         self._log_robot(f'Current state changed to {new_state}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}_{self.id}'
 
+class MobileRobotModel(RobotModel):
+    onboard_batches = fields.ListField(fields.IntField(),default=[])
+
 class MobileRobot(Robot):
-    def __init__(self, db_name: str, robot_document: dict):
-        if len(robot_document) > 1:
-            robot_document['onboard_batches'] = []
-        
-        super().__init__(db_name, robot_document)
+    def __init__(self, robot_model: MobileRobotModel) -> None:
+        self._model = robot_model
 
     @property
     def batch_capacity(self):
-        return self.get_field('batch_capacity')
+        return self._model.batch_capacity
 
     @property 
     def onboard_batches(self):
-        return self.get_field('onboard_batches')
+        self._model.reload('onboard_batches')
+        return self._model.onboard_batches
 
     def add_to_onboard_batches(self, batch_id: int):
         if len(self.onboard_batches) < self.batch_capacity:
-            self.push_to_array_field('onboard_batches',batch_id)
+            self._model.update(push__onboard_batches=batch_id)
         else:
             self._log_robot(f'Cannot add batch {batch_id} to deck. Batch capacity exceeded')
 
     def remove_from_onboard_batches(self, batch_id:int):
-        self.delete_element_from_array_field('onboard_batches',batch_id)
+        self._model.update(pull__onboard_batches=batch_id)
 
     def is_onboard_capacity_full(self):
         return len(self.onboard_batches) == self.batch_capacity
@@ -267,22 +337,15 @@ class MobileRobot(Robot):
     def is_batch_onboard(self, batch_id: int):
         return batch_id in self.onboard_batches
 
-    def get_complete_job(self):
-        encoded_station_robot_job = self.get_field('complete_job')
-        if encoded_station_robot_job is not None:
-            station_robot_job = DbObjProxy.decode_object(encoded_station_robot_job)
-            robot_op = station_robot_job.robot_op
-            batch_id = station_robot_job.batch_id
-            if isinstance(robot_op, RobotTaskOpDescriptor):
-                if robot_op.job_type == RobotTaskType.LOAD_TO_ROBOT:
-                    self.add_to_onboard_batches(batch_id)
-                elif robot_op.job_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                    self.remove_from_onboard_batches(batch_id)
-            self.update_field('complete_job', None)
-            self._log_robot(f'Job ({station_robot_job.robot_op}) is retrieved.')
+    def get_complete_job(self) -> Any:
+        if self.has_complete_job():
+            complete_op = ObjectFactory.construct_robot_op_from_model(self._model.complete_job)
+            self._model.update(unset__complete_job=True)
+            if isinstance(complete_op, RobotTaskOpDescriptor):
+                if complete_op.task_type == RobotTaskType.LOAD_TO_ROBOT:
+                    self.add_to_onboard_batches(complete_op.related_batch_id)
+                elif complete_op.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
+                    self.remove_from_onboard_batches(complete_op.related_batch_id)
+            self._log_robot(f'Job ({complete_op}) is retrieved.')
             self._update_state(RobotState.IDLE)
-            return station_robot_job
-
-class armRobot(Robot):
-    def __init__(self, db_name: str, robot_document: dict):
-        super().__init__(db_name, robot_document)
+            return complete_op

@@ -1,5 +1,5 @@
 class Location:
-    def __init__(self, node_id: int, graph_id: int, frame_name: str):
+    def __init__(self, node_id: int=-1, graph_id: int=-1, frame_name: str=''):
         self._node_id = node_id
         self._graph_id = graph_id
         self._frame_name = frame_name

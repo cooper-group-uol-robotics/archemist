@@ -1,44 +1,88 @@
-from archemist.state.robot import MobileRobot, RobotTaskOpDescriptor, RobotOutputDescriptor, RobotOpDescriptor,RobotTaskType
+from archemist.state.robot import MobileRobot, MobileRobotModel, RobotTaskOpDescriptor, RobotTaskOpDescriptorModel, RobotOpDescriptorModel, RobotOpDescriptor,RobotTaskType
 from archemist.util import Location
 from bson.objectid import ObjectId
+from mongoengine import fields
+from typing import List
 
 
 class KukaLBRTask(RobotTaskOpDescriptor):
-    def __init__(self, job_name: str, job_params: list, job_type: RobotTaskType, job_location: Location,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
-        super().__init__(job_name, job_params, job_type, job_location, output)
+    def __init__(self, op_model: RobotTaskOpDescriptorModel):
+        super().__init__(op_model)
+    
+    @classmethod
+    def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, parametrs: List[str]=[], 
+                    location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
+        model = RobotTaskOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.name = name
+        model.task_type = type
+        model.parameters = parametrs
+        model.location = location.to_dict() if location is not None else None
+        model.origin_station = origin_station if origin_station is not None else None
+        model.related_batch_id = related_batch_id if related_batch_id is not None else None
+        return cls(model)
+    
+    
 
 class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
-    def __init__(self, job_name: str, job_params: list,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
-        super().__init__(job_name, job_params, RobotTaskType.OTHER, Location(-1,-1,''), output)
+    def __init__(self, op_model: RobotTaskOpDescriptorModel):
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, name: str, type: RobotTaskType, parametrs: List[str]):
+        model = RobotTaskOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.name = name
+        model.task_type = type
+        model.parameters = parametrs
+        return cls(model)
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__} with task: {self._job_name}'
+        return f'{self.__class__.__name__} with task: {self._model.name}'
+
+class KukaNAVTaskModel(RobotOpDescriptorModel):
+    target_location = fields.DictField(required=True)
+    fine_localisation = fields.BooleanField(default=False)
 
 class KukaNAVTask(RobotOpDescriptor):
-    def __init__(self, target_location: Location, fine_localisation: bool,  output: RobotOutputDescriptor = RobotOutputDescriptor()):
-        super().__init__(output)
-        self._target_location = target_location
-        self._fine_localisation =  fine_localisation
+    def __init__(self, op_model: KukaNAVTaskModel) -> None:
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, target_location: Location, fine_localisation: bool):
+        model = KukaNAVTaskModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.target_location = target_location.to_dict()
+        model.fine_localisation = fine_localisation
+        return cls(model)
     
     @property
     def target_location(self):
-        return self._target_location
+        loc_dict = self._model.target_location
+        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
 
     @property
     def fine_localisation(self):
-        return self._fine_localisation
+        return self._model.fine_localisation
 
 
 class KukaLBRIIWA(MobileRobot):
-    def __init__(self, db_name: str, robot_document: dict):
-        super().__init__(db_name, robot_document)
+    def __init__(self, robot_model: MobileRobotModel):
+        self._model = robot_model
 
     @classmethod
-    def from_dict(cls, db_name: str, robot_document: dict):
+    def from_dict(cls, robot_document: dict):
+        model = MobileRobotModel()
+        model._type = cls.__name__
         robot_document['location'] = {'node_id':-1, 'graph_id':-1, 'frame_name':''}
-        return cls(db_name, robot_document)
+        cls._set_model_common_fields(robot_document, model)
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        robot_dict = {'object_id':object_id}
-        return cls(db_name, robot_dict)
+    def from_object_id(cls, object_id: ObjectId):
+        model = MobileRobotModel.objects.get(id=object_id)
+        return cls(model)
