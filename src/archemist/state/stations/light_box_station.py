@@ -1,69 +1,75 @@
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
+from archemist.state.station import StationModel,Station,StationOpDescriptorModel,StationOpDescriptor
+from archemist.state.material import Liquid,Solid
+from typing import List
+from mongoengine import fields
 from bson.objectid import ObjectId
+from datetime import datetime
 
 
 ''' ==== Station Description ==== '''
 class LightBoxStation(Station):
-    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
-        super().__init__(db_name, station_dict)
+    def __init__(self, station_model: StationModel) -> None:
+        self._model = station_model
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = StationModel()
+        cls._set_model_common_fields(station_document,model)
+        model._type = cls.__name__
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
+    def from_object_id(cls, object_id: ObjectId):
+        model = StationModel.objects.get(id=object_id)
+        return cls(model)
 
 ''' ==== Station Operation Descriptors ==== '''
+class SampleColorOpDescriptorModel(StationOpDescriptorModel):
+    result_filename = fields.StringField()
+    red_intensity = fields.IntField(min_value=0, max_value=255)
+    green_intensity = fields.IntField(min_value=0, max_value=255)
+    blue_intensity = fields.IntField(min_value=0, max_value=255)
 
-class VialProcessingOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=LightBoxStation.__class__, output=output)
-      
-        
-''' ==== Station Output Descriptors ==== '''
+class SampleColorOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: SampleColorOpDescriptorModel):
+        self._model = op_model
 
-class ColourDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        super().__init__()
-        self._filename = ''
-        self._red_value = -1
-        self._green_value = -1
-        self._blue_value = -1
-
-    @property
-    def file_name(self):
-        return self._file_name
-
-    @file_name.setter
-    def file_name(self,value):
-        self._file_name = value
+    @classmethod
+    def from_args(cls):
+        model = SampleColorOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
     @property
-    def red_value(self):
-        return self._red_value
-
-    @red_value.setter
-    def red_value(self,value):
-        self._red_value = value
+    def result_filename(self) -> str:
+        return self._model.result_filename
 
     @property
-    def green_value(self):
-        return self._green_value
-
-    @red_value.setter
-    def green_value(self,value):
-        self._green_value = value
+    def red_intensity(self) -> int:
+        return self._model.red_intensity
 
     @property
-    def blue_value(self):
-        return self._blue_value
+    def green_intensity(self) -> int:
+        return self._model.green_intensity
 
-    @blue_value.setter
-    def blue_value(self,value):
-        self._blue_value = value
+    @property
+    def blue_intensity(self) -> int:
+        return self._model.blue_intensity
+
+    def complete_op(self, success: bool, **kwargs):
+        self._model.has_result = True
+        self._model.was_successful = success
+        self._model.end_timestamp = datetime.now()
+        if 'result_filename' in kwargs:
+            self._model.result_filename = kwargs['result_filename']
+        else:
+            print('missing result_file!!')
+        self._model.red_intensity = kwargs['red_intensity']
+        self._model.green_intensity = kwargs['green_intensity']
+        self._model.blue_intensity = kwargs['blue_intensity']
+
     
     
 

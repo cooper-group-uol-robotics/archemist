@@ -1,185 +1,209 @@
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
-from archemist.state.material import Solid
+from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
+from archemist.state.material import Solid, Liquid, SolidMaterialModel
+from typing import List
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
 from bson.objectid import ObjectId
+from mongoengine import EmbeddedDocument, fields
+from datetime import datetime
+
+class QuantosCatridgeModel(EmbeddedDocument):
+    exp_id = fields.IntField()
+    associated_solid= fields.ReferenceField(SolidMaterialModel,required=True)
+    remaining_dosages = fields.IntField(min_value=0, default=100)
+    blocked = fields.BooleanField(default=False)
+    hotel_index = fields.IntField(required=True)
 
 
-class QuantosCatridge():
-    def __init__(self, catridge_dict: dict):
-        self._solid_name = catridge_dict['solid_name']
-        self._solid_obj_id = catridge_dict['solid_obj_id']
-        self._db_name = catridge_dict['db_name']
-        self._remaining_dosages = catridge_dict['remaining_dosages']
-        self._blocked = catridge_dict['blocked']
-        self._consumed = catridge_dict['consumed']
-        self._hotel_id = catridge_dict['hotel_id']
+
+
+class QuantosCatridge:
+    def __init__(self, catridge_model: QuantosCatridgeModel) -> None:
+        self._model = catridge_model
 
     @classmethod
-    def from_dict(cls, catridge_dict: dict):
-        return cls(catridge_dict)
-
-    @classmethod
-    def from_config_dict(cls, catridge_dict: dict):
-        catridge_dict.update({'blocked': False, 'consumed': False})
-        return cls(catridge_dict)
-
-
-    @property
-    def solid_name(self):
-        return self._solid_name
+    def from_args(cls, id: int, solid: Solid, hotel_index: int, remaining_dosages: int):
+        model = QuantosCatridgeModel()
+        model.exp_id = id
+        model.associated_solid = solid.model
+        model.hotel_index = hotel_index
+        model.remaining_dosages = remaining_dosages
+        return cls(model)
 
     @property
-    def solid(self):
-        return Solid.from_object_id(self._db_name, self._solid_obj_id)
+    def model(self) -> QuantosCatridgeModel:
+        return self._model
 
     @property
-    def hotel_id(self):
-        return self._hotel_id
+    def id(self) -> int:
+        return self._model.exp_id
 
     @property
-    def consumed(self):
-        return self._consumed
+    def associated_solid(self) -> Solid:
+        return Solid(self._model.associated_solid)
 
     @property
-    def blocked(self):
-        return self._blocked
+    def hotel_index(self) -> int:
+        return self._model.hotel_index
 
     @property
-    def remaining_dosages(self):
-        return self._remaining_dosages
+    def consumed(self) -> bool:
+        return self._model.remaining_dosages == 0
 
-    def to_dict(self):
-        return{
-            'solid_name': self._solid_name,
-            'solid_obj_id': self._solid_obj_id,
-            'db_name': self._db_name,
-            'remaining_dosages': self._remaining_dosages,
-            'blocked': self._blocked,
-            'consumed': self._consumed,
-            'hotel_id': self._hotel_id
-        }
+    @property
+    def blocked(self) -> bool:
+        return self._model.blocked
 
-    # def dispense(self, dispensed_solid: Solid):
-    #     if (not self._consumed):
-    #         self._solid.mass = self._solid.mass - dispensed_solid.mass
-    #         self._remaining_dosages -= 1
-    #         if (self._remaining_dosages <= 0):
-    #             self._consumed = True
-    #     else:
-    #         raise UsingConsumedCatridgeError(self._hotel_id)
+    @property
+    def remaining_dosages(self) -> int:
+        return self._model.remaining_dosages
+
+    def dispense(self, dispense_amount: float):
+        self.associated_solid.mass -= dispense_amount
+        self._model.remaining_dosages -= 1
 
 
-
+class QuantosSolidDispenserQS2Model(StationModel):
+    carousel_pos = fields.IntField(min_value=1, max_value=20, default=1)
+    catridges = fields.EmbeddedDocumentListField(QuantosCatridgeModel, default=[])
+    loaded_ctridge_id = fields.IntField(min_value=0, null=True)
+    doors_open = fields.BooleanField(default=False)
 
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
-        if len(station_dict) > 1:
-            parameters = station_dict.pop('parameters')
-            station_dict['carousel_pos'] = -1
-            station_dict['catridges'] = dict()
-            for cat in parameters['catridges']:
-                for solid in solids:
-                    if (solid.cartridge_id == cat['hotel_id']):
-                        cat['solid_obj_id'] = solid.object_id
-                        cat['db_name'] = solid.db_name
-                        catridge = QuantosCatridge.from_config_dict(cat)
-                        station_dict['catridges'].update({cat['hotel_id']: catridge.to_dict()})
-            station_dict['current_loaded_catridge'] = None
-            station_dict['doors_open'] = False
+    def __init__(self, station_model: QuantosSolidDispenserQS2Model) -> None:
+        self._model = station_model
+        self._loaded_catridge_index = None
 
-        super().__init__(db_name,station_dict)
+    
+    @classmethod
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = QuantosSolidDispenserQS2Model()
+        cls._set_model_common_fields(station_document, model)
+        model._type = cls.__name__
+        parameters = station_document['parameters']
+        for cat in parameters['catridges']:
+            for solid in solids:
+                if solid.catridge_id is not None and solid.catridge_id == cat['id']:
+                    catridge = QuantosCatridge.from_args(id=cat['id'], solid=solid, 
+                                   hotel_index=cat['hotel_index'],
+                                   remaining_dosages=cat['remaining_dosages'])
+                    model.catridges.append(catridge.model)
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
-
-    @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
+    def from_object_id(cls, object_id: ObjectId):
+        model = QuantosSolidDispenserQS2Model.objects.get(id=object_id)
+        return cls(model)
 
     @property
-    def carousel_pos(self):
-        return self.get_field('carousel_pos')
+    def carousel_pos(self) -> int:
+        self._model.reload('carousel_pos')
+        return self._model.carousel_pos
 
     @carousel_pos.setter
-    def carousel_pos(self, value: int):
-        if (value <= 20 and value >= 1):
-            self.update_field('carousel_pos', value)
-        else:
-            raise ValueError
+    def carousel_pos(self, new_pos: int):
+        self._model.update(carousel_pos=new_pos)
 
     @property
-    def current_catridge(self):
-        cat_id = self.get_field('current_loaded_catridge')
-        if cat_id is not None:
-            catridge_dict = self.get_nested_field(f'catridges.{cat_id}')
-            return QuantosCatridge.from_dict(catridge_dict)
+    def current_catridge(self) -> QuantosCatridge:
+        self._model.reload('loaded_ctridge_id')
+        loaded_ctridge_id = self._model.loaded_ctridge_id
+        if loaded_ctridge_id is not None:
+            i = 0
+            for catridge_model in self._model.catridges:
+                if catridge_model.exp_id == loaded_ctridge_id:
+                    self._loaded_catridge_index = i
+                    return QuantosCatridge(catridge_model)
+                i += 1
 
     @property
-    def doors_open(self):
-        return self.get_field('doors_open')
+    def doors_open(self) -> bool:
+        self._model.reload('doors_open')
+        return self._model.doors_open
 
     @doors_open.setter
-    def doors_open(self, value):
-        if isinstance(value, bool):
-            self.update_field('doors_open', value)
-        else:
-            raise ValueError
+    def doors_open(self, new_state: bool):
+        self._model.update(doors_open=new_state)
 
     def get_catridge_id(self, solid_name: str):
-        catridges = self.get_field('catridges')
-        for cat_id, cat_dict in catridges.items():
-            if cat_dict['solid_name'] == solid_name:
-                return cat_id
+        for catridge_model in self._model.catridges:
+            if catridge_model.associated_solid.name == solid_name:
+                return catridge_model.exp_id
 
-    def load_catridge(self, catridge_id: str):
-        if (self.current_catridge is None):
-            self.update_field('current_loaded_catridge', catridge_id)
+    def load_catridge(self, catridge_id: int):
+        self._model.reload('loaded_ctridge_id')
+        if self._model.loaded_ctridge_id is None:
+            self._model.update(loaded_ctridge_id=catridge_id)
         else:
             raise QuantosCatridgeLoadedError()
 
     def unload_current_catridge(self):
-        if (self.current_catridge is not None):
-            self.update_field('current_loaded_catridge', None)
+        self._model.reload('loaded_ctridge_id')
+        if self._model.loaded_ctridge_id is not None:
+            self._model.update(unset__loaded_ctridge_id=True)
         else:
             print('unloading catridge when no catridge is loaded!!!')
 
-    def dispense(self, catridge_id: str, dispense_amount: float):
+    def dispense(self, dispense_amount: float):
         current_catridge = self.current_catridge
         if not current_catridge.consumed and not current_catridge.blocked:
-            current_solid = self.current_catridge.solid
-            current_solid.mass = current_solid.mass - dispense_amount
-            self.decrement_field(f'catridges.{catridge_id}.remaining_dosages')
-            if self.get_nested_field(f'catridges.{catridge_id}.remaining_dosages') == 0:
-                self._log_station(f'the catridge {catridge_id} does not have any dosages left anymore. Please replace it.')
-                self.update_field(f'catridges.{catridge_id}.consumed', True)
+            current_catridge.dispense(dispense_amount)
+            self._model.update(**{f'catridges__{self._loaded_catridge_index}':current_catridge.model})
+            if current_catridge.consumed:
+                self._log_station(f'the catridge {current_catridge.id} does not have any dosages left anymore. Please replace it.')
         else:
-            self._log_station(f'Current catridge {catridge_id} is either consumed or blocked. Cannot Dispense solid!!!')
+            self._log_station(f'Current catridge {current_catridge.id} is either consumed or blocked. Cannot Dispense solid!!!')
 
+    def finish_station_op(self, success: bool, **kwargs):
+        current_op = self.get_station_op()
+        if isinstance(current_op, QuantosDispenseOpDescriptor):
+            if success and current_op.solid_name == self.current_catridge.associated_solid.name:
+                if 'actual_dispensed_mass' in kwargs:
+                    self.dispense(kwargs['actual_dispensed_mass'])
+                else:
+                    self.dispense(current_op.dispense_mass)
+        super().finish_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
+class QuantosDispenseOpDescriptorModel(StationOpDescriptorModel):
+    solid_name = fields.StringField(required=True)
+    dispense_mass = fields.FloatField(min_value=0, required=True)
+    actual_dispensed_mass = fields.FloatField(min_value=0)
+
 
 class QuantosDispenseOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=QuantosSolidDispenserQS2.__class__.__name__, output=output)
-        self._solid_name = properties['solid']
-        self._dispense_mass = properties['mass']
+    def __init__(self, op_model: QuantosDispenseOpDescriptorModel) -> None:
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, solid_name: str, dispense_mass: float):
+        model = QuantosDispenseOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.solid_name = solid_name
+        model.dispense_mass = dispense_mass
+        return cls(model)
 
     @property
-    def solid_name(self):
-        return self._solid_name
+    def solid_name(self) -> str:
+        return self._model.solid_name
 
     @property
-    def dispense_mass(self):
-        return self._dispense_mass
+    def dispense_mass(self) -> float:
+        return self._model.dispense_mass
 
-# TODO you can have another op for loading catridge and doing stuff
+    @property
+    def actual_dispensed_mass(self) -> float:
+        if self._model.has_result and self._model.was_successful:
+            return self._model.actual_dispensed_mass
 
+    def complete_op(self, success: bool, **kwargs):
+        self._model.has_result = True
+        self._model.was_successful = success
+        self._model.end_timestamp = datetime.now()
+        if 'actual_dispensed_mass' in kwargs:
+            self._model.actual_dispensed_mass = kwargs['actual_dispensed_mass']
+        else:
+            print('missing actual dispensed mass!!')
 
-''' ==== Station Output Descriptors ==== '''
-
-class QuantosOutputDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        super().__init__()

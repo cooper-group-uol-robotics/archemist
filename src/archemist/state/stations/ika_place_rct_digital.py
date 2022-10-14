@@ -1,6 +1,9 @@
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
+from archemist.state.station import Station, StationModel, StationOpDescriptorModel, StationOpDescriptor
 from enum import Enum
 from bson.objectid import ObjectId
+from typing import List, Any
+from archemist.state.material import Liquid, Solid
+from mongoengine import fields
 
 class IKAMode(Enum):
     HEATING = 1
@@ -9,186 +12,202 @@ class IKAMode(Enum):
 
 ''' ==== Station Description ==== '''
 
+class IkaPlateRCTDigitalModel(StationModel):
+    mode = fields.EnumField(IKAMode, null=True)
+    current_temperature = fields.IntField(min_value=0, max_value=500, null=True)
+    target_temperature = fields.IntField(min_value=0, max_value=500, null=True)
+    current_stirring_speed = fields.IntField(min_value=0, max_value=1500, null=True)
+    target_stirring_speed = fields.IntField(min_value=0, max_value=1500, null=True)
+    external_temperature = fields.IntField(min_value=0, max_value=500, null=True)
+    viscosity_trend = fields.FloatField(null=True)
+    target_duration = fields.FloatField(null=True)
+
+
 class IkaPlateRCTDigital(Station):
-    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
-        if len(station_dict) > 1:
-            station_dict['mode'] = None
-            station_dict['current_temperature'] = None
-            station_dict['set_temperature'] = None
-            station_dict['current_stirring_speed'] = None
-            station_dict['set_stirring_speed'] = None
-            station_dict['external_temp'] = None
-            station_dict['viscosity_trend'] = None
-            station_dict['set_duration'] = None
-
-        super().__init__(db_name,station_dict)
+    def __init__(self, station_model: IkaPlateRCTDigitalModel) -> None:
+        self._model = station_model
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = IkaPlateRCTDigitalModel()
+        cls._set_model_common_fields(station_document,model)
+        model._type = cls.__name__
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
+    def from_object_id(cls, object_id: ObjectId):
+        model = IkaPlateRCTDigitalModel.objects.get(id=object_id)
+        return cls(model)
 
     @property
-    def current_temperature(self):
-        return self.get_field('current_temperature')
+    def current_temperature(self) -> int:
+        self._model.reload('current_temperature')
+        return self._model.current_temperature
 
     @current_temperature.setter
-    def current_temperature(self, value):
-        self.update_field('current_temperature', value)
+    def current_temperature(self, new_temp: int):
+        self._model.update(current_temperature=new_temp)
 
     @property
-    def set_temperature(self):
-        return self.get_field('set_temperature')
+    def target_temperature(self) -> int:
+        self._model.reload('target_temperature')
+        return self._model.target_temperature
 
-    @set_temperature.setter
-    def set_temperature(self, value):
-        self.update_field('set_temperature', value)
+    @target_temperature.setter
+    def target_temperature(self, new_temp: int):
+        self._model.update(target_temperature=new_temp)
 
     @property
-    def current_stirring_speed(self):
-        return self.get_field('current_stirring_speed')
+    def current_stirring_speed(self) -> int:
+        self._model.reload('current_stirring_speed')
+        return self._model.current_stirring_speed
 
     @current_stirring_speed.setter
-    def current_stirring_speed(self, value):
-        self.update_field('current_stirring_speed', value)
+    def current_stirring_speed(self, new_speed: int):
+        self._model.update(current_stirring_speed=new_speed)
 
     @property
-    def set_stirring_speed(self):
-        return self.get_field('set_stirring_speed')
+    def target_stirring_speed(self) -> int:
+        self._model.reload('target_stirring_speed')
+        return self._model.target_stirring_speed
 
-    @set_stirring_speed.setter
-    def set_stirring_speed(self, value):
-        self.update_field('set_stirring_speed', value)
-
-    @property
-    def set_duration(self):
-        return self.get_field('set_duration')
-
-    @set_duration.setter
-    def set_duration(self, value):
-        self.update_field('set_duration', value)
+    @target_stirring_speed.setter
+    def target_stirring_speed(self, new_speed: int):
+        self._model.update(target_stirring_speed=new_speed)
 
     @property
-    def external_temp(self):
-        return self.get_field('external_temp')
+    def target_duration(self) -> int:
+        self._model.reload('target_duration')
+        return self._model.target_duration
 
-    @external_temp.setter
-    def external_temp(self, value):
-        self.update_field('external_temp', value)
+    @target_duration.setter
+    def target_duration(self, new_duration: int):
+        self._model.update(target_duration=new_duration)
 
     @property
-    def viscosity_trend(self):
-        return self.get_field('viscosity_trend')
+    def external_temperature(self) -> int:
+        self._model.reload('external_temperature')
+        return self._model.external_temperature
+
+    @external_temperature.setter
+    def external_temperature(self, new_temp: int):
+        self._model.update(external_temperature=new_temp)
+
+    @property
+    def viscosity_trend(self) -> float:
+        self._model.reload('viscosity_trend')
+        return self._model.viscosity_trend
 
     @viscosity_trend.setter
-    def viscosity_trend(self, value):
-        self.update_field('viscosity_trend', value)
+    def viscosity_trend(self, value: float):
+        self._model.update(viscosity_trend=value)
 
     @property
-    def mode(self):
-        return IKAMode(self.get_field('mode'))
+    def mode(self) -> IKAMode:
+        self._model.reload('mode')
+        return self._model.mode
 
     @mode.setter
-    def mode(self, mode):
-        if isinstance(mode, IKAMode):
-            self.update_field('mode', mode.value)
-        else:
-            raise ValueError
+    def mode(self, new_mode: IKAMode):
+        self._model.update(mode=new_mode)
 
-    def set_station_op(self, stationOp: StationOpDescriptor):
-        self.mode = stationOp.mode
-        if self.mode == IKAMode.HEATINGSTIRRING:
-            self.set_temperature = stationOp.set_temperature
-            self.set_stirring_speed = stationOp.set_stirring_speed
-            self.set_duration = stationOp.duration
-        elif self.mode == IKAMode.HEATING:
-            self.set_temperature = stationOp.set_temperature
-            self.set_duration = stationOp.duration
-        elif self.mode == IKAMode.STIRRING:
-            self.set_stirring_speed = stationOp.set_stirring_speed
-            self.set_duration = stationOp.duration
+    def set_station_op(self, stationOp: Any):
+        if isinstance(stationOp, IKAHeatingStirringOpDescriptor):
+            self.target_temperature = stationOp.target_temperature
+            self.target_stirring_speed = stationOp.target_stirring_speed
+            self.target_duration = stationOp.target_duration
+            self.mode = IKAMode.HEATINGSTIRRING
+        elif isinstance(stationOp, IKAHeatingOpDescriptor):
+            self.target_temperature = stationOp.target_temperature
+            self.target_duration = stationOp.target_duration
+            self.mode = IKAMode.HEATING
+        elif isinstance(stationOp, IKAStirringOpDescriptor):
+            self.target_stirring_speed = stationOp.target_stirring_speed
+            self.target_duration = stationOp.target_duration
+            self.mode = IKAMode.STIRRING
         super().set_station_op(stationOp)
 
-    def finish_station_operation(self):
-        self.set_temperature = None
-        self.set_stirring_speed = None
-        self.set_duration = None
-        super().finish_station_operation()
+    def finish_station_op(self, success: bool, **kwargs):
+        self._model.update(unset__target_temperature=True)
+        self._model.update(unset__target_stirring_speed=True)
+        self._model.update(unset__target_duration=True)
+        self._model.update(unset__mode=True)
+        super().finish_station_op(success, **kwargs)
 
 
 ''' ==== Station Operation Descriptors ==== '''
 
+class IKAOpDescriptorModel(StationOpDescriptorModel):
+    target_temperature = fields.IntField(min_value=0, max_value=500, null=True)
+    target_stirring_speed = fields.IntField(min_value=0, max_value=1500, null=True)
+    target_duration = fields.FloatField(null=True)
+
 class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
-        self._mode = IKAMode.HEATINGSTIRRING
-        self._set_temperature = properties['temperature']
-        self._set_stirring_speed = properties['rpm']
-        self._duration = properties['duration']
+    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, temperature: int, stirrring_speed: int, duration: int):
+        model = IKAOpDescriptorModel()
+        model.target_temperature = temperature
+        model.target_stirring_speed = stirrring_speed
+        model.target_duration = duration
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
     @property
-    def set_temperature(self):
-        return self._set_temperature
+    def target_temperature(self) -> int:
+        return self._model.target_temperature
 
     @property
-    def set_stirring_speed(self):
-        return self._set_stirring_speed
+    def target_stirring_speed(self) -> int:
+        return self._model.target_stirring_speed
 
     @property
-    def mode(self):
-        return self._mode
-
-    @property
-    def duration(self):
-        return self._duration
+    def target_duration(self) -> int:
+        return self._model.target_duration
 
 class IKAHeatingOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
-        self._mode = IKAMode.HEATING
-        self._set_temperature = properties['temperature']
-        self._set_stirring_speed = 0
-        self._duration = properties['duration']
+    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, temperature: int, duration: int):
+        model = IKAOpDescriptorModel()
+        model.target_temperature = temperature
+        model.target_duration = duration
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
     @property
-    def set_temperature(self):
-        return self._set_temperature
-
-
-    @property
-    def duration(self):
-        return self._duration
+    def target_temperature(self) -> int:
+        return self._model.target_temperature
 
     @property
-    def mode(self):
-        return self._mode
+    def target_duration(self) -> int:
+        return self._model.target_duration
+
 
 class IKAStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=IkaPlateRCTDigital.__class__.__name__, output=output)
-        self._mode = IKAMode.STIRRING
-        self._set_temperature = 0
-        self._set_stirring_speed = properties['rpm']
-        self._duration = properties['duration']
+    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, stirring_speed: int, duration: int):
+        model = IKAOpDescriptorModel()
+        model.target_stirring_speed = stirring_speed
+        model.target_duration = duration
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
     @property
-    def set_stirring_speed(self):
-        return self._set_stirring_speed
+    def target_stirring_speed(self) -> int:
+        return self._model.target_stirring_speed
 
     @property
-    def mode(self):
-        return self._mode
-
-    @property
-    def duration(self):
-        return self._duration
-
-''' ==== Station Output Descriptors ==== '''
-
-class IKAOutputDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        super().__init__()
+    def target_duration(self) -> int:
+        return self._model.target_duration

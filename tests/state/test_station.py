@@ -130,7 +130,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(t_station.station_op_history), 0)
         self.assertFalse(t_station.has_station_op())
         self.assertEqual(t_station.state,StationState.PROCESSING)
-        station_op1 = PeristalticPumpOpDescriptor.from_args(liquid='water', volume=0.01)
+        station_op1 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.01)
         t_station.set_station_op(station_op1)
         self.assertTrue(t_station.has_station_op())
         self.assertEqual(t_station.state,StationState.WAITING_ON_OPERATION)
@@ -138,17 +138,17 @@ class StationTest(unittest.TestCase):
         current_op = t_station.get_station_op()
         self.assertEqual(current_op.liquid_name, station_op1.liquid_name)
         self.assertEqual(current_op.dispense_volume, station_op1.dispense_volume)
-        t_station.finish_station_op(current_op)
+        t_station.finish_station_op(success=True, actual_dispensed_volume=0.011)
         self.assertFalse(t_station.has_station_op())
         self.assertEqual(t_station.state,StationState.PROCESSING)
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 1)
         
 
-        station_op2 = PeristalticPumpOpDescriptor.from_args(liquid='water', volume=0.005)
+        station_op2 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.005)
         t_station.set_station_op(station_op2)
         self.assertTrue(t_station.has_station_op())
-        t_station.finish_station_op(station_op2)
+        t_station.finish_station_op(success=True, actual_dispensed_volume=0.0051)
 
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 2)

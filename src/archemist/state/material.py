@@ -109,6 +109,7 @@ class Liquid(Material):
 
 class SolidMaterialModel(MaterialModel):
     dispense_src = fields.StringField()
+    catridge_id = fields.IntField()
 
 class Solid(Material):
     def __init__(self, material_model: SolidMaterialModel) -> None:
@@ -119,7 +120,9 @@ class Solid(Material):
         model = SolidMaterialModel()
         model.name = solid_document['name']
         model.exp_id = solid_document['id']
-        model.dispense_src = solid_document['dispense_method']
+        model.dispense_src = solid_document['dispense_src']
+        if model.dispense_src == 'quantos':
+            model.catridge_id = solid_document['catridge_id']
         model.expiry_date = date.isoformat(solid_document['expiry_date'])
         if solid_document['unit'] == 'g':
             unit_modifier = 1
@@ -141,6 +144,10 @@ class Solid(Material):
     @property
     def dispense_src(self):
         return self._model.dispense_src
+
+    @property
+    def catridge_id(self):
+        return self._model.catridge_id
 
     def __str__(self):
         return f'Solid: {self.name}, Expiry date: {self.expiry_date},\

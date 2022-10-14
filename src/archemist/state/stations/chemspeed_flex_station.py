@@ -1,6 +1,10 @@
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
+from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
 from enum import Enum
 from bson.objectid import ObjectId
+from mongoengine import fields
+from typing import List, Any
+from archemist.state.material import Liquid, Solid
+from datetime import datetime
 
 class ChemSpeedStatus(Enum):
     DOORS_OPEN = 0
@@ -10,72 +14,118 @@ class ChemSpeedStatus(Enum):
 
 ''' ==== Station Description ==== '''
 
+class ChemSpeedFlexStationModel(StationModel):
+    machine_status = fields.EnumField(ChemSpeedStatus, null=True)
+
 class ChemSpeedFlexStation(Station):
-    def __init__(self, db_name: str, station_dict: dict, liquids: list, solids: list):
-        if len(station_dict) > 1:
-            station_dict['status'] = None
-
-        super().__init__(db_name,station_dict)
+    def __init__(self, station_model: ChemSpeedFlexStationModel) -> None:
+        self._model = station_model
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = ChemSpeedFlexStationModel()
+        cls._set_model_common_fields(station_document,model)
+        model._type = cls.__name__
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
+    def from_object_id(cls, object_id: ObjectId):
+        model = ChemSpeedFlexStationModel.objects.get(id=object_id)
+        return cls(model)
 
     @property
-    def status(self):
-        return ChemSpeedStatus(self.get_field('status'))
+    def status(self) -> ChemSpeedStatus:
+        self._model.reload('machine_status')
+        return self._model.machine_status
 
     @status.setter
-    def status(self, status):
-        if isinstance(status, ChemSpeedStatus):
-            self.update_field('status', status.value)
-        else:
-            raise ValueError
+    def status(self, new_status: ChemSpeedStatus):
+        self._model.update(machine_status=new_status)
+
+    def set_station_op(self, stationOp: Any):
+        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
+            self.status = ChemSpeedStatus.RUNNING_JOB
+        super().set_station_op(stationOp)
+
+    def finish_station_op(self, success: bool, **kwargs):
+        current_op = self.get_station_op()
+        if isinstance(current_op, CSOpenDoorOpDescriptor):
+            self.status = ChemSpeedStatus.DOORS_OPEN
+        elif isinstance(current_op, CSCloseDoorOpDescriptor):
+            self.status = ChemSpeedStatus.DOORS_CLOSED
+        elif (isinstance(current_op, CSCSVJobOpDescriptor) or 
+                isinstance(current_op, CSCSVJobOpDescriptor) and 
+                current_op.was_successful):
+            self.status = ChemSpeedStatus.JOB_COMPLETE
+        super().finish_station_op(success, **kwargs)
 
 
 ''' ==== Station Operation Descriptors ==== '''
 
 class CSOpenDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
 class CSCloseDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        output = StationOutputDescriptor()
-        super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
 class CSProcessingOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        output = StationOutputDescriptor()
-        super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class CSCSVJobOpDescriptorModel(StationOpDescriptorModel):
+    csv_string = fields.StringField(required=True)
+    result_file = fields.StringField()
 
 class CSCSVJobOpDescriptor(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        output = StationOutputDescriptor()
-        super().__init__(stationName=ChemSpeedFlexStation.__class__.__name__, output=output)
-        self._csv_string = properties['csv_string']
+    def __init__(self, op_model: CSCSVJobOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, csv_string: str):
+        model = CSCSVJobOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.csv_string = csv_string
+        return cls(model)
 
     @property
-    def csv_string(self):
-        return self._csv_string
-
-''' ==== Station Output Descriptors ==== '''
-
-class CSJobOutputDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        self._results_file_name = ''
-        super().__init__()
+    def csv_string(self) -> str:
+        return self._model.csv_string
 
     @property
-    def results_file_name(self):
-        return self._results_file_name
+    def result_file(self) -> str:
+        if self._model.has_result and self._model.was_successful:
+            return self._model.result_file
 
-    @results_file_name.setter
-    def results_file_name(self, file_name):
-        self._results_file_name = file_name
-
+    def complete_op(self, success: bool, **kwargs):
+        self._model.has_result = True
+        self._model.was_successful = success
+        self._model.end_timestamp = datetime.now()
+        if 'result_file' in kwargs:
+            self._model.result_file = kwargs['result_file']
+        else:
+            pass #print('missing result_file!!')

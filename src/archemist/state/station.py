@@ -54,41 +54,10 @@ class StationOpDescriptor:
     def add_start_timestamp(self):
         self._model.start_timestamp = datetime.now()
 
-    def complete_op(self, success: bool):
+    def complete_op(self, success: bool, **kwargs):
         self._model.has_result = True
-        self.was_successful = success
+        self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-
-class StationOutputDescriptor:
-    def __init__(self):
-        self._has_result = False
-        self._success = False
-        self._timestamp = None
-
-    @property
-    def success(self):
-        return self._success
-
-    @success.setter
-    def success(self, value):
-        if isinstance(value, bool):
-            self._success = value
-        else:
-            raise ValueError
-
-    @property
-    def has_result(self):
-        return self._has_result
-
-    @has_result.setter
-    def has_result(self, value):
-        if isinstance(value, bool):
-            self._has_result = value
-        else:
-            raise ValueError
-
-    def add_timestamp(self):
-        self._timestamp = datetime.now()
 
 class StationModel(Document):
     _type = fields.StringField(required=True)
@@ -277,9 +246,12 @@ class Station:
         self._log_station(f'Requesting station job ({station_op})')
         
 
-    def finish_station_op(self, complete_station_op: StationOpDescriptor):
+    def finish_station_op(self, success: bool, **kwargs):
+        self._model.reload('current_station_op')
+        station_op = ObjectFactory.construct_station_op_from_model(self._model.current_station_op)
+        station_op.complete_op(success, **kwargs)
         self._model.update(unset__current_station_op=True)
-        self._model.update(push__station_op_history=complete_station_op.model)
+        self._model.update(push__station_op_history=station_op.model)
         self._log_station(f'Station op is complete.')
         self._update_state(StationState.PROCESSING)
 

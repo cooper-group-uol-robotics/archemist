@@ -1,47 +1,35 @@
-from archemist.state.station import Station, StationOpDescriptor, StationOutputDescriptor
-from archemist.util.location import Location
+from archemist.state.station import StationModel,Station,StationOpDescriptorModel,StationOpDescriptor
+from archemist.state.material import Liquid,Solid
+from typing import List
 from bson.objectid import ObjectId
 
 
 class OutputStation(Station):
-    def __init__(self, db_name: str, station_dict: dict,  
-                 liquids: list, solids: list):
-
-        super().__init__(db_name,station_dict)
+    def __init__(self, station_model: StationModel) -> None:
+        self._model = station_model
 
     @classmethod
-    def from_dict(cls, db_name: str, station_dict: dict, liquids: list, solids: list):
-        return cls(db_name, station_dict, liquids, solids)
+    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+        model = StationModel()
+        cls._set_model_common_fields(station_document,model)
+        model._type = cls.__name__
+        model.save()
+        return cls(model)
 
     @classmethod
-    def from_object_id(cls, db_name: str, object_id: ObjectId):
-        station_dict = {'object_id':object_id}
-        return cls(db_name, station_dict, None, None)
-
-    # TODO handle mutliple batches
-    # def batches_available(self):
-    #     return self._batches != []
-
-    # def add_batch(self, batch):
-    #     self._batches.append(batch)
-    #     if(self._assigned_batch is None):
-    #         self._assigned_batch = self._batches.pop
-    #         print('Batch {id} assigned to station {name}'.format(id=batch.id,
-    #               name=self._name))
-
-    # def retrieve_batch(self):
-    #     ret_batch = self._assigned_batch
-    #     if(self._batches is not []):
-    #         self._assigned_batch = self._batches.pop
-    #     else:
-    #         self._assigned_batch = None
-    #     return ret_batch
+    def from_object_id(cls, object_id: ObjectId):
+        model = StationModel.objects.get(id=object_id)
+        return cls(model)
 
 class OutputStationPlaceOp(StationOpDescriptor):
-    def __init__(self, properties: dict, output: StationOutputDescriptor):
-        super().__init__(stationName=OutputStation.__class__.__name__, output=output)
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
 
 
-class OutputStationResultDescriptor(StationOutputDescriptor):
-    def __init__(self):
-        super().__init__()
