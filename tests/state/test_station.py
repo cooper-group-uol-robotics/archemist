@@ -1,6 +1,6 @@
 import unittest
 from archemist.state.material import Liquid
-from archemist.state.robot import MoveSampleOp, RobotOutputDescriptor
+from archemist.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
 from archemist.state.station import StationState
 from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
@@ -109,13 +109,16 @@ class StationTest(unittest.TestCase):
         self.assertFalse(t_station.has_robot_job())
         self.assertTrue(t_station.get_robot_job() is None)
 
-        robot_op = MoveSampleOp('pickup_vial', 1, RobotOutputDescriptor())
-        t_station.set_robot_job(robot_op)
+        robot_op = RobotTaskOpDescriptor.from_args('test_task', parametrs=['False','1'])
+        t_station.set_robot_job(robot_op, current_batch_id=31)
         self.assertTrue(t_station.has_robot_job())
         ret_robot_job = t_station.get_robot_job()
         self.assertTrue(ret_robot_job is not None)
-        self.assertEqual(robot_op.sample_index, ret_robot_job.robot_op.sample_index)
-        self.assertEqual(robot_op.task_name, ret_robot_job.robot_op.task_name)
+        self.assertEqual(robot_op.name, ret_robot_job.name)
+        self.assertEqual(robot_op.params, ret_robot_job.params)
+        self.assertEqual(ret_robot_job.origin_station, t_station._model.id)
+        self.assertEqual(ret_robot_job.related_batch_id, 31)
+        self.assertEqual(ret_robot_job.task_type, RobotTaskType.MANIPULATION)
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
 
         t_station.finish_robot_job(robot_op)

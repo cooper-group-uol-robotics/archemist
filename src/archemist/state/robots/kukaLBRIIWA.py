@@ -12,15 +12,9 @@ class KukaLBRTask(RobotTaskOpDescriptor):
     @classmethod
     def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, parametrs: List[str]=[], 
                     location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
-        model = RobotTaskOpDescriptorModel()
+        model = super().from_args(name,type,parametrs,location,origin_station,related_batch_id).model
         model._type = cls.__name__
         model._module = cls.__module__
-        model.name = name
-        model.task_type = type
-        model.parameters = parametrs
-        model.location = location.to_dict() if location is not None else None
-        model.origin_station = origin_station if origin_station is not None else None
-        model.related_batch_id = related_batch_id if related_batch_id is not None else None
         return cls(model)
     
     
@@ -30,13 +24,10 @@ class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, name: str, type: RobotTaskType, parametrs: List[str]):
-        model = RobotTaskOpDescriptorModel()
+    def from_args(cls, name: str, parametrs: List[str]):
+        model = super().from_args(name,RobotTaskType.OTHER,parametrs).model
         model._type = cls.__name__
         model._module = cls.__module__
-        model.name = name
-        model.task_type = type
-        model.parameters = parametrs
         return cls(model)
 
     def __str__(self) -> str:

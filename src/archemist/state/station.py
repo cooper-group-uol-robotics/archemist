@@ -1,14 +1,11 @@
-from email.policy import default
 from bson.objectid import ObjectId
 from mongoengine import Document, EmbeddedDocument, fields
 from enum import Enum
-from pickle import loads, dumps
 from typing import List, Any
 from datetime import datetime
 from archemist.state.material import Liquid,Solid
 from archemist.util.location import Location
-from archemist.util.station_robot_job import StationRobotJob
-from archemist.state.robot import RobotOpDescriptor
+from archemist.state.robot import RobotOpDescriptor,RobotOpDescriptorModel
 from archemist.state.batch import Batch, BatchModel
 from archemist.persistence.object_factory import ObjectFactory
 
@@ -93,24 +90,6 @@ class StationOutputDescriptor:
     def add_timestamp(self):
         self._timestamp = datetime.now()
 
-# class StationOpDescriptor:
-#     def __init__(self, stationName: str, output: StationOutputDescriptor):
-#         self._stationName = stationName
-#         self._output = output
-#         self._timestamp = None
-
-#     @property
-#     def stationName(self):
-#         return self._stationName
-
-#     @property
-#     def output(self):
-#         return self._output
-
-#     def add_timestamp(self):
-#         self._timestamp = datetime.now()
-
-
 class StationModel(Document):
     _type = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
@@ -122,10 +101,10 @@ class StationModel(Document):
     loaded_samples = fields.IntField(default=0) # cannot use min value, breaks dec__ operator
     assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    requested_robot_op = fields.BinaryField(null=True)
+    requested_robot_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel,null=True)
     current_station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel,null=True)
     station_op_history = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-    requested_robot_op_history = fields.ListField(fields.BinaryField(), default=[])
+    requested_robot_op_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
@@ -185,7 +164,7 @@ class Station:
     @property
     def requested_robot_op_history(self) -> List[Any]:
         self._model.reload('requested_robot_op_history')
-        return [loads(encoded_robob_job) for encoded_robob_job in self._model.requested_robot_op_history]
+        return [ObjectFactory.construct_robot_op_from_model(robot_job_model) for robot_job_model in self._model.requested_robot_op_history]
 
     @property
     def process_sm_dict(self) -> dict:
@@ -264,23 +243,23 @@ class Station:
         self._model.reload('requested_robot_op')
         return self._model.requested_robot_op is not None
     
-    def get_robot_job(self) -> StationRobotJob:
+    def get_robot_job(self) -> RobotOpDescriptor:
         if self.has_robot_job():
-            robot_op = loads(self._model.requested_robot_op)
+            robot_op = ObjectFactory.construct_robot_op_from_model(self._model.requested_robot_op)
             self._log_station(f'Robot job request for ({robot_op}) is retrieved.')
             self._update_state(StationState.WAITING_ON_ROBOT)
             return robot_op
 
-    def set_robot_job(self, robot_job, current_batch_id = -1):
-        station_robot_job = StationRobotJob(robot_job, current_batch_id, self._model.id) 
-        encoded_station_robot_job = dumps(station_robot_job)
-        self._model.update(requested_robot_op=encoded_station_robot_job)
+    def set_robot_job(self, robot_job: RobotOpDescriptor, current_batch_id = -1):
+        if current_batch_id != -1:
+            robot_job.related_batch_id = current_batch_id
+        robot_job.origin_station = self._model.id
+        self._model.update(requested_robot_op=robot_job.model)
         self._log_station(f'Requesting robot job ({robot_job})')
 
     def finish_robot_job(self, complete_robot_op: RobotOpDescriptor):
-        encodedRobotOp = dumps(complete_robot_op)
         self._model.update(unset__requested_robot_op=True)
-        self._model.update(push__requested_robot_op_history=encodedRobotOp)
+        self._model.update(push__requested_robot_op_history=complete_robot_op.model)
         self._log_station(f'Robot job request is fulfilled.')
         self._update_state(StationState.PROCESSING)
 

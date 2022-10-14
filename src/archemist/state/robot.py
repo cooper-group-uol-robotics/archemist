@@ -1,8 +1,6 @@
-from archemist.persistence.dbObjProxy import DbObjProxy
 from archemist.util.location import Location
-from archemist.util.station_robot_job import StationRobotJob
 from enum import Enum
-from archemist.exceptions.exception import RobotAssignedRackError, RobotUnAssignedRackError
+from archemist.exceptions.exception import RobotAssignedRackError
 from datetime import datetime
 from mongoengine import Document, EmbeddedDocument, fields
 from bson.objectid import ObjectId
@@ -87,9 +85,17 @@ class RobotOpDescriptor:
     def origin_station(self) -> ObjectId:
         return self._model.origin_station
 
+    @origin_station.setter
+    def origin_station(self, station_object_id: ObjectId) -> None:
+        self._model.origin_station = station_object_id
+
     @property
-    def related_batch_id(self) -> ObjectId:
+    def related_batch_id(self) -> int:
         return self._model.related_batch_id
+
+    @related_batch_id.setter
+    def related_batch_id(self, batch_id: int) -> None:
+        self._model.related_batch_id = batch_id
 
     @property
     def has_result(self) -> bool:
@@ -148,14 +154,17 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, name: str, type: RobotTaskType, parametrs: List[str], location: Location):
+    def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, parametrs: List[str]=[], 
+                    location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
         model = RobotTaskOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
         model.name = name
         model.task_type = type
         model.parameters = parametrs
-        model.location = location.to_dict()
+        model.location = location.to_dict() if location is not None else None
+        model.origin_station = origin_station if origin_station is not None else None
+        model.related_batch_id = related_batch_id if related_batch_id is not None else None
         return cls(model)
     
     @property
