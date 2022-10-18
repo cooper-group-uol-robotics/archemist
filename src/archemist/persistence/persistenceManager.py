@@ -1,14 +1,14 @@
-from archemist.persistence.dbHandler import dbHandler
+from archemist.persistence.dbHandler import DatabaseHandler
 from archemist.persistence.yamlHandler import YamlHandler
-from archemist.persistence.objectConstructor import ObjectConstructor
+from archemist.persistence.object_factory import RobotFactory, StationFactory, MaterialFactory
 from archemist.state.state import State
 from archemist.exceptions.exception import DatabaseNotPopulatedError
 
 
 class PersistenceManager:
-    def __init__(self, db_name: str):
+    def __init__(self, db_host: str, db_name: str):
         self._db_name = db_name
-        self._dbhandler = dbHandler()
+        self._dbhandler = DatabaseHandler(db_host, db_name)
         
     def construct_state_from_config_file(self, config_file_path:str):
         self._dbhandler.clear_database(self._db_name)
@@ -16,30 +16,32 @@ class PersistenceManager:
         config_dict = YamlHandler.loadYamlFile(config_file_path)
         if 'Robots' in config_dict['workflow']:
             for robot_dict in config_dict['workflow']['Robots']:
-                ObjectConstructor.construct_robot_from_document(self._db_name, robot_dict)
+                RobotFactory.create_from_dict(robot_dict)
 
-        liquids = list()
-        solids = list()
+        liquids = []
+        solids = []
         
         if config_dict['workflow']['Materials'] is not None:
             if 'liquids' in config_dict['workflow']['Materials']:
-                for liquid_doc in config_dict['workflow']['Materials']['liquids']:
-                    liquids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Liquid', liquid_doc))
+                for liquid_dict in config_dict['workflow']['Materials']['liquids']:
+                    liquids.append(MaterialFactory.create_liquid_from_dict(liquid_dict))
 
             
             if 'solids' in config_dict['workflow']['Materials']:
-                for solid_doc in config_dict['workflow']['Materials']['solids']:
-                    solids.append(ObjectConstructor.construct_material_from_document(self._db_name, 'Solid', solid_doc))
+                for solid_dict in config_dict['workflow']['Materials']['solids']:
+                    solids.append(MaterialFactory.create_solid_from_dict(solid_dict))
 
         for station_dict in config_dict['workflow']['Stations']:
-            ObjectConstructor.construct_station_from_document(self._db_name, station_dict, liquids, solids)
+            StationFactory.create_from_dict(station_dict, liquids, solids)
 
-        return State(self._db_name)
+        return State()
 
     def construct_state_from_db(self):
         if self._dbhandler.is_database_populated(self._db_name):
-            return State(self._db_name)
+            return State()
         else:
             raise DatabaseNotPopulatedError()
+
+    
 
     

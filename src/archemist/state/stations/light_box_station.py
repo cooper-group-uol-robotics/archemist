@@ -1,8 +1,7 @@
 from archemist.state.station import StationModel,Station,StationOpDescriptorModel,StationOpDescriptor
 from archemist.state.material import Liquid,Solid
-from typing import List
+from typing import Dict, List
 from mongoengine import fields
-from bson.objectid import ObjectId
 from datetime import datetime
 
 
@@ -12,16 +11,11 @@ class LightBoxStation(Station):
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = StationModel()
-        cls._set_model_common_fields(station_document,model)
-        model._type = cls.__name__
+        cls._set_model_common_fields(station_dict,model)
+        model._module = cls.__module__
         model.save()
-        return cls(model)
-
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        model = StationModel.objects.get(id=object_id)
         return cls(model)
 
 ''' ==== Station Operation Descriptors ==== '''
@@ -36,7 +30,7 @@ class SampleColorOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls):
+    def from_args(cls, **kwargs):
         model = SampleColorOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__

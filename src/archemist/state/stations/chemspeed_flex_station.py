@@ -1,8 +1,7 @@
 from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
 from enum import Enum
-from bson.objectid import ObjectId
 from mongoengine import fields
-from typing import List, Any
+from typing import List, Any, Dict
 from archemist.state.material import Liquid, Solid
 from datetime import datetime
 
@@ -22,16 +21,11 @@ class ChemSpeedFlexStation(Station):
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = ChemSpeedFlexStationModel()
-        cls._set_model_common_fields(station_document,model)
-        model._type = cls.__name__
+        cls._set_model_common_fields(station_dict,model)
+        model._module = cls.__module__
         model.save()
-        return cls(model)
-
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        model = ChemSpeedFlexStationModel.objects.get(id=object_id)
         return cls(model)
 
     @property
@@ -68,18 +62,19 @@ class CSOpenDoorOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls):
+    def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
+
 
 class CSCloseDoorOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
         self._model = op_model
 
     @classmethod
-    def from_args(cls):
+    def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
@@ -90,7 +85,7 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls):
+    def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
@@ -105,11 +100,11 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, csv_string: str):
+    def from_args(cls, **kwargs):
         model = CSCSVJobOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.csv_string = csv_string
+        model.csv_string = kwargs['csv_string']
         return cls(model)
 
     @property

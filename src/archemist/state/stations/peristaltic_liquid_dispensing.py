@@ -1,8 +1,8 @@
-from bson.objectid import ObjectId
 from archemist.state.station import StationModel, Station, StationOpDescriptorModel, StationOpDescriptor
 from archemist.state.material import Liquid, Solid
+from archemist.persistence.object_factory import MaterialFactory
 from mongoengine import fields
-from typing import List, Any
+from typing import Dict, List
 from archemist.exceptions.exception import InvalidLiquidError
 from datetime import datetime
 
@@ -14,11 +14,11 @@ class PeristalticLiquidDispensing(Station):
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = PeristalticPumpStationModel()
-        cls._set_model_common_fields(station_document, model)
-        model._type = cls.__name__
-        parameters = station_document['parameters']
+        cls._set_model_common_fields(station_dict, model)
+        model._module = cls.__module__
+        parameters = station_dict['parameters']
         for _, pump_id in parameters['liquid_pump_map'].items():
                 for liquid in liquids:
                     if liquid.pump_id == pump_id:
@@ -26,21 +26,16 @@ class PeristalticLiquidDispensing(Station):
         model.save()
         return cls(model)
 
-
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        model = PeristalticPumpStationModel.objects.get(id=object_id)
-        return cls(model)
-
-    def get_liquid(self, pump_id: str):
+    def get_liquid(self, pump_id: str) -> Liquid:
         liquid_obj_id = self._model.pump_liquid_map[pump_id]
-        return Liquid.from_object_id(liquid_obj_id)
+        return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
-    def get_pump_id(self, liquid_name: str):
+    def get_pump_id(self, liquid_name: str) -> int:
         # assuming only single liquid per pump
         pump_liquid_map = self._model.pump_liquid_map
         for pump_id, liquid_obj_id in pump_liquid_map.items():
-            if liquid_name == Liquid.from_object_id(liquid_obj_id).name:
+            liquid = MaterialFactory.create_material_from_object_id(liquid_obj_id)
+            if liquid_name == liquid.name:
                 return pump_id
             else:
                 raise InvalidLiquidError(self.__class__.__name__)
@@ -84,12 +79,12 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
 
 
     @classmethod
-    def from_args(cls, liquid_name: str, dispense_volume: float):
+    def from_args(cls, **kwargs):
         model = PeristalticPumpOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.liquid_name = liquid_name
-        model.dispense_volume = dispense_volume
+        model.liquid_name = kwargs['liquid_name']
+        model.dispense_volume = kwargs['dispense_volume']
         return cls(model)
         
 

@@ -1,17 +1,18 @@
 workflow:
   Robots:
-    - class: PandaFranka
+    - type: PandaFranka
       id: 99
       location:
         node_id: 1
         graph_id: 7
         frame_name: neutral
-    - class: KukaLBRIIWA
+    - type: KukaLBRIIWA
       id: 1
       location:
         node_id: 7
         graph_id: 7
         frame_name: neutral
+      batch_capacity: 2
   Materials:
     liquids:
       - name: water
@@ -19,22 +20,23 @@ workflow:
         amount_stored: 400
         unit: ml
         density: 997 #g/l
-        pump_id: p1
+        pump_id: pUmP1
         expiry_date: 2025-02-11
     solids:
       - name: sodium_chloride
         id: 345
         amount_stored: 10000
-        dispense_method: quantos
-        cartridge_id: cat1
+        dispense_src: quantos
+        catridge_id: 22
         unit: mg
         expiry_date: 2025-02-11
   Stations:
-    - class: PeristalticLiquidDispensing
+    - type: PeristalticLiquidDispensing
       id: 23
       location:
         node_id: 1
         graph_id: 7
+      batch_capacity: 2
       process_state_machine:
         type: StationLoadingSm
         args:
@@ -43,33 +45,36 @@ workflow:
       parameters:
         liquid_pump_map:
           water: pUmP1
-    - class: IkaPlateRCTDigital
+    - type: IkaPlateRCTDigital
       id: 2
       location:
         node_id: 1
         graph_id: 7
+      batch_capacity: 2
       process_state_machine:
         type: StationLoadingSm
         args:
           batch_mode: true
           load_frame: '/ikaStation/loadFrame'
       parameters:
-    - class: FisherWeightingStation
+    - type: FisherWeightingStation
       id: 5
       location:
         node_id: 1
         graph_id: 7
+      batch_capacity: 2
       process_state_machine:
         type: StationLoadingSm
         args:
           batch_mode: true
           load_frame: '/fisherScaleStation/loadFrame'
       parameters:
-    - class: ChemSpeedFlexStation
+    - type: ChemSpeedFlexStation
       id: 9
       location:
         node_id: 3
         graph_id: 7
+      batch_capacity: 2
       process_state_machine:
         type: ChemSpeedRackProcessingSm
         args:

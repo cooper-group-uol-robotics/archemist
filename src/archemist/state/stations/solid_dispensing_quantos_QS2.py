@@ -1,8 +1,7 @@
 from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
 from archemist.state.material import Solid, Liquid, SolidMaterialModel
-from typing import List
+from typing import Dict, List
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
-from bson.objectid import ObjectId
 from mongoengine import EmbeddedDocument, fields
 from datetime import datetime
 
@@ -76,11 +75,11 @@ class QuantosSolidDispenserQS2(Station):
 
     
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = QuantosSolidDispenserQS2Model()
-        cls._set_model_common_fields(station_document, model)
-        model._type = cls.__name__
-        parameters = station_document['parameters']
+        cls._set_model_common_fields(station_dict, model)
+        model._module = cls.__module__
+        parameters = station_dict['parameters']
         for cat in parameters['catridges']:
             for solid in solids:
                 if solid.catridge_id is not None and solid.catridge_id == cat['id']:
@@ -89,11 +88,6 @@ class QuantosSolidDispenserQS2(Station):
                                    remaining_dosages=cat['remaining_dosages'])
                     model.catridges.append(catridge.model)
         model.save()
-        return cls(model)
-
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        model = QuantosSolidDispenserQS2Model.objects.get(id=object_id)
         return cls(model)
 
     @property
@@ -177,12 +171,12 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, solid_name: str, dispense_mass: float):
+    def from_args(cls, **kwargs):
         model = QuantosDispenseOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.solid_name = solid_name
-        model.dispense_mass = dispense_mass
+        model.solid_name = kwargs['solid_name']
+        model.dispense_mass = kwargs['dispense_mass']
         return cls(model)
 
     @property

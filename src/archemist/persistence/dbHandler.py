@@ -1,12 +1,8 @@
-from pymongo import MongoClient
-from archemist.persistence.yamlHandler import YamlHandler
-import os
-from datetime import datetime
+from mongoengine import connect
 
-
-class dbHandler:
-    def __init__(self):
-        self._client = MongoClient("mongodb://localhost:27017")
+class DatabaseHandler:
+    def __init__(self, host: str, db_name: str):
+        self._client = connect(db=db_name, host=host, alias='archemist_state')
 
     def clear_database(self, db_name:str):
         if self.is_database_populated(db_name):
@@ -28,7 +24,3 @@ class dbHandler:
     def delete_database(self, db_name:str):
         if self.is_database_existing(db_name):
             self._client.drop_database(db_name)
-        
-
-    
-

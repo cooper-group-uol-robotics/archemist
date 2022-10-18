@@ -10,6 +10,7 @@ class PandaFranka(Robot):
     def from_dict(cls, robot_document: dict):
         model = RobotModel()
         model._type = cls.__name__
+        model._module = cls.__module__
         cls._set_model_common_fields(robot_document, model)
         model.save()
         return cls(model)

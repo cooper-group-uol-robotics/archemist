@@ -1,7 +1,6 @@
 from archemist.state.station import Station, StationModel, StationOpDescriptorModel, StationOpDescriptor
 from enum import Enum
-from bson.objectid import ObjectId
-from typing import List, Any
+from typing import List, Any, Dict
 from archemist.state.material import Liquid, Solid
 from mongoengine import fields
 
@@ -28,16 +27,11 @@ class IkaPlateRCTDigital(Station):
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = IkaPlateRCTDigitalModel()
-        cls._set_model_common_fields(station_document,model)
-        model._type = cls.__name__
+        cls._set_model_common_fields(station_dict,model)
+        model._module = cls.__module__
         model.save()
-        return cls(model)
-
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        model = IkaPlateRCTDigitalModel.objects.get(id=object_id)
         return cls(model)
 
     @property
@@ -148,11 +142,11 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, temperature: int, stirrring_speed: int, duration: int):
+    def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = temperature
-        model.target_stirring_speed = stirrring_speed
-        model.target_duration = duration
+        model.target_temperature = kwargs['temperature']
+        model.target_stirring_speed = kwargs['stirring_speed']
+        model.target_duration = kwargs['duration']
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -174,10 +168,10 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, temperature: int, duration: int):
+    def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = temperature
-        model.target_duration = duration
+        model.target_temperature = kwargs['temperature']
+        model.target_duration = kwargs['duration']
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -196,10 +190,10 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, stirring_speed: int, duration: int):
+    def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_stirring_speed = stirring_speed
-        model.target_duration = duration
+        model.target_stirring_speed = kwargs['stirring_speed']
+        model.target_duration = kwargs['duration']
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

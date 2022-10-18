@@ -35,7 +35,8 @@ class MaterialTest(unittest.TestCase):
             'name': 'sodium_chloride',
             'id': 133,
             'amount_stored': 10000,
-            'dispense_method': 'quantos',
+            'dispense_src': 'quantos',
+            'catridge_id': 123,
             'unit': 'ug',
             'expiry_date': date.fromisoformat('2025-02-11')
         }

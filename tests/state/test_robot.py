@@ -12,7 +12,7 @@ class RobotTest(unittest.TestCase):
 
     def test_robot(self):
         robot_dict = {
-            'class': 'KukaLBRIIWA',
+            'type': 'KukaLBRIIWA',
             'id': 187,
             'batch_capacity':2
         }

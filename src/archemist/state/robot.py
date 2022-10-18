@@ -4,8 +4,8 @@ from archemist.exceptions.exception import RobotAssignedRackError
 from datetime import datetime
 from mongoengine import Document, EmbeddedDocument, fields
 from bson.objectid import ObjectId
-from typing import List, Any
-from archemist.persistence.object_factory import ObjectFactory
+from typing import Dict, List, Any
+from archemist.persistence.object_factory import RobotFactory
 
 class RobotState(Enum):
     JOB_ASSIGNED = 0
@@ -18,46 +18,6 @@ class RobotTaskType(Enum):
     UNLOAD_FROM_ROBOT = 1
     MANIPULATION = 2
     OTHER = 3
-
-class RobotOutputDescriptor:
-    def __init__(self):
-        self._success = False
-        self._has_result = False
-        self._timestamp = None
-        self._executing_robot = None
-
-    @property
-    def success(self):
-        return self._success
-
-    @success.setter
-    def success(self, value):
-        if isinstance(value, bool):
-            self._success = value
-        else:
-            raise ValueError
-
-    @property
-    def has_result(self):
-        return self._has_result
-
-    @has_result.setter
-    def has_result(self, value):
-        if isinstance(value, bool):
-            self._has_result = value
-        else:
-            raise ValueError
-
-    def add_timestamp(self):
-        self._timestamp = datetime.now()
-
-    @property
-    def executing_robot(self):
-        return self._executing_robot
-
-    @executing_robot.setter
-    def executing_robot(self, robot_stamp):
-        self._executing_robot = robot_stamp
 
 class RobotOpDescriptorModel(EmbeddedDocument):
     _type = fields.StringField(required=True)
@@ -126,23 +86,6 @@ class RobotOpDescriptor:
         self._model.robot_stamp = robot_stamp
         self._model.end_timestamp = datetime.now()
 
-class MoveSampleOp(RobotOpDescriptor):
-    def __init__(self, task_name: str ,sample_index: int , output: RobotOutputDescriptor):
-        super().__init__(output=output)
-        self._task_name = task_name
-        self._sample_index = sample_index
-
-    @property
-    def task_name(self):
-        return self._task_name
-
-    @property
-    def sample_index(self):
-        return self._sample_index
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__} task_name: {self._task_name}, sample_index: {self._sample_index}'
-
 class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
     task_type = fields.EnumField(RobotTaskType, required=True)
@@ -189,6 +132,7 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
 
 class RobotModel(Document):
     _type = fields.StringField(required=True)
+    _module = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
     operational = fields.BooleanField(default=True)
     batch_capacity = fields.IntField(min_value=1, default=1)
@@ -206,20 +150,17 @@ class Robot:
         self._model = robot_model
 
     @classmethod
-    def from_dict(cls, robot_document: dict):
+    def from_dict(cls, robot_dict: Dict):
         pass
 
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        pass
-
-    @classmethod
-    def _set_model_common_fields(cls, robot_document: dict, robot_model: RobotModel):
-        robot_model.exp_id = robot_document['id']
-        if 'location' in robot_document:
-            robot_model.location = robot_document['location']
-        if 'batch_capacity' in robot_document:
-            robot_model.batch_capacity = robot_document['batch_capacity']
+    @staticmethod
+    def _set_model_common_fields(robot_dict: Dict, robot_model: RobotModel):
+        robot_model._type = robot_dict['type']
+        robot_model.exp_id = robot_dict['id']
+        if 'location' in robot_dict:
+            robot_model.location = robot_dict['location']
+        if 'batch_capacity' in robot_dict:
+            robot_model.batch_capacity = robot_dict['batch_capacity']
 
     @property
     def id(self) -> int:
@@ -263,12 +204,12 @@ class Robot:
         self._model.reload('assigned_job')
         op_model = self._model.assigned_job
         if op_model is not None:
-            return ObjectFactory.construct_robot_op_from_model(op_model)
+            return RobotFactory.create_op_from_model(op_model)
 
     @property
     def robot_job_history(self) -> List[Any]:
         self._model.reload('robot_job_history')
-        return [ObjectFactory.construct_robot_op_from_model(op) for op in self._model.robot_job_history] 
+        return [RobotFactory.create_op_from_model(op) for op in self._model.robot_job_history] 
 
     def assign_job(self, robot_op: RobotOpDescriptor):
         if(self.assigned_job is None):
@@ -289,7 +230,7 @@ class Robot:
         self._model.update(complete_job=job.model)
         self._model.update(push__robot_job_history=job.model)
         self._model.update(unset__assigned_job=True)
-        complete_job = ObjectFactory.construct_robot_op_from_model(job.model)
+        complete_job = RobotFactory.create_op_from_model(job.model)
         self._log_robot(f'Job ({complete_job} is complete.')
         self._update_state(RobotState.EXECUTION_COMPLETE)
 
@@ -299,7 +240,7 @@ class Robot:
 
     def get_complete_job(self) -> Any:
         if self.has_complete_job():
-            complete_op = ObjectFactory.construct_robot_op_from_model(self._model.complete_job)
+            complete_op = RobotFactory.create_op_from_model(self._model.complete_job)
             self._model.update(unset__complete_job=True)
             self._log_robot(f'Job ({complete_op}) is retrieved.')
             self._update_state(RobotState.IDLE)
@@ -348,7 +289,7 @@ class MobileRobot(Robot):
 
     def get_complete_job(self) -> Any:
         if self.has_complete_job():
-            complete_op = ObjectFactory.construct_robot_op_from_model(self._model.complete_job)
+            complete_op = RobotFactory.create_op_from_model(self._model.complete_job)
             self._model.update(unset__complete_job=True)
             if isinstance(complete_op, RobotTaskOpDescriptor):
                 if complete_op.task_type == RobotTaskType.LOAD_TO_ROBOT:

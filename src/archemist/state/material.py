@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from mongoengine import Document, fields
 
 class MaterialModel(Document):
+    _type = fields.StringField(required=True)
     name = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
     expiry_date = fields.DateTimeField()
@@ -14,6 +15,12 @@ class MaterialModel(Document):
 class Material:
     def __init__(self, material_model: MaterialModel) -> None:
         self._model = material_model
+
+    @staticmethod
+    def _set_model_common_fields(material_dict: dict, station_model: MaterialModel):
+        station_model.name = material_dict['name']
+        station_model.exp_id = material_dict['id']
+        station_model.expiry_date = date.isoformat(material_dict['expiry_date'])
 
     @property
     def model(self) -> MaterialModel:
@@ -52,30 +59,29 @@ class Liquid(Material):
         self._model = material_model
 
     @classmethod
-    def from_dict(cls, liquid_document: dict):
+    def from_dict(cls, liquid_doct: dict):
         model = LiquidMaterialModel()
-        model.name = liquid_document['name']
-        model.exp_id = liquid_document['id']
-        model.pump_id = liquid_document['pump_id']
-        model.expiry_date = date.isoformat(liquid_document['expiry_date'])
-        model.density = liquid_document['density']
-        if liquid_document['unit'] in ['l','ml','ul']:
-            if liquid_document['unit'] == 'l':
+        model._type = cls.__name__
+        cls._set_model_common_fields(liquid_doct,model)
+        model.pump_id = liquid_doct['pump_id']
+        model.density = liquid_doct['density']
+        if liquid_doct['unit'] in ['l','ml','ul']:
+            if liquid_doct['unit'] == 'l':
                 unit_modifier = 1
-            elif liquid_document['unit'] == 'ml':
+            elif liquid_doct['unit'] == 'ml':
                 unit_modifier = 1000
-            elif liquid_document['unit'] == 'ul':
+            elif liquid_doct['unit'] == 'ul':
                 unit_modifier = 1000000
-            model.volume = liquid_document['amount_stored']/unit_modifier
+            model.volume = liquid_doct['amount_stored']/unit_modifier
             model.mass = model.density * model.volume
-        elif liquid_document['unit'] in ['g','mg','ug']:
-            if liquid_document['unit'] == 'g':
+        elif liquid_doct['unit'] in ['g','mg','ug']:
+            if liquid_doct['unit'] == 'g':
                 unit_modifier = 1
-            elif liquid_document['unit'] == 'mg':
+            elif liquid_doct['unit'] == 'mg':
                 unit_modifier = 1000
-            elif liquid_document['unit'] == 'ug':
+            elif liquid_doct['unit'] == 'ug':
                 unit_modifier = 1000000
-            model.mass = liquid_document['amount_stored']/unit_modifier
+            model.mass = liquid_doct['amount_stored']/unit_modifier
             model.volume = model.mass/model.density
         model.save()
         return cls(model)
@@ -116,23 +122,22 @@ class Solid(Material):
         self._model = material_model
 
     @classmethod
-    def from_dict(cls, solid_document: dict):
+    def from_dict(cls, solid_doct: dict):
         model = SolidMaterialModel()
-        model.name = solid_document['name']
-        model.exp_id = solid_document['id']
-        model.dispense_src = solid_document['dispense_src']
+        model._type = cls.__name__
+        cls._set_model_common_fields(solid_doct,model)
+        model.dispense_src = solid_doct['dispense_src']
         if model.dispense_src == 'quantos':
-            model.catridge_id = solid_document['catridge_id']
-        model.expiry_date = date.isoformat(solid_document['expiry_date'])
-        if solid_document['unit'] == 'g':
+            model.catridge_id = solid_doct['catridge_id']
+        if solid_doct['unit'] == 'g':
             unit_modifier = 1
-            model.mass = solid_document['amount_stored']/unit_modifier
-        elif solid_document['unit'] == 'mg':
+            model.mass = solid_doct['amount_stored']/unit_modifier
+        elif solid_doct['unit'] == 'mg':
             unit_modifier = 1000
-            model.mass = solid_document['amount_stored']/unit_modifier
-        elif solid_document['unit'] == 'ug':
+            model.mass = solid_doct['amount_stored']/unit_modifier
+        elif solid_doct['unit'] == 'ug':
             unit_modifier = 1000000
-            model.mass = solid_document['amount_stored']/unit_modifier
+            model.mass = solid_doct['amount_stored']/unit_modifier
         model.save()
         return cls(model)
 

@@ -2,7 +2,7 @@ import unittest
 from archemist.state.material import Liquid
 from archemist.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
-from archemist.state.station import StationState
+from archemist.state.station import StationModel, StationState
 from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
 from archemist.state.batch import Batch
 from archemist.util.location import Location
@@ -16,7 +16,7 @@ class StationTest(unittest.TestCase):
 
     def test_station(self):
         station_dict = {
-            'class': 'PeristalticLiquidDispensing',
+            'type': 'PeristalticLiquidDispensing',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -41,7 +41,7 @@ class StationTest(unittest.TestCase):
         }
         liquids_list = []
         liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = PeristalticLiquidDispensing.from_dict(station_document=station_dict, 
+        t_station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
                         liquids=liquids_list, solids=[])
 
         # general properties
@@ -157,7 +157,8 @@ class StationTest(unittest.TestCase):
 
         self.station_object_id = t_station._model.id
 
-        t_station2 = PeristalticLiquidDispensing.from_object_id(self.station_object_id)
+        model = StationModel.objects.get(id=self.station_object_id)
+        t_station2 = PeristalticLiquidDispensing(model)
         self.assertEqual(t_station2.id, 23)
         self.assertEqual(t_station2.state, StationState.PROCESSING)
         self.assertEqual(t_station2.batch_capacity, 2)
@@ -171,7 +172,7 @@ class StationTest(unittest.TestCase):
 
     def test_specific_station(self):
         station_dict = {
-            'class': 'PeristalticLiquidDispensing',
+            'type': 'PeristalticLiquidDispensing',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -196,7 +197,7 @@ class StationTest(unittest.TestCase):
         }
         liquids_list = []
         liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = PeristalticLiquidDispensing.from_dict(station_document=station_dict, 
+        t_station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
                         liquids=liquids_list, solids=[])
 
         liquid = t_station.get_liquid('pUmP1')

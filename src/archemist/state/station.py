@@ -7,7 +7,7 @@ from archemist.state.material import Liquid,Solid
 from archemist.util.location import Location
 from archemist.state.robot import RobotOpDescriptor,RobotOpDescriptorModel
 from archemist.state.batch import Batch, BatchModel
-from archemist.persistence.object_factory import ObjectFactory
+from archemist.persistence.object_factory import StationFactory, RobotFactory
 
 class StationState(Enum):
     IDLE = 0
@@ -61,6 +61,7 @@ class StationOpDescriptor:
 
 class StationModel(Document):
     _type = fields.StringField(required=True)
+    _module = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
     location = fields.DictField()
     batch_capacity = fields.IntField(min_value=1, default=1)
@@ -82,19 +83,16 @@ class Station:
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_document: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: dict, liquids: List[Liquid], solids: List[Solid]):
         pass
 
-    @classmethod
-    def from_object_id(cls, object_id: ObjectId):
-        pass
-
-    @classmethod
-    def _set_model_common_fields(cls, station_document: dict, station_model: StationModel):
-        station_model.exp_id = station_document['id']
-        station_model.location = station_document['location']
-        station_model.batch_capacity = station_document['batch_capacity']
-        station_model.process_state_machine = station_document['process_state_machine']
+    @staticmethod
+    def _set_model_common_fields(station_dict: dict, station_model: StationModel):
+        station_model._type = station_dict['type']
+        station_model.exp_id = station_dict['id']
+        station_model.location = station_dict['location']
+        station_model.batch_capacity = station_dict['batch_capacity']
+        station_model.process_state_machine = station_dict['process_state_machine']
 
     @property
     def model(self) -> StationModel:
@@ -128,12 +126,12 @@ class Station:
     @property
     def station_op_history(self) -> List[StationOpDescriptor]:
         self._model.reload('station_op_history')
-        return [ObjectFactory.construct_station_op_from_model(op_model) for op_model in self._model.station_op_history]
+        return [StationFactory.create_op_from_model(op_model) for op_model in self._model.station_op_history]
 
     @property
     def requested_robot_op_history(self) -> List[Any]:
         self._model.reload('requested_robot_op_history')
-        return [ObjectFactory.construct_robot_op_from_model(robot_job_model) for robot_job_model in self._model.requested_robot_op_history]
+        return [RobotFactory.create_op_from_model(robot_job_model) for robot_job_model in self._model.requested_robot_op_history]
 
     @property
     def process_sm_dict(self) -> dict:
@@ -214,7 +212,7 @@ class Station:
     
     def get_robot_job(self) -> RobotOpDescriptor:
         if self.has_robot_job():
-            robot_op = ObjectFactory.construct_robot_op_from_model(self._model.requested_robot_op)
+            robot_op = RobotFactory.create_op_from_model(self._model.requested_robot_op)
             self._log_station(f'Robot job request for ({robot_op}) is retrieved.')
             self._update_state(StationState.WAITING_ON_ROBOT)
             return robot_op
@@ -238,7 +236,7 @@ class Station:
 
     def get_station_op(self):
         if self.has_station_op():
-            return ObjectFactory.construct_station_op_from_model(self._model.current_station_op)
+            return StationFactory.create_op_from_model(self._model.current_station_op)
 
     def set_station_op(self, station_op: StationOpDescriptor):
         self._model.update(current_station_op=station_op.model)
@@ -248,7 +246,7 @@ class Station:
 
     def finish_station_op(self, success: bool, **kwargs):
         self._model.reload('current_station_op')
-        station_op = ObjectFactory.construct_station_op_from_model(self._model.current_station_op)
+        station_op = StationFactory.create_op_from_model(self._model.current_station_op)
         station_op.complete_op(success, **kwargs)
         self._model.update(unset__current_station_op=True)
         self._model.update(push__station_op_history=station_op.model)

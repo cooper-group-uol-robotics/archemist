@@ -68,6 +68,7 @@ class KukaLBRIIWA(MobileRobot):
     def from_dict(cls, robot_document: dict):
         model = MobileRobotModel()
         model._type = cls.__name__
+        model._module = cls.__module__
         robot_document['location'] = {'node_id':-1, 'graph_id':-1, 'frame_name':''}
         cls._set_model_common_fields(robot_document, model)
         model.save()

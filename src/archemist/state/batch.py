@@ -46,14 +46,6 @@ class Sample:
     def add_material(self, material: str):
         self._model.materials.append(material)
 
-    def to_dict(self):
-        return {
-            'rack_index': self.rack_indx,
-            'materials': self.materials,
-            'capped': self.capped,
-            'operation_ops': self.operation_ops
-        }
-
 class BatchModel(Document):
     exp_id = fields.IntField(required=True)
     num_samples = fields.IntField(min_value=1, required=True)
@@ -135,9 +127,9 @@ class Batch:
         return self._model.current_sample_index
 
     def get_current_sample(self) -> Sample:
-        samples = self.get_samples_list()
+        self._model.reload('samples')
         current_index = self.current_sample_index
-        return samples[current_index]
+        return Sample(self._model.samples[current_index])
 
     def get_samples_list(self) -> List[Sample]:
         self._model.reload('samples')
@@ -152,13 +144,13 @@ class Batch:
     def add_station_op_to_current_sample(self, station_op: Any):
         current_sample = self.get_current_sample()
         current_sample.add_operation_op(station_op)
-        self._model.update(**{f'samples__{self.current_sample_index}':current_sample.model}) #https://stackoverflow.com/questions/2932648/how-do-i-use-a-string-as-a-keyword-argument
+        self._model.update(**{f'samples__{self._model.current_sample_index}':current_sample.model}) #https://stackoverflow.com/questions/2932648/how-do-i-use-a-string-as-a-keyword-argument
         #self._model.update(samples=self._model.samples) alternatively but the whole list will be updated
 
     def add_material_to_current_sample(self, material: str):
         current_sample = self.get_current_sample()
         current_sample.add_material(material)
-        self._model.update(**{f'samples__{self.current_sample_index}':current_sample.model})
+        self._model.update(**{f'samples__{self._model.current_sample_index}':current_sample.model})
 
     @property
     def station_history(self):

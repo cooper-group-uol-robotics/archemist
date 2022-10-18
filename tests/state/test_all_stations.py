@@ -17,7 +17,7 @@ class AllStationsTest(unittest.TestCase):
     def test_fisher_weighing_station(self):
         # construct station
         station_doc = {
-            'class': 'FisherWeightingStation',
+            'type': 'FisherWeightingStation',
             'id': 20,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -49,7 +49,7 @@ class AllStationsTest(unittest.TestCase):
     def test_ika_plate_station(self):
         # construct station
         station_doc = {
-            'class': 'IkaPlateRCTDigital',
+            'type': 'IkaPlateRCTDigital',
             'id': 21,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -99,7 +99,7 @@ class AllStationsTest(unittest.TestCase):
         self.assertIsNone(t_station.target_temperature)
         self.assertIsNone(t_station.target_duration)
 
-        t_op = IKAHeatingStirringOpDescriptor.from_args(temperature=140, stirrring_speed=500, duration=10)
+        t_op = IKAHeatingStirringOpDescriptor.from_args(temperature=140, stirring_speed=500, duration=10)
         self.assertFalse(t_op.has_result)
         
         t_station.set_station_op(t_op)
@@ -121,7 +121,7 @@ class AllStationsTest(unittest.TestCase):
     def test_chemspeed_station(self):
         # construct station
         station_doc = {
-            'class': 'ChemSpeedFlexStation',
+            'type': 'ChemSpeedFlexStation',
             'id': 22,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -177,7 +177,7 @@ class AllStationsTest(unittest.TestCase):
     def test_input_station(self):
         # construct station
         station_doc = {
-            'class': 'InputStation',
+            'type': 'InputStation',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -206,7 +206,7 @@ class AllStationsTest(unittest.TestCase):
     def test_output_station(self):
         # construct station
         station_doc = {
-            'class': 'OutputStation',
+            'type': 'OutputStation',
             'id': 24,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -235,7 +235,7 @@ class AllStationsTest(unittest.TestCase):
     def test_light_box_station(self):
         # construct station
         station_doc = {
-            'class': 'LightBoxStation',
+            'type': 'LightBoxStation',
             'id': 25,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -269,7 +269,7 @@ class AllStationsTest(unittest.TestCase):
     def test_quantos_station(self):
         # construct station
         station_doc = {
-            'class': 'QuantosSolidDispenserQS2',
+            'type': 'QuantosSolidDispenserQS2',
             'id': 26,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -329,7 +329,7 @@ class AllStationsTest(unittest.TestCase):
     def test_peristaltic_station(self):
         # construct station
         station_doc = {
-            'class': 'PeristalticLiquidDispensing',
+            'type': 'PeristalticLiquidDispensing',
             'id': 22,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -354,7 +354,7 @@ class AllStationsTest(unittest.TestCase):
         }
         liquids_list = []
         liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = PeristalticLiquidDispensing.from_dict(station_document=station_doc, 
+        t_station = PeristalticLiquidDispensing.from_dict(station_dict=station_doc, 
                         liquids=liquids_list, solids=[])
         self.assertEqual(t_station.id, station_doc['id'])
         self.assertEqual(t_station.state, StationState.IDLE)
@@ -377,7 +377,7 @@ class AllStationsTest(unittest.TestCase):
     def test_soluibility_station(self):
         # construct station
         station_doc = {
-            'class': 'SolubilityStation',
+            'type': 'SolubilityStation',
             'id': 26,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,

@@ -1,6 +1,6 @@
 import unittest
 from bson.objectid import ObjectId
-from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, StationOutputDescriptor, IKAStirringOpDescriptor
+from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
 from archemist.state.batch import Batch
 import yaml
 from mongoengine import connect
@@ -33,28 +33,28 @@ class BatchRecipeTest(unittest.TestCase):
         ''' First operation '''
         # process first sample
         self.assertEqual(batch.current_sample_index, 0)
-        ika_op1 = IKAHeatingOpDescriptor({'temperature':50, 'duration':10},StationOutputDescriptor())
+        ika_op1 = IKAHeatingOpDescriptor.from_args(temperature=50, duration=10)
         batch.add_station_op_to_current_sample(ika_op1)
-        batch.add_material_to_current_sample('heat - 50')
+        batch.add_material_to_current_sample('water')
         batch.process_current_sample()
         # process second sample
         self.assertEqual(batch.current_sample_index, 1)
         batch.add_station_op_to_current_sample(ika_op1)
-        batch.add_material_to_current_sample('heat - 50')
+        batch.add_material_to_current_sample('water')
         batch.process_current_sample()
         batch.add_station_stamp('IkaRCTDigital-31')
         self.assertEqual(len(batch.station_history), 1)
         ''' Second operation '''
         # process first sample
         self.assertEqual(batch.current_sample_index, 0)
-        ika_op2 = IKAStirringOpDescriptor({'rpm':50, 'duration':10},StationOutputDescriptor())
+        ika_op2 = IKAStirringOpDescriptor.from_args(stirring_speed=50, duration=10)
         batch.add_station_op_to_current_sample(ika_op2)
-        batch.add_material_to_current_sample('rpm - 50')
+        batch.add_material_to_current_sample('salt')
         batch.process_current_sample()
         # process second sample
         self.assertEqual(batch.current_sample_index, 1)
         batch.add_station_op_to_current_sample(ika_op2)
-        batch.add_material_to_current_sample('rpm - 50')
+        batch.add_material_to_current_sample('salt')
         batch.process_current_sample()
         batch.add_station_stamp('IkaRCTDigital-31')
         self.assertEqual(len(batch.station_history), 2)
@@ -64,11 +64,10 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(samples[0].rack_index, 0)
         self.assertFalse(samples[0].capped)
         self.assertEqual(len(samples[0].materials), 2)
-        self.assertEqual(samples[0].materials[0], 'heat - 50')
+        self.assertEqual(samples[0].materials[0], 'water')
         self.assertEqual(len(samples[0].operation_ops), 2)
-        self.assertEqual(samples[0].operation_ops[0].mode, ika_op1.mode)
-        self.assertEqual(samples[0].operation_ops[0].set_temperature, ika_op1.set_temperature)
-        self.assertEqual(samples[0].operation_ops[0].duration, ika_op1.duration)
+        self.assertEqual(samples[0].operation_ops[0].target_temperature, ika_op1.target_temperature)
+        self.assertEqual(samples[0].operation_ops[0].target_duration, ika_op1.target_duration)
 
         # Test batch construction from objectId
         batch2 = Batch.from_object_id(batch._model.id)
