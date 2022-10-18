@@ -27,7 +27,7 @@ workflow:
         id: 345
         amount_stored: 10000
         dispense_src: quantos
-        catridge_id: 22
+        cartridge_id: 22
         unit: mg
         expiry_date: 2025-02-11
   Stations:

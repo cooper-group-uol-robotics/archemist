@@ -82,7 +82,7 @@ class QuantosSolidDispenserQS2(Station):
         parameters = station_dict['parameters']
         for cat in parameters['catridges']:
             for solid in solids:
-                if solid.catridge_id is not None and solid.catridge_id == cat['id']:
+                if solid.cartridge_id is not None and solid.cartridge_id == cat['id']:
                     catridge = QuantosCatridge.from_args(id=cat['id'], solid=solid, 
                                    hotel_index=cat['hotel_index'],
                                    remaining_dosages=cat['remaining_dosages'])
@@ -120,15 +120,15 @@ class QuantosSolidDispenserQS2(Station):
     def doors_open(self, new_state: bool):
         self._model.update(doors_open=new_state)
 
-    def get_catridge_id(self, solid_name: str):
+    def get_cartridge_id(self, solid_name: str):
         for catridge_model in self._model.catridges:
             if catridge_model.associated_solid.name == solid_name:
                 return catridge_model.exp_id
 
-    def load_catridge(self, catridge_id: int):
+    def load_catridge(self, cartridge_id: int):
         self._model.reload('loaded_ctridge_id')
         if self._model.loaded_ctridge_id is None:
-            self._model.update(loaded_ctridge_id=catridge_id)
+            self._model.update(loaded_ctridge_id=cartridge_id)
         else:
             raise QuantosCatridgeLoadedError()
 

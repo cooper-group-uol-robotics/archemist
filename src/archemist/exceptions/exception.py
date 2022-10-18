@@ -27,8 +27,8 @@ class InvalidLiquidError(Error):
         self.message = f'{station_name} station does not contain the specified liquid'
 
 class UsingConsumedCatridgeError(Error):
-    def __init__(self, catridge_id):
-        self.message = f'{catridge_id} is being used while it is consumed catridge'
+    def __init__(self, cartridge_id):
+        self.message = f'{cartridge_id} is being used while it is consumed catridge'
 
 class QuantosCatridgeLoadedError(Error):
     def __init__(self):

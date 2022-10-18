@@ -45,8 +45,8 @@ class QuantosSolidDispenserQS2_Handler(StationHandler):
         rospy.wait_for_message("/Quantos_Done", String)
         self._station.carousel_pos = 20
         #Well 5 exposed to KUKA, unload filed vial
-        catridge_id = self._station.get_catridge_id(current_op.solid_name)
-        self._station.dispense(catridge_id, current_op.dispense_mass)
+        cartridge_id = self._station.get_cartridge_id(current_op.solid_name)
+        self._station.dispense(cartridge_id, current_op.dispense_mass)
 
         current_op.output.has_result = True
         current_op.output.success = True

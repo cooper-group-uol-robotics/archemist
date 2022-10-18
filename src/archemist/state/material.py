@@ -115,7 +115,7 @@ class Liquid(Material):
 
 class SolidMaterialModel(MaterialModel):
     dispense_src = fields.StringField()
-    catridge_id = fields.IntField()
+    cartridge_id = fields.IntField()
 
 class Solid(Material):
     def __init__(self, material_model: SolidMaterialModel) -> None:
@@ -128,7 +128,7 @@ class Solid(Material):
         cls._set_model_common_fields(solid_doct,model)
         model.dispense_src = solid_doct['dispense_src']
         if model.dispense_src == 'quantos':
-            model.catridge_id = solid_doct['catridge_id']
+            model.cartridge_id = solid_doct['cartridge_id']
         if solid_doct['unit'] == 'g':
             unit_modifier = 1
             model.mass = solid_doct['amount_stored']/unit_modifier
@@ -151,8 +151,8 @@ class Solid(Material):
         return self._model.dispense_src
 
     @property
-    def catridge_id(self):
-        return self._model.catridge_id
+    def cartridge_id(self):
+        return self._model.cartridge_id
 
     def __str__(self):
         return f'Solid: {self.name}, Expiry date: {self.expiry_date},\

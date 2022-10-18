@@ -288,7 +288,7 @@ class AllStationsTest(unittest.TestCase):
             'amount_stored': 2,
             'unit': 'g',
             'dispense_src': 'quantos',
-            'catridge_id': 31,
+            'cartridge_id': 31,
             'expiry_date': datetime.fromisoformat('2025-02-11')
         }
         solids_list = []
