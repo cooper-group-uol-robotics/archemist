@@ -17,14 +17,10 @@ class GenericRobot_Handler(RobotHandler):
 
     def execute_job(self):
         self._handled_robot_op = self._robot.assigned_job
-        self._handled_robot_op.robot_op.add_timestamp()
-        print(f'[{self.__class__.__name__}] executing {str(self._handled_robot_op.robot_op)}')
+        self._handled_robot_op.add_start_timestamp()
+        print(f'[{self.__class__.__name__}] executing {str(self._handled_robot_op)}')
         time.sleep(1)
         self._robot.start_job_execution()
 
     def is_job_execution_complete(self):
-        self._handled_robot_op.robot_op.output.has_result = True
-        self._handled_robot_op.robot_op.output.success = True
-        self._handled_robot_op.robot_op.output.add_timestamp()
-        self._handled_robot_op.robot_op.output.executing_robot = str(self._robot)
         return True

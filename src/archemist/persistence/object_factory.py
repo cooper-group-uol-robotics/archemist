@@ -102,4 +102,15 @@ class StationFactory:
             module = importlib.import_module(module_itr.name)
             if hasattr(module,op_dict['type']):
                 cls = getattr(module,op_dict['type'])
-                return cls.from_args(**op_dict['properties'])
+                kwargs = {} if op_dict['properties'] is None else op_dict['properties']
+                return cls.from_args(**kwargs)
+
+    @staticmethod
+    def create_state_machine(station: Station):
+        station_sm_dict = station.process_sm_dict
+        pkg = importlib.import_module('archemist.processing.state_machines')
+        for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+            module = importlib.import_module(module_itr.name)
+            if hasattr(module,station_sm_dict['type']):
+                cls = getattr(module,station_sm_dict['type'])
+                return cls(station, station_sm_dict['args'])

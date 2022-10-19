@@ -20,7 +20,8 @@ if __name__ == '__main__':
 
     try:
         # Construct state from config file
-        pers_manager = PersistenceManager(db_name)
+        host='mongodb://localhost:27017'
+        pers_manager = PersistenceManager(host,db_name)
         state = pers_manager.construct_state_from_config_file(config_file_path)
         # construct the state manager
         wm_manager = WorkflowManager(state)

@@ -1,6 +1,5 @@
 from archemist.persistence.yamlHandler import YamlHandler
 from archemist.persistence.persistenceManager import PersistenceManager
-from archemist.persistence.objectConstructor import ObjectConstructor
 import archemist.processing.robotHandlers
 import archemist.processing.stationHandlers
 import multiprocessing as mp
@@ -11,10 +10,10 @@ import argparse
 
 from collections import namedtuple
 
-HandlerArgs = namedtuple('HandlerArgs', ['db_name','test_mode','type','class_name', 'id'])
+HandlerArgs = namedtuple('HandlerArgs', ['db_host','db_name','test_mode','type','class_name', 'id'])
 
 def run_handler(handler_discriptor: HandlerArgs):
-    p_manager = PersistenceManager(handler_discriptor.db_name)
+    p_manager = PersistenceManager(handler_discriptor.db_host, handler_discriptor.db_name)
     state = p_manager.construct_state_from_db()
     if handler_discriptor.type == 'stn':
         station = state.get_station(handler_discriptor.class_name, handler_discriptor.id)
@@ -66,9 +65,9 @@ if __name__ == '__main__':
     try:
         # get config dict
         config_dict = YamlHandler.loadYamlFile(workflow_config_file_path.absolute())
-
-        handlers_discrptors = [HandlerArgs(db_name, args.test_mode, 'stn', station['class'], station['id']) for station in config_dict['workflow']['Stations']]
-        handlers_discrptors.extend([HandlerArgs(db_name, args.test_mode, 'rob', robot['class'], robot['id']) for robot in config_dict['workflow']['Robots']])
+        host='mongodb://localhost:27017'
+        handlers_discrptors = [HandlerArgs(host,db_name, args.test_mode, 'stn', station['type'], station['id']) for station in config_dict['workflow']['Stations']]
+        handlers_discrptors.extend([HandlerArgs(host,db_name, args.test_mode, 'rob', robot['type'], robot['id']) for robot in config_dict['workflow']['Robots']])
         # launch handlers this assumes the state was constructed from a config file before hand
         procs = [mp.Process(target=run_handler, args=(desciptor,)) for desciptor in handlers_discrptors]
         for proc in procs:

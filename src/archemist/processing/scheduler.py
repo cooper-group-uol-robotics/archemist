@@ -1,4 +1,4 @@
-from archemist.state.robot import RobotTaskType, RobotState, MoveSampleOp
+from archemist.state.robot import RobotTaskType, RobotState
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.state.robots.pandaFranka import PandaFranka
 from archemist.state.state import State
@@ -32,15 +32,15 @@ class SimpleRobotScheduler(RobotScheduler):
                 if robot.operational and robot.state == RobotState.IDLE:
                     robot.assign_job(station_robot_job)
                     job_assigned = True
-            elif isinstance(robot_job, MoveSampleOp):
-                for robot in state.robots:
-                    if robot.state == RobotState.IDLE and isinstance(robot,PandaFranka):
-                        robot.assign_job(station_robot_job)
-                        job_assigned = True
-                        # if robot.location.get_map_coordinates() == robot_job.start_location.get_map_coordinates():
-                        #     if robot_job.start_location.frame_name in robot.saved_frames and robot_job.target_location.frame_name in robot.saved_frames:
-                        #         robot.assign_job(station_robot_job)
-                        #         job_assigned = True
+            # elif isinstance(robot_job, MoveSampleOp):
+            #     for robot in state.robots:
+            #         if robot.state == RobotState.IDLE and isinstance(robot,PandaFranka):
+            #             robot.assign_job(station_robot_job)
+            #             job_assigned = True
+            #             if robot.location.get_map_coordinates() == robot_job.start_location.get_map_coordinates():
+            #                 if robot_job.start_location.frame_name in robot.saved_frames and robot_job.target_location.frame_name in robot.saved_frames:
+            #                     robot.assign_job(station_robot_job)
+            #                     job_assigned = True
             if not job_assigned:
                 unassigned_jobs.append(station_robot_job)
         
@@ -65,37 +65,36 @@ class MultiBatchRobotScheduler(RobotScheduler):
     def schedule(self, job_station_queue: list, state: State):
         unassigned_jobs = list()
         while job_station_queue:
-            station_robot_job = job_station_queue.pop()
+            robot_job = job_station_queue.pop()
             job_assigned = False
-            robot_job = station_robot_job.robot_op
             if isinstance(robot_job, KukaLBRMaintenanceTask):
                 robot = state.get_robot('KukaLBRIIWA',1)
                 if robot.state == RobotState.IDLE:
-                    robot.assign_job(station_robot_job)
+                    robot.assign_job(robot_job)
                     job_assigned = True
             elif isinstance(robot_job, KukaNAVTask):
                 robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
                 if robot.operational and robot.state == RobotState.IDLE:
-                    robot.assign_job(station_robot_job)
+                    robot.assign_job(robot_job)
                     job_assigned = True
             elif isinstance(robot_job, KukaLBRTask):
                 robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
                 if robot.operational and robot.state == RobotState.IDLE:
-                    if robot_job.job_type == RobotTaskType.LOAD_TO_ROBOT: #load to robot if it has capacity and next station is free
+                    if robot_job.task_type == RobotTaskType.LOAD_TO_ROBOT: #load to robot if it has capacity and next station is free
                         if not robot.is_onboard_capacity_full():
-                            if self._is_next_station_free(station_robot_job.batch_id,state):
-                                robot.assign_job(station_robot_job)
+                            if self._is_next_station_free(robot_job.related_batch_id,state):
+                                robot.assign_job(robot_job)
                                 job_assigned = True
-                    elif robot_job.job_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                        if robot.is_batch_onboard(station_robot_job.batch_id):
-                            if self._is_next_station_free(station_robot_job.batch_id,state):
-                                robot.assign_job(station_robot_job)
+                    elif robot_job.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
+                        if robot.is_batch_onboard(robot_job.related_batch_id):
+                            if self._is_next_station_free(robot_job.related_batch_id,state):
+                                robot.assign_job(robot_job)
                                 job_assigned = True
-                    elif robot_job.job_type == RobotTaskType.MANIPULATION:
-                        robot.assign_job(station_robot_job)
+                    elif robot_job.task_type == RobotTaskType.MANIPULATION:
+                        robot.assign_job(robot_job)
                         job_assigned = True
             if not job_assigned:
-                unassigned_jobs.append(station_robot_job)
+                unassigned_jobs.append(robot_job)
         
         job_station_queue.extend(unassigned_jobs)
             

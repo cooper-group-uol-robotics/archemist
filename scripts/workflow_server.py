@@ -6,15 +6,14 @@ from archemist.persistence.yamlHandler import YamlHandler
 from archemist.util.location import Location
 from pathlib import Path
 from datetime import datetime
-from archemist.state.robots.kukaLBRIIWA import KukaNAVTask, KukaLBRMaintenanceTask
-from archemist.state.robot import RobotOutputDescriptor
+from archemist.state.robots.kukaLBRIIWA import KukaLBRMaintenanceTask
 import zmq
 
 if __name__ == '__main__':
     current_dir = Path.cwd()
     server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
     server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
-
+    
     workflow_dir = Path(server_setttings['workflow_dir_path'])
     workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
     recipes_dir_path = workflow_dir.joinpath(f'recipes')
@@ -35,7 +34,8 @@ if __name__ == '__main__':
     socket = context.socket(zmq.PAIR)
     socket.bind('tcp://127.0.0.1:5555')
     # Construct state from config file
-    pers_manager = PersistenceManager(db_name)
+    host='mongodb://localhost:27017'
+    pers_manager = PersistenceManager(host,db_name)
     state = pers_manager.construct_state_from_config_file(workflow_config_file_path)
     # construct the state manager
     wm_manager = WorkflowManager(state)
@@ -92,11 +92,11 @@ if __name__ == '__main__':
                 state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
                 batch_id += 1
             elif msg == 'charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('ChargeRobot',[False,85],RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('ChargeRobot',[False,85]))
             elif msg == 'stop_charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('StopCharge',[False],RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('StopCharge',[False]))
             elif msg == 'resume_app':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask('resumeLBRApp',[False],RobotOutputDescriptor()))
+                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('resumeLBRApp',[False]))
             elif msg == 'terminate':
                 if wm_manager._running:
                     wm_manager.stop_processor()
@@ -106,4 +106,5 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             if wm_manager._running:
                 wm_manager.stop_processor()
+                socket.close()
                 break

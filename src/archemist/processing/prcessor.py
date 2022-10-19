@@ -95,10 +95,9 @@ class WorkflowManager:
                 # process workflow stations
                 for station in self._workflow_state.stations:
                     if station.state == StationState.PROCESSING and station.has_robot_job():
-                        #TODO change tuple to StationRobotJob
-                        station_robot_job = station.get_robot_job()
-                        self._log_processor(f'{station_robot_job.robot_op} is added to robot scheduling queue.')
-                        self._job_station_queue.append(station_robot_job)
+                        robot_job = station.get_robot_job()
+                        self._log_processor(f'{robot_job} is added to robot scheduling queue.')
+                        self._job_station_queue.append(robot_job)
                     elif station.has_processed_batch():
                         processed_batch = station.get_processed_batch()
                         processed_batch.recipe.advance_state(True)
@@ -108,18 +107,18 @@ class WorkflowManager:
             # process workflow robots
             for robot in self._workflow_state.robots:
                 if robot.has_complete_job():
-                    station_robot_job = robot.get_complete_job()
-                    self._log_processor(f'{robot} finished executing job {station_robot_job.robot_op}')
+                    robot_job = robot.get_complete_job()
+                    self._log_processor(f'{robot} finished executing job {robot_job}')
                     # todo check the robot job matches
-                    if station_robot_job.station_obj_id is not None:
-                        station_to_notify = self._workflow_state.get_station(station_robot_job.station_obj_id)
+                    if robot_job.origin_station is not None:
+                        station_to_notify = self._workflow_state.get_station(robot_job.origin_station)
                         self._log_processor(f'Notifying {station_to_notify}')
-                        station_to_notify.finish_robot_job(station_robot_job.robot_op)
+                        station_to_notify.finish_robot_job(robot_job)
 
             if self._job_station_queue:
                 self._robot_scheduler.schedule(self._job_station_queue, self._workflow_state)
             
-            sleep(5)
+            sleep(2)
 
     def _log_processor(self, message:str):
         print(f'[{self}]: {message}')

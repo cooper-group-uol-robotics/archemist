@@ -1,4 +1,4 @@
-from archemist.state.robot import Robot, MoveSampleOp
+from archemist.state.robot import Robot, RobotTaskOpDescriptor
 import rospy
 from franka_msgs_archemist.msg import PandaTask, TaskStatus
 from archemist.processing.handler import RobotHandler
@@ -35,9 +35,9 @@ class PandaFranka_Handler(RobotHandler):
         self._panda_done = False
 
     def _process_op(self, robotOp):
-        if isinstance(robotOp, MoveSampleOp):
-            return PandaTask(task_name=f'{robotOp.task_name}', task_seq=self._task_counter,
-                             task_parameters=[str(robotOp.sample_index)])
+        if isinstance(robotOp, RobotTaskOpDescriptor):
+            return PandaTask(task_name=f'{robotOp.name}', task_seq=self._task_counter,
+                             task_parameters=[str(param) for param in robotOp.params])
         else:
             rospy.logerr('unknown robot op')    
         return None
