@@ -60,10 +60,12 @@ class SampleColorOpDescriptor(StationOpDescriptor):
             self._model.result_filename = kwargs['result_filename']
         else:
             print('missing result_file!!')
-        self._model.red_intensity = kwargs['red_intensity']
-        self._model.green_intensity = kwargs['green_intensity']
-        self._model.blue_intensity = kwargs['blue_intensity']
-
+        if all(karg in kwargs for karg in ['red_intensity','green_intensity','blue_intensity']):
+            self._model.red_intensity = kwargs['red_intensity']
+            self._model.green_intensity = kwargs['green_intensity']
+            self._model.blue_intensity = kwargs['blue_intensity']
+        else:
+            print('missing one or all color intensity values')
     
     
 

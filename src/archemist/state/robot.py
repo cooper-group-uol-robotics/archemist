@@ -89,7 +89,7 @@ class RobotOpDescriptor:
 class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
     task_type = fields.EnumField(RobotTaskType, required=True)
-    parameters = fields.ListField(fields.StringField(), default=True)
+    params = fields.ListField(fields.StringField(), default=True)
     location = fields.DictField()
 
 class RobotTaskOpDescriptor(RobotOpDescriptor):
@@ -97,14 +97,14 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, parametrs: List[str]=[], 
+    def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, params: List[str]=[], 
                     location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
         model = RobotTaskOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
         model.name = name
         model.task_type = type
-        model.parameters = parametrs
+        model.params = [str(param) for param in params]
         model.location = location.to_dict() if location is not None else None
         model.origin_station = origin_station if origin_station is not None else None
         model.related_batch_id = related_batch_id if related_batch_id is not None else None
@@ -120,7 +120,7 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
 
     @property
     def params(self):
-        return self._model.parameters
+        return self._model.params
 
     @property
     def location(self):
@@ -238,7 +238,7 @@ class Robot:
         self._model.reload('complete_job')
         return self._model.complete_job is not None
 
-    def get_complete_job(self) -> Any:
+    def get_complete_job(self) -> RobotOpDescriptor:
         if self.has_complete_job():
             complete_op = RobotFactory.create_op_from_model(self._model.complete_job)
             self._model.update(unset__complete_job=True)

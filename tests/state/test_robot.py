@@ -30,7 +30,7 @@ class RobotTest(unittest.TestCase):
         # assign job
         self.assertEqual(t_robot.robot_job_history, [])
         stn_obj_id  = ObjectId('0123456789ab0123456789ab')
-        robot_job = KukaLBRTask.from_args(name='test_job', parametrs=['False','1'],related_batch_id=32,
+        robot_job = KukaLBRTask.from_args(name='test_job', params=['False','1'],related_batch_id=32,
                     type=RobotTaskType.LOAD_TO_ROBOT, location=Location(node_id=1, graph_id=7), 
                     origin_station=stn_obj_id)
         t_robot.assign_job(robot_job)

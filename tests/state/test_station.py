@@ -109,7 +109,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(t_station.has_robot_job())
         self.assertTrue(t_station.get_robot_job() is None)
 
-        robot_op = RobotTaskOpDescriptor.from_args('test_task', parametrs=['False','1'])
+        robot_op = RobotTaskOpDescriptor.from_args('test_task', params=['False','1'])
         t_station.set_robot_job(robot_op, current_batch_id=31)
         self.assertTrue(t_station.has_robot_job())
         ret_robot_job = t_station.get_robot_job()
