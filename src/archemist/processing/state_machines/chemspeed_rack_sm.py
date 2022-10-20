@@ -43,14 +43,14 @@ class ChemSpeedRackSm(BaseSm):
         # open chemspeed door
         self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_station_job_ready')
 
-        # load all racks into the chemspeed
+        # load all batches into the chemspeed
         self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='load_batch', unless='is_station_operation_complete' ,conditions='is_station_job_ready')
         # self.machine.add_transition('process_state_transitions', source='load_batch',dest='=', unless='are_all_batches_loaded', conditions='is_station_job_ready', before='update_batch_loc_to_station')
         self.machine.add_transition('process_state_transitions', source='load_batch',dest='added_batch_update', conditions='is_station_job_ready')
         self.machine.add_transition('process_state_transitions', source='added_batch_update',dest='load_batch', unless='are_all_batches_loaded', conditions='is_station_job_ready')
 
 
-        # close door after loading rack
+        # close door after loading batch
         # self.machine.add_transition('process_state_transitions', source='load_batch',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_loaded'], before='update_batch_loc_to_station')
         self.machine.add_transition('process_state_transitions', source='added_batch_update',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_loaded'])
 

@@ -127,8 +127,8 @@ class Batch:
         return self._model.current_sample_index
 
     def get_current_sample(self) -> Sample:
-        self._model.reload('samples')
         current_index = self.current_sample_index
+        self._model.reload('samples')
         return Sample(self._model.samples[current_index])
 
     def get_samples_list(self) -> List[Sample]:
