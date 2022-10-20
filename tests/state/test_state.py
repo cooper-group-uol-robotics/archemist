@@ -23,6 +23,7 @@ class StateTest(unittest.TestCase):
         string_id_station = state.get_station('FisherWeightingStation', 5)
         self.assertEqual(string_id_station.__class__.__name__, 'FisherWeightingStation')
         self.assertEqual(string_id_station.id, 5)
+        string_id_station = state.get_station('ChemSpeedFlexStation', 9)
         self.assertEqual(stations[1].__class__.__name__, 'ChemSpeedFlexStation')
         self.assertEqual(stations[1].id, 9)
         self.assertEqual(stations[2].__class__.__name__, 'IkaPlateRCTDigital')
@@ -85,33 +86,37 @@ class StateTest(unittest.TestCase):
         batches = state.batches
         self.assertEqual(len(batches), 2)
 
-    # def test_state_db(self):
-    #     pm = PersistenceManager('test')
-    #     state = pm.construct_state_from_db()
+    def test_state_db(self):
+        host = 'mongodb://localhost:27017'
+        pm = PersistenceManager(host,'archemist_test')
+        state = pm.construct_state_from_db()
 
-    #     stations = state.stations
-    #     self.assertEqual(len(stations), 4)
-    #     self.assertEqual(stations[0].__class__.__name__, 'PeristalticLiquidDispensing')
-    #     self.assertEqual(stations[0].id, 23)
-    #     self.assertEqual(stations[1].__class__.__name__, 'IkaPlateRCTDigital')
-    #     self.assertEqual(stations[1].id, 2)
-    #     self.assertEqual(stations[2].__class__.__name__, 'FisherWeightingStation')
-    #     self.assertEqual(stations[2].id, 5)
+        stations = state.stations
+        self.assertEqual(len(stations), 4)
+        self.assertEqual(stations[0].__class__.__name__, 'FisherWeightingStation')
+        self.assertEqual(stations[0].id, 5)
+        self.assertEqual(stations[1].__class__.__name__, 'ChemSpeedFlexStation')
+        self.assertEqual(stations[1].id, 9)
+        self.assertEqual(stations[2].__class__.__name__, 'IkaPlateRCTDigital')
+        self.assertEqual(stations[2].id, 2)
+        string_id_station = state.get_station('ChemSpeedFlexStation', 9)
+        self.assertEqual(string_id_station.__class__.__name__, 'ChemSpeedFlexStation')
+        self.assertEqual(string_id_station.id, 9)
 
-    #     robots = state.robots
-    #     self.assertEqual(len(robots), 2)
-    #     self.assertEqual(robots[0].__class__.__name__, 'PandaFranka')
-    #     self.assertEqual(robots[0].id, 99)
+        robots = state.robots
+        self.assertEqual(len(robots), 2)
+        self.assertEqual(robots[0].__class__.__name__, 'PandaFranka')
+        self.assertEqual(robots[0].id, 99)
 
-    #     liquids = state.liquids
-    #     self.assertEqual(len(liquids), 1)
-    #     self.assertEqual(liquids[0].name, 'water')
-    #     self.assertEqual(liquids[0].id, 145)
+        liquids = state.liquids
+        self.assertEqual(len(liquids), 1)
+        self.assertEqual(liquids[0].name, 'water')
+        self.assertEqual(liquids[0].id, 145)
 
-    #     solids = state.solids
-    #     self.assertEqual(len(solids), 1)
-    #     self.assertEqual(solids[0].name, 'sodium_chloride')
-    #     self.assertEqual(solids[0].id, 345)
+        solids = state.solids
+        self.assertEqual(len(solids), 1)
+        self.assertEqual(solids[0].name, 'sodium_chloride')
+        self.assertEqual(solids[0].id, 345)
 
 
 if __name__ == '__main__':

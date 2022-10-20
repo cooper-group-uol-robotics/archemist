@@ -1,3 +1,4 @@
+import importlib
 from archemist.persistence.yamlHandler import YamlHandler
 from archemist.persistence.persistenceManager import PersistenceManager
 import archemist.processing.robotHandlers
@@ -35,7 +36,8 @@ def construct_robot_handler(robot):
     return handler_cls(robot)
 
 def construct_robot_test_handler(robot):
-    handler_cls = getattr(archemist.processing.robotHandlers, 'GenericRobot_Handler')
+    pkg = importlib.import_module('archemist.processing.robotHandlers.genericRobot_handler')
+    handler_cls = getattr(pkg, 'GenericRobot_Handler')
     return handler_cls(robot) 
 
 def construct_station_handler(station):
@@ -44,7 +46,8 @@ def construct_station_handler(station):
     return handler_cls(station)
 
 def construct_station_test_handler(station):
-    handler_cls = getattr(archemist.processing.stationHandlers, 'GenericStation_Handler')
+    pkg = importlib.import_module('archemist.processing.stationHandlers.GenericStation_Handler')
+    handler_cls = getattr(pkg, 'GenericStation_Handler')
     return handler_cls(station)
 
 if __name__ == '__main__':

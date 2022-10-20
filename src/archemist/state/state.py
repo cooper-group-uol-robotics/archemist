@@ -8,11 +8,20 @@ from archemist.state.material import Liquid,LiquidMaterialModel,SolidMaterialMod
 from archemist.state.batch import BatchModel,Batch
 from archemist.state.recipe import RecipeModel
 from archemist.persistence.object_factory import RobotFactory,StationFactory
+import importlib
+import pkgutil
 
 
 class State:
     def __init__(self):
-        pass
+        # to load all the derived modes for the station and robot queries to work
+        pkg = importlib.import_module('archemist.state.stations')
+        for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+            importlib.import_module(module_itr.name)
+
+        pkg = importlib.import_module('archemist.state.robots')
+        for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+            importlib.import_module(module_itr.name)
     
     @property
     def liquids(self) -> List[Liquid]:

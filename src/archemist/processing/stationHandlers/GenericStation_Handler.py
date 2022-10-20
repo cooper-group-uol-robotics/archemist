@@ -8,12 +8,10 @@ class GenericStation_Handler(StationHandler):
 
     def process(self):
         current_op = self._station.get_station_op()
-        current_op.add_timestamp()   
+        current_op.add_start_timestamp()   
         print(f'performing operation {current_op}')    
         time.sleep(1) 
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
+        current_op.complete_op(True)
 
         return current_op
 
