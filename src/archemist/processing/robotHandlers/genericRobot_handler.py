@@ -16,7 +16,7 @@ class GenericRobot_Handler(RobotHandler):
             print(f'{self._robot}_handler is terminating!!!')
 
     def execute_job(self):
-        self._handled_robot_op = self._robot.assigned_job
+        self._handled_robot_op = self._robot.get_assigned_op()
         self._handled_robot_op.add_start_timestamp()
         print(f'[{self.__class__.__name__}] executing {str(self._handled_robot_op)}')
         time.sleep(1)

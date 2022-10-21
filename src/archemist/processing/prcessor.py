@@ -94,8 +94,8 @@ class WorkflowManager:
 
                 # process workflow stations
                 for station in self._workflow_state.stations:
-                    if station.state == StationState.PROCESSING and station.has_robot_job():
-                        robot_job = station.get_robot_job()
+                    if station.state == StationState.PROCESSING and station.has_requested_robot_op():
+                        robot_job = station.get_requested_robot_op()
                         self._log_processor(f'{robot_job} is added to robot scheduling queue.')
                         self._job_station_queue.append(robot_job)
                     elif station.has_processed_batch():
@@ -106,14 +106,14 @@ class WorkflowManager:
 
             # process workflow robots
             for robot in self._workflow_state.robots:
-                if robot.has_complete_job():
-                    robot_job = robot.get_complete_job()
+                if robot.is_assigned_op_complete():
+                    robot_job = robot.get_complete_op()
                     self._log_processor(f'{robot} finished executing job {robot_job}')
                     # todo check the robot job matches
                     if robot_job.origin_station is not None:
                         station_to_notify = self._workflow_state.get_station(robot_job.origin_station)
                         self._log_processor(f'Notifying {station_to_notify}')
-                        station_to_notify.finish_robot_job(robot_job)
+                        station_to_notify.complete_robot_op_request(robot_job)
 
             if self._job_station_queue:
                 self._robot_scheduler.schedule(self._job_station_queue, self._workflow_state)

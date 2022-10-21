@@ -149,15 +149,15 @@ class QuantosSolidDispenserQS2(Station):
         else:
             self._log_station(f'Current catridge {current_catridge.id} is either consumed or blocked. Cannot Dispense solid!!!')
 
-    def finish_station_op(self, success: bool, **kwargs):
-        current_op = self.get_station_op()
+    def complete_assigned_station_op(self, success: bool, **kwargs):
+        current_op = self.get_assigned_station_op()
         if isinstance(current_op, QuantosDispenseOpDescriptor):
             if success and current_op.solid_name == self.current_catridge.associated_solid.name:
                 if 'actual_dispensed_mass' in kwargs:
                     self.dispense(kwargs['actual_dispensed_mass'])
                 else:
                     self.dispense(current_op.dispense_mass)
-        super().finish_station_op(success, **kwargs)
+        super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
 class QuantosDispenseOpDescriptorModel(StationOpDescriptorModel):

@@ -28,34 +28,34 @@ class RobotTest(unittest.TestCase):
 
         # Robot job
         # assign job
-        self.assertEqual(t_robot.robot_job_history, [])
+        self.assertEqual(t_robot.robot_op_history, [])
         stn_obj_id  = ObjectId('0123456789ab0123456789ab')
         robot_job = KukaLBRTask.from_args(name='test_job', params=['False','1'],related_batch_id=32,
                     type=RobotTaskType.LOAD_TO_ROBOT, location=Location(node_id=1, graph_id=7), 
                     origin_station=stn_obj_id)
-        t_robot.assign_job(robot_job)
+        t_robot.assign_op(robot_job)
         self.assertEqual(t_robot.state, RobotState.JOB_ASSIGNED)
-        assigned_job = t_robot.assigned_job
+        assigned_job = t_robot.get_assigned_op()
         self.assertTrue(assigned_job is not None)
         self.assertEqual(assigned_job.name, robot_job.name)
         self.assertEqual(assigned_job.location, robot_job.location)
         self.assertEqual(assigned_job.origin_station, robot_job.origin_station)
         with self.assertRaises(RobotAssignedRackError):
-            t_robot.assign_job(robot_job)
+            t_robot.assign_op(robot_job)
         # start executing
         t_robot.start_job_execution()
         self.assertEqual(t_robot.state, RobotState.EXECUTING_JOB)
         # complete robot job
-        self.assertFalse(t_robot.has_complete_job())
-        t_robot.complete_assigned_job(True)
-        self.assertTrue(t_robot.assigned_job is None)
+        self.assertFalse(t_robot.is_assigned_op_complete())
+        t_robot.complete_assigned_op(True)
+        self.assertFalse(t_robot.has_assigned_op())
         self.assertEqual(t_robot.state, RobotState.EXECUTION_COMPLETE)
-        self.assertTrue(t_robot.has_complete_job())
+        self.assertTrue(t_robot.is_assigned_op_complete())
 
         # retrieve robot job
-        ret_job = t_robot.get_complete_job()
+        ret_job = t_robot.get_complete_op()
         self.assertEqual(t_robot.state, RobotState.IDLE)
-        self.assertFalse(t_robot.has_complete_job())
+        self.assertFalse(t_robot.is_assigned_op_complete())
         self.assertEqual(len(t_robot.onboard_batches),1)
         self.assertEqual(t_robot.onboard_batches[0],32)
         self.assertEqual(ret_job.name, robot_job.name)
@@ -64,7 +64,7 @@ class RobotTest(unittest.TestCase):
         self.assertTrue(ret_job.has_result)
         self.assertTrue(ret_job.was_successful)
 
-        history = t_robot.robot_job_history
+        history = t_robot.robot_op_history
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].name, robot_job.name)
         self.assertEqual(history[0].location, robot_job.location)

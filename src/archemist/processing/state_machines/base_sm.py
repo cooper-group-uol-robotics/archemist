@@ -13,7 +13,7 @@ class BaseSm:
         return not self._station.has_free_batch_capacity()
 
     def is_station_job_ready(self) -> bool:
-        return not self._station.has_station_op() and not self._station.has_robot_job()
+        return not self._station.has_assigned_station_op() and not self._station.has_requested_robot_op()
 
     def are_all_batches_loaded(self):
         return self._current_batches_count == self._station.batch_capacity

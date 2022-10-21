@@ -76,7 +76,7 @@ class StationLoadingSm(BaseSm):
         self.machine.add_transition('process_state_transitions',source='removed_batch_update',dest='final_state', conditions=['is_station_job_ready','are_all_batches_processed'], before='reset_batches')
 
     def is_station_job_ready(self):
-        return not self._station.has_station_op() and not self._station.has_robot_job()
+        return not self._station.has_assigned_station_op() and not self._station.has_requested_robot_op()
 
     def are_all_samples_loaded(self):
         return self._currently_loaded_samples == self._station.assigned_batches[self._current_batch_index].num_samples
@@ -106,31 +106,31 @@ class StationLoadingSm(BaseSm):
         sample_index = self._currently_loaded_samples
         robot_job = (RobotTaskOpDescriptor.from_args(name=self._sample_load_task, params=[sample_index]))
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
 
     def request_load_batch(self):
         robot_job = (KukaLBRTask.from_args(name=self._batch_load_task,params=[False,self._current_batch_index],
                                     type=RobotTaskType.UNLOAD_FROM_ROBOT,location=self._station.location))
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_unload_batch_job(self):
         robot_job = (KukaLBRTask.from_args(name=self._batch_unload_task,params=[False,self._current_batch_index],
                                     type=RobotTaskType.UNLOAD_FROM_ROBOT,location=self._station.location))
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_operation(self):
         current_op_dict = self._station.assigned_batches[self._current_batch_index].recipe.get_current_task_op_dict()
         current_op = StationFactory.create_op_from_dict(current_op_dict)
-        self._station.set_station_op(current_op)
+        self._station.assign_station_op(current_op)
 
     def request_unload_sample_job(self):
         sample_index = self._currently_loaded_samples
         robot_job = (RobotTaskOpDescriptor.from_args(name=self._sample_unload_task, params=[sample_index]))
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def update_sample_addition(self):
         self._currently_loaded_samples += 1

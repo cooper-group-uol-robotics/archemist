@@ -56,15 +56,15 @@ class PeristalticLiquidDispensing(Station):
         pump_id = self.get_pump_id(liquid_nam)
         self.reduce_pump_liquid_level(pump_id, dispensed_volume)
 
-    def finish_station_op(self, success: bool, **kwargs):
-        current_op = self.get_station_op()
+    def complete_assigned_station_op(self, success: bool, **kwargs):
+        current_op = self.get_assigned_station_op()
         if isinstance(current_op, PeristalticPumpOpDescriptor):
             if success:
                 if 'actual_dispensed_volume' in kwargs:
                     self.dispense_liquid(current_op.liquid_name, kwargs['actual_dispensed_volume'])
                 else:
                     self.dispense(current_op.liquid_name, current_op.dispense_volume)
-        super().finish_station_op(success, **kwargs)
+        super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
 

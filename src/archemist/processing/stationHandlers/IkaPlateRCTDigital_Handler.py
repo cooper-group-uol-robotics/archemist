@@ -26,7 +26,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
     def process(self):
-        current_op = self._station.get_station_op()
+        current_op = self._station.get_assigned_station_op()
         current_op.add_timestamp()
         if (current_op.mode == IKAMode.HEATING):
             print("heating")

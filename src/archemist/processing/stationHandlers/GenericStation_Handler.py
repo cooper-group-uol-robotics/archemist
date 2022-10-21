@@ -7,7 +7,7 @@ class GenericStation_Handler(StationHandler):
         super().__init__(station)
 
     def process(self):
-        current_op = self._station.get_station_op()
+        current_op = self._station.get_assigned_station_op()
         current_op.add_start_timestamp()   
         print(f'performing operation {current_op}')    
         time.sleep(1) 

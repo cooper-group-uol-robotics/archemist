@@ -32,7 +32,7 @@ class OutputStationSm(BaseSm):
         robot_job = KukaLBRTask.from_args(name='PlaceRack',params=[False,self._current_batch_index+1],
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()

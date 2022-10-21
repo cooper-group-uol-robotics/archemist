@@ -61,7 +61,7 @@ class LightBoxSM(BaseSm):
         robot_job = KukaLBRTask.from_args(name='PresentVial',params=[perform_6p,self._current_batch_index+1,sample_index,allow_auto_func],
                                         type=RobotTaskType.MANIPULATION, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_unload_sample_job(self):
         sample_index = self._currently_loaded_samples
@@ -73,7 +73,7 @@ class LightBoxSM(BaseSm):
         robot_job = KukaLBRTask.from_args(name='ReturnVial',params=[perform_6p,self._current_batch_index+1,sample_index,allow_auto_func],
                                             type=RobotTaskType.MANIPULATION, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_batch_index_update(self):
         self._current_batch_index += 1
@@ -86,7 +86,7 @@ class LightBoxSM(BaseSm):
         self.to_init_state()
         
     def request_process_data_job(self):
-        self._station.set_station_op(SampleColorOpDescriptor.from_args())
+        self._station.assign_station_op(SampleColorOpDescriptor.from_args())
 
     def process_sample(self):
         last_operation_op = self._station.station_op_history[-1]

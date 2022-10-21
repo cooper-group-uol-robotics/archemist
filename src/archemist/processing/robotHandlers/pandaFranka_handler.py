@@ -43,7 +43,7 @@ class PandaFranka_Handler(RobotHandler):
         return None
 
     def execute_job(self):
-        station_robot_job = self._robot.assigned_job
+        station_robot_job = self._robot.get_assigned_op()
         station_robot_job.robot_op.add_timestamp()
         # this has to be changed to convert vial job to a good message to panda
         pandaJob = self._process_op(station_robot_job.robot_op)

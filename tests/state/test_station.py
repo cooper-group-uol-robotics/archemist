@@ -106,13 +106,13 @@ class StationTest(unittest.TestCase):
 
         # Robot Job
         self.assertEqual(len(t_station.requested_robot_op_history), 0)
-        self.assertFalse(t_station.has_robot_job())
-        self.assertTrue(t_station.get_robot_job() is None)
+        self.assertFalse(t_station.has_requested_robot_op())
+        self.assertTrue(t_station.get_requested_robot_op() is None)
 
         robot_op = RobotTaskOpDescriptor.from_args('test_task', params=['False','1'])
-        t_station.set_robot_job(robot_op, current_batch_id=31)
-        self.assertTrue(t_station.has_robot_job())
-        ret_robot_job = t_station.get_robot_job()
+        t_station.request_robot_op(robot_op, current_batch_id=31)
+        self.assertTrue(t_station.has_requested_robot_op())
+        ret_robot_job = t_station.get_requested_robot_op()
         self.assertTrue(ret_robot_job is not None)
         self.assertEqual(robot_op.name, ret_robot_job.name)
         self.assertEqual(robot_op.params, ret_robot_job.params)
@@ -121,34 +121,34 @@ class StationTest(unittest.TestCase):
         self.assertEqual(ret_robot_job.task_type, RobotTaskType.MANIPULATION)
         self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
 
-        t_station.finish_robot_job(robot_op)
+        t_station.complete_robot_op_request(robot_op)
         self.assertEqual(t_station.state, StationState.PROCESSING)
-        self.assertFalse(t_station.has_robot_job())
+        self.assertFalse(t_station.has_requested_robot_op())
         self.assertEqual(len(t_station.requested_robot_op_history), 1)
 
         # Station op
         self.assertEqual(len(t_station.station_op_history), 0)
-        self.assertFalse(t_station.has_station_op())
+        self.assertFalse(t_station.has_assigned_station_op())
         self.assertEqual(t_station.state,StationState.PROCESSING)
         station_op1 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.01)
-        t_station.set_station_op(station_op1)
-        self.assertTrue(t_station.has_station_op())
+        t_station.assign_station_op(station_op1)
+        self.assertTrue(t_station.has_assigned_station_op())
         self.assertEqual(t_station.state,StationState.WAITING_ON_OPERATION)
         
-        current_op = t_station.get_station_op()
+        current_op = t_station.get_assigned_station_op()
         self.assertEqual(current_op.liquid_name, station_op1.liquid_name)
         self.assertEqual(current_op.dispense_volume, station_op1.dispense_volume)
-        t_station.finish_station_op(success=True, actual_dispensed_volume=0.011)
-        self.assertFalse(t_station.has_station_op())
+        t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.011)
+        self.assertFalse(t_station.has_assigned_station_op())
         self.assertEqual(t_station.state,StationState.PROCESSING)
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 1)
         
 
         station_op2 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.005)
-        t_station.set_station_op(station_op2)
-        self.assertTrue(t_station.has_station_op())
-        t_station.finish_station_op(success=True, actual_dispensed_volume=0.0051)
+        t_station.assign_station_op(station_op2)
+        self.assertTrue(t_station.has_assigned_station_op())
+        t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.0051)
 
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 2)

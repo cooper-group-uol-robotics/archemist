@@ -106,7 +106,7 @@ class IkaPlateRCTDigital(Station):
     def mode(self, new_mode: IKAMode):
         self._model.update(mode=new_mode)
 
-    def set_station_op(self, stationOp: Any):
+    def assign_station_op(self, stationOp: Any):
         if isinstance(stationOp, IKAHeatingStirringOpDescriptor):
             self.target_temperature = stationOp.target_temperature
             self.target_stirring_speed = stationOp.target_stirring_speed
@@ -120,14 +120,14 @@ class IkaPlateRCTDigital(Station):
             self.target_stirring_speed = stationOp.target_stirring_speed
             self.target_duration = stationOp.target_duration
             self.mode = IKAMode.STIRRING
-        super().set_station_op(stationOp)
+        super().assign_station_op(stationOp)
 
-    def finish_station_op(self, success: bool, **kwargs):
+    def complete_assigned_station_op(self, success: bool, **kwargs):
         self._model.update(unset__target_temperature=True)
         self._model.update(unset__target_stirring_speed=True)
         self._model.update(unset__target_duration=True)
         self._model.update(unset__mode=True)
-        super().finish_station_op(success, **kwargs)
+        super().complete_assigned_station_op(success, **kwargs)
 
 
 ''' ==== Station Operation Descriptors ==== '''

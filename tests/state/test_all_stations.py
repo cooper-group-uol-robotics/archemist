@@ -37,9 +37,9 @@ class AllStationsTest(unittest.TestCase):
         self.assertFalse(t_op.has_result)
         self.assertIsNone(t_op.weight)
         
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True, weight=1.2)
+        t_station.complete_assigned_station_op(True, weight=1.2)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -68,12 +68,12 @@ class AllStationsTest(unittest.TestCase):
         t_op = IKAStirringOpDescriptor.from_args(stirring_speed=500, duration=10)
         self.assertFalse(t_op.has_result)
         
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
         self.assertTrue(t_station.mode, IKAMode.STIRRING)
         self.assertTrue(t_station.target_stirring_speed, 500)
         self.assertTrue(t_station.target_duration, 10)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -85,12 +85,12 @@ class AllStationsTest(unittest.TestCase):
         t_op = IKAHeatingOpDescriptor.from_args(temperature=140, duration=10)
         self.assertFalse(t_op.has_result)
         
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
         self.assertTrue(t_station.mode, IKAMode.HEATING)
         self.assertTrue(t_station.target_temperature, 140)
         self.assertTrue(t_station.target_duration, 10)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[1]
         self.assertTrue(ret_op.has_result)
@@ -102,13 +102,13 @@ class AllStationsTest(unittest.TestCase):
         t_op = IKAHeatingStirringOpDescriptor.from_args(temperature=140, stirring_speed=500, duration=10)
         self.assertFalse(t_op.has_result)
         
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
         self.assertTrue(t_station.mode, IKAMode.HEATINGSTIRRING)
         self.assertTrue(t_station.target_temperature, 140)
         self.assertTrue(t_station.target_stirring_speed, 500)
         self.assertTrue(t_station.target_duration, 10)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[2]
         self.assertTrue(ret_op.has_result)
@@ -140,9 +140,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = CSOpenDoorOpDescriptor.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         self.assertTrue(t_station.status, ChemSpeedStatus.DOORS_OPEN)
         ret_op = t_station.station_op_history[0]
@@ -151,9 +151,9 @@ class AllStationsTest(unittest.TestCase):
 
         t_op = CSCloseDoorOpDescriptor.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         self.assertTrue(t_station.status, ChemSpeedStatus.DOORS_CLOSED)
         ret_op = t_station.station_op_history[1]
@@ -162,10 +162,10 @@ class AllStationsTest(unittest.TestCase):
 
         t_op = CSCSVJobOpDescriptor.from_args(csv_string='1,2,3\n4,5,6\n')
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
         self.assertTrue(t_station.status, ChemSpeedStatus.RUNNING_JOB)
-        t_station.finish_station_op(True, result_file='file.test')
+        t_station.complete_assigned_station_op(True, result_file='file.test')
         self.assertEqual(t_station.state, StationState.PROCESSING)
         self.assertTrue(t_station.status, ChemSpeedStatus.JOB_COMPLETE)
         ret_op = t_station.station_op_history[2]
@@ -195,9 +195,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = InputStationPickupOp.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -224,9 +224,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = OutputStationPlaceOp.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True)
+        t_station.complete_assigned_station_op(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -253,9 +253,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = SampleColorOpDescriptor.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True, result_filename='file.test', red_intensity=255, 
+        t_station.complete_assigned_station_op(True, result_filename='file.test', red_intensity=255, 
                                     green_intensity=125, blue_intensity=0)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
@@ -310,9 +310,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = QuantosDispenseOpDescriptor.from_args(solid_name='salt',dispense_mass=1.2)
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True, actual_dispensed_mass=1.193)
+        t_station.complete_assigned_station_op(True, actual_dispensed_mass=1.193)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -364,9 +364,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = PeristalticPumpOpDescriptor.from_args(liquid_name='water',dispense_volume=100)
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True, actual_dispensed_volume=199)
+        t_station.complete_assigned_station_op(True, actual_dispensed_volume=199)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
@@ -397,9 +397,9 @@ class AllStationsTest(unittest.TestCase):
         # construct station ops
         t_op = SolubilityOpDescriptor.from_args()
         self.assertFalse(t_op.has_result)
-        t_station.set_station_op(t_op)
+        t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
-        t_station.finish_station_op(True, turbidity_state=TurbidityState.DISSOLVED)
+        t_station.complete_assigned_station_op(True, turbidity_state=TurbidityState.DISSOLVED)
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)

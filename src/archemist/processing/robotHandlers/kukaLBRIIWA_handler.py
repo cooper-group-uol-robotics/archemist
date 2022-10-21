@@ -111,7 +111,7 @@ class KukaLBRIIWA_Handler(RobotHandler):
         pass
 
     def execute_job(self):
-        self._handled_robot_op = self._robot.assigned_job
+        self._handled_robot_op = self._robot.get_assigned_op()
         self._handled_robot_op.robot_op.add_timestamp()
         
         self._kmr_task, self._lbr_task = self._process_kmriiwa_task_op(self._handled_robot_op.robot_op)

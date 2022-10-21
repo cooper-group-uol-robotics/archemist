@@ -72,7 +72,7 @@ class StationModel(Document):
     assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     requested_robot_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel,null=True)
-    current_station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel,null=True)
+    assigned_station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel,null=True)
     station_op_history = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
     requested_robot_op_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
 
@@ -206,49 +206,49 @@ class Station:
                 self._update_state(StationState.IDLE)
             return batch
 
-    def has_robot_job(self) -> bool:
+    def has_requested_robot_op(self) -> bool:
         self._model.reload('requested_robot_op')
         return self._model.requested_robot_op is not None
     
-    def get_robot_job(self) -> RobotOpDescriptor:
-        if self.has_robot_job():
+    def get_requested_robot_op(self) -> RobotOpDescriptor:
+        if self.has_requested_robot_op():
             robot_op = RobotFactory.create_op_from_model(self._model.requested_robot_op)
             self._log_station(f'Robot job request for ({robot_op}) is retrieved.')
             self._update_state(StationState.WAITING_ON_ROBOT)
             return robot_op
 
-    def set_robot_job(self, robot_job: RobotOpDescriptor, current_batch_id = -1):
+    def request_robot_op(self, robot_job: RobotOpDescriptor, current_batch_id = -1):
         if current_batch_id != -1:
             robot_job.related_batch_id = current_batch_id
         robot_job.origin_station = self._model.id
         self._model.update(requested_robot_op=robot_job.model)
         self._log_station(f'Requesting robot job ({robot_job})')
 
-    def finish_robot_job(self, complete_robot_op: RobotOpDescriptor):
+    def complete_robot_op_request(self, complete_robot_op: RobotOpDescriptor):
         self._model.update(unset__requested_robot_op=True)
         self._model.update(push__requested_robot_op_history=complete_robot_op.model)
         self._log_station(f'Robot job request is fulfilled.')
         self._update_state(StationState.PROCESSING)
 
-    def has_station_op(self):
-        self._model.reload('current_station_op')
-        return self._model.current_station_op is not None
+    def has_assigned_station_op(self):
+        self._model.reload('assigned_station_op')
+        return self._model.assigned_station_op is not None
 
-    def get_station_op(self):
-        if self.has_station_op():
-            return StationFactory.create_op_from_model(self._model.current_station_op)
+    def get_assigned_station_op(self):
+        if self.has_assigned_station_op():
+            return StationFactory.create_op_from_model(self._model.assigned_station_op)
 
-    def set_station_op(self, station_op: StationOpDescriptor):
-        self._model.update(current_station_op=station_op.model)
+    def assign_station_op(self, station_op: StationOpDescriptor):
+        self._model.update(assigned_station_op=station_op.model)
         self._update_state(StationState.WAITING_ON_OPERATION)
         self._log_station(f'Requesting station job ({station_op})')
         
 
-    def finish_station_op(self, success: bool, **kwargs):
-        self._model.reload('current_station_op')
-        station_op = StationFactory.create_op_from_model(self._model.current_station_op)
+    def complete_assigned_station_op(self, success: bool, **kwargs):
+        self._model.reload('assigned_station_op')
+        station_op = StationFactory.create_op_from_model(self._model.assigned_station_op)
         station_op.complete_op(success, **kwargs)
-        self._model.update(unset__current_station_op=True)
+        self._model.update(unset__assigned_station_op=True)
         self._model.update(push__station_op_history=station_op.model)
         self._log_station(f'Station op is complete.')
         self._update_state(StationState.PROCESSING)

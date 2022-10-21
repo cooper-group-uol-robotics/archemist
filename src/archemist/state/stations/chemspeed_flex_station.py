@@ -37,13 +37,13 @@ class ChemSpeedFlexStation(Station):
     def status(self, new_status: ChemSpeedStatus):
         self._model.update(machine_status=new_status)
 
-    def set_station_op(self, stationOp: Any):
+    def assign_station_op(self, stationOp: Any):
         if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
             self.status = ChemSpeedStatus.RUNNING_JOB
-        super().set_station_op(stationOp)
+        super().assign_station_op(stationOp)
 
-    def finish_station_op(self, success: bool, **kwargs):
-        current_op = self.get_station_op()
+    def complete_assigned_station_op(self, success: bool, **kwargs):
+        current_op = self.get_assigned_station_op()
         if isinstance(current_op, CSOpenDoorOpDescriptor):
             self.status = ChemSpeedStatus.DOORS_OPEN
         elif isinstance(current_op, CSCloseDoorOpDescriptor):
@@ -52,7 +52,7 @@ class ChemSpeedFlexStation(Station):
                 isinstance(current_op, CSCSVJobOpDescriptor) and 
                 current_op.was_successful):
             self.status = ChemSpeedStatus.JOB_COMPLETE
-        super().finish_station_op(success, **kwargs)
+        super().complete_assigned_station_op(success, **kwargs)
 
 
 ''' ==== Station Operation Descriptors ==== '''

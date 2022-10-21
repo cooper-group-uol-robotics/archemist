@@ -137,10 +137,10 @@ class RobotModel(Document):
     operational = fields.BooleanField(default=True)
     batch_capacity = fields.IntField(min_value=1, default=1)
     location = fields.DictField()
-    assigned_job = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
-    complete_job = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
+    assigned_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
+    complete_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
     state = fields.EnumField(RobotState, default=RobotState.IDLE)
-    robot_job_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
+    robot_op_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
 
     meta = {'collection': 'robots', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
@@ -200,20 +200,23 @@ class Robot:
         return self._model.state
 
     @property
-    def assigned_job(self) -> RobotOpDescriptor:
-        self._model.reload('assigned_job')
-        op_model = self._model.assigned_job
+    def robot_op_history(self) -> List[Any]:
+        self._model.reload('robot_op_history')
+        return [RobotFactory.create_op_from_model(op) for op in self._model.robot_op_history] 
+
+    def get_assigned_op(self) -> RobotOpDescriptor:
+        self._model.reload('assigned_op')
+        op_model = self._model.assigned_op
         if op_model is not None:
             return RobotFactory.create_op_from_model(op_model)
 
-    @property
-    def robot_job_history(self) -> List[Any]:
-        self._model.reload('robot_job_history')
-        return [RobotFactory.create_op_from_model(op) for op in self._model.robot_job_history] 
+    def has_assigned_op(self) -> bool:
+        self._model.reload('assigned_op')
+        return self._model.assigned_op is not None
 
-    def assign_job(self, robot_op: RobotOpDescriptor):
-        if(self.assigned_job is None):
-            self._model.update(assigned_job=robot_op.model)
+    def assign_op(self, robot_op: RobotOpDescriptor):
+        if not self.has_assigned_op():
+            self._model.update(assigned_op=robot_op.model)
             self._log_robot(f'Job ({robot_op}) is assigned.')
             self._update_state(RobotState.JOB_ASSIGNED)
 
@@ -223,25 +226,25 @@ class Robot:
     def start_job_execution(self):
         self._update_state(RobotState.EXECUTING_JOB)
 
-    def complete_assigned_job(self, success: bool):
+    def complete_assigned_op(self, success: bool):
         robot_stamp = f'{self._model._type}-{self.id}'
-        job = self.assigned_job
+        job = self.get_assigned_op()
         job.complete_op(robot_stamp, success)
-        self._model.update(complete_job=job.model)
-        self._model.update(push__robot_job_history=job.model)
-        self._model.update(unset__assigned_job=True)
-        complete_job = RobotFactory.create_op_from_model(job.model)
-        self._log_robot(f'Job ({complete_job} is complete.')
+        self._model.update(complete_op=job.model)
+        self._model.update(push__robot_op_history=job.model)
+        self._model.update(unset__assigned_op=True)
+        complete_op = RobotFactory.create_op_from_model(job.model)
+        self._log_robot(f'Job ({complete_op} is complete.')
         self._update_state(RobotState.EXECUTION_COMPLETE)
 
-    def has_complete_job(self) -> bool:
-        self._model.reload('complete_job')
-        return self._model.complete_job is not None
+    def is_assigned_op_complete(self) -> bool:
+        self._model.reload('complete_op')
+        return self._model.complete_op is not None
 
-    def get_complete_job(self) -> RobotOpDescriptor:
-        if self.has_complete_job():
-            complete_op = RobotFactory.create_op_from_model(self._model.complete_job)
-            self._model.update(unset__complete_job=True)
+    def get_complete_op(self) -> RobotOpDescriptor:
+        if self.is_assigned_op_complete():
+            complete_op = RobotFactory.create_op_from_model(self._model.complete_op)
+            self._model.update(unset__complete_op=True)
             self._log_robot(f'Job ({complete_op}) is retrieved.')
             self._update_state(RobotState.IDLE)
             return complete_op
@@ -287,10 +290,10 @@ class MobileRobot(Robot):
     def is_batch_onboard(self, batch_id: int):
         return batch_id in self.onboard_batches
 
-    def get_complete_job(self) -> Any:
-        if self.has_complete_job():
-            complete_op = RobotFactory.create_op_from_model(self._model.complete_job)
-            self._model.update(unset__complete_job=True)
+    def get_complete_op(self) -> Any:
+        if self.is_assigned_op_complete():
+            complete_op = RobotFactory.create_op_from_model(self._model.complete_op)
+            self._model.update(unset__complete_op=True)
             if isinstance(complete_op, RobotTaskOpDescriptor):
                 if complete_op.task_type == RobotTaskType.LOAD_TO_ROBOT:
                     self.add_to_onboard_batches(complete_op.related_batch_id)

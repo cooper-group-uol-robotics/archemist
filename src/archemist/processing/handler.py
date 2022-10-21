@@ -16,10 +16,10 @@ class StationHandler:
         if (self._station.state == StationState.WAITING_ON_OPERATION):
             station_op = self.process()
             if station_op is not None and station_op.has_result:
-                self._station.finish_station_op(station_op.was_successful)
+                self._station.complete_assigned_station_op(station_op.was_successful)
         
     def update_station_batch(self, operation_op):
-        self._station.set_station_op(operation_op)
+        self._station.assign_station_op(operation_op)
         if (self._station_sm.batch_mode):
             for _ in range(0, self._station.assigned_batch.num_samples):
                 self._station.assigned_batch.add_station_op_to_current_sample(operation_op)
@@ -48,7 +48,7 @@ class RobotHandler:
             self.execute_job()
         elif self._robot.state == RobotState.EXECUTING_JOB:
             if self.is_job_execution_complete():
-                self._robot.complete_assigned_job(True) #TODO fix this to check that job execution was successful
+                self._robot.complete_assigned_op(True) #TODO fix this to check that job execution was successful
                 self._handled_robot_op = None
 
     def run(self):

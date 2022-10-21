@@ -82,38 +82,38 @@ class ChemSpeedRackSm(BaseSm):
         return self.operation_complete
 
     def request_open_door(self):
-        self._station.set_station_op(CSOpenDoorOpDescriptor.from_args())
+        self._station.assign_station_op(CSOpenDoorOpDescriptor.from_args())
 
     def request_close_door(self):
-        self._station.set_station_op(CSCloseDoorOpDescriptor.from_args())
+        self._station.assign_station_op(CSCloseDoorOpDescriptor.from_args())
 
     def request_load_batch(self):
         robot_job = KukaLBRTask.from_args(name='LoadChemSpeed',params=[True,self._current_batch_index+1], 
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_unload_batch(self):
         robot_job = KukaLBRTask.from_args(name='UnloadChemSpeed',params=[False,self._current_batch_index+1],
                                 type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
-        self._station.set_robot_job(robot_job,current_batch_id)
+        self._station.request_robot_op(robot_job,current_batch_id)
         
 
     def request_navigate_to_chemspeed(self):
-        self._station.set_robot_job(KukaNAVTask.from_args(Location(26,1,''), True)) #TODO get this property from the config
+        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), True)) #TODO get this property from the config
 
     def request_disable_auto_functions(self):
-        self._station.set_robot_job(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
 
     def request_enable_auto_functions(self):
-        self._station.set_robot_job(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
 
     def request_process_operation(self):
         current_op_dict = self._station.assigned_batches[-1].recipe.get_current_task_op_dict()
         print(current_op_dict)
         current_op = StationFactory.create_op_from_dict(current_op_dict)
-        self._station.set_station_op(current_op)
+        self._station.assign_station_op(current_op)
 
     def process_batches(self):
         last_operation_op = self._station.station_op_history[-1]
