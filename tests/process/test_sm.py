@@ -93,10 +93,11 @@ class SMTestWithBatchMode(unittest.TestCase):
         
         self.assertTrue(t_sm.process_state_transitions())
         self.assertEqual(t_sm.state, 'station_process')
-        self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
+        self.assertEqual(t_station.state, StationState.OP_ASSIGNED)
         self.assertFalse(t_station.has_requested_robot_op())
         self.assertFalse(t_sm.process_state_transitions())
         t_station.complete_assigned_station_op(True)
+        t_station.set_to_processing()
         
         self.assertTrue(t_sm.process_state_transitions())
         self.assertEqual(t_sm.state, 'unload_sample')
@@ -128,10 +129,11 @@ class SMTestWithBatchMode(unittest.TestCase):
 
         self.assertTrue(t_sm.process_state_transitions())
         self.assertEqual(t_sm.state, 'station_process')
-        self.assertEqual(t_station.state, StationState.WAITING_ON_OPERATION)
+        self.assertEqual(t_station.state, StationState.OP_ASSIGNED)
         self.assertFalse(t_station.has_requested_robot_op())
         self.assertFalse(t_sm.process_state_transitions())
         t_station.complete_assigned_station_op(True)
+        t_station.set_to_processing()
         
         self.assertTrue(t_sm.process_state_transitions())
         self.assertEqual(t_sm.state, 'unload_sample')
@@ -163,7 +165,6 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_sm.state, 'removed_batch_update')
         self.assertTrue(t_sm.process_state_transitions())
         self.assertEqual(t_sm.state, 'init_state')
-        self.assertEqual(t_station.state, StationState.PROCESSING_COMPLETE)
 
 if __name__ == '__main__':
     connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')

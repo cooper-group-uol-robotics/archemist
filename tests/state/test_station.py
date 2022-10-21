@@ -89,13 +89,12 @@ class StationTest(unittest.TestCase):
         self.assertFalse(t_station.assigned_batches)
         self.assertTrue(t_station.has_processed_batch())
         self.assertEqual(len(t_station.processed_batches),2)
-        self.assertEqual(t_station.state, StationState.PROCESSING_COMPLETE)
 
         procssed_batch1 = t_station.get_processed_batch()
         self.assertTrue(procssed_batch1 is not None)
         self.assertEqual(procssed_batch1.id, batch1.id)
         self.assertEqual(procssed_batch1.location, batch1.location)
-        self.assertEqual(t_station.state, StationState.PROCESSING_COMPLETE)
+        self.assertEqual(t_station.state, StationState.PROCESSING)
 
         procssed_batch2 = t_station.get_processed_batch()
         self.assertTrue(procssed_batch2 is not None)
@@ -133,13 +132,15 @@ class StationTest(unittest.TestCase):
         station_op1 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.01)
         t_station.assign_station_op(station_op1)
         self.assertTrue(t_station.has_assigned_station_op())
-        self.assertEqual(t_station.state,StationState.WAITING_ON_OPERATION)
+        self.assertEqual(t_station.state,StationState.OP_ASSIGNED)
         
         current_op = t_station.get_assigned_station_op()
         self.assertEqual(current_op.liquid_name, station_op1.liquid_name)
         self.assertEqual(current_op.dispense_volume, station_op1.dispense_volume)
         t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.011)
         self.assertFalse(t_station.has_assigned_station_op())
+        self.assertEqual(t_station.state,StationState.OP_ASSIGNED)
+        t_station.set_to_processing()
         self.assertEqual(t_station.state,StationState.PROCESSING)
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 1)
@@ -149,7 +150,8 @@ class StationTest(unittest.TestCase):
         t_station.assign_station_op(station_op2)
         self.assertTrue(t_station.has_assigned_station_op())
         t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.0051)
-
+        t_station.set_to_processing()
+        
         station_history = t_station.station_op_history
         self.assertEqual(len(station_history), 2)
         self.assertEqual(station_history[-1].liquid_name, station_op2.liquid_name)

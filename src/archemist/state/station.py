@@ -13,9 +13,9 @@ class StationState(Enum):
     IDLE = 0
     PROCESSING = 1
     WAITING_ON_ROBOT = 2
-    WAITING_ON_OPERATION = 3
-    OPERATION_COMPLETE = 4
-    PROCESSING_COMPLETE = 5
+    OP_ASSIGNED = 3
+    EXECUTING_OP = 4
+    OP_COMPLETE = 5
 
 class StationOpDescriptorModel(EmbeddedDocument):
     _type = fields.StringField(required=True)
@@ -193,8 +193,8 @@ class Station:
         self._model.update(processed_batches=self._model.assigned_batches)
         self._model.update(unset__assigned_batches=True)
         self._log_station(f'all assigned batches processing complete.')
-        if len(self.processed_batches) == self.batch_capacity:
-            self._update_state(StationState.PROCESSING_COMPLETE)
+        # if len(self.processed_batches) == self.batch_capacity:
+        #     self._update_state(StationState.PROCESSING_COMPLETE)
 
     def get_processed_batch(self) -> Batch:
         processed_batches = self.processed_batches
@@ -240,7 +240,7 @@ class Station:
 
     def assign_station_op(self, station_op: StationOpDescriptor):
         self._model.update(assigned_station_op=station_op.model)
-        self._update_state(StationState.WAITING_ON_OPERATION)
+        self._update_state(StationState.OP_ASSIGNED)
         self._log_station(f'Requesting station job ({station_op})')
         
 
@@ -251,6 +251,14 @@ class Station:
         self._model.update(unset__assigned_station_op=True)
         self._model.update(push__station_op_history=station_op.model)
         self._log_station(f'Station op is complete.')
+
+    def start_executing_op(self):
+        op = self.get_assigned_station_op()
+        op.add_start_timestamp()
+        self._model.update(assigned_station_op=op.model)
+        self._update_state(StationState.EXECUTING_OP)
+
+    def set_to_processing(self):
         self._update_state(StationState.PROCESSING)
 
     def create_location_from_frame(self, frame: str) -> Location:

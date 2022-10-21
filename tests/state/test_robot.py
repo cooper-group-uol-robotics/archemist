@@ -34,7 +34,7 @@ class RobotTest(unittest.TestCase):
                     type=RobotTaskType.LOAD_TO_ROBOT, location=Location(node_id=1, graph_id=7), 
                     origin_station=stn_obj_id)
         t_robot.assign_op(robot_job)
-        self.assertEqual(t_robot.state, RobotState.JOB_ASSIGNED)
+        self.assertEqual(t_robot.state, RobotState.OP_ASSIGNED)
         assigned_job = t_robot.get_assigned_op()
         self.assertTrue(assigned_job is not None)
         self.assertEqual(assigned_job.name, robot_job.name)
@@ -43,12 +43,13 @@ class RobotTest(unittest.TestCase):
         with self.assertRaises(RobotAssignedRackError):
             t_robot.assign_op(robot_job)
         # start executing
-        t_robot.start_job_execution()
-        self.assertEqual(t_robot.state, RobotState.EXECUTING_JOB)
+        t_robot.start_executing_op()
+        self.assertEqual(t_robot.state, RobotState.EXECUTING_OP)
         # complete robot job
         self.assertFalse(t_robot.is_assigned_op_complete())
         t_robot.complete_assigned_op(True)
         self.assertFalse(t_robot.has_assigned_op())
+        t_robot.set_to_execution_complete()
         self.assertEqual(t_robot.state, RobotState.EXECUTION_COMPLETE)
         self.assertTrue(t_robot.is_assigned_op_complete())
 

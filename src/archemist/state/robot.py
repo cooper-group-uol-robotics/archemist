@@ -8,8 +8,8 @@ from typing import Dict, List, Any
 from archemist.persistence.object_factory import RobotFactory
 
 class RobotState(Enum):
-    JOB_ASSIGNED = 0
-    EXECUTING_JOB = 1
+    OP_ASSIGNED = 0
+    EXECUTING_OP = 1
     EXECUTION_COMPLETE = 2
     IDLE = 3
 
@@ -218,13 +218,19 @@ class Robot:
         if not self.has_assigned_op():
             self._model.update(assigned_op=robot_op.model)
             self._log_robot(f'Job ({robot_op}) is assigned.')
-            self._update_state(RobotState.JOB_ASSIGNED)
+            self._update_state(RobotState.OP_ASSIGNED)
 
         else:
             raise RobotAssignedRackError(self.__class__.__name__)
 
-    def start_job_execution(self):
-        self._update_state(RobotState.EXECUTING_JOB)
+    def start_executing_op(self):
+        op = self.get_assigned_op()
+        op.add_start_timestamp()
+        self._model.update(assigned_op=op.model)
+        self._update_state(RobotState.EXECUTING_OP)
+
+    def set_to_execution_complete(self):
+        self._update_state(RobotState.EXECUTION_COMPLETE)
 
     def complete_assigned_op(self, success: bool):
         robot_stamp = f'{self._model._type}-{self.id}'
@@ -235,7 +241,6 @@ class Robot:
         self._model.update(unset__assigned_op=True)
         complete_op = RobotFactory.create_op_from_model(job.model)
         self._log_robot(f'Job ({complete_op} is complete.')
-        self._update_state(RobotState.EXECUTION_COMPLETE)
 
     def is_assigned_op_complete(self) -> bool:
         self._model.reload('complete_op')
