@@ -5,8 +5,7 @@ from typing import Dict, Tuple
 from archemist.processing.handler import StationHandler
 from archemist.state.station import Station
 from colorimetry_msgs.msg import ColorimetryCommand,ColorimetryResult
-
-from rospy.core import is_shutdown
+from archemist.state.stations.light_box_station import SampleColorOpDescriptor
 
 class LightBoxStation_Handler(StationHandler):
     def __init__(self, station:Station):
@@ -15,7 +14,7 @@ class LightBoxStation_Handler(StationHandler):
         self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=1)
         rospy.Subscriber("/colorimetry_station/result", ColorimetryResult, self._colorimetry_callback)
         self._received_results = False
-        self._colorimetry_results = {}
+        self._op_results = {}
         rospy.sleep(1)
         
 
@@ -30,25 +29,25 @@ class LightBoxStation_Handler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-
-        op_msg = ColorimetryCommand()
-        op_msg.op_name = 'take_pic'
-        self._received_results = False
-        self._colorimetry_results = {}
-        for i in range(10):
-            self.pubCamera.publish(op_msg)
+        if isinstance(current_op, SampleColorOpDescriptor):
+            op_msg = ColorimetryCommand()
+            op_msg.op_name = 'take_pic'
+            self._received_results = False
+            self._op_results = {}
+            for i in range(10):
+                self.pubCamera.publish(op_msg)
 
     def is_op_execution_complete(self) -> bool:
         return self._received_results
 
     def get_op_result(self) -> Tuple[bool, Dict]:
-        return True, self._colorimetry_results
+        return True, self._op_results
 
     def _colorimetry_callback(self, msg: ColorimetryResult):
         self._received_results = True
-        self._colorimetry_results['result_filename'] = msg.result_file_name
-        self._colorimetry_results['red_intensity'] = msg.red
-        self._colorimetry_results['green_intensity'] = msg.green
-        self._colorimetry_results['blue_intensity'] = msg.blue
+        self._op_results['result_filename'] = msg.result_file_name
+        self._op_results['red_intensity'] = msg.red
+        self._op_results['green_intensity'] = msg.green
+        self._op_results['blue_intensity'] = msg.blue
 
     

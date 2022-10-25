@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
-
 import rospy
+from typing import Tuple, Dict
 from archemist.state.station import Station
-from archemist.state.stations.fisher_weighing_station import FisherWeightingStation
+from archemist.state.stations.fisher_weighing_station import FisherWeightOpDescriptor
 from fisherbrand_pps4102_balance_msgs.msg import BalanceCommand, BalanceReading
 from archemist.processing.handler import StationHandler
 
@@ -10,7 +9,10 @@ class FisherWeightingStation_Handler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self.pubFisherScale = rospy.Publisher("/Balance_Commands", BalanceCommand, queue_size=2)
+        self._fisher_pu = rospy.Publisher("/Balance_Commands", BalanceCommand, queue_size=2)
+        rospy.Subscriber('/Balance_Weights',BalanceReading, self._weight_callback)
+        self._received_results = False
+        self._op_results = {}
         rospy.sleep(1)
 
     def run(self):
@@ -22,20 +24,20 @@ class FisherWeightingStation_Handler(StationHandler):
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-    def process(self):
-        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
-        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
-        current_op.add_timestamp()
-        rospy.loginfo('reading stable weight')
-        self.pubFisherScale.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
-        balance_reading = rospy.wait_for_message('/Balance_Weights',BalanceReading)
-        
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.weight = balance_reading.weight
-        current_op.output.add_timestamp()
+    def execute_op(self):
+        current_op = self._station.get_assigned_station_op()
+        if isinstance(current_op,FisherWeightOpDescriptor):
+            rospy.loginfo('reading stable weight')
+            self._received_results = False
+            self._op_results = {}
+            self._fisher_pu.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
 
-        return current_op
+    def is_op_execution_complete(self) -> bool:
+        return self._received_results
 
-# if __name__ == '__main__':
-#     fisher_handler = FisherWeightingStation_Handler()
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, self._op_results
+
+    def _weight_callback(self, msg: BalanceReading):
+        self._received_results = True
+        self._op_results['weight'] = msg.weight
