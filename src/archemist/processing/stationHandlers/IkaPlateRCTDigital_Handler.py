@@ -3,7 +3,6 @@
 import rospy
 from archemist.state.station import Station
 from archemist.state.stations.ika_place_rct_digital import IKAMode
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 from ika_plate_rct_digital_msgs.msg import IKACommand
 from rospy.core import is_shutdown

@@ -19,7 +19,6 @@ class GenericRobot_Handler(RobotHandler):
 
     def execute_op(self):
         handled_robot_op = self._robot.get_assigned_op()
-        handled_robot_op.add_start_timestamp()
         print(f'[{self.__class__.__name__}] executing {str(handled_robot_op)}')
         self._thread = Thread(target=self._mock_execution)
         self._thread.start()
@@ -30,6 +29,8 @@ class GenericRobot_Handler(RobotHandler):
         else:
             return True
 
+    def get_op_result(self) -> bool:
+        return True
+
     def _mock_execution(self):
         time.sleep(1)
-        self._execution_result = True

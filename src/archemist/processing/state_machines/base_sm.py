@@ -6,7 +6,7 @@ class BaseSm:
     def __init__(self, station: Station, params_dict: Dict) -> None:
         self._station = station
         self._current_batches_count = 0
-        self._current_batch_index = -1
+        self._current_batch_index = 0 # was -1
         self.machine = None
 
     def all_batches_assigned(self) -> bool:

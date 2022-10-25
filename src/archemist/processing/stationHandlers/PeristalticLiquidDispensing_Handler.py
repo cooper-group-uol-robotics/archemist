@@ -3,7 +3,6 @@
 import rospy
 from archemist.state.station import Station
 from pi4_peristaltic_pump_msgs.msg import DispenserCommand
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 from std_msgs.msg import String
 

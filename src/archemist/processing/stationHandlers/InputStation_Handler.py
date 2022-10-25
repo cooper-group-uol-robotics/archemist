@@ -3,7 +3,6 @@
 import rospy
 from archemist.state.station import Station
 from archemist.state.stations.input_station import InputStation
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 
 class InputStation_Handler(StationHandler):

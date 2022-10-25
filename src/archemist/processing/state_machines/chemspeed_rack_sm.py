@@ -3,9 +3,10 @@ from transitions import Machine, State
 from archemist.state.station import Station
 from archemist.state.robot import RobotTaskType
 from archemist.state.robots.kukaLBRIIWA import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from archemist.state.stations.chemspeed_flex_station import CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor
+from archemist.state.stations.chemspeed_flex_station import CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSCSVJobOpDescriptor, CSProcessingOpDescriptor
 from archemist.persistence.object_factory import StationFactory
 from archemist.processing.state_machines.base_sm import BaseSm
+from archemist.persistence.object_factory import StationFactory
 from archemist.util import Location
 
 class ChemSpeedRackSm(BaseSm):
@@ -101,7 +102,7 @@ class ChemSpeedRackSm(BaseSm):
         
 
     def request_navigate_to_chemspeed(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), True)) #TODO get this property from the config
+        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
 
     def request_disable_auto_functions(self):
         self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
@@ -111,9 +112,18 @@ class ChemSpeedRackSm(BaseSm):
 
     def request_process_operation(self):
         current_op_dict = self._station.assigned_batches[-1].recipe.get_current_task_op_dict()
-        print(current_op_dict)
         current_op = StationFactory.create_op_from_dict(current_op_dict)
-        self._station.assign_station_op(current_op)
+        if isinstance (current_op,CSCSVJobOpDescriptor):
+            contacnated_csv = ''
+            for batch in self._station.assigned_batches:
+                current_op_dict = batch.recipe.get_current_task_op_dict()
+                current_op = StationFactory.create_op_from_dict(current_op_dict)
+                contacnated_csv += current_op.csv_string
+            current_op.csv_string = contacnated_csv
+            self._station.assign_station_op(current_op)
+        elif isinstance(current_op, CSProcessingOpDescriptor):
+            self._station.assign_station_op(current_op)
+
 
     def process_batches(self):
         last_operation_op = self._station.station_op_history[-1]

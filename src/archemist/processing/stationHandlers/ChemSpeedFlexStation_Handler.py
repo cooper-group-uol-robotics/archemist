@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import rospy
+from typing import Tuple, Dict
 from archemist.state.station import Station
-from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSJobOutputDescriptor,CSProcessingOpDescriptor,CSCSVJobOpDescriptor
-from archemist.persistence.objectConstructor import ObjectConstructor
+from archemist.state.stations.chemspeed_flex_station import CSOpenDoorOpDescriptor,CSCloseDoorOpDescriptor,CSProcessingOpDescriptor,CSCSVJobOpDescriptor
 from archemist.processing.handler import StationHandler
 from chemspeed_flex_msgs.msg import CSFlexCommand,CSFlexStatus
 from rospy.core import is_shutdown
@@ -11,7 +11,8 @@ from rospy.core import is_shutdown
 class ChemSpeedFlexStation_Handler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
-        self._cs_status = CSFlexStatus.DOOR_CLOSED
+        self._current_cs_status = CSFlexStatus.DOOR_CLOSED
+        self._desired_cs_status = None
         rospy.init_node(f'{self._station}_handler')
         self.pubCS_Flex = rospy.Publisher("/ChemSpeed_Flex_commands", CSFlexCommand, queue_size=1)
         rospy.Subscriber('/ChemSpeed_Flex_status', CSFlexStatus, self._cs_state_update, queue_size=1)
@@ -27,24 +28,23 @@ class ChemSpeedFlexStation_Handler(StationHandler):
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-    def process(self):
+    def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-        current_op.add_timestamp()
         if (isinstance(current_op,CSOpenDoorOpDescriptor)):
             rospy.loginfo('opening chemspeed door')
             for i in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.OPEN_DOOR)
-            self._wait_for_status(CSFlexStatus.DOOR_OPEN)
+            self._desired_cs_status = CSFlexStatus.DOOR_OPEN
         elif (isinstance(current_op,CSCloseDoorOpDescriptor)):
             rospy.loginfo('closing chemspeed door')
             for i in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
-            self._wait_for_status(CSFlexStatus.DOOR_CLOSED)
+            self._desired_cs_status = CSFlexStatus.DOOR_CLOSED
         elif (isinstance(current_op,CSProcessingOpDescriptor)):
             rospy.loginfo('starting chemspeed job')
             for i in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
-            self._wait_for_status(CSFlexStatus.JOB_COMPLETE)
+            self._desired_cs_status =  CSFlexStatus.JOB_COMPLETE
         elif (isinstance(current_op,CSCSVJobOpDescriptor)):
             rospy.loginfo('uploading csv file to rosparam server')
             rospy.set_param('chemspeed_input_csv', current_op.csv_string)
@@ -52,20 +52,21 @@ class ChemSpeedFlexStation_Handler(StationHandler):
             rospy.loginfo('starting chemspeed job')
             for i in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
-            self._wait_for_status(CSFlexStatus.JOB_COMPLETE)
-        
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
+            self._desired_cs_status = CSFlexStatus.JOB_COMPLETE
 
-        return current_op
+    def is_op_execution_complete(self) -> bool:
+        if self._desired_cs_status == self._current_cs_status:
+            self._desired_cs_status = None
+            return True
+        else:
+            return False
+
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        if self._current_cs_status != CSFlexStatus.ERROR:
+            return True, {}
+        else:
+            return False
 
     def _cs_state_update(self, msg):
-        # if self._station.status != msg.cs_flex_status:
-        #     self._station.status = msg.cs_flex_status
-        if self._cs_status != msg.cs_flex_status:
-            self._cs_status = msg.cs_flex_status
-
-    def _wait_for_status(self, status):
-        while(self._cs_status != status):
-            rospy.sleep(0.3)
+        if self._current_cs_status != msg.cs_flex_status:
+            self._current_cs_status = msg.cs_flex_status

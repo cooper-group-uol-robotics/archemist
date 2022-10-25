@@ -3,7 +3,6 @@
 import rospy
 from archemist.state.station import Station
 from mettler_toledo_quantos_q2_msgs.msg import QuantosCommand
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.processing.handler import StationHandler
 from std_msgs.msg import String
 

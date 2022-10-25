@@ -2,6 +2,7 @@ from archemist.state.station import Station
 from archemist.processing.handler import StationHandler
 from threading import Thread
 import time
+from typing import Tuple, Dict
 
 class GenericStation_Handler(StationHandler):
     def __init__(self, station: Station):
@@ -10,7 +11,6 @@ class GenericStation_Handler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-        current_op.add_start_timestamp()   
         print(f'performing operation {current_op}')    
         self._thread = Thread(target=self._mock_execution)
         self._thread.start()
@@ -20,6 +20,9 @@ class GenericStation_Handler(StationHandler):
             return False
         else:
             return True
+
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, {}
 
     def run(self):
         print(f'{self._station}_handler is running')
@@ -32,5 +35,3 @@ class GenericStation_Handler(StationHandler):
 
     def _mock_execution(self):
         time.sleep(1)
-        self._execution_result = True
-        self._results = {}

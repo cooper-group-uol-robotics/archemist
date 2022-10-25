@@ -1,10 +1,10 @@
-workflow_dir_path: '/home/gilgamish/algae_bot_workflow'
-db_name: 'chemspeed_testing'
+workflow_dir_path: 'C:\Users\hatem\m_algae_bot_workflow'
+db_name: 'algae_bot_test'
 batch_addition:
   location:
     node_id: 25
     graph_id: 1
     frame_name: '/InputStation'
   num_vials: 6
-recipe_loop_mode: True
+recipe_loop_mode: False
 auto_batch_addition: False

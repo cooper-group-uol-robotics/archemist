@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
+from typing import Dict, Tuple
 from archemist.processing.handler import StationHandler
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.station import Station
 from colorimetry_msgs.msg import ColorimetryCommand,ColorimetryResult
 
@@ -13,6 +13,9 @@ class LightBoxStation_Handler(StationHandler):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
         self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=1)
+        rospy.Subscriber("/colorimetry_station/result", ColorimetryResult, self._colorimetry_callback)
+        self._received_results = False
+        self._colorimetry_results = {}
         rospy.sleep(1)
         
 
@@ -25,24 +28,27 @@ class LightBoxStation_Handler(StationHandler):
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-    def process(self):
-        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
-        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
-        current_op.add_timestamp()
+    def execute_op(self):
+        current_op = self._station.get_assigned_station_op()
 
-        # Process Sample 
         op_msg = ColorimetryCommand()
         op_msg.op_name = 'take_pic'
+        self._received_results = False
+        self._colorimetry_results = {}
         for i in range(10):
             self.pubCamera.publish(op_msg)
-        message = rospy.wait_for_message("/colorimetry_station/result", ColorimetryResult)
 
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
-        current_op.output.file_name = message.result_file_name
-        current_op.output.red_value = message.red
-        current_op.output.blue_value = message.blue
-        current_op.output.green_value = message.green
+    def is_op_execution_complete(self) -> bool:
+        return self._received_results
 
-        return current_op
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, self._colorimetry_results
+
+    def _colorimetry_callback(self, msg: ColorimetryResult):
+        self._received_results = True
+        self._colorimetry_results['result_filename'] = msg.result_file_name
+        self._colorimetry_results['red_intensity'] = msg.red
+        self._colorimetry_results['green_intensity'] = msg.green
+        self._colorimetry_results['blue_intensity'] = msg.blue
+
+    

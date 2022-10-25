@@ -111,6 +111,10 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
     def csv_string(self) -> str:
         return self._model.csv_string
 
+    @csv_string.setter
+    def csv_string(self, new_csv_str: str):
+        self._model.csv_string = new_csv_str
+
     @property
     def result_file(self) -> str:
         if self._model.has_result and self._model.was_successful:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import rospy
-from archemist.persistence.objectConstructor import ObjectConstructor
 from archemist.state.station import Station
 from archemist_msgs.msg import CameraCommand
 

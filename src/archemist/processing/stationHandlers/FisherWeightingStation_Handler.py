@@ -3,7 +3,6 @@
 import rospy
 from archemist.state.station import Station
 from archemist.state.stations.fisher_weighing_station import FisherWeightingStation
-from archemist.persistence.objectConstructor import ObjectConstructor
 from fisherbrand_pps4102_balance_msgs.msg import BalanceCommand, BalanceReading
 from archemist.processing.handler import StationHandler
 

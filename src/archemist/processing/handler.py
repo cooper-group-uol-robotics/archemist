@@ -1,19 +1,21 @@
 from archemist.state.robot import Robot, RobotState
 from archemist.state.station import Station, StationState, StationOpDescriptor
 from archemist.persistence.object_factory import StationFactory
+from typing import Tuple,Dict
 
 
 class StationHandler:
     def __init__(self, station: Station):
         self._station = station
         self._station_sm = StationFactory.create_state_machine(self._station)
-        self._execution_result = False
-        self._results = dict()
 
     def execute_op(self):
         pass
 
-    def is_op_execution_complete(self):
+    def is_op_execution_complete(self) -> bool:
+        pass
+
+    def get_op_result(self) -> Tuple[bool,Dict]:
         pass
 
     def handle(self):
@@ -23,8 +25,9 @@ class StationHandler:
             self.execute_op()
         elif self._station.state == StationState.EXECUTING_OP:
             if self.is_op_execution_complete():
+                op_successful, op_results = self.get_op_result()
+                self._station.complete_assigned_station_op(op_successful, **op_results)
                 self._station.set_to_processing()
-                self._station.complete_assigned_station_op(self._execution_result, **self._results)
 
     def run(self):
         pass
@@ -32,12 +35,14 @@ class StationHandler:
 class RobotHandler:
     def __init__(self, robot: Robot):
         self._robot = robot
-        self._execution_result = False
 
     def execute_op(self):
         pass
 
-    def is_op_execution_complete(self):
+    def is_op_execution_complete(self) -> bool:
+        pass
+
+    def get_op_result(self) -> bool:
         pass
 
 
@@ -47,8 +52,9 @@ class RobotHandler:
             self.execute_op()
         elif self._robot.state == RobotState.EXECUTING_OP:
             if self.is_op_execution_complete():
+                op_successful = self.get_op_result()
+                self._robot.complete_assigned_op(op_successful)
                 self._robot.set_to_execution_complete()
-                self._robot.complete_assigned_op(self._execution_result)
 
     def run(self):
         pass

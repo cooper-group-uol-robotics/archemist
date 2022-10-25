@@ -8,6 +8,7 @@ from time import sleep
 from pathlib import Path
 from archemist.state.state import State
 import argparse
+import pkgutil
 
 from collections import namedtuple
 
@@ -32,8 +33,12 @@ def run_handler(handler_discriptor: HandlerArgs):
 
 def construct_robot_handler(robot):
     handler_name = f'{robot.__class__.__name__}_Handler'
-    handler_cls = getattr(archemist.processing.robotHandlers, handler_name)
-    return handler_cls(robot)
+    pkg = importlib.import_module('archemist.processing.robotHandlers')
+    for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+        module = importlib.import_module(module_itr.name)
+        if hasattr(module,handler_name):
+            cls = getattr(module,handler_name)
+            return cls(robot)
 
 def construct_robot_test_handler(robot):
     pkg = importlib.import_module('archemist.processing.robotHandlers.genericRobot_handler')
@@ -42,8 +47,12 @@ def construct_robot_test_handler(robot):
 
 def construct_station_handler(station):
     handler_name = f'{station.__class__.__name__}_Handler'
-    handler_cls = getattr(archemist.processing.stationHandlers, handler_name)
-    return handler_cls(station)
+    pkg = importlib.import_module('archemist.processing.stationHandlers')
+    for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+        module = importlib.import_module(module_itr.name)
+        if hasattr(module,handler_name):
+            cls = getattr(module,handler_name)
+            return cls(station)
 
 def construct_station_test_handler(station):
     pkg = importlib.import_module('archemist.processing.stationHandlers.GenericStation_Handler')
