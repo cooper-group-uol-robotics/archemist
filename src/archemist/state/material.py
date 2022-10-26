@@ -1,15 +1,6 @@
 from datetime import date
 from bson.objectid import ObjectId
-from mongoengine import Document, fields
-
-class MaterialModel(Document):
-    _type = fields.StringField(required=True)
-    name = fields.StringField(required=True)
-    exp_id = fields.IntField(required=True)
-    expiry_date = fields.DateTimeField()
-    mass = fields.FloatField(min_value=0)
-
-    meta = {'collection': 'materials', 'db_alias': 'archemist_state', 'allow_inheritance': True}
+from archemist.models.material_model import MaterialModel, SolidMaterialModel, LiquidMaterialModel
 
 
 class Material:
@@ -47,12 +38,6 @@ class Material:
     @mass.setter
     def mass(self, value):
         self._model.update(mass=value)
-
-class LiquidMaterialModel(MaterialModel):
-    pump_id = fields.StringField()
-    volume = fields.FloatField(min_value=0)
-    density = fields.FloatField(min_value=0)
-
 
 class Liquid(Material):
     def __init__(self, material_model: LiquidMaterialModel) -> None:
@@ -112,10 +97,6 @@ class Liquid(Material):
         return f'Liquid: {self.name}, Pump ID: {self.pump_id}, Expiry date: {self.expiry_date},\
                  Mass: {self.mass} g, Volume: {self.volume} L,\
                  Density: {self.density} g/L'
-
-class SolidMaterialModel(MaterialModel):
-    dispense_src = fields.StringField()
-    cartridge_id = fields.IntField()
 
 class Solid(Material):
     def __init__(self, material_model: SolidMaterialModel) -> None:

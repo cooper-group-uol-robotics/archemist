@@ -66,7 +66,7 @@ class WorkflowManager:
                     clean_batches = self._workflow_state.get_clean_batches()
                     while self._queued_recipes:
                         if clean_batches and self._current_batch_processing_count < self._max_batch_processing_capacity: 
-                            recipe = self._queued_recipes.popleft()
+                            recipe = self._queued_recipes.pop()
                             new_batch = clean_batches.pop(0)
                             new_batch.attach_recipe(recipe)
                             self._current_batch_processing_count += 1

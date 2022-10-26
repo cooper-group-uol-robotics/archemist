@@ -1,4 +1,5 @@
-from archemist.state.robot import Robot, RobotModel
+from archemist.models.robot_model import RobotModel
+from archemist.state.robot import Robot
 from bson.objectid import ObjectId
 
 

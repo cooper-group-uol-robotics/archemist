@@ -1,82 +1,12 @@
-from bson.objectid import ObjectId
-from mongoengine import Document, EmbeddedDocument, fields
-from enum import Enum
 from typing import List, Any
-from datetime import datetime
+from archemist.util.enums import StationState
+from archemist.models.station_model import StationModel
+from archemist.state.station_op import StationOpDescriptor
 from archemist.state.material import Liquid,Solid
 from archemist.util.location import Location
-from archemist.state.robot import RobotOpDescriptor,RobotOpDescriptorModel
-from archemist.state.batch import Batch, BatchModel
+from archemist.state.robot import RobotOpDescriptor
+from archemist.state.batch import Batch
 from archemist.persistence.object_factory import StationFactory, RobotFactory
-
-class StationState(Enum):
-    IDLE = 0
-    PROCESSING = 1
-    WAITING_ON_ROBOT = 2
-    OP_ASSIGNED = 3
-    EXECUTING_OP = 4
-    OP_COMPLETE = 5
-
-class StationOpDescriptorModel(EmbeddedDocument):
-    _type = fields.StringField(required=True)
-    _module = fields.StringField(required=True)
-    has_result = fields.BooleanField(default=False)
-    was_successful = fields.BooleanField(default=False)
-    start_timestamp = fields.ComplexDateTimeField()
-    end_timestamp = fields.ComplexDateTimeField()
-
-    meta = {'allow_inheritance': True}
-
-class StationOpDescriptor:
-    def __init__(self, stationOpModel: StationOpDescriptorModel) -> None:
-        self._model = stationOpModel
-
-    @property
-    def model(self):
-        return self._model
-
-    @property
-    def has_result(self):
-        return self._model.has_result
-
-    @property
-    def was_successful(self):
-        return self._model.was_successful
-
-    @property
-    def start_timestamp(self):
-        return self._model.start_timestamp
-
-    @property
-    def end_timestamp(self):
-        return self._model.end_timestamp
-
-    def add_start_timestamp(self):
-        self._model.start_timestamp = datetime.now()
-
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-
-class StationModel(Document):
-    _type = fields.StringField(required=True)
-    _module = fields.StringField(required=True)
-    exp_id = fields.IntField(required=True)
-    location = fields.DictField()
-    batch_capacity = fields.IntField(min_value=1, default=1)
-    process_state_machine = fields.DictField(required=True)
-    operational = fields.BooleanField(default=True)
-    state = fields.EnumField(StationState, default=StationState.IDLE)
-    loaded_samples = fields.IntField(default=0) # cannot use min value, breaks dec__ operator
-    assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    requested_robot_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel,null=True)
-    assigned_station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel,null=True)
-    station_op_history = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-    requested_robot_op_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
-
-    meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
 class Station:
     def __init__(self, station_model: StationModel) -> None:

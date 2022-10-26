@@ -1,6 +1,9 @@
-from email.policy import default
-from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
-from archemist.state.material import Solid, Liquid, SolidMaterialModel
+from archemist.models.station_model import StationModel
+from archemist.models.station_op_model import StationOpDescriptorModel
+from archemist.state.station import Station
+from archemist.state.station_op import StationOpDescriptor
+from archemist.state.material import Solid, Liquid
+from archemist.models.material_model import SolidMaterialModel
 from typing import Dict, List
 from archemist.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
 from mongoengine import EmbeddedDocument, fields

@@ -1,8 +1,9 @@
-from archemist.state.station import StationModel,Station,StationOpDescriptorModel,StationOpDescriptor
+from archemist.models.station_model import StationModel
+from archemist.models.station_op_model import StationOpDescriptorModel
+from archemist.state.station import Station
+from archemist.state.station_op import StationOpDescriptor
 from archemist.state.material import Liquid,Solid
 from typing import List
-from bson.objectid import ObjectId
-
 
 class OutputStation(Station):
     def __init__(self, station_model: StationModel) -> None:

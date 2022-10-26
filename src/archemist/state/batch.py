@@ -1,16 +1,12 @@
 from datetime import datetime
 from typing import Any, List
-from mongoengine import Document, EmbeddedDocument, fields
 from bson.objectid import ObjectId
 from pickle import loads,dumps
-from archemist.state.recipe import Recipe,RecipeModel
+from archemist.persistence.object_factory import StationFactory
+from archemist.state.recipe import Recipe
+from archemist.models.batch_model import SampleModel,BatchModel
+from archemist.state.station_op import StationOpDescriptor
 from archemist.util import Location
-
-class SampleModel(EmbeddedDocument):
-    rack_index = fields.IntField(min_value=0, required=True)
-    materials = fields.ListField(fields.StringField(), default=[])
-    capped = fields.BooleanField(default=False)
-    operation_ops = fields.ListField(fields.BinaryField(), default=[])
 
 class Sample:
     def __init__(self, sample_model: SampleModel):
@@ -38,24 +34,13 @@ class Sample:
 
     @property
     def operation_ops(self):
-        return [loads(encoded_op) for encoded_op in self._model.operation_ops]
+        return [StationFactory.create_op_from_model(op_model) for op_model in self._model.operation_ops]
 
     def add_operation_op(self, operation_op: Any):
-        self._model.operation_ops.append(dumps(operation_op))
+        self._model.operation_ops.append(operation_op)
 
     def add_material(self, material: str):
         self._model.materials.append(material)
-
-class BatchModel(Document):
-    exp_id = fields.IntField(required=True)
-    num_samples = fields.IntField(min_value=1, required=True)
-    location = fields.DictField()
-    recipe = fields.ReferenceField(RecipeModel, null=True)
-    samples = fields.EmbeddedDocumentListField(SampleModel)
-    current_sample_index = fields.IntField(min_value=0, default=0)
-    station_history = fields.ListField(fields.StringField(), default=[])
-
-    meta = {'collection': 'batches', 'db_alias': 'archemist_state'}
 
 class Batch:
     def __init__(self, batch_model: BatchModel) -> None:
@@ -141,9 +126,9 @@ class Batch:
             self._model.update(current_sample_index=0)
             self._log_batch('All samples have been processed. Batch index is reset to 0.')
 
-    def add_station_op_to_current_sample(self, station_op: Any):
+    def add_station_op_to_current_sample(self, station_op: StationOpDescriptor):
         current_sample = self.get_current_sample()
-        current_sample.add_operation_op(station_op)
+        current_sample.add_operation_op(station_op.model)
         self._model.update(**{f'samples__{self._model.current_sample_index}':current_sample.model}) #https://stackoverflow.com/questions/2932648/how-do-i-use-a-string-as-a-keyword-argument
         #self._model.update(samples=self._model.samples) alternatively but the whole list will be updated
 

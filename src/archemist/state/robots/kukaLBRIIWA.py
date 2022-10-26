@@ -1,4 +1,6 @@
-from archemist.state.robot import MobileRobot, MobileRobotModel, RobotTaskOpDescriptor, RobotTaskOpDescriptorModel, RobotOpDescriptorModel, RobotOpDescriptor,RobotTaskType
+from archemist.models.robot_model import MobileRobotModel
+from archemist.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
+from archemist.state.robot import MobileRobot, RobotTaskOpDescriptor, RobotOpDescriptor,RobotTaskType
 from archemist.util import Location
 from bson.objectid import ObjectId
 from mongoengine import fields
@@ -15,9 +17,7 @@ class KukaLBRTask(RobotTaskOpDescriptor):
         model = super().from_args(name,type,params,location,origin_station,related_batch_id).model
         model._type = cls.__name__
         model._module = cls.__module__
-        return cls(model)
-    
-    
+        return cls(model) 
 
 class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
     def __init__(self, op_model: RobotTaskOpDescriptorModel):

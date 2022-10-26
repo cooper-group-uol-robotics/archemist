@@ -1,4 +1,7 @@
-from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
+from archemist.models.station_model import StationModel
+from archemist.models.station_op_model import StationOpDescriptorModel
+from archemist.state.station import Station
+from archemist.state.station_op import StationOpDescriptor
 from enum import Enum
 from mongoengine import fields
 from typing import List, Any, Dict

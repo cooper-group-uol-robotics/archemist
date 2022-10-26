@@ -2,11 +2,15 @@ from bson.objectid import ObjectId
 from multipledispatch import dispatch
 from archemist.util import Location
 from typing import List
-from archemist.state.station import StationModel, Station
-from archemist.state.robot import RobotModel, Robot
-from archemist.state.material import Liquid,LiquidMaterialModel,SolidMaterialModel, Solid
-from archemist.state.batch import BatchModel,Batch
-from archemist.state.recipe import RecipeModel
+from archemist.models.station_model import StationModel
+from archemist.state.station import Station
+from archemist.models.robot_model import RobotModel
+from archemist.state.robot import Robot
+from archemist.models.material_model import LiquidMaterialModel,SolidMaterialModel
+from archemist.state.material import Liquid, Solid
+from archemist.models.batch_model import BatchModel
+from archemist.state.batch import Batch
+from archemist.models.recipe_model import RecipeModel
 from archemist.persistence.object_factory import RobotFactory,StationFactory
 import importlib
 import pkgutil
