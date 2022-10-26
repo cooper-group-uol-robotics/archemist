@@ -1,6 +1,6 @@
 import importlib
-from archemist.persistence.yamlHandler import YamlHandler
-from archemist.persistence.persistenceManager import PersistenceManager
+from archemist.persistence.yaml_handler import YamlHandler
+from archemist.persistence.persistence_manager import PersistenceManager
 import archemist.processing.robotHandlers
 import archemist.processing.stationHandlers
 import multiprocessing as mp

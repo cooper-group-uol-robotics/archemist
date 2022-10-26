@@ -1,5 +1,5 @@
 import unittest
-from archemist.persistence.persistenceManager import PersistenceManager
+from archemist.persistence.persistence_manager import PersistenceManager
 from archemist.util.location import Location
 import yaml
 import os

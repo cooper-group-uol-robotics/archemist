@@ -1,5 +1,5 @@
-from archemist.persistence.dbHandler import DatabaseHandler
-from archemist.persistence.yamlHandler import YamlHandler
+from archemist.persistence.db_handler import DatabaseHandler
+from archemist.persistence.yaml_handler import YamlHandler
 from archemist.persistence.object_factory import RobotFactory, StationFactory, MaterialFactory
 from archemist.state.state import State
 from archemist.exceptions.exception import DatabaseNotPopulatedError
