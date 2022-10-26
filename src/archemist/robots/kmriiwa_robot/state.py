@@ -1,9 +1,9 @@
 from archemist.core.models.robot_model import MobileRobotModel
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
+from archemist.core.models.robot_op_model import RobotTaskOpDescriptorModel
 from archemist.core.state.robot import MobileRobot, RobotTaskOpDescriptor, RobotOpDescriptor,RobotTaskType
 from archemist.core.util import Location
+from .model import KukaNAVTaskModel
 from bson.objectid import ObjectId
-from mongoengine import fields
 from typing import List
 
 
@@ -32,10 +32,6 @@ class KukaLBRMaintenanceTask(RobotTaskOpDescriptor):
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self._model.name}'
-
-class KukaNAVTaskModel(RobotOpDescriptorModel):
-    target_location = fields.DictField(required=True)
-    fine_localisation = fields.BooleanField(default=False)
 
 class KukaNAVTask(RobotOpDescriptor):
     def __init__(self, op_model: KukaNAVTaskModel) -> None:

@@ -36,9 +36,10 @@ class RobotFactory:
     
     @staticmethod
     def create_from_dict(robot_dict: Dict) -> Robot:
-        pkg = importlib.import_module('archemist.core.state.robots')
+        pkg = importlib.import_module('archemist.robots')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            module = importlib.import_module(module_itr.name)
+            state_module = f'{module_itr.name}.state'
+            module = importlib.import_module(state_module)
             if hasattr(module,robot_dict['type']):
                 cls = getattr(module,robot_dict['type'])
                 return cls.from_dict(robot_dict)

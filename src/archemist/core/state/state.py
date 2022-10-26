@@ -23,9 +23,10 @@ class State:
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
             importlib.import_module(module_itr.name)
 
-        pkg = importlib.import_module('archemist.core.state.robots')
+        pkg = importlib.import_module('archemist.robots')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            importlib.import_module(module_itr.name)
+            model_module = f'{module_itr.name}.model'
+            importlib.import_module(model_module)
     
     @property
     def liquids(self) -> List[Liquid]:

@@ -5,6 +5,6 @@ batch_addition:
     node_id: 25
     graph_id: 1
     frame_name: '/InputStation'
-  num_vials: 6
+  num_vials: 2
 recipe_loop_mode: False
 auto_batch_addition: False

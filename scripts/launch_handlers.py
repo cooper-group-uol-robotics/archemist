@@ -31,15 +31,16 @@ def run_handler(handler_discriptor: HandlerArgs):
 
 def construct_robot_handler(robot):
     handler_name = f'{robot.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.core.processing.robot_handlers')
+    pkg = importlib.import_module('archemist.robots')
     for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-        module = importlib.import_module(module_itr.name)
+        handler_modeul = f'{module_itr.name}.handler'
+        module = importlib.import_module(handler_modeul)
         if hasattr(module,handler_name):
             cls = getattr(module,handler_name)
             return cls(robot)
 
 def construct_robot_test_handler(robot):
-    pkg = importlib.import_module('archemist.core.processing.robot_handlers.generic_robot_handler')
+    pkg = importlib.import_module('archemist.robots.simulated_robot.handler')
     handler_cls = getattr(pkg, 'GenericRobotHandler')
     return handler_cls(robot) 
 

@@ -1,5 +1,5 @@
 from archemist.core.state.robot import Robot, RobotState
-from archemist.core.state.station import Station, StationState, StationOpDescriptor
+from archemist.core.state.station import Station, StationState
 from archemist.core.persistence.object_factory import StationFactory
 from typing import Tuple,Dict
 

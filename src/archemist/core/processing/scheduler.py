@@ -1,6 +1,6 @@
 from archemist.core.state.robot import RobotTaskType, RobotState
-from archemist.core.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
-from archemist.core.state.robots.pandaFranka import PandaFranka
+from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
+from archemist.robots.panda_robot.state import PandaFranka
 from archemist.core.state.state import State
 
 

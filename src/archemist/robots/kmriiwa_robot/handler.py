@@ -1,9 +1,9 @@
 import rospy
 from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand, KMRStatus, LBRStatus
-from archemist.core.state.robots.kukaLBRIIWA import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.core.state.robot import Robot
 from archemist.core.util.location import Location
 from archemist.core.processing.handler import RobotHandler
+from .state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 
 class KmriiwaROSHandler(RobotHandler):
     def __init__(self, robot: Robot):
