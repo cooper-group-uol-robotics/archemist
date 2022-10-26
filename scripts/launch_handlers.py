@@ -1,8 +1,6 @@
 import importlib
 from archemist.persistence.yaml_handler import YamlHandler
 from archemist.persistence.persistence_manager import PersistenceManager
-import archemist.processing.robotHandlers
-import archemist.processing.stationHandlers
 import multiprocessing as mp
 from time import sleep
 from pathlib import Path
