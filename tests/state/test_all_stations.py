@@ -1,15 +1,15 @@
 import unittest
-from archemist.state.material import Solid,Liquid
-from archemist.state.stations.fisher_weighing_station import FisherWeightingStation,FisherWeightOpDescriptor
-from archemist.state.stations.ika_plate_digital import IKAMode,IkaPlateDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
-from archemist.state.stations.chemspeed_flex_station import ChemSpeedStatus,ChemSpeedFlexStation, CSOpenDoorOpDescriptor, CSCloseDoorOpDescriptor, CSCSVJobOpDescriptor
-from archemist.state.stations.input_station import InputStation, InputStationPickupOp
-from archemist.state.stations.output_station import OutputStation,OutputStationPlaceOp
-from archemist.state.stations.light_box_station import LightBoxStation, SampleColorOpDescriptor
-from archemist.state.stations.solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor
-from archemist.state.stations.soluibility_station import SolubilityStation, SolubilityOpDescriptor, TurbidityState
-from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
-from archemist.state.station import StationState
+from archemist.core.state.material import Solid,Liquid
+from archemist.core.state.stations.fisher_weighing_station import FisherWeightingStation,FisherWeightOpDescriptor
+from archemist.core.state.stations.ika_plate_digital import IKAMode,IkaPlateDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
+from archemist.core.state.stations.chemspeed_flex_station import ChemSpeedStatus,ChemSpeedFlexStation, CSOpenDoorOpDescriptor, CSCloseDoorOpDescriptor, CSCSVJobOpDescriptor
+from archemist.core.state.stations.input_station import InputStation, InputStationPickupOp
+from archemist.core.state.stations.output_station import OutputStation,OutputStationPlaceOp
+from archemist.core.state.stations.light_box_station import LightBoxStation, SampleColorOpDescriptor
+from archemist.core.state.stations.solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor
+from archemist.core.state.stations.soluibility_station import SolubilityStation, SolubilityOpDescriptor, TurbidityState
+from archemist.core.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.core.state.station import StationState
 from datetime import datetime
 from mongoengine import connect
 

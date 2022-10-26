@@ -1,10 +1,10 @@
 import unittest
-from archemist.util import Location
-from archemist.state.material import Liquid
-from archemist.state.stations.ika_plate_digital import IkaPlateDigital
-from archemist.persistence.object_factory import StationFactory
-from archemist.state.batch import Batch
-from archemist.state.station import StationState
+from archemist.core.util import Location
+from archemist.core.state.material import Liquid
+from archemist.core.state.stations.ika_plate_digital import IkaPlateDigital
+from archemist.core.persistence.object_factory import StationFactory
+from archemist.core.state.batch import Batch
+from archemist.core.state.station import StationState
 from datetime import datetime
 from mongoengine import connect
 import yaml

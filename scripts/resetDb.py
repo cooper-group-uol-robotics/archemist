@@ -1,3 +1,3 @@
-from archemist.state.state import State
+from archemist.core.state.state import State
 state = State()
 state.initializeState(True)

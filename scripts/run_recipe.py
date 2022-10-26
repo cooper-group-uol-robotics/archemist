@@ -1,12 +1,12 @@
 from time import sleep
-from archemist.processing.prcessor import WorkflowManager
-from archemist.persistence.persistence_manager import PersistenceManager
-from archemist.persistence.yaml_handler import YamlHandler
-from archemist.util.location import Location
+from archemist.core.processing.prcessor import WorkflowManager
+from archemist.core.persistence.persistence_manager import PersistenceManager
+from archemist.core.persistence.yaml_handler import YamlHandler
+from archemist.core.util.location import Location
 from pathlib import Path
 from datetime import datetime
-from archemist.state.robots.kukaLBRIIWA import KukaNAVTask
-from archemist.state.robot import RobotOutputDescriptor
+from archemist.core.state.robots.kukaLBRIIWA import KukaNAVTask
+from archemist.core.state.robot import RobotOutputDescriptor
 
 if __name__ == '__main__':
     config_file_name = 'algae_bot_config_file.yaml'

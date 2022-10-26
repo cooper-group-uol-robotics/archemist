@@ -1,5 +1,5 @@
-from archemist.processing.prcessor import WorkflowManager
-from archemist.util.location import Location
+from archemist.core.processing.prcessor import WorkflowManager
+from archemist.core.util.location import Location
 from time import sleep
 wm = WorkflowManager()
 wm.initializeWorkflow()

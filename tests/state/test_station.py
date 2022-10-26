@@ -1,11 +1,11 @@
 import unittest
-from archemist.state.material import Liquid
-from archemist.state.robot import RobotTaskOpDescriptor, RobotTaskType
+from archemist.core.state.material import Liquid
+from archemist.core.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
-from archemist.state.station import StationModel, StationState
-from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
-from archemist.state.batch import Batch
-from archemist.util.location import Location
+from archemist.core.state.station import StationModel, StationState
+from archemist.core.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.core.state.batch import Batch
+from archemist.core.util.location import Location
 import yaml
 from datetime import datetime
 

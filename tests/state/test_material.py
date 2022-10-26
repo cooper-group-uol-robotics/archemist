@@ -1,6 +1,6 @@
 import unittest
 from mongoengine import connect,errors
-from archemist.state.material import Liquid, Material, Solid
+from archemist.core.state.material import Liquid, Material, Solid
 from datetime import date, timedelta
 
 

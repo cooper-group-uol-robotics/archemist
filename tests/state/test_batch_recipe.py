@@ -1,10 +1,10 @@
 import unittest
 from bson.objectid import ObjectId
-from archemist.state.stations.ika_plate_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
-from archemist.state.batch import Batch
+from archemist.core.state.stations.ika_plate_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
+from archemist.core.state.batch import Batch
 import yaml
 from mongoengine import connect
-from archemist.util.location import Location
+from archemist.core.util.location import Location
 
 class BatchRecipeTest(unittest.TestCase):
     def setUp(self):

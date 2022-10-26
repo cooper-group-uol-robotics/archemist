@@ -1,10 +1,10 @@
 import importlib
-from archemist.persistence.yaml_handler import YamlHandler
-from archemist.persistence.persistence_manager import PersistenceManager
+from archemist.core.persistence.yaml_handler import YamlHandler
+from archemist.core.persistence.persistence_manager import PersistenceManager
 import multiprocessing as mp
 from time import sleep
 from pathlib import Path
-from archemist.state.state import State
+from archemist.core.state.state import State
 import argparse
 import pkgutil
 
@@ -31,7 +31,7 @@ def run_handler(handler_discriptor: HandlerArgs):
 
 def construct_robot_handler(robot):
     handler_name = f'{robot.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.processing.robot_handlers')
+    pkg = importlib.import_module('archemist.core.processing.robot_handlers')
     for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
         module = importlib.import_module(module_itr.name)
         if hasattr(module,handler_name):
@@ -39,13 +39,13 @@ def construct_robot_handler(robot):
             return cls(robot)
 
 def construct_robot_test_handler(robot):
-    pkg = importlib.import_module('archemist.processing.robot_handlers.generic_robot_handler')
+    pkg = importlib.import_module('archemist.core.processing.robot_handlers.generic_robot_handler')
     handler_cls = getattr(pkg, 'GenericRobotHandler')
     return handler_cls(robot) 
 
 def construct_station_handler(station):
     handler_name = f'{station.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.processing.station_handlers')
+    pkg = importlib.import_module('archemist.core.processing.station_handlers')
     for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
         module = importlib.import_module(module_itr.name)
         if hasattr(module,handler_name):
@@ -53,7 +53,7 @@ def construct_station_handler(station):
             return cls(station)
 
 def construct_station_test_handler(station):
-    pkg = importlib.import_module('archemist.processing.station_handlers.generic_station_handler')
+    pkg = importlib.import_module('archemist.core.processing.station_handlers.generic_station_handler')
     handler_cls = getattr(pkg, 'GenericStationHandler')
     return handler_cls(station)
 

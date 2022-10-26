@@ -1,12 +1,12 @@
 from time import sleep
-from archemist.processing.prcessor import WorkflowManager
-from archemist.persistence.persistence_manager import PersistenceManager
-from archemist.persistence.recipe_files_watchdog import RecipeFilesWatchdog
-from archemist.persistence.yaml_handler import YamlHandler
-from archemist.util.location import Location
+from archemist.core.processing.prcessor import WorkflowManager
+from archemist.core.persistence.persistence_manager import PersistenceManager
+from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
+from archemist.core.persistence.yaml_handler import YamlHandler
+from archemist.core.util.location import Location
 from pathlib import Path
 from datetime import datetime
-from archemist.state.robots.kukaLBRIIWA import KukaLBRMaintenanceTask
+from archemist.core.state.robots.kukaLBRIIWA import KukaLBRMaintenanceTask
 import zmq
 
 if __name__ == '__main__':
