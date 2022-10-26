@@ -1,3 +1,4 @@
+from email.policy import default
 from archemist.state.station import Station, StationModel, StationOpDescriptor, StationOpDescriptorModel
 from archemist.state.material import Solid, Liquid, SolidMaterialModel
 from typing import Dict, List
@@ -160,6 +161,50 @@ class QuantosSolidDispenserQS2(Station):
         super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
+class OpenDoorOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+
+class CloseDoorOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class MoveCarouselOpDescriptorModel(StationOpDescriptorModel):
+    carousel_pos = fields.IntField(min_value=1, default=1)
+
+
+class MoveCarouselOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: MoveCarouselOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = MoveCarouselOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.carousel_pos = kwargs['carousel_pos']
+        return cls(model)
+
+    @property
+    def carousel_pos(self) -> int:
+        return self._model.carousel_pos
+
+
 class QuantosDispenseOpDescriptorModel(StationOpDescriptorModel):
     solid_name = fields.StringField(required=True)
     dispense_mass = fields.FloatField(min_value=0, required=True)

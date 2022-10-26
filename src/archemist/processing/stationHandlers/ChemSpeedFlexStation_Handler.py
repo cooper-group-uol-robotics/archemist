@@ -53,6 +53,8 @@ class ChemSpeedFlexStation_Handler(StationHandler):
             for i in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
             self._desired_cs_status = CSFlexStatus.JOB_COMPLETE
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
     def is_op_execution_complete(self) -> bool:
         if self._desired_cs_status == self._current_cs_status:

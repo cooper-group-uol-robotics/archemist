@@ -1,16 +1,19 @@
-#!/usr/bin/env python3
-
 import rospy
+from typing import Dict, Tuple
+from archemist.processing.handler import StationHandler
 from archemist.state.station import Station
+from archemist.state.stations.soluibility_station import SolubilityOpDescriptor
 from archemist_msgs.msg import CameraCommand
 
 from rospy.core import is_shutdown
 
-class SolubilityStation_Handler:
+class SolubilityStation_Handler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self.pubCamera = rospy.Publisher("/camera1/commands", CameraCommand, queue_size=2)
+        self._camera_pub = rospy.Publisher("/camera1/commands", CameraCommand, queue_size=2)
+        self._received_results = False
+        self._op_results = {}
         rospy.sleep(1)
         
 
@@ -23,22 +26,20 @@ class SolubilityStation_Handler:
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-    def process(self):
-        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
-        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
-        current_op.add_timestamp()
-        rospy.loginfo('recording video')
-        self._station.recording = True
-        self.pubCamera.publish(camera_command=CameraCommand.RECORD)
-        rospy.sleep(current_op.duration)
-        self.pubCamera.publish(camera_command=CameraCommand.STOPRECORD)
-        self._station.recording = False
+    def execute_op(self):
+        current_op = self._station.get_assigned_station_op()
+        self._received_results = False
+        self._op_results = {}
+        if isinstance(current_op, SolubilityOpDescriptor):
+            # TODO change the code to talk to an atual soluability 
+            self._camera_pub.publish(camera_command=CameraCommand.RECORD)
+            rospy.sleep(2)
+            self._camera_pub.publish(camera_command=CameraCommand.STOPRECORD)
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
+    def is_op_execution_complete(self) -> bool:
+        return True
 
-        return current_op
-
-# if __name__ == '__main__':
-#     ika_handler = SolubilityStation_Handler()
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, {}

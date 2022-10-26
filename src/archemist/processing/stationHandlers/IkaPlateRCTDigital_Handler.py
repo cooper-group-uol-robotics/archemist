@@ -26,7 +26,7 @@ class IkaPlateRCTDigital_Handler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-        
+
         if isinstance(current_op, IKAHeatingOpDescriptor):
             rospy.loginfo("executing heating operation")
             for i in range(10):
@@ -40,9 +40,12 @@ class IkaPlateRCTDigital_Handler(StationHandler):
             for i in range(10):
                 self._ika_pub.publish(ika_command= IKACommand.HEATAT, ika_param=current_op.target_temperature)
                 self._ika_pub.publish(ika_command= IKACommand.STIRAT, ika_param=current_op.target_stirring_speed)
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
         
         self._timer_thread = Thread(target=self._sleep_for_duration,kwargs={'duration':current_op.target_duration})
         self._timer_thread.start()
+
 
     def is_op_execution_complete(self) -> bool:
         if self._timer_thread.is_alive():

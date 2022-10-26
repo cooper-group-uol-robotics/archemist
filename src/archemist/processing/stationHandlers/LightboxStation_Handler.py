@@ -29,13 +29,15 @@ class LightBoxStation_Handler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
+        self._received_results = False
+        self._op_results = {}
         if isinstance(current_op, SampleColorOpDescriptor):
             op_msg = ColorimetryCommand()
             op_msg.op_name = 'take_pic'
-            self._received_results = False
-            self._op_results = {}
             for i in range(10):
                 self.pubCamera.publish(op_msg)
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
     def is_op_execution_complete(self) -> bool:
         return self._received_results

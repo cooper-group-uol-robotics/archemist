@@ -1,22 +1,27 @@
-#!/usr/bin/env python3
-
 import rospy
+from typing import Tuple, Dict
 from archemist.state.station import Station
+from archemist.state.stations.solid_dispensing_quantos_QS2 import OpenDoorOpDescriptor, CloseDoorOpDescriptor, QuantosDispenseOpDescriptor, MoveCarouselOpDescriptor
 from mettler_toledo_quantos_q2_msgs.msg import QuantosCommand
 from archemist.processing.handler import StationHandler
 from std_msgs.msg import String
+
+
+'''TODO write a subscriber that publish quantos status such as dispensed weight, door status, sampler position and possibly dispensed solid'''
 
 class QuantosSolidDispenserQS2_Handler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self._pubQuantos = rospy.Publisher("/Quantos_Commands", QuantosCommand, queue_size=1)
+        self._quantos_pub = rospy.Publisher("/Quantos_Commands", QuantosCommand, queue_size=1)
+        rospy.Subscriber('/Quantos_Done', String, self._quantos_callback)
+        self._received_results = False
         
         # put quantos in the correct place before robott
-        rospy.sleep(3)
-        self._pubQuantos.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
-        rospy.wait_for_message("/Quantos_Done", String)
-        self._station.carousel_pos = 20
+        # rospy.sleep(3)
+        # self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
+        # rospy.wait_for_message("/Quantos_Done", String)
+        # self._station.carousel_pos = 20
 
     def run(self):
         rospy.loginfo(f'{self._station}_handler is running')
@@ -29,31 +34,26 @@ class QuantosSolidDispenserQS2_Handler(StationHandler):
 
 
 
-    def process(self):
-        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
-        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
-        current_op.add_timestamp()
+    def execute_op(self):
+        current_op = self._station.get_assigned_station_op()
+        self._received_results = False
+        if isinstance(current_op, QuantosDispenseOpDescriptor):
+            #Dispense solid
+            self._quantos_pub.publish(quantos_command=QuantosCommand.DISPENSESOLID, quantos_int= self._station.carousel_pos, quantos_float= current_op.dispense_mass)
+        elif isinstance(current_op, OpenDoorOpDescriptor):
+            self._quantos_pub.publish(quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=True)
+        elif isinstance(current_op, CloseDoorOpDescriptor):
+            self._quantos_pub.publish(quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=False)
+        elif isinstance(current_op, MoveCarouselOpDescriptor):
+            self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=current_op.carousel_pos)
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
-        #Dispense solid
-        self._pubQuantos.publish(quantos_command=QuantosCommand.DISPENSESOLID, quantos_int= 5, quantos_float= 200.0)
-        self._station.carousel_pos = 5
-        rospy.wait_for_message("/Quantos_Done", String)
-        
-        #Move carousel back to the start position
-        self._pubQuantos.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
-        rospy.wait_for_message("/Quantos_Done", String)
-        self._station.carousel_pos = 20
-        #Well 5 exposed to KUKA, unload filed vial
-        cartridge_id = self._station.get_cartridge_id(current_op.solid_name)
-        self._station.dispense(cartridge_id, current_op.dispense_mass)
+    def is_op_execution_complete(self) -> bool:
+        return self._received_results
 
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, {} 
 
-        return current_op
-
-        
-
-# if __name__ == '__main__':
-#     ika_handler = QuantosSolidDispenserQS2_Handler()
+    def _quantos_callback(self, msg):
+        self._received_results = False

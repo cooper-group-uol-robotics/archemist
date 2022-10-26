@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 
 import rospy
+from typing import Tuple, Dict
 from archemist.state.station import Station
 from pi4_peristaltic_pump_msgs.msg import DispenserCommand
 from archemist.processing.handler import StationHandler
+from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticPumpOpDescriptor
 from std_msgs.msg import String
 
 class PeristalticLiquidDispensing_Handler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self._pubPeristaltic = rospy.Publisher("/Dispenser_Commands", DispenserCommand, queue_size=1)
+        self._pump_pub = rospy.Publisher("/Dispenser_Commands", DispenserCommand, queue_size=1)
+        rospy.Publisher('/Dispenser_Done',String, self._pump_callback)
+        self._received_results = False
+        rospy.sleep(1)
 
     def run(self):
         rospy.loginfo(f'{self._station}_handler is running')
@@ -21,20 +26,22 @@ class PeristalticLiquidDispensing_Handler(StationHandler):
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
-    def process(self):
-        current_op_dict = self._station.assigned_batch.recipe.get_current_task_op_dict()
-        current_op = ObjectConstructor.construct_station_op_from_dict(current_op_dict)
-        current_op.add_timestamp()
+    def execute_op(self):
+        current_op = self._station.get_assigned_station_op()
+        self._received_results = False
+        if isinstance(current_op, PeristalticPumpOpDescriptor):
+            #TODO depending on the liquid we can select the correct pump
+            for i in range(10):
+                self._pump_pub.publish(dispenser_command=DispenserCommand.DISPENSEPID, dispenser_ml=current_op.dispense_volume)
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
-        self._pubPeristaltic.publish(dispenser_command=DispenserCommand.DISPENSEPID, dispenser_ml=current_op.dispense_volume)
-        rospy.wait_for_message("/Dispenser_Done", String)
-        
-        self._station.dispense_liquid(current_op.liquid_name, current_op.dispense_volume)
-        current_op.output.has_result = True
-        current_op.output.success = True
-        current_op.output.add_timestamp()
+    def is_op_execution_complete(self) -> bool:
+        return self._received_results
 
-        return current_op
+    def get_op_result(self) -> Tuple[bool, Dict]:
+        return True, {}
+            
 
-# if __name__ == '__main__':
-#     ika_handler = PeristalticLiquidDispensing_Handler()
+    def _pump_callback(self, msg):
+        self._received_results = True
