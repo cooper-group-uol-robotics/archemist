@@ -26,7 +26,7 @@ class StateTest(unittest.TestCase):
         string_id_station = state.get_station('ChemSpeedFlexStation', 9)
         self.assertEqual(stations[1].__class__.__name__, 'ChemSpeedFlexStation')
         self.assertEqual(stations[1].id, 9)
-        self.assertEqual(stations[2].__class__.__name__, 'IkaPlateRCTDigital')
+        self.assertEqual(stations[2].__class__.__name__, 'IkaPlateDigital')
         self.assertEqual(stations[2].id, 2)
 
         robots = state.robots
@@ -97,7 +97,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(stations[0].id, 5)
         self.assertEqual(stations[1].__class__.__name__, 'ChemSpeedFlexStation')
         self.assertEqual(stations[1].id, 9)
-        self.assertEqual(stations[2].__class__.__name__, 'IkaPlateRCTDigital')
+        self.assertEqual(stations[2].__class__.__name__, 'IkaPlateDigital')
         self.assertEqual(stations[2].id, 2)
         string_id_station = state.get_station('ChemSpeedFlexStation', 9)
         self.assertEqual(string_id_station.__class__.__name__, 'ChemSpeedFlexStation')

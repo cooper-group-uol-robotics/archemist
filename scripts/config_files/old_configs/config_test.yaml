@@ -17,7 +17,7 @@ workflow:
         cartridge_id: 'cat1'
         unit: mg
   Stations:
-    IkaPlateRCTDigital:
+    IkaPlateDigital:
       id: 2
       location:
         node_id: 1

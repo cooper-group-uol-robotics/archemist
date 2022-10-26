@@ -18,7 +18,7 @@ workflow:
         unit: mg
         expiry_date: 2025-02-11
   Stations:
-    - type: IkaPlateRCTDigital
+    - type: IkaPlateDigital
       id: 2
       location:
         node_id: 1

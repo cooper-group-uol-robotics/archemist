@@ -1,12 +1,12 @@
 import rospy
 from archemist.state.station import Station
-from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor, IKAHeatingStirringOpDescriptor
+from archemist.state.stations.ika_plate_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor, IKAHeatingStirringOpDescriptor
 from archemist.processing.handler import StationHandler
 from ika_plate_rct_digital_msgs.msg import IKACommand
 from threading import Thread
 from typing import Tuple, Dict
 
-class IkaPlateRCTDigital_Handler(StationHandler):
+class IKAPlateDigitalROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

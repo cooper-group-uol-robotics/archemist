@@ -9,7 +9,7 @@ stations:
       - type: InputStationPickupOp
         properties:
         output: InputStationResultDescriptor
-  - name: IkaPlateRCTDigital.id_2
+  - name: IkaPlateDigital.id_2
     stationOps:
       - type: IKAStirringOpDescriptor
         properties:
@@ -21,9 +21,9 @@ workflowSM:
     onSuccess: InputStation.id_1.InputStationPickupOp
     onFail: end
   - state_name: InputStation.id_1.InputStationPickupOp
-    onSuccess: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+    onSuccess: IkaPlateDigital.id_2.IKAStirringOpDescriptor
     onFail: end
-  - state_name: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+  - state_name: IkaPlateDigital.id_2.IKAStirringOpDescriptor
     onSuccess: end
     onFail: end
   - state_name: end

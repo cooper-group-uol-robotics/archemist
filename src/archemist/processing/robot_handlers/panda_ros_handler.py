@@ -3,7 +3,7 @@ import rospy
 from franka_msgs_archemist.msg import PandaTask, TaskStatus
 from archemist.processing.handler import RobotHandler
 
-class PandaFranka_Handler(RobotHandler):
+class PandaROSHandler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
         rospy.init_node( f'{self._robot}_handler')

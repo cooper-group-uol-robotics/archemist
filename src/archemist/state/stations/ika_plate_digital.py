@@ -11,7 +11,7 @@ class IKAMode(Enum):
 
 ''' ==== Station Description ==== '''
 
-class IkaPlateRCTDigitalModel(StationModel):
+class IkaPlateDigitalModel(StationModel):
     mode = fields.EnumField(IKAMode, null=True)
     current_temperature = fields.IntField(min_value=0, max_value=500, null=True)
     target_temperature = fields.IntField(min_value=0, max_value=500, null=True)
@@ -22,13 +22,13 @@ class IkaPlateRCTDigitalModel(StationModel):
     target_duration = fields.FloatField(null=True)
 
 
-class IkaPlateRCTDigital(Station):
-    def __init__(self, station_model: IkaPlateRCTDigitalModel) -> None:
+class IkaPlateDigital(Station):
+    def __init__(self, station_model: IkaPlateDigitalModel) -> None:
         self._model = station_model
 
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
-        model = IkaPlateRCTDigitalModel()
+        model = IkaPlateDigitalModel()
         cls._set_model_common_fields(station_dict,model)
         model._module = cls.__module__
         model.save()

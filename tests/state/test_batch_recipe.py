@@ -1,6 +1,6 @@
 import unittest
 from bson.objectid import ObjectId
-from archemist.state.stations.ika_place_rct_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
+from archemist.state.stations.ika_plate_digital import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
 from archemist.state.batch import Batch
 import yaml
 from mongoengine import connect
@@ -100,13 +100,13 @@ class BatchRecipeTest(unittest.TestCase):
 
         # IKAPlatRCTDigital state
         batch.recipe.advance_state(True)
-        self.assertEqual(batch.recipe.current_state, 'IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor')
+        self.assertEqual(batch.recipe.current_state, 'IkaPlateDigital.id_2.IKAStirringOpDescriptor')
         station_name, station_id = batch.recipe.get_current_station()
-        self.assertEqual(station_name, 'IkaPlateRCTDigital')
+        self.assertEqual(station_name, 'IkaPlateDigital')
         self.assertEqual(station_id, 2)
         op1_dict = batch.recipe.get_current_task_op_dict()
         self.assertEqual(op1_dict['type'], 'IKAStirringOpDescriptor')
-        self.assertEqual(op1_dict['properties']['rpm'], 200)
+        self.assertEqual(op1_dict['properties']['stirring_speed'], 200)
         self.assertEqual(op1_dict['properties']['duration'], 10)
         self.assertFalse(batch.recipe.is_complete())
         # IKAPlatRCTDigital state

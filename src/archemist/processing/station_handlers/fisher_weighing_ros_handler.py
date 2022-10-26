@@ -5,7 +5,7 @@ from archemist.state.stations.fisher_weighing_station import FisherWeightOpDescr
 from fisherbrand_pps4102_balance_msgs.msg import BalanceCommand, BalanceReading
 from archemist.processing.handler import StationHandler
 
-class FisherWeightingStation_Handler(StationHandler):
+class FisherWeighingROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

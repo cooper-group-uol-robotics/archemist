@@ -33,7 +33,7 @@ workflow:
           frame_name: "quantos_rack"
         post_load_pos: 
       parameters:
-    IkaPlateRCTDigital:
+    IkaPlateDigital:
       id: 2
       locations:
         rack_holder:

@@ -4,7 +4,7 @@ materials:
   liquids: [water]
   solids: [sodium_chloride]
 stations:
-  - name: IkaPlateRCTDigital
+  - name: IkaPlateDigital
     stationOps:
       - type: IKAStirringOpDescriptor
         properties:
@@ -19,9 +19,9 @@ stations:
         output: "FisherOutputDescriptor"
 workflowSM:
   - state_name: start
-    onSuccess: "IkaPlateRCTDigital.IKAStirringOpDescriptor"
+    onSuccess: "IkaPlateDigital.IKAStirringOpDescriptor"
     onFail: "end"
-  - state_name: IkaPlateRCTDigital.IKAStirringOpDescriptor
+  - state_name: IkaPlateDigital.IKAStirringOpDescriptor
     onSuccess: "FisherWeightingStation.FisherWeightStablepDescriptor"
     onFail: "end"
   - state_name: FisherWeightingStation.FisherWeightStablepDescriptor

@@ -8,7 +8,7 @@ from archemist.processing.handler import StationHandler
 from archemist.state.stations.peristaltic_liquid_dispensing import PeristalticPumpOpDescriptor
 from std_msgs.msg import String
 
-class PeristalticLiquidDispensing_Handler(StationHandler):
+class PeristalticLiquidDispensingROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

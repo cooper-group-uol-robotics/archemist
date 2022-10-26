@@ -52,7 +52,7 @@ recipe:
               unit: mg
               volDispensed: float
               unit: mL
-    IkaPlateRCTDigital:
+    IkaPlateDigital:
       stationOp:
         IKAHeatingOpDescriptor:
           id: 24
@@ -93,7 +93,7 @@ recipe:
       onSuccess: "heating_stn1"
       onFail: "end"  
     heating_stn1:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn2"
       onFail: "end"
@@ -103,7 +103,7 @@ recipe:
       onSuccess: "heating_stn2"
       onFail: "end"
     heating_stn2:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn3"
       onFail: "end"
@@ -113,7 +113,7 @@ recipe:
       onSuccess: "end"
       onFail: "end"
     heating_stn3:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn4"
       onFail: "end"
@@ -123,7 +123,7 @@ recipe:
       onSuccess: "heating_stn4"
       onFail: "end"
     heating_stn4:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn5"
       onFail: "end"
@@ -133,7 +133,7 @@ recipe:
       onSuccess: "heating_stn5"
       onFail: "end"
     heating_stn5:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn6"
       onFail: "end"
@@ -143,7 +143,7 @@ recipe:
       onSuccess: "heating_stn6"
       onFail: "end"
     heating_stn6:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn7"
       onFail: "end"
@@ -153,7 +153,7 @@ recipe:
       onSuccess: "heating_stn7"
       onFail: "end"
     heating_stn7:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn8"
       onFail: "end"
@@ -163,7 +163,7 @@ recipe:
       onSuccess: "heating_stn9"
       onFail: "end"
     heating_stn9:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAHeatingOpDescriptor"
       onSuccess: "weight_stn9"
       onFail: "end"

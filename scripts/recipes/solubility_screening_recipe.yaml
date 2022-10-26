@@ -4,7 +4,7 @@ materials:
   liquids: [water]
   solids: [sodium_chloride]
 stations:
-  - name: IkaPlateRCTDigital.id_2
+  - name: IkaPlateDigital.id_2
     stationOps:
       - type: IKAStirringOpDescriptor
         properties:
@@ -24,9 +24,9 @@ workflowSM:
     onSuccess: PeristalticLiquidDispensing.id_23.PeristalticPumpOpDescriptor
     onFail: end
   - state_name: PeristalticLiquidDispensing.id_23.PeristalticPumpOpDescriptor
-    onSuccess: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+    onSuccess: IkaPlateDigital.id_2.IKAStirringOpDescriptor
     onFail: end
-  - state_name: IkaPlateRCTDigital.id_2.IKAStirringOpDescriptor
+  - state_name: IkaPlateDigital.id_2.IKAStirringOpDescriptor
     onSuccess: end
     onFail: end
   - state_name: end

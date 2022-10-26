@@ -7,7 +7,7 @@ from archemist.state.station import Station
 from colorimetry_msgs.msg import ColorimetryCommand,ColorimetryResult
 from archemist.state.stations.light_box_station import SampleColorOpDescriptor
 
-class LightBoxStation_Handler(StationHandler):
+class LightBoxROSHandler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

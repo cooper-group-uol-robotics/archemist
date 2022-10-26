@@ -7,7 +7,7 @@ from archemist_msgs.msg import CameraCommand
 
 from rospy.core import is_shutdown
 
-class SolubilityStation_Handler(StationHandler):
+class SolubilityStationROSHandler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

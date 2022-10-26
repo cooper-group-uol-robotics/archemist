@@ -4,7 +4,7 @@ from threading import Thread
 import time
 from typing import Tuple, Dict
 
-class GenericStation_Handler(StationHandler):
+class GenericStationHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         self._thread = None

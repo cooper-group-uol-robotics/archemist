@@ -1,7 +1,7 @@
 import unittest
 from archemist.util import Location
 from archemist.state.material import Liquid
-from archemist.state.stations.ika_place_rct_digital import IkaPlateRCTDigital
+from archemist.state.stations.ika_plate_digital import IkaPlateDigital
 from archemist.persistence.object_factory import StationFactory
 from archemist.state.batch import Batch
 from archemist.state.station import StationState
@@ -12,7 +12,7 @@ import yaml
 class SMTestWithBatchMode(unittest.TestCase):
     def test_sm_progress(self):
         station_dict = {
-            'type': 'IkaPlateRCTDigital',
+            'type': 'IkaPlateDigital',
             'id': 2,
             'location': {'node_id': 2, 'graph_id': 7},
             'process_state_machine': 
@@ -40,7 +40,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         }
         liquids_list = []
         liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = IkaPlateRCTDigital.from_dict(station_dict=station_dict, 
+        t_station = IkaPlateDigital.from_dict(station_dict=station_dict, 
                         liquids=liquids_list, solids=[])
 
         t_sm = StationFactory.create_state_machine(t_station)

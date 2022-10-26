@@ -8,7 +8,7 @@ from archemist.processing.handler import StationHandler
 from chemspeed_flex_msgs.msg import CSFlexCommand,CSFlexStatus
 from rospy.core import is_shutdown
 
-class ChemSpeedFlexStation_Handler(StationHandler):
+class ChemSpeedFlexROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         self._current_cs_status = CSFlexStatus.DOOR_CLOSED

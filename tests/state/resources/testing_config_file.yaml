@@ -45,7 +45,7 @@ workflow:
       parameters:
         liquid_pump_map:
           water: pUmP1
-    - type: IkaPlateRCTDigital
+    - type: IkaPlateDigital
       id: 2
       location:
         node_id: 1

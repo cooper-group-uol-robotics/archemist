@@ -2,7 +2,7 @@ import time
 from archemist.state.station import Station
 from archemist.processing.handler import StationHandler
 
-class OutputStation_Handler(StationHandler):
+class OutputStationHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
     

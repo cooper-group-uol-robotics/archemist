@@ -9,7 +9,7 @@ from std_msgs.msg import String
 
 '''TODO write a subscriber that publish quantos status such as dispensed weight, door status, sampler position and possibly dispensed solid'''
 
-class QuantosSolidDispenserQS2_Handler(StationHandler):
+class QuantosSolidDispenserQS2ROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')

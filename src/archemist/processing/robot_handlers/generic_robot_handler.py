@@ -3,7 +3,7 @@ from archemist.processing.handler import RobotHandler
 from threading import Thread
 import time
 
-class GenericRobot_Handler(RobotHandler):
+class GenericRobotHandler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
         self._thread = None

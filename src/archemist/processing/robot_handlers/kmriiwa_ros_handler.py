@@ -5,7 +5,7 @@ from archemist.state.robot import Robot
 from archemist.util.location import Location
 from archemist.processing.handler import RobotHandler
 
-class KukaLBRIIWA_Handler(RobotHandler):
+class KmriiwaROSHandler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
         rospy.init_node(f'{self._robot}_handler')

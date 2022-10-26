@@ -5,7 +5,7 @@ recipe:
     liquids: { water }
     solids: { sodium_chloride }
   stations:
-    IkaPlateRCTDigital:
+    IkaPlateDigital:
       stationOp:
         IKAStirringOpDescriptor:
           id: 24
@@ -31,7 +31,7 @@ recipe:
       onSuccess: "stir_stn"
       onFail: "end"
     stir_stn:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAStirringOpDescriptor"
       onSuccess: "weight_stn"
       onFail: "end"

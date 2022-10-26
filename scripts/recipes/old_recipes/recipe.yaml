@@ -52,7 +52,7 @@ recipe:
               unit: mg
               volDispensed: float
               unit: mL
-    IkaPlateRCTDigital:
+    IkaPlateDigital:
       stationOp:
         IKAStirringOpDescriptor:
           id: 24
@@ -96,7 +96,7 @@ recipe:
       onSuccess: "stir_stn"
       onFail: "end"
     stir_stn:
-      station: "IkaPlateRCTDigital"
+      station: "IkaPlateDigital"
       task: "IKAStirringOpDescriptor"
       onSuccess: "solubility_stn"
       onFail: "end"

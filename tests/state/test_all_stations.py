@@ -1,7 +1,7 @@
 import unittest
 from archemist.state.material import Solid,Liquid
 from archemist.state.stations.fisher_weighing_station import FisherWeightingStation,FisherWeightOpDescriptor
-from archemist.state.stations.ika_place_rct_digital import IKAMode,IkaPlateRCTDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
+from archemist.state.stations.ika_plate_digital import IKAMode,IkaPlateDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
 from archemist.state.stations.chemspeed_flex_station import ChemSpeedStatus,ChemSpeedFlexStation, CSOpenDoorOpDescriptor, CSCloseDoorOpDescriptor, CSCSVJobOpDescriptor
 from archemist.state.stations.input_station import InputStation, InputStationPickupOp
 from archemist.state.stations.output_station import OutputStation,OutputStationPlaceOp
@@ -50,7 +50,7 @@ class AllStationsTest(unittest.TestCase):
     def test_ika_plate_station(self):
         # construct station
         station_doc = {
-            'type': 'IkaPlateRCTDigital',
+            'type': 'IkaPlateDigital',
             'id': 21,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -61,7 +61,7 @@ class AllStationsTest(unittest.TestCase):
             },
             'parameters':{}
         }
-        t_station = IkaPlateRCTDigital.from_dict(station_doc,[],[])
+        t_station = IkaPlateDigital.from_dict(station_doc,[],[])
         self.assertEqual(t_station.id, station_doc['id'])
         self.assertEqual(t_station.state, StationState.IDLE)
         
