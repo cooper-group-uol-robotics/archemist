@@ -4,9 +4,9 @@ from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType, RobotTaskOpDescriptor
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
 from archemist.core.persistence.object_factory import StationFactory
-from archemist.core.processing.state_machines.base_sm import BaseSm
+from archemist.core.processing.station_process_fsm import StationProcessFSM
 
-class StationLoadingSm(BaseSm):
+class StationLoadingSm(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
@@ -37,42 +37,32 @@ class StationLoadingSm(BaseSm):
         self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
-
-        # init_state transitions
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='load_batch', conditions='all_batches_assigned')
-        self.machine.add_transition('process_state_transitions',source='load_batch',dest='added_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions',source='added_batch_update',dest='load_sample', conditions='is_station_job_ready')
-        
-
+        transitions=[
+            {'trigger':self._trigger_function,'source':'init_state','dest':'load_batch', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'load_batch','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'added_batch_update','dest':'load_sample', 'conditions':'is_station_job_ready'},
+        ]
         if self.batch_mode:
-            # load_sample transitions
-            self.machine.add_transition('process_state_transitions', source='load_sample',dest='added_sample_update', conditions='is_station_job_ready')
-            self.machine.add_transition('process_state_transitions', source='added_sample_update',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded')
-            self.machine.add_transition('process_state_transitions', source='added_sample_update',dest='station_process', conditions=['are_all_samples_loaded','is_station_job_ready'])
-
-            # station_process transitions
-            self.machine.add_transition('process_state_transitions', source='station_process',dest='unload_sample',conditions='is_station_job_ready', before='process_batch')
-
-            # unload_sample transitions
-            self.machine.add_transition('process_state_transitions', source='unload_sample',dest='removed_sample_update', conditions='is_station_job_ready')
-            self.machine.add_transition('process_state_transitions', source='removed_sample_update',dest='unload_sample', conditions='is_station_job_ready', unless='are_all_samples_unloaded')
-            self.machine.add_transition('process_state_transitions', source='removed_sample_update',dest='unload_batch', conditions=['are_all_samples_unloaded','is_station_job_ready'])
-
+            transitions += [{'trigger':self._trigger_function, 'source':'load_sample','dest':'added_sample_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'added_sample_update','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_loaded'},
+            {'trigger':self._trigger_function, 'source':'added_sample_update','dest':'station_process', 'conditions':['are_all_samples_loaded','is_station_job_ready']},
+            {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample','conditions':'is_station_job_ready', 'before':'process_batch'},
+            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'removed_sample_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'removed_sample_update','dest':'unload_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_unloaded'},
+            {'trigger':self._trigger_function, 'source':'removed_sample_update','dest':'unload_batch', 'conditions':['are_all_samples_unloaded','is_station_job_ready']},
+            ]
         else:
-            # load_sample transitions
-            self.machine.add_transition('process_state_transitions', source='load_sample',dest='station_process', conditions='is_station_job_ready')
-            # station_process transitions
-            self.machine.add_transition('process_state_transitions', source='station_process',dest='unload_sample', conditions='is_station_job_ready', before='process_sample')
+             transitions += [{'trigger':self._trigger_function, 'source':'load_sample','dest':'station_process', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready', 'before':'process_sample'},
+            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'added_sample_update', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_loaded'},
+            {'trigger':self._trigger_function, 'source':'added_sample_update','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_loaded'},
+            {'trigger':self._trigger_function, 'source':'added_sample_update','dest':'unload_batch', 'conditions':['are_all_samples_loaded','is_station_job_ready'] , 'before':'reset_samples'}]
+        
+        transitions += [{'trigger':self._trigger_function,'source':'unload_batch','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
+        {'trigger':self._trigger_function,'source':'removed_batch_update','dest':'load_batch', 'unless':'are_all_batches_processed', 'conditions':'is_station_job_ready'},
+        {'trigger':self._trigger_function,'source':'removed_batch_update','dest':'final_state', 'conditions':['is_station_job_ready','are_all_batches_processed'], 'before':'reset_batches'}]
 
-            # unload_sample transitions
-            self.machine.add_transition('process_state_transitions', source='unload_sample',dest='added_sample_update', conditions='is_station_job_ready', unless='are_all_samples_loaded')
-            self.machine.add_transition('process_state_transitions', source='added_sample_update',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded')
-
-            self.machine.add_transition('process_state_transitions', source='added_sample_update',dest='unload_batch', conditions=['are_all_samples_loaded','is_station_job_ready'] , before='reset_samples')
-            
-        self.machine.add_transition('process_state_transitions',source='unload_batch',dest='removed_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions',source='removed_batch_update',dest='load_batch', unless='are_all_batches_processed', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions',source='removed_batch_update',dest='final_state', conditions=['is_station_job_ready','are_all_batches_processed'], before='reset_batches')
+        self.init_state_machine(states=states, transitions=transitions)
 
     def is_station_job_ready(self):
         return not self._station.has_assigned_station_op() and not self._station.has_requested_robot_op()

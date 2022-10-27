@@ -3,9 +3,9 @@ from transitions import Machine, State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
-from archemist.core.processing.state_machines.base_sm import BaseSm
+from archemist.core.processing.station_process_fsm import StationProcessFSM
 
-class InputStationSm(BaseSm):
+class InputStationSm(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)        
@@ -19,14 +19,14 @@ class InputStationSm(BaseSm):
         self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
+        transitions = [
+            {'trigger':self._trigger_function,'source':'init_state','dest':'pickup_batch', 'prepare':'update_assigned_batches', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'pickup_batch','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'removed_batch_update','dest':'pickup_batch', 'unless':'are_all_batches_unloaded', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'final_state', 'conditions':['is_station_job_ready','are_all_batches_unloaded']}
+        ]
 
-        # init_state transitions
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='pickup_batch', prepare='update_assigned_batches', conditions='all_batches_assigned')
-        self.machine.add_transition('process_state_transitions',source='pickup_batch',dest='removed_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions',source='removed_batch_update',dest='pickup_batch', unless='are_all_batches_unloaded', conditions='is_station_job_ready')
-
-        # finalise picking up batch
-        self.machine.add_transition('process_state_transitions', source='removed_batch_update',dest='final_state', conditions=['is_station_job_ready','are_all_batches_unloaded'])
+        self.init_state_machine(states=states, transitions=transitions)
 
     def update_assigned_batches(self):
         self._current_batches_count = len(self._station.assigned_batches)

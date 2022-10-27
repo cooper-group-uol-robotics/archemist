@@ -1,13 +1,18 @@
-from typing import Dict
+from transitions import Machine, State
+from typing import Dict, List
 from archemist.core.state.station import Station
 from archemist.core.util import Location
 
-class BaseSm:
+class StationProcessFSM:
     def __init__(self, station: Station, params_dict: Dict) -> None:
         self._station = station
         self._current_batches_count = 0
         self._current_batch_index = 0 # was -1
         self.machine = None
+        self._trigger_function = 'process_state_transitions'
+
+    def init_state_machine(self, states: List[State], transitions: Dict):
+        self.machine = Machine(self, states=states, initial='init_state', transitions=transitions)
 
     def all_batches_assigned(self) -> bool:
         return not self._station.has_free_batch_capacity()

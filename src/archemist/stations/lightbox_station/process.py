@@ -1,12 +1,12 @@
 from typing import Dict
-from transitions import Machine, State
+from transitions import State
 from archemist.core.state.station import Station
 from .state import SampleColorOpDescriptor
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
-from archemist.core.processing.state_machines.base_sm import BaseSm
+from archemist.core.processing.station_process_fsm import StationProcessFSM
 
-class LightBoxSM(BaseSm):
+class LightBoxSM(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
@@ -22,26 +22,20 @@ class LightBoxSM(BaseSm):
             State(name='final_state', on_enter='finalize_batch_processing')]
             
             
-        self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
+        transitions = [
+            {'trigger':self._trigger_function,'source':'init_state','dest':'load_sample', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function, 'source':'load_sample','dest':'station_process', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready', 'before':'process_sample'},
+            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_loaded'},
+            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'update_batch_index', 'conditions':['are_all_samples_loaded','is_station_job_ready'], 'before':'reset_station'},
+            {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_batches_processed'},
+            {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'final_state', 'conditions':['are_all_batches_processed','is_station_job_ready']}
+        ]
 
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='load_sample', conditions='all_batches_assigned')
-
-        # load_sample transitions
-        self.machine.add_transition('process_state_transitions', source='load_sample',dest='station_process', conditions='is_station_job_ready')
-
-        # station_process transitions
-        self.machine.add_transition('process_state_transitions', source='station_process',dest='unload_sample', conditions='is_station_job_ready', before='process_sample')
-
-        # unload_sample transitions
-        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='load_sample', conditions='is_station_job_ready', unless='are_all_samples_loaded')
-        self.machine.add_transition('process_state_transitions', source='unload_sample',dest='update_batch_index', conditions=['are_all_samples_loaded','is_station_job_ready'], before='reset_station')
+        self.init_state_machine(states=states, transitions=transitions)
         
-        self.machine.add_transition('process_state_transitions', source='update_batch_index',dest='load_sample', conditions='is_station_job_ready', unless='are_all_batches_processed')
-
-        self.machine.add_transition('process_state_transitions', source='update_batch_index',dest='final_state', conditions=['are_all_batches_processed','is_station_job_ready'])
-
 
     def are_all_samples_loaded(self):
         return self._currently_loaded_samples == self._station.assigned_batches[self._current_batch_index].num_samples

@@ -1,11 +1,11 @@
 from typing import Dict
-from transitions import Machine, State
+from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
-from archemist.core.processing.state_machines.base_sm import BaseSm
+from archemist.core.processing.station_process_fsm import StationProcessFSM
 
-class OutputStationSm(BaseSm):
+class OutputStationSm(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
@@ -15,18 +15,16 @@ class OutputStationSm(BaseSm):
             State(name='place_batch', on_enter=['request_place_batch', '_print_state']),
             State(name='added_batch_update', on_enter=['update_loaded_batch', '_print_state']),
             State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
-        
-        self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
+        transitions = [
+            {'trigger':self._trigger_function,'source':'init_state','dest':'place_batch', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'place_batch','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'added_batch_update','dest':'place_batch', 'unless':'are_all_batches_loaded', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'final_state', 'conditions':['is_station_job_ready','are_all_batches_loaded']}
+        ]
 
-        # init_state transitions
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='place_batch', conditions='all_batches_assigned')
-        self.machine.add_transition('process_state_transitions',source='place_batch',dest='added_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions',source='added_batch_update',dest='place_batch', unless='are_all_batches_loaded', conditions='is_station_job_ready')
-
-        # finalise picking up batch
-        self.machine.add_transition('process_state_transitions', source='added_batch_update',dest='final_state', conditions=['is_station_job_ready','are_all_batches_loaded'])
+        self.init_state_machine(states=states, transitions=transitions)
 
     def request_place_batch(self):
         robot_job = KukaLBRTask.from_args(name='PlaceRack',params=[False,self._current_batch_index+1],

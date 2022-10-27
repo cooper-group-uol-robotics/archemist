@@ -1,15 +1,15 @@
 from typing import Dict
-from transitions import Machine, State
+from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from .state import CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSCSVJobOpDescriptor, CSProcessingOpDescriptor
 from archemist.core.persistence.object_factory import StationFactory
-from archemist.core.processing.state_machines.base_sm import BaseSm
+from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.util import Location
 
-class ChemSpeedRackSm(BaseSm):
+class ChemSpeedRackSm(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
@@ -30,54 +30,28 @@ class ChemSpeedRackSm(BaseSm):
             State(name='unload_batch', on_enter=['request_unload_batch', '_print_state']),
             State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
             State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
-        
-        self.machine = Machine(self, states=states, initial='init_state')
 
         ''' Transitions '''
+        transitions = [
+            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'disable_auto_functions', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'navigate_to_chemspeed', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'navigate_to_chemspeed','dest':'open_chemspeed_door', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'open_chemspeed_door','dest':'load_batch', 'unless':'is_station_operation_complete' ,'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'load_batch','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'load_batch', 'unless':'are_all_batches_loaded', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'close_chemspeed_door', 'conditions':['is_station_job_ready','are_all_batches_loaded']},
+            {'trigger':self._trigger_function,'source':'close_chemspeed_door','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'retreat_from_chemspeed', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'retreat_from_chemspeed','dest':'chemspeed_process', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'chemspeed_process','dest':'disable_auto_functions', 'conditions':'is_station_job_ready', 'before':'process_batches'},
+            {'trigger':self._trigger_function, 'source':'open_chemspeed_door','dest':'unload_batch', 'conditions':['is_station_operation_complete','is_station_job_ready']},
+            {'trigger':self._trigger_function, 'source':'unload_batch','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'unload_batch', 'unless':'are_all_batches_unloaded', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'close_chemspeed_door', 'conditions':['is_station_job_ready','are_all_batches_unloaded']},
+            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
+        ]
 
-        # init_state transitions
-        self.machine.add_transition('process_state_transitions',source='init_state',dest='disable_auto_functions', conditions='all_batches_assigned')
-
-        # disable autofunctions and navigate to the station
-        self.machine.add_transition('process_state_transitions',source='disable_auto_functions',dest='navigate_to_chemspeed', conditions='is_station_job_ready')
-
-        # open chemspeed door
-        self.machine.add_transition('process_state_transitions',source='navigate_to_chemspeed',dest='open_chemspeed_door', conditions='is_station_job_ready')
-
-        # load all batches into the chemspeed
-        self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='load_batch', unless='is_station_operation_complete' ,conditions='is_station_job_ready')
-        # self.machine.add_transition('process_state_transitions', source='load_batch',dest='=', unless='are_all_batches_loaded', conditions='is_station_job_ready', before='update_batch_loc_to_station')
-        self.machine.add_transition('process_state_transitions', source='load_batch',dest='added_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions', source='added_batch_update',dest='load_batch', unless='are_all_batches_loaded', conditions='is_station_job_ready')
-
-
-        # close door after loading batch
-        # self.machine.add_transition('process_state_transitions', source='load_batch',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_loaded'], before='update_batch_loc_to_station')
-        self.machine.add_transition('process_state_transitions', source='added_batch_update',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_loaded'])
-
-        # enable autofunctions
-        self.machine.add_transition('process_state_transitions',source='close_chemspeed_door',dest='enable_auto_functions', conditions='is_station_job_ready')
-
-        # process batch after closing door and enabling autofunctions
-        self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='retreat_from_chemspeed', unless='is_station_operation_complete', conditions='is_station_job_ready')
-        
-        self.machine.add_transition('process_state_transitions', source='retreat_from_chemspeed',dest='chemspeed_process', conditions='is_station_job_ready')
-
-        # navigate to the chemspeed
-        self.machine.add_transition('process_state_transitions', source='chemspeed_process',dest='disable_auto_functions', conditions='is_station_job_ready', before='process_batches')
-
-        # unload after openning door
-        self.machine.add_transition('process_state_transitions', source='open_chemspeed_door',dest='unload_batch', conditions=['is_station_operation_complete','is_station_job_ready'])
-        # self.machine.add_transition('process_state_transitions', source='unload_batch',dest='=', unless='are_all_batches_unloaded', conditions='is_station_job_ready', before='update_batch_loc_to_robot')
-        self.machine.add_transition('process_state_transitions', source='unload_batch',dest='removed_batch_update', conditions='is_station_job_ready')
-        self.machine.add_transition('process_state_transitions', source='removed_batch_update',dest='unload_batch', unless='are_all_batches_unloaded', conditions='is_station_job_ready')
-
-        # close door after unloading
-        # self.machine.add_transition('process_state_transitions', source='unload_batch',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_unloaded'], before='update_batch_loc_to_robot')
-        self.machine.add_transition('process_state_transitions', source='removed_batch_update',dest='close_chemspeed_door', conditions=['is_station_job_ready','are_all_batches_unloaded'])
-        
-        # complete
-        self.machine.add_transition('process_state_transitions', source='enable_auto_functions',dest='final_state', conditions=['is_station_job_ready','is_station_operation_complete'])
+        self.init_state_machine(states=states, transitions=transitions)
 
     def is_station_operation_complete(self):
         return self.operation_complete
