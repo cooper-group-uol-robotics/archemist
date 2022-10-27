@@ -33,8 +33,8 @@ def construct_robot_handler(robot):
     handler_name = f'{robot.__class__.__name__}_Handler'
     pkg = importlib.import_module('archemist.robots')
     for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-        handler_modeul = f'{module_itr.name}.handler'
-        module = importlib.import_module(handler_modeul)
+        handler_module = f'{module_itr.name}.handler'
+        module = importlib.import_module(handler_module)
         if hasattr(module,handler_name):
             cls = getattr(module,handler_name)
             return cls(robot)
@@ -46,15 +46,16 @@ def construct_robot_test_handler(robot):
 
 def construct_station_handler(station):
     handler_name = f'{station.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.core.processing.station_handlers')
+    pkg = importlib.import_module('archemist.stations')
     for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-        module = importlib.import_module(module_itr.name)
+        handler_module = f'{module_itr.name}.handler'
+        module = importlib.import_module(handler_module)
         if hasattr(module,handler_name):
             cls = getattr(module,handler_name)
             return cls(station)
 
 def construct_station_test_handler(station):
-    pkg = importlib.import_module('archemist.core.processing.station_handlers.generic_station_handler')
+    pkg = importlib.import_module('archemist.stations.simulated_station.handler')
     handler_cls = getattr(pkg, 'GenericStationHandler')
     return handler_cls(station)
 

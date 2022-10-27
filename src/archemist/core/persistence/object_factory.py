@@ -68,9 +68,10 @@ class StationFactory:
 
     @staticmethod
     def create_from_dict(station_dict: Dict, liquids: List[Liquid], solids: List[Solid]) -> Station:
-        pkg = importlib.import_module('archemist.core.state.stations')
+        pkg = importlib.import_module('archemist.stations')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            module = importlib.import_module(module_itr.name)
+            state_module = f'{module_itr.name}.state'
+            module = importlib.import_module(state_module)
             if hasattr(module,station_dict['type']):
                 cls = getattr(module,station_dict['type'])
                 return cls.from_dict(station_dict, liquids, solids)
@@ -98,9 +99,10 @@ class StationFactory:
 
     @staticmethod
     def create_op_from_dict(op_dict: Dict) -> StationOpDescriptor:
-        pkg = importlib.import_module('archemist.core.state.stations')
+        pkg = importlib.import_module('archemist.stations')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            module = importlib.import_module(module_itr.name)
+            state_module = f'{module_itr.name}.state'
+            module = importlib.import_module(state_module)
             if hasattr(module,op_dict['type']):
                 cls = getattr(module,op_dict['type'])
                 kwargs = {} if op_dict['properties'] is None else op_dict['properties']
@@ -109,9 +111,10 @@ class StationFactory:
     @staticmethod
     def create_state_machine(station: Station):
         station_sm_dict = station.process_sm_dict
-        pkg = importlib.import_module('archemist.core.processing.state_machines')
+        pkg = importlib.import_module('archemist.stations')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            module = importlib.import_module(module_itr.name)
+            process_module = f'{module_itr.name}.process'
+            module = importlib.import_module(process_module)
             if hasattr(module,station_sm_dict['type']):
                 cls = getattr(module,station_sm_dict['type'])
                 return cls(station, station_sm_dict['args'])

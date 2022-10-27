@@ -3,7 +3,6 @@ from transitions import Machine, State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType, RobotTaskOpDescriptor
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
-from archemist.core.util import Location
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.processing.state_machines.base_sm import BaseSm
 

@@ -19,9 +19,10 @@ import pkgutil
 class State:
     def __init__(self):
         # to load all the derived modes for the station and robot queries to work
-        pkg = importlib.import_module('archemist.core.state.stations')
+        pkg = importlib.import_module('archemist.stations')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-            importlib.import_module(module_itr.name)
+            model_module = f'{module_itr.name}.model'
+            importlib.import_module(model_module)
 
         pkg = importlib.import_module('archemist.robots')
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
