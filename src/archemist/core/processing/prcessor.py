@@ -2,7 +2,6 @@ from archemist.core.state.state import State
 from archemist.core.state.station import StationState
 from archemist.core.state.batch import Batch
 from archemist.core.util.location import Location
-from archemist.core.util.station_robot_job import StationRobotJob
 from archemist.core.processing.scheduler import SimpleRobotScheduler,MultiBatchRobotScheduler
 from collections import deque
 from threading import Thread
@@ -53,8 +52,7 @@ class WorkflowManager:
         self._queued_recipes.append(recipe_dict)
 
     def queue_robot_op(self, robot_op):
-        queued_job = StationRobotJob(robot_op=robot_op, station_obj_id=None)
-        self._job_station_queue.append(queued_job)
+        self._job_station_queue.append(robot_op)
 
 
     # this can keep track of the batches on the robot deck

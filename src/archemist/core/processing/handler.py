@@ -28,6 +28,12 @@ class StationHandler:
                 op_successful, op_results = self.get_op_result()
                 self._station.complete_assigned_station_op(op_successful, **op_results)
                 self._station.set_to_processing()
+        elif self._station.state == StationState.REPEAT_OP:
+            self._station.start_executing_op()
+            self.execute_op()
+        elif self._station.state == StationState.SKIP_OP:
+            self._station.complete_assigned_station_op(True, **{})
+            self._station.set_to_processing()
 
     def run(self):
         pass
@@ -55,6 +61,12 @@ class RobotHandler:
                 op_successful = self.get_op_result()
                 self._robot.complete_assigned_op(op_successful)
                 self._robot.set_to_execution_complete()
+        elif self._robot.state == StationState.REPEAT_OP:
+            self._robot.start_executing_op()
+            self.execute_op()
+        elif self._robot.state == StationState.SKIP_OP:
+            self._robot.complete_assigned_op(True)
+            self._robot.set_to_execution_complete()
 
     def run(self):
         pass

@@ -3,7 +3,6 @@ import unittest
 from archemist.core.core.state.robot import RobotState,RobotTaskType
 from archemist.core.state.robots.kukaLBRIIWA import KukaLBRIIWA, KukaLBRTask
 from archemist.core.util.location import Location
-from archemist.core.util.station_robot_job import StationRobotJob
 from archemist.core.exceptions.exception import RobotAssignedRackError
 from mongoengine import connect
 

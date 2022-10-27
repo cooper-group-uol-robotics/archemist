@@ -1,21 +1,25 @@
-from enum import Enum
+from enum import Enum, auto
 
 class RobotState(Enum):
-    OP_ASSIGNED = 0
-    EXECUTING_OP = 1
-    EXECUTION_COMPLETE = 2
-    IDLE = 3
+    OP_ASSIGNED = auto()
+    SKIP_OP = auto()
+    REPEAT_OP = auto()
+    EXECUTING_OP = auto()
+    EXECUTION_COMPLETE = auto()
+    IDLE = auto()
 
 class RobotTaskType(Enum):
-    LOAD_TO_ROBOT = 0
-    UNLOAD_FROM_ROBOT = 1
-    MANIPULATION = 2
-    OTHER = 3
+    LOAD_TO_ROBOT = auto()
+    UNLOAD_FROM_ROBOT = auto()
+    MANIPULATION = auto()
+    OTHER = auto()
 
 class StationState(Enum):
-    IDLE = 0
-    PROCESSING = 1
-    WAITING_ON_ROBOT = 2
-    OP_ASSIGNED = 3
-    EXECUTING_OP = 4
-    OP_COMPLETE = 5
+    IDLE = auto()
+    PROCESSING = auto()
+    WAITING_ON_ROBOT = auto()
+    OP_ASSIGNED = auto()
+    SKIP_OP = auto()
+    REPEAT_OP = auto()
+    EXECUTING_OP = auto()
+    OP_COMPLETE = auto()
