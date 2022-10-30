@@ -115,6 +115,18 @@ class Robot:
             self._update_state(RobotState.IDLE)
             return complete_op
 
+    def repeat_assigned_op(self):
+        if self.has_assigned_op() and self.state == RobotState.EXECUTING_OP:
+            self._update_state(RobotState.REPEAT_OP)
+        else:
+            self._log_station('Unable to repeat op since it is not under execution')
+
+    def skip_assigned_op(self):
+        if self.has_assigned_op() and self.state == RobotState.EXECUTING_OP:
+            self._update_state(RobotState.SKIP_OP)
+        else:
+            self._log_station('Unable to skip op since it is not under execution')
+
     def _log_robot(self, message: str):
         print(f'[{self}]: {message}')
 

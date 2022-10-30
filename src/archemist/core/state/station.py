@@ -191,6 +191,18 @@ class Station:
     def set_to_processing(self):
         self._update_state(StationState.PROCESSING)
 
+    def repeat_assigned_op(self):
+        if self.has_assigned_station_op() and self.state == StationState.EXECUTING_OP:
+            self._update_state(StationState.REPEAT_OP)
+        else:
+            self._log_station('Unable to repeat op since it is not under execution')
+
+    def skip_assigned_op(self):
+        if self.has_assigned_station_op() and self.state == StationState.EXECUTING_OP:
+            self._update_state(StationState.SKIP_OP)
+        else:
+            self._log_station('Unable to skip op since it is not under execution')
+
     def create_location_from_frame(self, frame: str) -> Location:
         return Location(self.location.node_id, self.location.graph_id, frame)
 
