@@ -22,16 +22,8 @@ class WorkflowManager:
         self._queued_recipes = deque()
         self._unassigned_batches = deque()
 
-    @property
-    def pause_workflow(self):
-        return self._pause_workflow
-
-    @pause_workflow.setter
-    def pause_workflow(self, value):
-        if isinstance(value, bool):
-            self._pause_workflow = value
-        else:
-            raise ValueError
+    def is_running(self) -> bool:
+        return self._running
 
     @property
     def recipes_queue(self):
@@ -47,6 +39,12 @@ class WorkflowManager:
         self._running = False
         self._processor_thread.join(1)
         self._log_processor('processor thread is terminated')
+
+    def pause_processor(self):
+        self._pause_workflow = True
+
+    def resume_processor(self):
+        self._pause_workflow = False
 
     def queue_recipe(self, recipe_dict):
         self._queued_recipes.append(recipe_dict)

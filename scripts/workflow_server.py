@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime
 from archemist.robots.kmriiwa_robot.state import KukaLBRMaintenanceTask
 import zmq
+import json
 
 if __name__ == '__main__':
     current_dir = Path.cwd()
@@ -70,34 +71,35 @@ if __name__ == '__main__':
 
         if auto_batch_addition:
             if not loop_batch_added:
-                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
+                state.add_clean_batch(batch_num_vials, batch_addition_location)
                 print(f'Batch (id: {batch_id}) is added')
                 loop_batch_added = True
             elif state.is_batch_complete(batch_id):
                 batch_id += 1
-                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
+                state.add_clean_batch(batch_num_vials, batch_addition_location)
                 print(f'Batch (id: {batch_id}) is added')
 
         try:
-            msg = socket.recv_string(flags=zmq.NOBLOCK)
-            if msg == 'start':
+            json_msg = socket.recv_json(flags=zmq.NOBLOCK)
+            msg = json.loads(json_msg)
+            if msg['cmd'] == 'start':
                 if not wm_manager._running:
                     wm_manager.start_processor()
                     init = True
                 else:
                     wm_manager.pause_workflow = False
-            elif msg == 'pause':
+            elif msg['cmd'] == 'pause':
                 wm_manager.pause_workflow = True
-            elif msg == 'add_batch':
-                state.add_clean_batch(batch_id, batch_num_vials, batch_addition_location)
+            elif msg['cmd'] == 'add_batch':
+                state.add_clean_batch(batch_num_vials, batch_addition_location)
                 batch_id += 1
-            elif msg == 'charge':
+            elif msg['cmd'] == 'charge':
                 wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('ChargeRobot',[False,85]))
-            elif msg == 'stop_charge':
+            elif msg['cmd'] == 'stop_charge':
                 wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('StopCharge',[False]))
-            elif msg == 'resume_app':
+            elif msg['cmd'] == 'resume_app':
                 wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('resumeLBRApp',[False]))
-            elif msg == 'terminate':
+            elif msg['cmd'] == 'terminate':
                 if wm_manager._running:
                     wm_manager.stop_processor()
                     break

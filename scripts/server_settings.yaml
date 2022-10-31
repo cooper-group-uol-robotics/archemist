@@ -1,5 +1,6 @@
 workflow_dir_path: 'C:\Users\hatem\m_algae_bot_workflow'
 db_name: 'algae_bot_test'
+mongodb_host: 'mongodb://localhost:27017'
 batch_addition:
   location:
     node_id: 25

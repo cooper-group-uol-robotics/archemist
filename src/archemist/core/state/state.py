@@ -28,6 +28,10 @@ class State:
         for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
             model_module = f'{module_itr.name}.model'
             importlib.import_module(model_module)
+
+    @property
+    def batch_num(self):
+        return len(self.batches)
     
     @property
     def liquids(self) -> List[Liquid]:
@@ -49,8 +53,8 @@ class State:
     def batches(self) -> List[Batch]:
         return [Batch(model) for model in BatchModel.objects]
 
-    def add_clean_batch(self, batch_id: int, num_samples: int, location:Location) -> Batch:
-        return Batch.from_arguments(batch_id=batch_id, num_samples=num_samples, location=location)
+    def add_clean_batch(self, num_samples: int, location:Location) -> Batch:
+        return Batch.from_arguments(batch_id=self.batch_num, num_samples=num_samples, location=location)
 
     def get_completed_batches(self) -> List[Batch]:
         complete_recipes = RecipeModel.objects(current_state='end')
