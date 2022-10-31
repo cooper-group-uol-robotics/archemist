@@ -21,7 +21,7 @@ class PersistenceManager:
         liquids = []
         solids = []
         
-        if 'Materials' in config_dict['workflow'] is not None:
+        if 'Materials' in config_dict['workflow']:
             if 'liquids' in config_dict['workflow']['Materials']:
                 for liquid_dict in config_dict['workflow']['Materials']['liquids']:
                     liquids.append(MaterialFactory.create_liquid_from_dict(liquid_dict))
@@ -31,8 +31,9 @@ class PersistenceManager:
                 for solid_dict in config_dict['workflow']['Materials']['solids']:
                     solids.append(MaterialFactory.create_solid_from_dict(solid_dict))
 
-        for station_dict in config_dict['workflow']['Stations']:
-            StationFactory.create_from_dict(station_dict, liquids, solids)
+        if 'Stations' in config_dict['workflow']:
+            for station_dict in config_dict['workflow']['Stations']:
+                StationFactory.create_from_dict(station_dict, liquids, solids)
 
         return State()
 
