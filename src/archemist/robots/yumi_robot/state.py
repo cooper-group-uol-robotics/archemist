@@ -6,7 +6,7 @@ from archemist.core.util.location import Location
 from bson.objectid import ObjectId
 from typing import List
 
-class PandaRobotTask(RobotTaskOpDescriptor):
+class YuMiRobotTask(RobotTaskOpDescriptor):
     def __init__(self, op_model: RobotTaskOpDescriptorModel):
         super().__init__(op_model)
     
@@ -19,7 +19,7 @@ class PandaRobotTask(RobotTaskOpDescriptor):
         return cls(model) 
 
 
-class PandaFranka(Robot):
+class YuMiRobot(Robot):
     def __init__(self, robot_model: RobotModel) -> None:
         self._model = robot_model
 
