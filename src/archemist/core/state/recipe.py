@@ -1,5 +1,6 @@
 from bson.objectid import ObjectId
 from archemist.core.models.recipe_model import RecipeModel
+from archemist.core.persistence.object_factory import StationFactory
 from transitions import Machine
 
 class Recipe:
@@ -12,13 +13,13 @@ class Recipe:
         model = RecipeModel()
         model.name = recipe_document['name']
         model.exp_id = recipe_document['id']
-        model.station_op_descriptors = [stationOp for station_dict in recipe_document['stations'] for stationOp in station_dict['stationOps']]
+        model.station_op_descriptors = [StationFactory.create_op_from_dict(stationOp).model for station_dict in recipe_document['stations'] for stationOp in station_dict['stationOps']]
         model.solids = recipe_document['materials']['solids']
         model.liquids = recipe_document['materials']['liquids']
         model.states = [state_dict['state_name'] for state_dict in recipe_document['workflowSM']]
         model.transitions = [{'trigger': trigger, 'source': state_dict['state_name'], 'dest': state_dict[trigger]} 
                         for state_dict in recipe_document['workflowSM'] for trigger in ['onSuccess','onFail']]
-        model.current_state = recipe_document['current_state']
+        model.current_state = 'start'
         model.save()
         return cls(model)
 
@@ -69,12 +70,12 @@ class Recipe:
     def is_complete(self):
         return self.current_state == 'end'
 
-    def get_current_task_op_dict(self):
+    def get_current_task_op(self):
         if not self.is_complete():
             self._update_recipe_sm_state()
             _,_, current_op_name = self._station_sm.state.split('.')
-            current_op_dict = next(op_dict for op_dict in self._model.station_op_descriptors if op_dict['type'] == current_op_name)
-            return current_op_dict
+            current_op = next(op for op in self._model.station_op_descriptors if op._type == current_op_name)
+            return StationFactory.create_op_from_model(current_op)
 
     def get_current_station(self):
         if not self.is_complete():

@@ -111,8 +111,7 @@ class StationLoadingSm(StationProcessFSM):
         self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_operation(self):
-        current_op_dict = self._station.assigned_batches[self._current_batch_index].recipe.get_current_task_op_dict()
-        current_op = StationFactory.create_op_from_dict(current_op_dict)
+        current_op = self._station.assigned_batches[self._current_batch_index].recipe.get_current_task_op()
         self._station.assign_station_op(current_op)
 
     def request_unload_sample_job(self):

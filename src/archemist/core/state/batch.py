@@ -81,13 +81,8 @@ class Batch:
         if self.recipe_attached:
             return Recipe(self._model.recipe)
 
-    def attach_recipe(self, recipe_dict: dict):
-        if isinstance(recipe_dict, dict):
-            recipe_dict['current_state'] = 'start'
-            new_recipe = Recipe.from_dict(recipe_dict).model
-            self._model.update(recipe=new_recipe)
-        else:
-            raise ValueError
+    def attach_recipe(self, recipe: Recipe):
+        self._model.update(recipe=recipe.model)
 
     @property
     def location(self) -> Location:

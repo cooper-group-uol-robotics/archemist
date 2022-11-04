@@ -1,7 +1,8 @@
 import unittest
 from archemist.core.util import Location
 from archemist.core.state.material import Liquid
-from archemist.core.state.stations.ika_plate_digital import IkaPlateDigital
+from archemist.stations.ika_digital_plate_station.state import IkaPlateDigital
+from archemist.core.state.recipe import Recipe
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.state.batch import Batch
 from archemist.core.state.station import StationState
@@ -56,7 +57,8 @@ class SMTestWithBatchMode(unittest.TestCase):
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
         bat = Batch.from_arguments(31,2,Location(2,7,'table_frame'))
-        bat.attach_recipe(recipe_doc)
+        recipe = Recipe.from_dict(recipe_doc)
+        bat.attach_recipe(recipe)
         t_station.add_batch(bat)
         bat.recipe.advance_state(True)
         self.assertEqual(t_station.state, StationState.PROCESSING)

@@ -85,13 +85,11 @@ class ChemSpeedRackSm(StationProcessFSM):
         self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
 
     def request_process_operation(self):
-        current_op_dict = self._station.assigned_batches[-1].recipe.get_current_task_op_dict()
-        current_op = StationFactory.create_op_from_dict(current_op_dict)
+        current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
         if isinstance (current_op,CSCSVJobOpDescriptor):
             contacnated_csv = ''
             for batch in self._station.assigned_batches:
-                current_op_dict = batch.recipe.get_current_task_op_dict()
-                current_op = StationFactory.create_op_from_dict(current_op_dict)
+                current_op = batch.recipe.get_current_task_op()
                 contacnated_csv += current_op.csv_string
             current_op.csv_string = contacnated_csv
             self._station.assign_station_op(current_op)

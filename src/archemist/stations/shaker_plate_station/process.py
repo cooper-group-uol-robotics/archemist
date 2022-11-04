@@ -35,8 +35,7 @@ class YumiShakerPlateSm(StationProcessFSM):
         self._station.request_robot_op(robot_job, current_batch_id)
 
     def shake(self):
-        current_op_dict = self._station.assigned_batches[self._current_batch_index].recipe.get_current_task_op_dict()
-        current_op = StationFactory.create_op_from_dict(current_op_dict)
+        current_op = self._station.assigned_batches[self._current_batch_index].recipe.get_current_task_op()
         if isinstance(current_op, ShakeOpDescriptor):
             self._station.assign_station_op(current_op)
 

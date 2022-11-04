@@ -3,8 +3,9 @@ from archemist.core.state.material import Liquid
 from archemist.core.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
 from archemist.core.state.station import StationModel, StationState
-from archemist.core.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
 from archemist.core.state.batch import Batch
+from archemist.core.state.recipe import Recipe
 from archemist.core.util.location import Location
 import yaml
 from datetime import datetime
@@ -68,9 +69,11 @@ class StationTest(unittest.TestCase):
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         batch1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
-        batch1.attach_recipe(recipe_doc)
+        recipe1 = Recipe.from_dict(recipe_doc)
+        batch1.attach_recipe(recipe1)
         batch2 = Batch.from_arguments(32,2,Location(1,3,'table_frame'))
-        batch2.attach_recipe(recipe_doc)
+        recipe2 = Recipe.from_dict(recipe_doc)
+        batch2.attach_recipe(recipe2)
 
         self.assertTrue(t_station.has_free_batch_capacity())
         t_station.add_batch(batch1)

@@ -14,7 +14,7 @@ stations:
         output: "IKAOutputDescriptor"
   - name: FisherWeightingStation.id_5
     stationOps:
-      - type: FisherWeightStablepDescriptor
+      - type: FisherWeightOpDescriptor
         properties:
         output: "FisherOutputDescriptor"
 workflowSM:
@@ -22,9 +22,9 @@ workflowSM:
     onSuccess: "IkaPlateDigital.id_2.IKAStirringOpDescriptor"
     onFail: "end"
   - state_name: IkaPlateDigital.id_2.IKAStirringOpDescriptor
-    onSuccess: "FisherWeightingStation.id_5.FisherWeightStablepDescriptor"
+    onSuccess: "FisherWeightingStation.id_5.FisherWeightOpDescriptor"
     onFail: "end"
-  - state_name: FisherWeightingStation.id_5.FisherWeightStablepDescriptor
+  - state_name: FisherWeightingStation.id_5.FisherWeightOpDescriptor
     onSuccess: "end"
     onFail: "end"
   - state_name: end
