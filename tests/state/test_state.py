@@ -1,6 +1,7 @@
 import unittest
 from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.util.location import Location
+from archemist.core.state.recipe import Recipe
 import yaml
 import os
 
@@ -55,16 +56,16 @@ class StateTest(unittest.TestCase):
         recipe_dir = os.path.join(dir_path, 'resources/testing_recipe.yaml')
         with open(recipe_dir) as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
-        batch1 = state.add_clean_batch(31,2,Location(1,3,'table_frame'))
-        batch2 = state.add_clean_batch(77,2,Location(1,3,'table_frame'))
+        batch1 = state.add_clean_batch()
+        batch2 = state.add_clean_batch()
 
         batches = state.batches
         self.assertEqual(len(batches), 2)
 
         clean_batches = state.get_clean_batches()
         self.assertEqual(len(clean_batches), 2)
-
-        batch1.attach_recipe(recipe_doc)
+        recipe = Recipe.from_dict(recipe_doc)
+        batch1.attach_recipe(recipe)
 
         clean_batches = state.get_clean_batches()
         self.assertEqual(len(clean_batches), 1)
@@ -77,7 +78,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(obj_id_batch.id,batch1.id)
         self.assertTrue(obj_id_batch.recipe.is_complete())
 
-        only_id_batch = state.get_batch(77)
+        only_id_batch = state.get_batch(1)
         self.assertFalse(only_id_batch.recipe_attached)
         
         processed_batches = state.get_completed_batches()

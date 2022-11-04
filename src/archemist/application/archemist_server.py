@@ -59,11 +59,7 @@ class ArchemistServer:
                     elif msg.cmd == 'pause':
                         self._workflow_mgr.pause_processor()
                     elif msg.cmd == 'add_batch':
-                        batch_addition_location = Location(self._server_config['batch_addition']['location']['node_id'],
-                                                self._server_config['batch_addition']['location']['graph_id'], 
-                                                self._server_config['batch_addition']['location']['frame_name'])
-                        batch_num_vials = self._server_config['batch_addition']['num_vials']
-                        self._state.add_clean_batch(batch_num_vials, batch_addition_location)
+                        self._state.add_clean_batch()
                     elif msg.cmd == 'terminate':
                         self.shut_down()
                         break
@@ -112,10 +108,10 @@ class ArchemistServer:
 
     def _queue_added_recipes(self):
         while self._recipes_watchdog.recipes_queue:
-                recipe_file_path = self._recipes_watchdog.recipes_queue.pop()
+                recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
                 recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
                 self._workflow_mgr.queue_recipe(recipe_dict)
-                print(f'new recipe file queued')
+                print(f'new recipe with id {recipe_dict["id"]} queued')
 
     def shut_down(self):
         if self._workflow_mgr.is_running():

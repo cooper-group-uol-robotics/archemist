@@ -1,11 +1,5 @@
 workflow_dir_path: 'C:\Users\hatem\m_algae_bot_workflow'
 db_name: 'algae_bot_test'
 mongodb_host: 'mongodb://localhost:27017'
-batch_addition:
-  location:
-    node_id: 25
-    graph_id: 1
-    frame_name: '/InputStation'
-  num_vials: 2
 recipe_loop_mode: False
 auto_batch_addition: False

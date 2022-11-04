@@ -1,6 +1,7 @@
 from archemist.core.persistence.db_handler import DatabaseHandler
 from archemist.core.persistence.yaml_handler import YamlHandler
 from archemist.core.persistence.object_factory import RobotFactory, StationFactory, MaterialFactory
+from archemist.core.models.state_model import StateModel
 from archemist.core.state.state import State
 from archemist.core.exceptions.exception import DatabaseNotPopulatedError
 
@@ -35,11 +36,12 @@ class PersistenceManager:
             for station_dict in config_dict['workflow']['Stations']:
                 StationFactory.create_from_dict(station_dict, liquids, solids)
 
-        return State()
+        return State.from_dict(config_dict['workflow']['General'])
 
     def construct_state_from_db(self):
         if self._dbhandler.is_database_populated(self._db_name):
-            return State()
+            state_model = StateModel.objects.first()
+            return State(state_model)
         else:
             raise DatabaseNotPopulatedError()
 

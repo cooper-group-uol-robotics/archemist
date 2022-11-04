@@ -1,4 +1,10 @@
 workflow:
+  General:
+    name: solubility_workflow
+    samples_per_batch: 2
+    default_batch_input_location:
+      node_id: 25
+      graph_id: 1
   Robots:
     - type: PandaFranka
       id: 99
@@ -80,5 +86,3 @@ workflow:
         args:
           batch_mode: true
       parameters:
-  name: solubility_workflow
-  timestamp: 08/26/2021, 15:28:26

@@ -8,7 +8,7 @@ class RobotScheduler():
     def __init__(self):
         pass
 
-    def schedule(self, job_station_queue: list, state:State):
+    def schedule(self, state:State):
         pass
 
 
@@ -16,10 +16,10 @@ class SimpleRobotScheduler(RobotScheduler):
     def __init__(self):
         super().__init__()
 
-    def schedule(self, job_station_queue: list, state: State):
+    def schedule(self, state: State):
         unassigned_jobs = list()
-        while job_station_queue:
-            station_robot_job = job_station_queue.pop()
+        while state.robot_ops_queue:
+            station_robot_job = state.robot_ops_queue.pop()
             job_assigned = False
             robot_job = station_robot_job.robot_op
             if isinstance(robot_job, KukaLBRMaintenanceTask):
@@ -44,7 +44,7 @@ class SimpleRobotScheduler(RobotScheduler):
             if not job_assigned:
                 unassigned_jobs.append(station_robot_job)
         
-        job_station_queue.extend(unassigned_jobs)
+        state.robot_ops_queue.extend(unassigned_jobs)
 
 class MultiBatchRobotScheduler(RobotScheduler):
     def __init__(self):
@@ -62,10 +62,10 @@ class MultiBatchRobotScheduler(RobotScheduler):
             next_station_free = True
         return next_station_free
 
-    def schedule(self, job_station_queue: list, state: State):
+    def schedule(self, state: State):
         unassigned_jobs = list()
-        while job_station_queue:
-            robot_job = job_station_queue.pop()
+        while state.robot_ops_queue:
+            robot_job = state.robot_ops_queue.pop()
             job_assigned = False
             if isinstance(robot_job, KukaLBRMaintenanceTask):
                 robot = state.get_robot('KukaLBRIIWA',1)
@@ -96,5 +96,5 @@ class MultiBatchRobotScheduler(RobotScheduler):
             if not job_assigned:
                 unassigned_jobs.append(robot_job)
         
-        job_station_queue.extend(unassigned_jobs)
+        state.robot_ops_queue.extend(unassigned_jobs)
             

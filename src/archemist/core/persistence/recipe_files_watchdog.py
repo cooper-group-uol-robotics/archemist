@@ -53,8 +53,6 @@ if __name__ == '__main__':
 
     try:
         while True:
-            ##if recipes_watcher.recipes_queue:
-                #print(recipes_watcher.recipes_queue.pop())
             time.sleep(1)
     except KeyboardInterrupt:
         recipes_watcher.stop()
