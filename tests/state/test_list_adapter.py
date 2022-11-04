@@ -92,6 +92,17 @@ class ListAdapterTest(unittest.TestCase):
         self.assertEqual(len(station_ops_list),3)
         self.assertEqual(station_ops_list[-1].target_duration, station_op3.target_duration)
 
+        # empty list
+        self.assertTrue(station_ops_list)
+        station_ops_list.pop()
+        station_ops_list.pop()
+        station_ops_list.pop()
+        self.assertEqual(len(station_ops_list),0)
+        self.assertFalse(station_ops_list)
+        station_ops_list.append(station_op1)
+        self.assertEqual(len(station_ops_list),1)
+        self.assertTrue(station_ops_list)
+
         ''' state objects list adapter '''
         batches_list_adapter = StateObjListAdapter(test_model, 'batches', Batch)
 
