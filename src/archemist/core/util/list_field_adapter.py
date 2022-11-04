@@ -21,6 +21,9 @@ class ListFieldAdapter:
     def extend(self, objects_list: List[Union[Document, EmbeddedDocument]]):
         self._model.update(**{f'push_all__{self._field_name}':[obj for obj in objects_list]})
 
+    def remove(self, object: Union[Document, EmbeddedDocument]):
+        self._model.update(**{f'pull__{self._field_name}':object})
+
     def _pop(self, left: bool) -> Union[Document, EmbeddedDocument]:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model,self._field_name)
@@ -78,6 +81,9 @@ class OpListAdapter(ListFieldAdapter):
     def extend(self, objects_list: List[Union[RobotOpDescriptor,StationOpDescriptor]]):
         return super().extend([object.model for object in objects_list])
 
+    def remove(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+        return super().remove(object.model)
+
     def __iter__(self) -> Iterator:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
@@ -110,6 +116,9 @@ class StateObjListAdapter(ListFieldAdapter):
 
     def extend(self, objects_list: List[Any]):
         return super().extend([object.model for object in objects_list])
+
+    def remove(self, object: Any):
+        return super().remove(object.model)
 
     def __iter__(self) -> Iterator:
         self._model.reload(self._field_name)

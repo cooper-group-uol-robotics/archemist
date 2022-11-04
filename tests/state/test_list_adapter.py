@@ -71,12 +71,20 @@ class ListAdapterTest(unittest.TestCase):
         self.assertEqual(robot_ops_list[1].name, rob_op3.name)
         self.assertEqual(robot_ops_list[2].name, rob_op1.name)
 
+        
+        # iteration operation
         i = 0
         indices = [2,3,1,2]
-        # iteration operation
         for op in robot_ops_list:
             self.assertEqual(op.name, f'op{indices[i]}')
             i += 1
+
+        # remove operation
+        robot_ops_list.remove(rob_op1)
+        self.assertEqual(len(robot_ops_list),3)
+        self.assertEqual(robot_ops_list[0].name, rob_op2.name)
+        self.assertEqual(robot_ops_list[1].name, rob_op3.name)
+        self.assertEqual(robot_ops_list[2].name, rob_op2.name)
 
         ''' station_op list adapter '''
         station_ops_list = OpListAdapter(test_model, 'station_ops', StationFactory)
@@ -137,12 +145,19 @@ class ListAdapterTest(unittest.TestCase):
         self.assertEqual(batches_list_adapter[1].id, batch1.id)
         self.assertEqual(batches_list_adapter[2].id, batch3.id)
 
+        
+        # iteration operation
         i = 0
         ids = [2,1,3]
-        # iteration operation
         for batch in batches_list_adapter:
             self.assertEqual(batch.id, ids[i])
             i += 1
+
+        # remove operation
+        batches_list_adapter.remove(batch1)
+        self.assertEqual(len(batches_list_adapter),2)
+        self.assertEqual(batches_list_adapter[0].id, batch2.id)
+        self.assertEqual(batches_list_adapter[1].id, batch3.id)
 
 if __name__ == '__main__':
     connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
