@@ -11,13 +11,17 @@ class YuMiROSHandler(RobotHandler):
         #TODO robot topic can be set from the config file or even be associated with the robot id
         self._yumi_pub = rospy.Publisher('/yumi/task', YuMiTask, queue_size=1)
         rospy.Subscriber('/yumi/status', TaskStatus, self._yumi_task_cb, queue_size=2)
-        self._yumi_task = None
+        self._yumi_task = YuMiTask()
         self._task_complete = False
         self._op_result = False
         self._task_counter = 0
 
     def run(self):
         try:
+            if self._task_counter == 0:
+                latest_task_msg = rospy.wait_for_message('/yumi/status', TaskStatus,timeout=5)
+                if latest_task_msg.cmd_seq > self._task_counter:
+                    self._task_counter = latest_task_msg.cmd_seq
             rospy.loginfo(f'{self._robot}_handler is running')
             while (not rospy.is_shutdown()):
                 self.handle()
@@ -37,13 +41,13 @@ class YuMiROSHandler(RobotHandler):
                 self._op_result = False
 
     def _process_op(self, robotOp) -> YuMiTask:
+        task = None
         if isinstance(robotOp, YuMiRobotTask):
+            task = YuMiTask(task_name=f'{robotOp.name}', cmd_seq=self._task_counter)
             self._task_counter += 1
-            return YuMiTask(task_name=f'{robotOp.name}', task_seq=self._task_counter,
-                             task_parameters=robotOp.params)
         else:
             rospy.logerr('unknown robot op')    
-        return None
+        return task
 
     def execute_op(self):
         robot_op = self._robot.get_assigned_op()
