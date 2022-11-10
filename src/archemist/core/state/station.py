@@ -23,6 +23,7 @@ class Station:
         station_model.location = station_dict['location']
         station_model.batch_capacity = station_dict['batch_capacity']
         station_model.process_state_machine = station_dict['process_state_machine']
+        station_model.selected_handler = station_dict['handler']
 
     @property
     def model(self) -> StationModel:
@@ -66,6 +67,11 @@ class Station:
     @property
     def process_sm_dict(self) -> dict:
         return self._model.process_state_machine
+
+    @property
+    def selected_handler_dict(self) -> dict:
+        station_module = self._model._module.rsplit('.',1)[0]
+        return {'type':self._model.selected_handler, 'module':station_module}
 
     @property
     def batch_capacity(self) -> int:

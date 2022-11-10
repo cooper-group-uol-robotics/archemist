@@ -7,6 +7,7 @@ class RobotModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
+    selected_handler = fields.StringField(required=True)
     operational = fields.BooleanField(default=True)
     batch_capacity = fields.IntField(min_value=1, default=1)
     location = fields.DictField()

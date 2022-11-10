@@ -1,93 +1,84 @@
-import importlib
 from archemist.core.persistence.yaml_handler import YamlHandler
+from archemist.core.persistence.db_handler import DatabaseHandler
 from archemist.core.persistence.persistence_manager import PersistenceManager
+from archemist.core.persistence.object_factory import StationFactory, RobotFactory
 import multiprocessing as mp
-from time import sleep
 from pathlib import Path
-from archemist.core.state.state import State
 import argparse
-import pkgutil
+import time
+import sys
 
-from collections import namedtuple
 
-HandlerArgs = namedtuple('HandlerArgs', ['db_host','db_name','test_mode','type','class_name', 'id'])
-
-def run_handler(handler_discriptor: HandlerArgs):
-    p_manager = PersistenceManager(handler_discriptor.db_host, handler_discriptor.db_name)
-    state = p_manager.construct_state_from_db()
-    if handler_discriptor.type == 'stn':
-        station = state.get_station(handler_discriptor.class_name, handler_discriptor.id)
-        if handler_discriptor.test_mode:
-            handler = construct_station_test_handler(station)
-        else:
-            handler = construct_station_handler(station)
-    elif handler_discriptor.type == 'rob':
-        robot = state.get_robot(handler_discriptor.class_name, handler_discriptor.id)
-        if handler_discriptor.test_mode:
-            handler = construct_robot_test_handler(robot)
-        else:
-            handler = construct_robot_handler(robot)
+def run_station_handler(db_host, db_name, station, use_sim_handler):
+    db_handler = DatabaseHandler(db_host, db_name) # required to establish connection with db
+    handler = StationFactory.create_handler(station, use_sim_handler)
     handler.run()
 
-def construct_robot_handler(robot):
-    handler_name = f'{robot.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.robots')
-    for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-        handler_module = f'{module_itr.name}.handler'
-        module = importlib.import_module(handler_module)
-        if hasattr(module,handler_name):
-            cls = getattr(module,handler_name)
-            return cls(robot)
-
-def construct_robot_test_handler(robot):
-    pkg = importlib.import_module('archemist.robots.simulated_robot.handler')
-    handler_cls = getattr(pkg, 'GenericRobotHandler')
-    return handler_cls(robot) 
-
-def construct_station_handler(station):
-    handler_name = f'{station.__class__.__name__}_Handler'
-    pkg = importlib.import_module('archemist.stations')
-    for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
-        handler_module = f'{module_itr.name}.handler'
-        module = importlib.import_module(handler_module)
-        if hasattr(module,handler_name):
-            cls = getattr(module,handler_name)
-            return cls(station)
-
-def construct_station_test_handler(station):
-    pkg = importlib.import_module('archemist.stations.simulated_station.handler')
-    handler_cls = getattr(pkg, 'GenericStationHandler')
-    return handler_cls(station)
+def run_robot_handler(db_host, db_name, robot, use_sim_handler):
+    db_handler = DatabaseHandler(db_host, db_name) # required to establish connection with db
+    handler = RobotFactory.create_handler(robot, use_sim_handler)
+    handler.run()
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Launch workflow handlers')
-    parser.add_argument('--t', dest='test_mode', action='store_true',
-                    help='run the given recipe continously in test mode')
+    parser.add_argument('--sim', dest='sim_mode', action='store_true',
+                    help='run the given recipe continuously in test mode')
+    parser.add_argument('--conf', dest='config_dir', action='store', type=str,
+                    help='path to the config directory')
+    parser.add_argument('--timeout', dest='timeout', action='store', type=int,
+                    default=5, help='timeout for db state to be available')
     args = parser.parse_args()
-    
-    current_dir = Path.cwd()
-    server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
-    server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
 
-    workflow_dir = Path(server_setttings['workflow_dir_path'])
-    workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
-    db_name = server_setttings['db_name']
+    if args.config_dir is None:
+        config_dir = Path.cwd()
+    else:
+        config_dir = Path(args.config_dir)
+    
+    server_config_file_path = config_dir.joinpath(f'server_settings.yaml')
+    server_settings = YamlHandler.loadYamlFile(server_config_file_path)
+    db_name = server_settings['db_name']
+    db_host = server_settings['mongodb_host']
 
     try:
-        # get config dict
-        config_dict = YamlHandler.loadYamlFile(workflow_config_file_path.absolute())
-        host='mongodb://localhost:27017'
-        handlers_discrptors = [HandlerArgs(host,db_name, args.test_mode, 'stn', station['type'], station['id']) for station in config_dict['workflow']['Stations']]
-        handlers_discrptors.extend([HandlerArgs(host,db_name, args.test_mode, 'rob', robot['type'], robot['id']) for robot in config_dict['workflow']['Robots']])
+        p_manager = PersistenceManager(db_host, db_name)
+
+        start_time = time.time()
+        while not p_manager.is_db_state_existing():
+            print('waiting on database state to exist')
+            time.sleep(0.5)
+            if time.time() - start_time > args.timeout:
+                sys.exit('timeout reached! no db state is available. Exiting')
+
+        state = p_manager.construct_state_from_db()
+        # define robot handlers processes
+        robot_handlers_processes = []
+        for robot in state.robots:
+            kwargs = {
+                'db_host': db_host,
+                'db_name': db_name,
+                'robot': robot,
+                'use_sim_handler': args.sim_mode
+                }
+            robot_handlers_processes.append(mp.Process(target=run_robot_handler, kwargs=kwargs))
+        # define station handlers processes
+        station_handlers_processes = []
+        for station in state.stations:
+            kwargs = {
+                'db_host': db_host,
+                'db_name': db_name,
+                'station': station,
+                'use_sim_handler': args.sim_mode
+                }
+            station_handlers_processes.append(mp.Process(target=run_station_handler, kwargs=kwargs))
         # launch handlers this assumes the state was constructed from a config file before hand
-        procs = [mp.Process(target=run_handler, args=(desciptor,)) for desciptor in handlers_discrptors]
-        for proc in procs:
-            proc.daemon = True
-            proc.start()
-        while any(proc.is_alive() for proc in procs):
-            sleep(0.1)
+        processes = robot_handlers_processes + station_handlers_processes
+        for p in processes:
+            p.daemon = True
+            p.start()
+        while any(p.is_alive() for p in processes):
+            time.sleep(0.1)
     except KeyboardInterrupt:
-        for proc in procs:
-            proc.terminate()
-            proc.join()
+        for p in processes:
+            p.terminate()
+            p.join()

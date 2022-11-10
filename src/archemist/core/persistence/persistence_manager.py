@@ -15,35 +15,38 @@ class PersistenceManager:
         self._dbhandler.clear_database(self._db_name)
         
         config_dict = YamlHandler.loadYamlFile(config_file_path)
-        if 'Robots' in config_dict['workflow']:
-            for robot_dict in config_dict['workflow']['Robots']:
+        if 'robots' in config_dict['workflow']:
+            for robot_dict in config_dict['workflow']['robots']:
                 RobotFactory.create_from_dict(robot_dict)
 
         liquids = []
         solids = []
         
-        if 'Materials' in config_dict['workflow']:
-            if 'liquids' in config_dict['workflow']['Materials']:
-                for liquid_dict in config_dict['workflow']['Materials']['liquids']:
+        if 'materials' in config_dict['workflow']:
+            if 'liquids' in config_dict['workflow']['materials']:
+                for liquid_dict in config_dict['workflow']['materials']['liquids']:
                     liquids.append(MaterialFactory.create_liquid_from_dict(liquid_dict))
 
             
-            if 'solids' in config_dict['workflow']['Materials']:
-                for solid_dict in config_dict['workflow']['Materials']['solids']:
+            if 'solids' in config_dict['workflow']['materials']:
+                for solid_dict in config_dict['workflow']['materials']['solids']:
                     solids.append(MaterialFactory.create_solid_from_dict(solid_dict))
 
-        if 'Stations' in config_dict['workflow']:
-            for station_dict in config_dict['workflow']['Stations']:
+        if 'stations' in config_dict['workflow']:
+            for station_dict in config_dict['workflow']['stations']:
                 StationFactory.create_from_dict(station_dict, liquids, solids)
 
-        return State.from_dict(config_dict['workflow']['General'])
+        return State.from_dict(config_dict['workflow']['general'])
 
     def construct_state_from_db(self):
-        if self._dbhandler.is_database_populated(self._db_name):
-            state_model = StateModel.objects.first()
-            return State(state_model)
-        else:
-            raise DatabaseNotPopulatedError()
+            if self.is_db_state_existing():
+                state_model = StateModel.objects.first()
+                return State(state_model)
+            else:
+                raise DatabaseNotPopulatedError()
+
+    def is_db_state_existing(self):
+        return self._dbhandler.is_database_populated(self._db_name)
 
     
 

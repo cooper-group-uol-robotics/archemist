@@ -18,6 +18,7 @@ class Robot:
     def _set_model_common_fields(robot_dict: Dict, robot_model: RobotModel):
         robot_model._type = robot_dict['type']
         robot_model.exp_id = robot_dict['id']
+        robot_model.selected_handler = robot_dict['handler']
         if 'location' in robot_dict:
             robot_model.location = robot_dict['location']
         if 'batch_capacity' in robot_dict:
@@ -26,6 +27,11 @@ class Robot:
     @property
     def id(self) -> int:
         return self._model.exp_id
+
+    @property
+    def selected_handler_dict(self) -> str:
+        robot_module = self._model._module.rsplit('.',1)[0]
+        return {'type':self._model.selected_handler, 'module':robot_module}
 
     @property
     def operational(self) -> bool:

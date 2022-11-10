@@ -64,6 +64,18 @@ class RobotFactory:
         cls = getattr(module,op_model._type)
         return cls(op_model)
 
+    @staticmethod
+    def create_handler(robot: Robot, use_sim_handler: bool=False):
+        if use_sim_handler:
+            pkg = importlib.import_module('archemist.robots.simulated_robot.handler')
+            cls = getattr(pkg, 'GenericRobotHandler')
+        else:
+            handler_type =  robot.selected_handler_dict['type']
+            robot_module = robot.selected_handler_dict['module'] + '.handler'
+            handler_module = importlib.import_module(robot_module)
+            cls = getattr(handler_module, handler_type)
+        return cls(robot)
+
 class StationFactory:
 
     @staticmethod
@@ -118,3 +130,15 @@ class StationFactory:
             if hasattr(module,station_sm_dict['type']):
                 cls = getattr(module,station_sm_dict['type'])
                 return cls(station, station_sm_dict['args'])
+
+    @staticmethod
+    def create_handler(station: Station, use_sim_handler: bool=False):
+        if use_sim_handler:
+            pkg = importlib.import_module('archemist.stations.simulated_station.handler')
+            cls = getattr(pkg, 'GenericStationHandler')
+        else:
+            handler_type =  station.selected_handler_dict['type']
+            station_module = station.selected_handler_dict['module'] + '.handler'
+            handler_module = importlib.import_module(station_module)
+            cls = getattr(handler_module, handler_type)
+        return cls(station)
