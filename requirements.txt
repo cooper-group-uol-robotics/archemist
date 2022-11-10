@@ -1,0 +1,7 @@
+mongoengine==0.24.2
+multipledispatch==0.6.0
+pyzmq==23.2.1
+transitions==0.6.4
+multipledispatch==0.6.0
+PyInquirer==1.0.3
+watchdog==2.1.9
