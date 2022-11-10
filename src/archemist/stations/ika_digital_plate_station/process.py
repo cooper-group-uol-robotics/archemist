@@ -29,7 +29,7 @@ class IKAStirPlateSm(StationProcessFSM):
         self.init_state_machine(states=states, transitions=transitions)
 
     def request_load_stir_plate(self):
-        robot_job = YuMiRobotTask.from_args(name='LoadIKAPlate', location=self._station.location)
+        robot_job = YuMiRobotTask.from_args(name='loadIKAPlate', location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
         self._station.request_robot_op(robot_job, current_batch_id)
 
