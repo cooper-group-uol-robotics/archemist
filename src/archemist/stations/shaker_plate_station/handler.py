@@ -9,10 +9,11 @@ class ShakePlateROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         self._waiting_for = False
+        self._cmd_time = -1
         self._task_finished = False
         rospy.init_node(f'{self._station}_handler')
-        self._shaker_plate_pu = rospy.Publisher("/shaker_plate/cmd", ShakerCommand, queue_size=1)
-        rospy.Subscriber('/shaker_plate/status', ShakerStatus, self._cs_state_update, queue_size=1)
+        self._shaker_plate_pu = rospy.Publisher("/shaker_plate/command", ShakerCommand, queue_size=1)
+        rospy.Subscriber('/shaker_plate/status', ShakerStatus, self._state_update, queue_size=1)
         rospy.sleep(1)
         
 
@@ -28,7 +29,9 @@ class ShakePlateROSHandler(StationHandler):
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
         if (isinstance(current_op,ShakeOpDescriptor)):
-            rospy.loginfo('starting shaker plate')
+            rospy.loginfo('sending shaking command')
+            rospy.loginfo(f'===>{current_op.duration}')
+            self._cmd_time = rospy.get_time()
             self._waiting_for = True
             self._task_finished = False
             msg = ShakerCommand(shake_duration=current_op.duration)
@@ -42,8 +45,11 @@ class ShakePlateROSHandler(StationHandler):
         return self._task_finished
 
     def get_op_result(self) -> Tuple[bool, Dict]:
-        return True
+        return True, {}
 
-    def _cs_state_update(self, msg):
-        if self._waiting_for and msg.state == ShakerStatus.NOT_SHAKING:
-            self._task_finished = True
+    def _state_update(self, msg: ShakerStatus):
+        if self._waiting_for:
+            elepsed_duration = rospy.get_time() - self._cmd_time
+            if elepsed_duration > 4 and msg.status == ShakerStatus.NOT_SHAKING:
+                self._task_finished = True
+                self._waiting_for = False
