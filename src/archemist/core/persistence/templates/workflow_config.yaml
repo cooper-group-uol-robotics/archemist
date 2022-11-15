@@ -1,0 +1,92 @@
+# ===== workflow general configuration =====
+# name: the given workflow name
+# samples_per_batch: number of samples in a workflow batch
+# default_batch_input_location: default navigation graph location where a batch is added
+#                               where node_id stands for the node number in the navigation
+#                               graph whose id is given by graph_id
+general:
+  name: 
+  samples_per_batch: 
+  default_batch_input_location: 
+    node_id:
+    graph_id: 
+
+# ===== workflow materials configuration =====
+# liquids configs:
+#   name: the liquid name
+#   id: the liquid unique workflow id
+#   amount_stored: the liquid stored amount
+#   unit: the unit representing stored amount, accepted units l, ml, ul
+#   denisty: liquid density in g/l
+#   pump_id: id of the pump responsible for the liquid handling
+#   expiry_date: expiry date of the liquid
+# solids:
+#   name: the solid name
+#   id: the solid unique workflow id
+#   amount_stored: the solid stored amount
+#   unit: the unit representing stored amount, accepted units g, mg, ug
+#   dispense_src: name of the solid hanlder, accepted value quantos
+#   cartridge_id: id of the catridge where the solid is stored
+#   expiry_date: expiry date of the solid
+#
+# for every solid and liquid used in the workflow, add a new entry and fill its fields as defined
+materials:
+  liquids:
+    - name: 
+      id: 
+      amount_stored: 
+      unit: 
+      density: 
+      pump_id: 
+      expiry_date: 
+  solids:
+    - name: 
+      id: 
+      amount_stored: 
+      unit: 
+      dispense_src: 
+      cartridge_id: 
+      expiry_date:
+
+# ===== workflow's robots configuration =====
+# type: the robot's class name as defined in archemist.robots.X.state 
+#       note that X stands for the robot's given module found in archemist's robots 
+#       module
+# id: the robot unique workflow id
+# batch_capacity: the number of batches the robot can carry/handle at a time
+# handler: robot handler class name as defined in archemist.robots.X.handler
+#
+# for every robot used in the workflow, add a new entry and fill its fields as defined
+robots:
+  - type:
+    id: 
+    batch_capacity:
+    handler: 
+
+# ===== workflow's stations configuration =====
+# type: the station's class name as defined in archemist.stations.X.state
+#       note that X stands for the stations's given module found in archemist's 
+#       stations module
+# id: the station unique workflow id
+# location: station's location in the robot navigation graph where node_id stands for the 
+# node number in the navigation graph whose id is given 
+# batch_capacity: number of batches the station can handle at a time
+# handler: station handler class name as defined in archemist.stations.X.handler
+# parameters: any additional parameters need to be passed to the station when initialized
+# process_state_machine: state machine describing the station process 
+  # type: the station process state machine class name as defined in archemist.stations.X.process
+  # args: any additional arguments that need to be passed to the state machine constructor
+#
+# for every station used in the workflow, add a new entry and fill its fields as defined
+stations:
+  - type:
+    id: 
+    location: 
+      node_id: 
+      graph_id: 
+    batch_capacity:
+    handler: 
+    parameters: 
+    process_state_machine: 
+      type: 
+      args:

@@ -1,0 +1,50 @@
+# workflow recipe sample
+# name: the given recipe name
+# id: the recipe unique workflow id
+# materials: recipe materials section
+#   liquids: the liquids' names that will be used in the recipe
+#   solids: the solids' names that will be used in the recipe
+# stations: recipe stations section that will describe all the stations
+#           utilized in the experiment
+#   name: name of the station. This should come in the format station_name.id_xx
+#          where xx is the station unique id
+#   stationOps: station operation section that will describe all the operations
+#               to be used by the recipe in this experiment
+#     type: the operation class name as defined in archemist.stations.X.state
+#           note that X stands for the stations's given module found in archemist's 
+#           stations module
+#     properties: operation properties
+# workflowSM: workflow state machine describing the experiment process
+#             that is composed of state and their transitions, currently only
+#             sequential process are possible. Note that a workflow can have any
+#             number of states and their transitions.
+#   state_name: name of the state in the form: station_name.id_xx.op_type where
+#               station_name and xx refer to the station name and id, while op_type
+#               stands for the operation to use
+#   onSuccess: the new state the workflow will transition to in case the current state
+#              is executed successfully
+#   onFail: the new state the workflow will transition to in case the current state
+#              execution fails
+
+name: 
+id:
+materials:
+  liquids:
+    - someLiquid
+  solids:
+    - someSolid
+stations:
+  - name: SomeStation.id_1
+    stationOps:
+      - type: SomeOp
+        properties:
+workflowSM:
+  - state_name: start
+    onSuccess: SomeStation.id_1.SomeOp
+    onFail: end
+  - state_name: SomeStation.id_1.SomeOp
+    onSuccess: end
+    onFail: end
+  - state_name: end
+    onSuccess:
+    onFail: 

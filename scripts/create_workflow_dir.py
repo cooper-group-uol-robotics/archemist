@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from archemist.core.persistence.yaml_handler import YamlHandler
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='creates a workflow directory \
@@ -20,5 +21,10 @@ if __name__ == '__main__':
     recipe_dir_path.mkdir(parents=False,exist_ok=False)
 
     # add workflow_config template
-    
+    config_file_path = config_dir_path.joinpath('workflow_config.yaml')
+    YamlHandler.create_empty_config_file(config_file_path)
+
+    # add recipe sample
+    recipe_sample_path = workflow_dir_path.joinpath('recipe_sample.yaml')
+    YamlHandler.create_sample_recipe_file(recipe_sample_path)
     

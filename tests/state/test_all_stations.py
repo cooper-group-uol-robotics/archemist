@@ -1,14 +1,14 @@
 import unittest
 from archemist.core.state.material import Solid,Liquid
-from archemist.core.state.stations.fisher_weighing_station import FisherWeightingStation,FisherWeightOpDescriptor
-from archemist.core.state.stations.ika_plate_digital import IKAMode,IkaPlateDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
-from archemist.core.state.stations.chemspeed_flex_station import ChemSpeedStatus,ChemSpeedFlexStation, CSOpenDoorOpDescriptor, CSCloseDoorOpDescriptor, CSCSVJobOpDescriptor
-from archemist.core.state.stations.input_station import InputStation, InputStationPickupOp
-from archemist.core.state.stations.output_station import OutputStation,OutputStationPlaceOp
-from archemist.core.state.stations.light_box_station import LightBoxStation, SampleColorOpDescriptor
-from archemist.core.state.stations.solid_dispensing_quantos_QS2 import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor
-from archemist.core.state.stations.soluibility_station import SolubilityStation, SolubilityOpDescriptor, TurbidityState
-from archemist.core.state.stations.peristaltic_liquid_dispensing import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.stations.fisher_balance_station.state import FisherWeightingStation,FisherWeightOpDescriptor
+from archemist.stations.ika_digital_plate_station.state import IKAMode,IkaPlateDigital, IKAStirringOpDescriptor, IKAHeatingOpDescriptor,IKAHeatingStirringOpDescriptor
+from archemist.stations.chemspeed_flex_station.state import ChemSpeedStatus,ChemSpeedFlexStation, CSOpenDoorOpDescriptor, CSCloseDoorOpDescriptor, CSCSVJobOpDescriptor
+from archemist.stations.input_station.state import InputStation, InputStationPickupOp
+from archemist.stations.output_station.state import OutputStation,OutputStationPlaceOp
+from archemist.stations.lightbox_station.state import LightBoxStation, SampleColorOpDescriptor
+from archemist.stations.quantos_qs2_station.state import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor
+from archemist.stations.solubility_station.state import SolubilityStation, SolubilityOpDescriptor, TurbidityState
+from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
 from archemist.core.state.station import StationState
 from datetime import datetime
 from mongoengine import connect
@@ -21,6 +21,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 20,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -54,6 +55,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 21,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -129,6 +131,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 22,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -188,6 +191,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -218,6 +222,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 24,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -248,6 +253,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 25,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -283,6 +289,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 26,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -344,6 +351,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 22,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -393,6 +401,7 @@ class AllStationsTest(unittest.TestCase):
             'id': 26,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',

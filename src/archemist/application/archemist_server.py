@@ -14,7 +14,7 @@ import json
 class ArchemistServer:
     def __init__(self, config_dir: Path, existing_db: bool=False) -> None:
         server_config_file_path = config_dir.joinpath(f'server_settings.yaml')
-        self._server_config = YamlHandler.loadYamlFile(server_config_file_path)
+        self._server_config = YamlHandler.load_server_settings_file(server_config_file_path)
         
         workflow_dir = Path(self._server_config['workflow_dir_path'])
         workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
@@ -109,7 +109,7 @@ class ArchemistServer:
     def _queue_added_recipes(self):
         while self._recipes_watchdog.recipes_queue:
                 recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
-                recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
+                recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
                 self._workflow_mgr.queue_recipe(recipe_dict)
                 print(f'new recipe with id {recipe_dict["id"]} queued')
 

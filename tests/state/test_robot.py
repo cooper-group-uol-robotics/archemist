@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 import unittest
-from archemist.core.core.state.robot import RobotState,RobotTaskType
-from archemist.core.state.robots.kukaLBRIIWA import KukaLBRIIWA, KukaLBRTask
+from archemist.core.state.robot import RobotState,RobotTaskType
+from archemist.robots.kmriiwa_robot.state import KukaLBRIIWA, KukaLBRTask
 from archemist.core.util.location import Location
 from archemist.core.exceptions.exception import RobotAssignedRackError
 from mongoengine import connect
@@ -13,7 +13,8 @@ class RobotTest(unittest.TestCase):
         robot_dict = {
             'type': 'KukaLBRIIWA',
             'id': 187,
-            'batch_capacity':2
+            'batch_capacity':2,
+            'handler': 'GenericRobotHandler'
         }
 
         t_robot = KukaLBRIIWA.from_dict(robot_dict)

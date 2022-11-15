@@ -1,5 +1,4 @@
 from archemist.core.persistence.yaml_handler import YamlHandler
-from archemist.core.persistence.db_handler import DatabaseHandler
 from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory
 import multiprocessing as mp
@@ -10,12 +9,14 @@ import sys
 
 
 def run_station_handler(db_host, db_name, station, use_sim_handler):
-    db_handler = DatabaseHandler(db_host, db_name) # required to establish connection with db
+    p_manager = PersistenceManager(db_host, db_name) # required to establish connection with db
+    p_manager.load_station_models()  # required to load db models
     handler = StationFactory.create_handler(station, use_sim_handler)
     handler.run()
 
 def run_robot_handler(db_host, db_name, robot, use_sim_handler):
-    db_handler = DatabaseHandler(db_host, db_name) # required to establish connection with db
+    p_manager = PersistenceManager(db_host, db_name) # required to establish connection with db
+    p_manager.load_robot_models() # required to load db models
     handler = RobotFactory.create_handler(robot, use_sim_handler)
     handler.run()
 
@@ -36,7 +37,7 @@ if __name__ == '__main__':
         config_dir = Path(args.config_dir)
     
     server_config_file_path = config_dir.joinpath(f'server_settings.yaml')
-    server_settings = YamlHandler.loadYamlFile(server_config_file_path)
+    server_settings = YamlHandler.load_server_settings_file(server_config_file_path)
     db_name = server_settings['db_name']
     db_host = server_settings['mongodb_host']
 

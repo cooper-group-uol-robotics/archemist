@@ -21,6 +21,7 @@ class StationTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -181,6 +182,7 @@ class StationTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
+            'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',

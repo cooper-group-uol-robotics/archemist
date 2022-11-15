@@ -1,14 +1,15 @@
 name: test_archemist_recipe
 id: 198
 materials:
-  liquids: [water]
-  solids: [sodium_chloride]
+  liquids: 
+    - water
+  solids: 
+    - sodium_chloride
 stations:
   - name: ChemSpeedFlexStation.id_9
     stationOps:
       - type: CSProcessingOpDescriptor
         properties:
-        output: "CSJobOutputDescriptor"
 workflowSM:
   - state_name: start
     onSuccess: ChemSpeedFlexStation.id_9.CSProcessingOpDescriptor

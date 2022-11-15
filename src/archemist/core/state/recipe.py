@@ -14,8 +14,11 @@ class Recipe:
         model.name = recipe_document['name']
         model.exp_id = recipe_document['id']
         model.station_op_descriptors = [StationFactory.create_op_from_dict(stationOp).model for station_dict in recipe_document['stations'] for stationOp in station_dict['stationOps']]
-        model.solids = recipe_document['materials']['solids']
-        model.liquids = recipe_document['materials']['liquids']
+        if 'materials' in recipe_document:
+            if 'solids' in recipe_document['materials']:
+                model.solids = recipe_document['materials']['solids']
+            if 'liquids' in recipe_document['materials']:
+                model.liquids = recipe_document['materials']['liquids']
         model.states = [state_dict['state_name'] for state_dict in recipe_document['workflowSM']]
         model.transitions = [{'trigger': trigger, 'source': state_dict['state_name'], 'dest': state_dict[trigger]} 
                         for state_dict in recipe_document['workflowSM'] for trigger in ['onSuccess','onFail']]

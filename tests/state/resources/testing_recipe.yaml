@@ -1,8 +1,10 @@
 name: test_archemist_recipe
 id: 198
 materials:
-  liquids: [water]
-  solids: [sodium_chloride]
+  liquids:
+    - water
+  solids:
+    - sodium_chloride
 stations:
   - name: IkaPlateDigital.id_2
     stationOps:
@@ -11,12 +13,10 @@ stations:
           stirring_speed: 200
           duration: 10
           unit: seconds
-        output: "IKAOutputDescriptor"
   - name: FisherWeightingStation.id_5
     stationOps:
       - type: FisherWeightOpDescriptor
         properties:
-        output: "FisherOutputDescriptor"
 workflowSM:
   - state_name: start
     onSuccess: "IkaPlateDigital.id_2.IKAStirringOpDescriptor"
