@@ -69,36 +69,46 @@ class MultiBatchRobotScheduler(RobotScheduler):
             robot_job = state.robot_ops_queue.pop()
             job_assigned = False
             if isinstance(robot_job, KukaLBRMaintenanceTask):
-                robot = state.get_robot('KukaLBRIIWA',1)
-                if robot.state == RobotState.IDLE:
-                    robot.assign_op(robot_job)
-                    job_assigned = True
-            elif isinstance(robot_job, KukaNAVTask):
-                robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
-                if robot.operational and robot.state == RobotState.IDLE:
-                    robot.assign_op(robot_job)
-                    job_assigned = True
-            elif isinstance(robot_job, KukaLBRTask):
-                robot = state.get_robot('KukaLBRIIWA',1) # this can be replaced by querying a list with robots that are KUKA
-                if robot.operational and robot.state == RobotState.IDLE:
-                    if robot_job.task_type == RobotTaskType.LOAD_TO_ROBOT: #load to robot if it has capacity and next station is free
-                        if not robot.is_onboard_capacity_full():
-                            if self._is_next_station_free(robot_job.related_batch_id,state):
-                                robot.assign_op(robot_job)
-                                job_assigned = True
-                    elif robot_job.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                        if robot.is_batch_onboard(robot_job.related_batch_id):
-                            if self._is_next_station_free(robot_job.related_batch_id,state):
-                                robot.assign_op(robot_job)
-                                job_assigned = True
-                    elif robot_job.task_type == RobotTaskType.MANIPULATION:
+                kuka_robots = state.get_robots('KukaLBRIIWA')
+                for robot in kuka_robots:
+                    if robot.state == RobotState.IDLE:
                         robot.assign_op(robot_job)
                         job_assigned = True
+                        break
+            elif isinstance(robot_job, KukaNAVTask):
+                kuka_robots = state.get_robots('KukaLBRIIWA')
+                for robot in kuka_robots:
+                    if robot.operational and robot.state == RobotState.IDLE:
+                        robot.assign_op(robot_job)
+                        job_assigned = True
+                        break
+            elif isinstance(robot_job, KukaLBRTask):
+                kuka_robots = state.get_robots('KukaLBRIIWA')
+                for robot in kuka_robots:
+                    if robot.operational and robot.state == RobotState.IDLE:
+                        if robot_job.task_type == RobotTaskType.LOAD_TO_ROBOT: #load to robot if it has capacity and next station is free
+                            if not robot.is_onboard_capacity_full():
+                                if self._is_next_station_free(robot_job.related_batch_id,state):
+                                    robot.assign_op(robot_job)
+                                    job_assigned = True
+                                    break
+                        elif robot_job.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
+                            if robot.is_batch_onboard(robot_job.related_batch_id):
+                                if self._is_next_station_free(robot_job.related_batch_id,state):
+                                    robot.assign_op(robot_job)
+                                    job_assigned = True
+                                    break
+                        elif robot_job.task_type == RobotTaskType.MANIPULATION:
+                            robot.assign_op(robot_job)
+                            job_assigned = True
+                            break
             elif isinstance(robot_job, YuMiRobotTask):
-                robot = state.get_robot('YuMiRobot', 123) #TODO change to loop through robots
-                if robot.state == RobotState.IDLE:
-                    robot.assign_op(robot_job)
-                    job_assigned = True
+                yumi_robots = state.get_robots('YuMiRobot')
+                for robot in yumi_robots:
+                    if robot.state == RobotState.IDLE:
+                        robot.assign_op(robot_job)
+                        job_assigned = True
+                        break
             if not job_assigned:
                 unassigned_jobs.append(robot_job)
         
