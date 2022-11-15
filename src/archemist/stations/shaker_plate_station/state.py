@@ -45,7 +45,7 @@ class ShakeOpDescriptor(StationOpDescriptor):
         model = ShakeOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.duration = kwargs['duration']
+        model.duration = int(kwargs['duration'])
         return cls(model)
 
     @property

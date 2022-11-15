@@ -141,6 +141,9 @@ class State:
         model = RobotModel.objects.get(_type=robot_type,exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)
+
+    def get_robots(self, robot_type: str):
+        return  [RobotFactory.create_from_model(model) for model in RobotModel.objects(_type=robot_type)]
         
         
 

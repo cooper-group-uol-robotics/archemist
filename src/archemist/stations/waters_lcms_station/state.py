@@ -53,7 +53,7 @@ class LCMSInsertBatchOpDescriptor(StationOpDescriptor):
         model = LCMSOpModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.rack = kwargs['rack']
+        model.rack = int(kwargs['rack'])
         return cls(model)
 
     @property

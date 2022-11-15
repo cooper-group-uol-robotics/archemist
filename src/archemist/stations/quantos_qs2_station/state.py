@@ -194,7 +194,7 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         model.solid_name = kwargs['solid_name']
-        model.dispense_mass = kwargs['dispense_mass']
+        model.dispense_mass = float(kwargs['dispense_mass'])
         return cls(model)
 
     @property

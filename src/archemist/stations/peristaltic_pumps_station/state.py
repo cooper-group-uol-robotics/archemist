@@ -78,7 +78,7 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         model.liquid_name = kwargs['liquid_name']
-        model.dispense_volume = kwargs['dispense_volume']
+        model.dispense_volume = float(kwargs['dispense_volume'])
         return cls(model)
         
 

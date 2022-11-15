@@ -122,9 +122,9 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = kwargs['temperature']
-        model.target_stirring_speed = kwargs['stirring_speed']
-        model.target_duration = kwargs['duration']
+        model.target_temperature = int(kwargs['temperature'])
+        model.target_stirring_speed = int(kwargs['stirring_speed'])
+        model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -148,8 +148,8 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = kwargs['temperature']
-        model.target_duration = kwargs['duration']
+        model.target_temperature = int(kwargs['temperature'])
+        model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -170,8 +170,8 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_stirring_speed = kwargs['stirring_speed']
-        model.target_duration = kwargs['duration']
+        model.target_stirring_speed = int(kwargs['stirring_speed'])
+        model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
