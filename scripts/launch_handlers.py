@@ -21,7 +21,7 @@ def run_robot_handler(db_host, db_name, robot, use_sim_handler):
     handler.run()
 
 if __name__ == '__main__':
-
+    
     parser = argparse.ArgumentParser(description='Launch workflow handlers')
     parser.add_argument('--sim', dest='sim_mode', action='store_true',
                     help='run the given recipe continuously in test mode')
@@ -52,6 +52,7 @@ if __name__ == '__main__':
                 sys.exit('timeout reached! no db state is available. Exiting')
 
         state = p_manager.construct_state_from_db()
+        mp.set_start_method('spawn') # to avoid forking error with mongodb
         # define robot handlers processes
         robot_handlers_processes = []
         for robot in state.robots:
