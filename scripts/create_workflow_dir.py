@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 from archemist.core.persistence.yaml_handler import YamlHandler
 
@@ -12,6 +13,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # create all the workflow directory 
+    if not os.path.exists(args.path): os.makedirs(args.path)
     base_path = Path(args.path) if args.path is not None else Path.cwd()
     workflow_dir_path = base_path.joinpath(args.name)
     config_dir_path = workflow_dir_path.joinpath('config_files')
