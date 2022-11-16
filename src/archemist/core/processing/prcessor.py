@@ -55,7 +55,6 @@ class WorkflowManager:
                             recipe = self._workflow_state.recipes_queue.popleft()
                             new_batch = clean_batches.popleft()
                             new_batch.attach_recipe(recipe)
-                            new_batch.recipe.advance_state(True) # to move out of start state
                             self._workflow_state.batches_buffer.append(new_batch)
                         else:
                             break

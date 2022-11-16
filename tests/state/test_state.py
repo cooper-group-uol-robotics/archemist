@@ -72,7 +72,6 @@ class StateTest(unittest.TestCase):
 
         batch1.recipe.advance_state(True)
         batch1.recipe.advance_state(True)
-        batch1.recipe.advance_state(True)
 
         obj_id_batch = state.get_batch(batch1._model.id)
         self.assertEqual(obj_id_batch.id,batch1.id)

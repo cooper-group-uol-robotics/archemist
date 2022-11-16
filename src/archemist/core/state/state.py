@@ -74,7 +74,7 @@ class State:
         return Batch.from_arguments(batch_id=batch_index, num_samples=samples_per_batch, location=default_in_location)
 
     def get_completed_batches(self) -> List[Batch]:
-        complete_recipes = RecipeModel.objects(current_state='end')
+        complete_recipes = RecipeModel.objects(current_state='end_state')
         return [Batch(model) for model in BatchModel.objects(recipe__in=complete_recipes)]
 
     def get_clean_batches(self) -> Deque[Batch]:
@@ -93,7 +93,7 @@ class State:
 
     ''' Recipe operations'''
     def queue_recipe(self, recipe_dict: Dict):
-        if not RecipeModel.objects(exp_id=recipe_dict['id']):
+        if not RecipeModel.objects(exp_id=recipe_dict['general']['id']):
             recipe = Recipe.from_dict(recipe_dict)
             self._model.update(push__recipes_queue=recipe.model)
         else:

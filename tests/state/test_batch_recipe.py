@@ -1,5 +1,4 @@
 import unittest
-from bson.objectid import ObjectId
 from archemist.stations.ika_digital_plate_station.state import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
@@ -76,7 +75,7 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(batch2.id, 31)
         self.assertEqual(batch2.location, Location(1,3,'chair_frame'))
         self.assertEqual(len(batch2.station_history), 2)
-        self.assertEqual(batch2.recipe.current_state, 'start')
+        self.assertEqual(batch2.recipe.current_state, 'stirring_operation')
 
         self.assertEqual(batch2.recipe.id, batch.recipe.id)
         self.assertEqual(batch2.recipe.current_state, batch.recipe.current_state)
@@ -96,14 +95,11 @@ class BatchRecipeTest(unittest.TestCase):
         
         self.assertEqual(batch.recipe.id, 198)
         self.assertEqual(batch.recipe.name, 'test_archemist_recipe')
-        self.assertEqual(batch.recipe.liquids[0], 'water')
-        self.assertEqual(batch.recipe.solids[0], 'sodium_chloride')
-        self.assertEqual(batch.recipe.current_state, 'start')
-        self.assertFalse(batch.recipe.is_complete())
+        self.assertEqual(batch.recipe.liquids[0], {'name':'water', 'id':1})
+        self.assertEqual(batch.recipe.solids[0], {'name':'sodium_chloride', 'id':2})
 
-        # IKAPlatRCTDigital state
-        batch.recipe.advance_state(True)
-        self.assertEqual(batch.recipe.current_state, 'IkaPlateDigital.id_2.IKAStirringOpDescriptor')
+        # stirring state
+        self.assertEqual(batch.recipe.current_state, 'stirring_operation')
         station_name, station_id = batch.recipe.get_current_station()
         self.assertEqual(station_name, 'IkaPlateDigital')
         self.assertEqual(station_id, 2)
@@ -112,9 +108,10 @@ class BatchRecipeTest(unittest.TestCase):
         self.assertEqual(op1.target_stirring_speed, 200)
         self.assertEqual(op1.target_duration, 10)
         self.assertFalse(batch.recipe.is_complete())
-        # IKAPlatRCTDigital state
+        
+        # weighing state
         batch.recipe.advance_state(True)
-        self.assertEqual(batch.recipe.current_state, 'FisherWeightingStation.id_5.FisherWeightOpDescriptor')
+        self.assertEqual(batch.recipe.current_state, 'weighing_operation')
         station_name, station_id = batch.recipe.get_current_station()
         self.assertEqual(station_name, 'FisherWeightingStation')
         self.assertEqual(station_id, 5)

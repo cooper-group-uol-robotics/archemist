@@ -111,7 +111,7 @@ class ArchemistServer:
                 recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
                 recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
                 self._workflow_mgr.queue_recipe(recipe_dict)
-                print(f'new recipe with id {recipe_dict["id"]} queued')
+                print(f'new recipe with id {recipe_dict["general"]["id"]} queued')
 
     def shut_down(self):
         if self._workflow_mgr.is_running():

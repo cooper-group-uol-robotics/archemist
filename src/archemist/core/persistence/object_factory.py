@@ -117,7 +117,9 @@ class StationFactory:
             module = importlib.import_module(state_module)
             if hasattr(module,op_dict['type']):
                 cls = getattr(module,op_dict['type'])
-                kwargs = {} if op_dict['properties'] is None else op_dict['properties']
+                kwargs = {}
+                if 'properties' in op_dict and op_dict['properties'] is not None:
+                    kwargs = op_dict['properties']
                 return cls.from_args(**kwargs)
 
     @staticmethod

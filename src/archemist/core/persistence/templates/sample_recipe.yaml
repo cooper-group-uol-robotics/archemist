@@ -1,50 +1,58 @@
 # workflow recipe sample
-# name: the given recipe name
-# id: the recipe unique workflow id
+#
+# general: this section describes the recipe general details
+#   name: the given recipe name
+#   id: the recipe unique workflow id
+#
 # materials: recipe materials section
-#   liquids: the liquids' names that will be used in the recipe
-#   solids: the solids' names that will be used in the recipe
-# stations: recipe stations section that will describe all the stations
-#           utilized in the experiment
-#   name: name of the station. This should come in the format station_name.id_xx
-#          where xx is the station unique id
-#   stationOps: station operation section that will describe all the operations
-#               to be used by the recipe in this experiment
-#     type: the operation class name as defined in archemist.stations.X.state
+#   liquids: this section describes the liquids used in the recipe
+#     name: liquid name
+#     id: liquid unique workflow id
+#   solids: this section describes the solids used in the recipe
+#     name: solid name
+#     id: solid unique workflow id
+#
+# process: this section describes the experiment process. The process
+#             is represented using a finite state machine that is composed of
+#             state and their transitions. Currently only sequential process are 
+#             possible. Note that a workflow can have any number of states
+#             and their transitions.
+#   state_name: name of the state
+#   station: this section describes the station involved in this state
+#     type: the station's class name as defined in archemist.stations.X.state
 #           note that X stands for the stations's given module found in archemist's 
 #           stations module
-#     properties: operation properties
-# workflowSM: workflow state machine describing the experiment process
-#             that is composed of state and their transitions, currently only
-#             sequential process are possible. Note that a workflow can have any
-#             number of states and their transitions.
-#   state_name: name of the state in the form: station_name.id_xx.op_type where
-#               station_name and xx refer to the station name and id, while op_type
-#               stands for the operation to use
-#   onSuccess: the new state the workflow will transition to in case the current state
-#              is executed successfully
-#   onFail: the new state the workflow will transition to in case the current state
-#              execution fails
-
-name: 
-id:
+#     id: station unique workflow id
+#     operation: this section describes the operation involved in the state
+#       type: station operation class name as defined in archemist.stations.X.state
+#             note that X stands for the stations's given module found in archemist's 
+#             stations module
+#       properties: operation properties
+#   transitions: this section describes current state transitions
+#     on_success: the new state the workflow will transition to in case the current state
+#                 is executed successfully
+#     on_success: the new state the workflow will transition to in case the current state
+#                 execution fails
+# note that the process is considered complete when it reaches the end_state so
+# make sure your process teminates with the end_state
+general:
+  name: 
+  id:
 materials:
   liquids:
-    - someLiquid
+   -  name:
+      id: 
   solids:
-    - someSolid
-stations:
-  - name: SomeStation.id_1
-    stationOps:
-      - type: SomeOp
+    - name:
+      id:
+process:
+  - state_name:
+    station:
+      type:
+      id:
+      operation:
+        type:
         properties:
-workflowSM:
-  - state_name: start
-    onSuccess: SomeStation.id_1.SomeOp
-    onFail: end
-  - state_name: SomeStation.id_1.SomeOp
-    onSuccess: end
-    onFail: end
-  - state_name: end
-    onSuccess:
-    onFail: 
+    transitions:
+      on_success: 
+      on_fail: end_state

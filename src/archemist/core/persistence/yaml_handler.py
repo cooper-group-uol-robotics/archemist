@@ -76,30 +76,49 @@ class WorkflowSchemas:
 
     recipe_schema = Map(
         {
-            'name': Str(),
-            'id': Str(),
-            Optional('materials'): Map(
+            'general': Map(
                 {
-                    Optional('liquids'): Seq(Str()),
-                    Optional('solids'): Seq(Str())
+                    'name': Str(),
+                    'id': Int(),
                 }
             ),
-            'stations': Seq(Map(
+            Optional('materials'): Map(
                 {
-                    'name':Str(),
-                    'stationOps': Seq(Map(
+                    Optional('liquids'): Seq(Map(
                         {
-                            'type':Str(),
-                            Optional('properties'): EmptyNone() | MapPattern(Str(), Any())
+                            'name': Str(),
+                            'id': Int()
+                        }
+                    )),
+                    Optional('solids'): Seq(Map(
+                        {
+                            'name': Str(),
+                            'id': Int()
                         }
                     ))
                 }
-            )),
-            'workflowSM': Seq(Map(
+            ),
+            'process': Seq(Map(
                 {
                     'state_name': Str(),
-                    'onSuccess': Str(),
-                    'onFail': Str()
+                    'station': Map(
+                        {
+                            'type': Str(),
+                            'id': Int(),
+                            'operation': Map(
+                                {
+                                    'type': Str(),
+                                    Optional('properties'): EmptyNone() | MapPattern(Str(), Any())
+                                }
+                            )
+                        }
+                    ),
+                    'transitions': Map(
+                        {
+                            'on_success': Str(),
+                            'on_fail': Str()
+                        }
+                    )
                 }
             ))
         }
