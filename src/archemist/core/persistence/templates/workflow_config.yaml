@@ -1,3 +1,5 @@
+# ============ Workflow Configuration ============
+#
 # general: this section describes the workflow general settings
 #   name: the given workflow name
 #   samples_per_batch: number of samples in a workflow batch

@@ -1,6 +1,6 @@
 from archemist.core.state.robot import RobotTaskType, RobotState
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
-from archemist.robots.panda_robot.state import PandaFranka
+from archemist.robots.panda_robot.state import PandaRobotTask
 from archemist.robots.yumi_robot.state import YuMiRobotTask
 from archemist.core.state.state import State
 
@@ -105,6 +105,13 @@ class MultiBatchRobotScheduler(RobotScheduler):
             elif isinstance(robot_job, YuMiRobotTask):
                 yumi_robots = state.get_robots('YuMiRobot')
                 for robot in yumi_robots:
+                    if robot.state == RobotState.IDLE:
+                        robot.assign_op(robot_job)
+                        job_assigned = True
+                        break
+            elif isinstance(robot_job, PandaRobotTask):
+                panda_robots = state.get_robots('PandaFranka')
+                for robot in panda_robots:
                     if robot.state == RobotState.IDLE:
                         robot.assign_op(robot_job)
                         job_assigned = True

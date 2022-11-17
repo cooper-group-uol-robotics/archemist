@@ -12,11 +12,10 @@ import zmq
 import json
 
 class ArchemistServer:
-    def __init__(self, config_dir: Path, existing_db: bool=False) -> None:
-        server_config_file_path = config_dir.joinpath(f'server_settings.yaml')
+    def __init__(self, workflow_dir: Path, existing_db: bool=False) -> None:
+        server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
         self._server_config = YamlHandler.load_server_settings_file(server_config_file_path)
         
-        workflow_dir = Path(self._server_config['workflow_dir_path'])
         workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
         recipes_dir_path = workflow_dir.joinpath(f'recipes')
 

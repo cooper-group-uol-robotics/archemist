@@ -68,7 +68,6 @@ class WorkflowSchemas:
 
     server_settings_schema = Map(
         {
-            'workflow_dir_path': Str(),
             'db_name': Str(),
             'mongodb_host': Str(),
         }
@@ -156,6 +155,7 @@ class YamlHandler:
     def create_empty_config_file(file_path: Path) :
         config_file_content = resource_string('archemist.core.persistence.templates', 'workflow_config.yaml').decode('utf-8')
         config_file_content = config_file_content.replace('\r\n', '\r')
+        file_path = file_path.joinpath('workflow_config.yaml')
         with open(file_path, 'w') as config_file:
             config_file.write(config_file_content)
 
@@ -163,5 +163,14 @@ class YamlHandler:
     def create_sample_recipe_file(file_path: Path) :
         recipe_file_content = resource_string('archemist.core.persistence.templates', 'sample_recipe.yaml').decode('utf-8')
         recipe_file_content = recipe_file_content.replace('\r\n', '\r')
+        file_path = file_path.joinpath('sample_recipe.yaml')
+        with open(file_path, 'w') as recipe_file:
+            recipe_file.write(recipe_file_content)
+
+    @staticmethod
+    def create_empty_server_settings_file(file_path: Path) :
+        recipe_file_content = resource_string('archemist.core.persistence.templates', 'server_settings.yaml').decode('utf-8')
+        recipe_file_content = recipe_file_content.replace('\r\n', '\r')
+        file_path = file_path.joinpath('server_settings.yaml')
         with open(file_path, 'w') as recipe_file:
             recipe_file.write(recipe_file_content)

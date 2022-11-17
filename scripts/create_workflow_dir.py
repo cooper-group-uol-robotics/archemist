@@ -1,5 +1,4 @@
 import argparse
-import os
 from pathlib import Path
 from archemist.core.persistence.yaml_handler import YamlHandler
 
@@ -13,20 +12,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # create all the workflow directory 
-    if not os.path.exists(args.path): os.makedirs(args.path)
     base_path = Path(args.path) if args.path is not None else Path.cwd()
     workflow_dir_path = base_path.joinpath(args.name)
+    workflow_dir_path.mkdir(parents=True,exist_ok=False)
     config_dir_path = workflow_dir_path.joinpath('config_files')
+    config_dir_path.mkdir(exist_ok=False)
     recipe_dir_path = workflow_dir_path.joinpath('recipes')
-    workflow_dir_path.mkdir(parents=False,exist_ok=False)
-    config_dir_path.mkdir(parents=False,exist_ok=False)
-    recipe_dir_path.mkdir(parents=False,exist_ok=False)
+    recipe_dir_path.mkdir(exist_ok=False)
+    template_dir_path = workflow_dir_path.joinpath('templates')
+    template_dir_path.mkdir(exist_ok=False)
 
-    # add workflow_config template
-    config_file_path = config_dir_path.joinpath('workflow_config.yaml')
-    YamlHandler.create_empty_config_file(config_file_path)
-
-    # add recipe sample
-    recipe_sample_path = workflow_dir_path.joinpath('recipe_sample.yaml')
-    YamlHandler.create_sample_recipe_file(recipe_sample_path)
+    # add templates
+    YamlHandler.create_empty_config_file(template_dir_path)
+    YamlHandler.create_sample_recipe_file(template_dir_path)
+    YamlHandler.create_empty_server_settings_file(template_dir_path)
     
