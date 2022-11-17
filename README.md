@@ -3,7 +3,7 @@
 
 ARCHemist is an open source architecture and application for the orchestration and management of robotic chemistry workflows. It is a reconfigurable architecture that allows different robots and lab instruments to work together to execute chemistry workflows. This architecture was designed with and for chemists, where it allows them to setup their experiments using human readable configuration and recipe files.
 
-![ARCHemist operation overview](file:///C:/Users/hatem/Documents/archemist_gif.gif)
+![archemist_gif](https://user-images.githubusercontent.com/13589969/202526574-b4121573-72c4-4b14-9d12-1f46d9a3eef3.gif)
 
 For more information on the architecture, please refer to our [published paper](https://arxiv.org/pdf/2204.13571.pdf)
 
@@ -69,6 +69,12 @@ This will allow the user to start/pause the workflow processor, add clean batche
 this will be added later
 
 ## Adding new station
+Before explaining the process of adding new stations and robots to the ARCHemist application, the diagram below illustrates the dataflow inside the applictaion and how a station/robot represented inside the application interacts with its real-world counterpart.
+
+<p align="center">
+  <img width="640" height="370" src="https://user-images.githubusercontent.com/13589969/202523533-976611d3-a0ab-4d0b-bd61-2421b8dd1eca.png">
+</p>
+
 To add a new station to the ARCHemist system, a new module for it need to be created inside [archemist/stations](./src/archemist/stations/) folder. This module should have the following structure:
 ```
 archemist/stations
