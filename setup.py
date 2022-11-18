@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
      name='archemist',
@@ -8,9 +8,10 @@ setup(
      author='stoic-roboticist',
      author_email='hatem.fakhruldeen@gmail.com',
      url='https://github.com/cooper-group-uol-robotics/archemist',
-     packages=['archemist'],
+     packages=find_packages('src'),
      package_dir={'':'src'},
-     install_requires=[  'mongoengine==0.24.2',
+     install_requires=[  'pyyaml==6.0',
+                         'mongoengine==0.24.2',
                          'multipledispatch==0.6.0',
                          'pyzmq==23.2.1',
                          'transitions==0.6.4',
@@ -18,9 +19,7 @@ setup(
                          'PyInquirer==1.0.3',
                          'watchdog==2.1.9',
                          'strictyaml==1.6.2',],
-     scripts=[ 'scripts/run_server',
-               'scripts/run_cli',
-               'scripts/create_workflow_dir',
-               'scripts/launch_handlers',
-               'scripts/clear_db']
+     entry_points={
+          'console_scripts': ["archemist = archemist.__main__:main"]
+     }
 )

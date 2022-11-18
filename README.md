@@ -16,14 +16,14 @@ Please refer to the appropriate documentation to install ROS1 on your system.
 
 Furthermore, the application requires [MongoDb](https://www.mongodb.com/) to be installed in order for its persistence layer to function. Please refer to the appropriate section on their website for installation instruction.
 
-After installing ROS1, MongoDb and the appropriate ROS stations' and robots' drivers and handlers (more info [to follow](#ros-drivers-and-handlers)), clone the ARCHemist repository into your system and install the needed dependencies using the [requirements.txt](./requirements.txt) file using:
+After installing ROS1, MongoDb and the appropriate ROS stations' and robots' drivers and handlers (more info [to follow](#ros-drivers-and-handlers)), clone the ARCHemist repository into your system and install the package using:
 
 ```
-$ pip install -r requirements.txt
+$ pip install .
 ```
-afterwards install the ARCHemist package using:
+or alternatively using:
 ```
-python setup.py install
+$ python setup.py install
 ```
 
 ## Usage
@@ -39,27 +39,27 @@ To use the ARCHemist to run chemistry experiments, first the user need to create
 
 For more information on these files, check their documentation and refer to the [examples](./examples/) folder for a number of example workflows.
 
-After creating the workflow directory, run the ARCHemist application server using:
+After creating the workflow directory, start the ARCHemist application server using:
 ```
-python scripts/run_server.py --path path/to/workflow/dir
+$ archemist start_server -path path/to/workflow/dir
 ```
 In case starting with an already existing workflow where its database entry exists use:
 ```
-python scripts/run_server.py --path path/to/workflow/dir --exists
+$ archemist start_server -path path/to/workflow/dir --exists
 ```
 Next launch all the station and robot handlers using:
 ```
-python scripts/launch_handlers.py --path path/to/workflow/dir
+$ archemist launch_handlers -path path/to/workflow/dir
 ```
 This will launch all the robots/stations handlers as specified in the configuration file. Note that, this assumes that all the robots and stations drivers are up and running and reachable by their respective handlers.
 
 Alternatively, for testing and debugging purposes, simulated stations/robots handlers can be launched that won't connect to any physical equipment using:
 ```
-python scripts/launch_handlers.py --path path/to/workflow/dir --sim
+$ archemist launch_handlers -path path/to/workflow/dir --sim
 ```
 Finally, the ARCHemist command line interface can be launched using:
 ```
-python scripts/run_cli.py
+$ archemist start_cli
 ```
 This will allow the user to start/pause the workflow processor, add clean batches to the workflow and access some basic robots/stations controls. 
 
@@ -68,13 +68,14 @@ This will allow the user to start/pause the workflow processor, add clean batche
 ### Web user interface
 this will be added later
 
-## Adding new station
+## Adding new stations and robots
 Before explaining the process of adding new stations and robots to the ARCHemist application, the diagram below illustrates the dataflow inside the applictaion and how a station/robot represented inside the application interacts with its real-world counterpart.
 
 <p align="center">
   <img width="640" height="370" src="https://user-images.githubusercontent.com/13589969/202523533-976611d3-a0ab-4d0b-bd61-2421b8dd1eca.png">
 </p>
 
+### Adding new station
 To add a new station to the ARCHemist system, a new module for it need to be created inside [archemist/stations](./src/archemist/stations/) folder. This module should have the following structure:
 ```
 archemist/stations
@@ -93,7 +94,7 @@ archemist/stations
 
 To better understand how to define a new station and add it to the ARCHemist application, please refer to any of the station modules defined inside [archemist/stations](./src/archemist/stations/) folder.
 
-## Adding new robot
+### Adding new robot
 To add a new robot to the ARCHemist system, a new module for it need to be created inside [archemist/robots](./src/archemist/robots/) folder. This module should have the following structure:
 ```
 archemist/robots

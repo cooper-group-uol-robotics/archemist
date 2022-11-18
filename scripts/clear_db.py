@@ -10,3 +10,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     mongodb_host = 'mongodb://localhost:27017'
     db_handler = DatabaseHandler(mongodb_host,args.db_name)
+    db_handler.clear_database(args.db_name)
