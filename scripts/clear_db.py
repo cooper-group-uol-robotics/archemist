@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from archemist.core.persistence.db_handler import DatabaseHandler
 import argparse
 

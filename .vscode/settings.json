@@ -1,4 +1,5 @@
 {
     "python.linting.enabled": false,
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "cSpell.language": "en-GB"
 }
