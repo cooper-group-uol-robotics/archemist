@@ -18,13 +18,11 @@ class PXRDSm(StationProcessFSM):
         states = [ State(name='init_state', on_enter='_print_state'), 
             State(name='open_pxrd_door', on_enter=['request_open_pxrd_door', '_print_state']),
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
-            State(name='navigate_to_pxrd_doors', on_enter=['request_navigate_to_pxrd_doors', '_print_state']),
-            State(name='retreat_to_pxrd_doors', on_enter=['request_navigate_to_pxrd_doors', '_print_state']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']), 
             State(name='pxrd_process', on_enter=['request_pxrd_process', '_print_state']),
             State(name='load_pxrd', on_enter=['request_load_pxrd', '_print_state']),
             State(name='added_batch_update', on_enter=['update_loaded_batch', '_print_state']),
-            State(name='close_pxrd_door', on_enter=['request_pxrd_door', '_print_state']), 
+            State(name='close_pxrd_door', on_enter=['request_close_pxrd_door', '_print_state']), 
             State(name='unload_pxrd', on_enter=['request_unload_pxrd', '_print_state']),
             State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
             State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
@@ -32,13 +30,11 @@ class PXRDSm(StationProcessFSM):
         ''' Transitions '''
         transitions = [
             {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'navigate_to_pxrd_doors', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'navigate_to_pxrd_doors','dest':'open_pxrd_door', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'open_pxrd_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'open_pxrd_door','dest':'load_pxrd', 'unless':'is_station_operation_complete' ,
                 'conditions':'is_station_job_ready', 'before':'set_doors_to_open'},
             {'trigger':self._trigger_function, 'source':'load_pxrd','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'retreat_to_pxrd_doors', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'retreat_to_pxrd_doors','dest':'close_pxrd_door', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'close_pxrd_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'close_pxrd_door','dest':'enable_auto_functions', 'conditions':'is_station_job_ready',
                 'before':'set_doors_to_closed'},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'pxrd_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
@@ -46,7 +42,7 @@ class PXRDSm(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'open_pxrd_door','dest':'unload_pxrd', 'conditions':['is_station_operation_complete','is_station_job_ready']
                 ,'before':'set_doors_to_open'},
             {'trigger':self._trigger_function, 'source':'unload_pxrd','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'retreat_to_pxrd_doors', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'close_pxrd_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
         ]
 
@@ -56,13 +52,15 @@ class PXRDSm(StationProcessFSM):
         return self.operation_complete
 
     def request_open_pxrd_door(self):
+        door_loc = Location(node_id=19, graph_id=1)
         robot_job = KukaLBRTask.from_args(name='OpenDoors',params=[True], 
-                                            type=RobotTaskType.MANIPULATION, location=self._station.location)
+                                            type=RobotTaskType.MANIPULATION, location=door_loc)
         self._station.request_robot_op(robot_job)
 
     def request_close_pxrd_door(self):
+        door_loc = Location(node_id=19, graph_id=1)
         robot_job = KukaLBRTask.from_args(name='CloseDoors',params=[True], 
-                                            type=RobotTaskType.MANIPULATION, location=self._station.location)
+                                            type=RobotTaskType.MANIPULATION, location=door_loc)
         self._station.request_robot_op(robot_job)
 
     def request_load_pxrd(self):
@@ -76,10 +74,6 @@ class PXRDSm(StationProcessFSM):
                                             type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
         self._station.request_robot_op(robot_job, current_batch_id)
-        
-
-    def request_navigate_to_pxrd_doors(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(19,1,''), False)) 
 
     def request_disable_auto_functions(self):
         self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
