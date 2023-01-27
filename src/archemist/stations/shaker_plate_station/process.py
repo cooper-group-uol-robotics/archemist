@@ -22,6 +22,7 @@ class YumiShakerPlateSm(StationProcessFSM):
             State(name='unload_shaker_plate', on_enter=['request_unload_shaker_plate', '_print_state']),
             State(name='unscrew_caps', on_enter=['request_unscrew_caps', '_print_state']),
             State(name='pick_pxrd_rack', on_enter=['request_pxrd_rack_pickup', '_print_state']),
+            State(name='pick_eightw_rack', on_enter=['request_eightw_rack_pickup', '_print_state']),
             State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
 
         transitions = [
@@ -30,7 +31,8 @@ class YumiShakerPlateSm(StationProcessFSM):
             {'trigger':self._trigger_function,'source':'shake','dest':'unload_shaker_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unload_shaker_plate','dest':'unscrew_caps', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unscrew_caps','dest':'pick_pxrd_rack', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'pick_pxrd_rack','dest':'final_state', 'conditions':'is_station_job_ready'}
+            {'trigger':self._trigger_function, 'source':'pick_pxrd_rack','dest':'pick_eightw_rack', 'conditions':'is_station_job_ready'}
+            {'trigger':self._trigger_function, 'source':'pick_eightw_rack','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -58,6 +60,12 @@ class YumiShakerPlateSm(StationProcessFSM):
     def request_pxrd_rack_pickup(self):
         robot_job = KukaLBRTask.from_args(name='UnloadPXRDRackYumiStation',params=[True], 
                                             type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
+        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        self._station.request_robot_op(robot_job,current_batch_id)
+        
+    def request_eightw_rack_pickup(self):
+        robot_job = KukaLBRTask.from_args(name='UnloadEightWRackYumiStation',params=[False], 
+                                            type=RobotTaskType.MANIPULATION, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
         self._station.request_robot_op(robot_job,current_batch_id)
 

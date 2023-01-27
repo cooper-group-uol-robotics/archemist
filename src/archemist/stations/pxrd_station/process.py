@@ -37,8 +37,8 @@ class PXRDSm(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'close_pxrd_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'close_pxrd_door','dest':'enable_auto_functions', 'conditions':'is_station_job_ready',
                 'before':'set_doors_to_closed'},
-            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'pxrd_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'pxrd_process','dest':'disable_auto_functions', 'conditions':'is_station_job_ready', 'before':'process_batches'},
+            #{'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'pxrd_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
+            #{'trigger':self._trigger_function, 'source':'pxrd_process','dest':'disable_auto_functions', 'conditions':'is_station_job_ready', 'before':'process_batches'},
             {'trigger':self._trigger_function, 'source':'open_pxrd_door','dest':'unload_pxrd', 'conditions':['is_station_operation_complete','is_station_job_ready']
                 ,'before':'set_doors_to_open'},
             {'trigger':self._trigger_function, 'source':'unload_pxrd','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
