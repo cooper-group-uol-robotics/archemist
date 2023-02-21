@@ -1,11 +1,12 @@
 #test comment
 
 from typing import Dict
+from datetime import datetime, timedelta
 from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-#from .state import CSCloseDoorOpDescriptor, CSOpenDoorOpDescriptor, CSCSVJobOpDescriptor, CSProcessingOpDescriptor
+from .state import WaitingOpDescriptor
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.persistence.object_factory import StationFactory
@@ -41,7 +42,7 @@ class WaitingStationSm(StationProcessFSM):
             {'trigger':self._trigger_function,'source':'navigate_to_WaitingStation','dest':'load_batch', 'unless':'is_station_operation_complete','conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'load_batch','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'load_batch', 'unless':'are_all_current_batches_loaded', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'retreat_from_WaitingStation', 'unless':'is_station_operation_complete','conditions':['is_station_job_ready','are_all_batches_loaded']},
+            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'retreat_from_WaitingStation', 'unless':'is_station_operation_complete','conditions':['is_station_job_ready','are_all_current_batches_loaded']},
             {'trigger':self._trigger_function, 'source':'retreat_from_WaitingStation','dest':'Waiting_process', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'Waiting_process','dest':'unload_batch', 'conditions':['is_station_operation_complete','is_station_job_ready'], 'before':'process_batches'},
             #is 'before' attribute required in previous transition
@@ -80,6 +81,9 @@ class WaitingStationSm(StationProcessFSM):
     def are_all_current_batches_loaded(self):
         return self._current_batches_count == self._station.batch_capacity
 
+    def are_all_batches_unloaded(self):
+        return self._current_batches_count == 0
+
     def is_station_operation_complete(self):
         return self.operation_complete
 
@@ -101,8 +105,9 @@ class WaitingStationSm(StationProcessFSM):
 
 
     def request_process_operation(self):
-        pass
-
+        self._station.assign_station_op(WaitingOpDescriptor.from_args())
+        self._Batch_waiting_start_timeStamp = datetime.now()
+        self._preset_waiting = timedelta(hours=12)
 
         # current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
         # if isinstance (current_op,CSCSVJobOpDescriptor):
@@ -117,12 +122,18 @@ class WaitingStationSm(StationProcessFSM):
 
 
     def process_batches(self):
-        last_operation_op = self._station.station_op_history[-1]
-        for batch in self._station.assigned_batches:
-            for _ in range(0, batch.num_samples):
-                    batch.add_station_op_to_current_sample(last_operation_op)
-                    batch.process_current_sample()
-        self.operation_complete = True
+        self._current_time = datetime.now()
+        self._waiting_duration = self._current_time - self._Batch_waiting_start_timeStamp
+
+        if self._waiting_duration >= self._preset_waiting:
+            return self.operation_complete = True
+        ################## to check if the waiting          
+        # last_operation_op = self._station.station_op_history[-1]
+        # for batch in self._station.assigned_batches:
+        #     for _ in range(0, batch.num_samples):
+        #             batch.add_station_op_to_current_sample(last_operation_op)
+        #             batch.process_current_sample()
+
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
