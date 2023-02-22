@@ -9,6 +9,7 @@ class ShakePlateROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
         self._waiting_for = False
+        self._task_seq = 0
         self._cmd_time = -1
         self._task_finished = False
         rospy.init_node(f'{self._station}_handler')
@@ -34,7 +35,8 @@ class ShakePlateROSHandler(StationHandler):
             self._cmd_time = rospy.get_time()
             self._waiting_for = True
             self._task_finished = False
-            msg = ShakerCommand(shake_duration=current_op.duration)
+            self._task_seq += 1
+            msg = ShakerCommand(shake_duration=current_op.duration, task_seq=self._task_seq)
             for i in range(10):
                 self._shaker_plate_pu.publish(msg)
 

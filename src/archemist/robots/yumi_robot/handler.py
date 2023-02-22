@@ -22,6 +22,7 @@ class YuMiROSHandler(RobotHandler):
                 latest_task_msg = rospy.wait_for_message('/yumi/status', TaskStatus,timeout=5)
                 if latest_task_msg.cmd_seq > self._task_counter:
                     self._task_counter = latest_task_msg.cmd_seq
+                    rospy.loginfo('relaunched handler while driver running. Task message counter updated.')
             rospy.loginfo(f'{self._robot}_handler is running')
             while (not rospy.is_shutdown()):
                 self.handle()
@@ -43,8 +44,8 @@ class YuMiROSHandler(RobotHandler):
     def _process_op(self, robotOp) -> YuMiTask:
         task = None
         if isinstance(robotOp, YuMiRobotTask):
-            task = YuMiTask(task_name=f'{robotOp.name}', cmd_seq=self._task_counter)
             self._task_counter += 1
+            task = YuMiTask(task_name=f'{robotOp.name}', cmd_seq=self._task_counter)
         else:
             rospy.logerr('unknown robot op')    
         return task
