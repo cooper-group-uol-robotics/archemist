@@ -34,6 +34,7 @@ class OutputStationSm(StationProcessFSM):
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
+        self._current_batch_index = 0
         self.to_init_state()
 
     def _print_state(self):
