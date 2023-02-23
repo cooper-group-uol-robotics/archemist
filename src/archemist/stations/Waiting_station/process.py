@@ -18,6 +18,7 @@ class WaitingStationSm(StationProcessFSM):
         self.operation_complete = False
         self._current_batch_index = 0
         self._current_batches_count = 0
+        self._preset_waiting = timedelta(hours=12)
         # all the variables below to be updated as global variables / added to models
         self._current_batch_capacity = 3 #Number of batches in the current set ot the number of batches the robot is going to load 
         self._station_total_capacity = 9 #Total batches the waiting station can hold
@@ -106,7 +107,7 @@ class WaitingStationSm(StationProcessFSM):
     def request_process_operation(self):
         self._station.assign_station_op(WaitingOpDescriptor.from_args())
         self._Batch_waiting_start_timeStamp = datetime.now()
-        self._preset_waiting = timedelta(hours=12)
+        
 
         # current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
         # if isinstance (current_op,CSCSVJobOpDescriptor):
@@ -123,9 +124,8 @@ class WaitingStationSm(StationProcessFSM):
     def process_batches(self):
         self._current_time = datetime.now()
         self._waiting_duration = self._current_time - self._Batch_waiting_start_timeStamp
-
         if self._waiting_duration >= self._preset_waiting:
-            return self.operation_complete = True
+            self.operation_complete = True
         ################## to check if the waiting          
         # last_operation_op = self._station.station_op_history[-1]
         # for batch in self._station.assigned_batches:

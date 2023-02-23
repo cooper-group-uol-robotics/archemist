@@ -1,4 +1,4 @@
-from .model import WaitingStationOpDescriptorModel
+from .model import WaitingStationStatus, WaitingStationModel, WaitingStationOpDescriptorModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -22,24 +22,33 @@ class WaitingStation(Station):
         return cls(model)
     
     @property
-    def status(self) -> int:
-        self._model.reload('Number_of_racks_occupied')
-        return self._model.Number_of_racks_occupied
+    def status(self) -> WaitingStationStatus:
+        self._model.reload('machine_status')
+        return self._model.machine_status
+    
+    @status.setter
+    def status(self, new_status: WaitingStationStatus):
+        self._model.update(machine_status=new_status)
 
+    def assign_station_op(self, stationOp: Any): #TBC
+        pass
+
+    def complete_assigned_station_op(self, success: bool, **kwargs): #TBC
+        pass
 
 ''' ==== Station Operation Descriptors ==== '''
 class WaitingOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel):
-        self._model = op_model
+    def __init__(self, stationOpModel: WaitingStationOpDescriptorModel)-> None:
+        self._model = stationOpModel
 
     @classmethod
     def from_args(cls, **kwargs):
-        model = StationOpDescriptorModel()
+        model = WaitingStationOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
+        model.duration = int(kwargs['duration'])
         return cls(model)
 
     @property
-    def station_waiting_complete
-
-    @status.setter
+    def duration(self) -> int:
+        return self._model.duration
