@@ -5,14 +5,19 @@ from enum import Enum, auto
 
 
 class WaitingStationStatus(Enum):
-    Not_available=auto()
+    Batch_waiting = auto()
+    Not_waiting = auto()
+  
+
+class WaitingStationAvailabity(Enum):
     Available = auto()
+    Not_available = auto()
     #number_of_available_slots = ?????? 
 
-
 class WaitingStationModel(StationModel):
-    machine_status = fields.IntField(WaitingStationStatus)
-    
+    station_status = fields.EnumField(WaitingStationStatus)
+    station_availability = fields.EnumField(WaitingStationAvailabity)
+    current_occupancy = fields.IntField(min_value=0)
 
 class WaitingStationOpDescriptorModel(StationOpDescriptorModel):
     duration = fields.IntField(min_value=0)

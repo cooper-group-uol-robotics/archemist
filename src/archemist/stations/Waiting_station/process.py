@@ -5,7 +5,7 @@ from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from .state import WaitingOpDescriptor
+from .state import WaitingStation, WaitingOpDescriptor
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.persistence.object_factory import StationFactory
@@ -51,17 +51,13 @@ class WaitingStationSm(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'final_state', 'conditions':['is_station_job_ready','are_all_batches_unloaded','is_station_operation_complete']},
 
         ]
+        self.init_state_machine(states=states, transitions=transitions)
 
-        if not self.spots_available < self.current_batch_capacity:
-            self.init_state_machine(states=states, transitions=transitions)
-            self._station_batches_occupied +=3
-
-
-    
     def update_loaded_batch_waiting(self):
         self.update_batch_loc_to_station()
         self._current_batches_count += 1
         if self._current_batches_count == self._station.batch_capacity:
+            self._station.update_batch_count(self._current_batches_count)
             self._current_batch_index = 0
         else:
             self._current_batch_index += 1
@@ -69,10 +65,10 @@ class WaitingStationSm(StationProcessFSM):
     def update_unloaded_batch_waiting(self):
         self.update_batch_loc_to_robot()
         self._current_batches_count -= 1
-        if self._current_batches_count == self._station.batch_capacity:
-            self._current_batch_index = 0
+        if self._current_batches_count == 0:
+            self._station.update_batch_count(self._current_batches_count)
         else:
-            self._current_batch_index += 1
+            pass
 
     def all_current_batches_assigned(self) -> bool:
         if len(self._station.assigned_batches) < self._current_batch_capacity:
@@ -92,6 +88,7 @@ class WaitingStationSm(StationProcessFSM):
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._current_batch_index].id
         self._station.request_robot_op(robot_job,current_batch_id)
+
 
     def request_unload_batch(self):
         robot_job = KukaLBRTask.from_args(name='UnloadWaitingStation',params=[False,self._current_batch_index+1],

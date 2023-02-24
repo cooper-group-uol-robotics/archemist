@@ -1,4 +1,4 @@
-from .model import WaitingStationStatus, WaitingStationModel, WaitingStationOpDescriptorModel
+from .model import WaitingStationStatus, WaitingStationModel, WaitingStationAvailabity, WaitingStationOpDescriptorModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -10,7 +10,7 @@ from datetime import datetime
 
 ''' ==== Station Description ==== '''
 class WaitingStation(Station):
-    def __init__(self, station_model: StationModel) -> None:
+    def __init__(self, station_model: WaitingStationModel) -> None:
         self._model = station_model
 
     @classmethod
@@ -23,18 +23,45 @@ class WaitingStation(Station):
     
     @property
     def status(self) -> WaitingStationStatus:
-        self._model.reload('machine_status')
-        return self._model.machine_status
+        self._model.reload('station_status')
+        return self._model.station_status
     
     @status.setter
     def status(self, new_status: WaitingStationStatus):
-        self._model.update(machine_status=new_status)
+        self._model.update(station_status=new_status)
+
+
+    @property
+    def availability(self) -> WaitingStationAvailabity:
+        self._model.reload('station_availability')
+        return self._model.station_availability
+    
+    @availability.setter
+    def availability(self, new_availability: WaitingStationAvailabity):
+        self._model.update(station_availability=new_availability)
+
+
 
     def assign_station_op(self, stationOp: Any): #TBC
-        pass
+        if isinstance(stationOp, WaitingOpDescriptor):
+            self.status = WaitingStationStatus.Batch_waiting
+        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs): #TBC
-        pass
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, WaitingOpDescriptor):
+            self.status = WaitingStationStatus.Not_waiting
+        super().complete_assigned_station_op(success, **kwargs)
+
+    def update_batch_count(self, BatchCount:int): #to increment number of slots
+        if BatchCount == 3 and self._model.current_occupancy <= (9-BatchCount):
+            self.availability = WaitingStationAvailabity.Available
+            self._model.current_occupancy += BatchCount
+        elif BatchCount == 3 and self._model.current_occupancy >(9-BatchCount):
+            self.availability = WaitingStationAvailabity.Not_available
+        elif BatchCount == 0:
+            self._model.current_occupancy -= 3
+            self.availability = WaitingStationAvailabity.Available
 
 ''' ==== Station Operation Descriptors ==== '''
 class WaitingOpDescriptor(StationOpDescriptor):
