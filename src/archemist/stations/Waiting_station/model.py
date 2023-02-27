@@ -12,7 +12,7 @@ class WaitingStationStatus(Enum):
 class WaitingStationAvailabity(Enum):
     Available = auto()
     Not_available = auto()
-    #number_of_available_slots = ?????? 
+    
 
 class WaitingStationModel(StationModel):
     station_status = fields.EnumField(WaitingStationStatus)

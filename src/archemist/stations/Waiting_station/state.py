@@ -40,8 +40,6 @@ class WaitingStation(Station):
     def availability(self, new_availability: WaitingStationAvailabity):
         self._model.update(station_availability=new_availability)
 
-
-
     def assign_station_op(self, stationOp: Any): #TBC
         if isinstance(stationOp, WaitingOpDescriptor):
             self.status = WaitingStationStatus.Batch_waiting
@@ -52,16 +50,18 @@ class WaitingStation(Station):
         if isinstance(current_op, WaitingOpDescriptor):
             self.status = WaitingStationStatus.Not_waiting
         super().complete_assigned_station_op(success, **kwargs)
+    
 
     def update_batch_count(self, BatchCount:int): #to increment number of slots
-        if BatchCount == 3 and self._model.current_occupancy <= (9-BatchCount):
+        if BatchCount == 3 and self._model.current_occupancy <= (self._model.batch_capacity-BatchCount):
             self.availability = WaitingStationAvailabity.Available
             self._model.current_occupancy += BatchCount
-        elif BatchCount == 3 and self._model.current_occupancy >(9-BatchCount):
+        elif BatchCount == 3 and self._model.current_occupancy >(self._model.batch_capacity-BatchCount):
             self.availability = WaitingStationAvailabity.Not_available
         elif BatchCount == 0:
             self._model.current_occupancy -= 3
             self.availability = WaitingStationAvailabity.Available
+        
 
 ''' ==== Station Operation Descriptors ==== '''
 class WaitingOpDescriptor(StationOpDescriptor):

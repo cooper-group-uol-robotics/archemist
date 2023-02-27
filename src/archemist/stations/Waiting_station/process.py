@@ -57,7 +57,7 @@ class WaitingStationSm(StationProcessFSM):
         self.update_batch_loc_to_station()
         self._current_batches_count += 1
         if self._current_batches_count == self._station.batch_capacity:
-            self._station.update_batch_count(self._current_batches_count)
+            WaitingStation.update_batch_count(self._current_batches_count)
             self._current_batch_index = 0
         else:
             self._current_batch_index += 1
@@ -66,7 +66,7 @@ class WaitingStationSm(StationProcessFSM):
         self.update_batch_loc_to_robot()
         self._current_batches_count -= 1
         if self._current_batches_count == 0:
-            self._station.update_batch_count(self._current_batches_count)
+            WaitingStation.update_batch_count(self._current_batches_count)
         else:
             pass
 
