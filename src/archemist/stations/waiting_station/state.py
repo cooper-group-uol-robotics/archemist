@@ -1,4 +1,4 @@
-from .model import WaitingStationStatus, WaitingStationModel, WaitingStationAvailabity, WaitingStationOpDescriptorModel
+from .model import WaitingStationStatus, WaitingStationModel, WaitingStationAvailabity
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -30,7 +30,6 @@ class WaitingStation(Station):
     def status(self, new_status: WaitingStationStatus):
         self._model.update(station_status=new_status)
 
-
     @property
     def availability(self) -> WaitingStationAvailabity:
         self._model.reload('station_availability')
@@ -51,7 +50,6 @@ class WaitingStation(Station):
             self.status = WaitingStationStatus.Not_waiting
         super().complete_assigned_station_op(success, **kwargs)
     
-
     def update_batch_count(self, BatchCount:int): #to increment number of slots
         if BatchCount == 3 and self._model.current_occupancy <= (self._model.batch_capacity-BatchCount):
             self.availability = WaitingStationAvailabity.Available
@@ -65,17 +63,25 @@ class WaitingStation(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 class WaitingOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: WaitingStationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
         self._model = stationOpModel
+
+    # @classmethod
+    # def from_args(cls, **kwargs):
+    #     model = WaitingStationOpDescriptorModel()
+    #     model._type = cls.__name__
+    #     model._module = cls.__module__
+    #     model.duration = int(kwargs['duration'])
+    #     return cls(model)
+
+    # @property
+    # def duration(self) -> int:
+    #     return self._model.duration
+    
 
     @classmethod
     def from_args(cls, **kwargs):
-        model = WaitingStationOpDescriptorModel()
+        model = StationOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.duration = int(kwargs['duration'])
         return cls(model)
-
-    @property
-    def duration(self) -> int:
-        return self._model.duration

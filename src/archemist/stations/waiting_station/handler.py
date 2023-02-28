@@ -29,7 +29,7 @@ class WaitingStationHandler(StationHandler):
         current_op = self._station.get_assigned_station_op()
         if (isinstance(current_op,WaitingOpDescriptor)):
             rospy.loginfo('Waiting is started')
-            rospy.loginfo(f'===>{current_op.duration}')
+            #rospy.loginfo(f'===>{current_op.duration}')
             self._cmd_time = rospy.get_time()
             self._waiting_for = True
             self._task_finished = False

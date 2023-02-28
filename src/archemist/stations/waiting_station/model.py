@@ -19,6 +19,6 @@ class WaitingStationModel(StationModel):
     station_availability = fields.EnumField(WaitingStationAvailabity)
     current_occupancy = fields.IntField(min_value=0)
 
-class WaitingStationOpDescriptorModel(StationOpDescriptorModel):
-    duration = fields.IntField(min_value=0)
+# class WaitingStationOpDescriptorModel(StationOpDescriptorModel):
+#     duration = fields.IntField(min_value=0)
     

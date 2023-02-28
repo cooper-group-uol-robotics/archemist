@@ -32,7 +32,7 @@ class YumiShakerPlateSm(StationProcessFSM):
             {'trigger':self._trigger_function,'source':'unload_shaker_plate','dest':'unscrew_caps', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unscrew_caps','dest':'pick_pxrd_rack', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'pick_pxrd_rack','dest':'pick_eightw_rack', 'conditions':'is_station_job_ready'}
-            {'trigger':self._trigger_function, 'source':'pick_eightw_rack','dest':'final_state', 'conditions':'is_station_job_ready'}
+            #{'trigger':self._trigger_function, 'source':'pick_eightw_rack','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 
         self.init_state_machine(states=states, transitions=transitions)

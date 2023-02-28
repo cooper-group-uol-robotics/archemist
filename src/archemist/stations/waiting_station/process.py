@@ -75,7 +75,7 @@ class WaitingStationSm(StationProcessFSM):
             return False
     
     def are_all_current_batches_loaded(self):
-        return self._current_batches_count == self._station.batch_capacity
+        return self._current_batches_count == self._current_batch_capacity
 
     def are_all_batches_unloaded(self):
         return self._current_batches_count == 0
