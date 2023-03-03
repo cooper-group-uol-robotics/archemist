@@ -3,7 +3,7 @@ from transitions import State
 from archemist.core.state.station import Station
 from .state import SampleColorOpDescriptor
 from archemist.core.state.robot import RobotTaskType
-from archemist.robots.kmriiwa_robot.state import KukaLBRTask
+from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 
 class LightBoxSM(StationProcessFSM):
@@ -16,6 +16,8 @@ class LightBoxSM(StationProcessFSM):
         ''' States '''
         states = [State(name='init_state', on_enter='_print_state'), 
             State(name='load_sample', on_enter=['request_load_sample_job','_print_state']),
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']),
             State(name='unload_sample', on_enter=['request_unload_sample_job','_print_state']),
             State(name='station_process', on_enter=['request_process_data_job', '_print_state']),
             State(name='update_batch_index', on_enter=['request_batch_index_update', '_print_state']),
@@ -25,13 +27,15 @@ class LightBoxSM(StationProcessFSM):
 
         ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function,'source':'init_state','dest':'load_sample', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function, 'source':'disable_auto_functions','dest':'load_sample', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'load_sample','dest':'station_process', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready', 'before':'process_sample'},
             {'trigger':self._trigger_function, 'source':'unload_sample','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_samples_loaded'},
             {'trigger':self._trigger_function, 'source':'unload_sample','dest':'update_batch_index', 'conditions':['are_all_samples_loaded','is_station_job_ready'], 'before':'reset_station'},
             {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'load_sample', 'conditions':'is_station_job_ready', 'unless':'are_all_batches_processed'},
-            {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'final_state', 'conditions':['are_all_batches_processed','is_station_job_ready']}
+            {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'enable_auto_functions', 'conditions':['are_all_batches_processed','is_station_job_ready']},
+            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -42,6 +46,12 @@ class LightBoxSM(StationProcessFSM):
 
     def are_all_batches_processed(self):
         return self._current_batches_count == self._station.batch_capacity
+
+    def request_disable_auto_functions(self):
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+
+    def request_enable_auto_functions(self):
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
 
 
     def reset_station(self):
