@@ -69,6 +69,16 @@ class Station:
         return self._model.process_state_machine
 
     @property
+    def process_status(self) -> dict:
+        self._model.reload('process_status')
+        return self._model.process_status
+    
+    @process_status.setter
+    def process_status(self, new_status: dict):
+        self._model.update(process_status=new_status)
+
+
+    @property
     def selected_handler_dict(self) -> dict:
         station_module = self._model._module.rsplit('.',1)[0]
         return {'type':self._model.selected_handler, 'module':station_module}

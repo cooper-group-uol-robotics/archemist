@@ -11,15 +11,13 @@ class InputStationSm(StationProcessFSM):
         super().__init__(station, params_dict)        
 
         ''' States '''
-        states = [ State(name='init_state', on_enter='_print_state'), 
-            State(name='pickup_batch', on_enter=['request_pickup_batch', '_print_state']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']),
-            State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
-            State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
+        states = [ State(name='init_state'), 
+            State(name='pickup_batch', on_enter=['request_pickup_batch']),
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
+            State(name='removed_batch_update', on_enter=['update_unloaded_batch']),
+            State(name='final_state', on_enter=['finalize_batch_processing'])]
         
-        self.machine = Machine(self, states=states, initial='init_state')
-
         ''' Transitions '''
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'prepare':'update_assigned_batches', 'conditions':'all_batches_assigned'},
@@ -33,12 +31,12 @@ class InputStationSm(StationProcessFSM):
         self.init_state_machine(states=states, transitions=transitions)
 
     def update_assigned_batches(self):
-        self._current_batches_count = len(self._station.assigned_batches)
+        self._status['batches_count'] = len(self._station.assigned_batches)
 
     def request_pickup_batch(self):
-        robot_job = KukaLBRTask.from_args(name='PickupInputRack',params=[False,self._current_batch_index+1],
+        robot_job = KukaLBRTask.from_args(name='PickupInputRack',params=[False,self._status['batch_index']+1],
                                         type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job, current_batch_id)
 
     def request_disable_auto_functions(self):
@@ -49,11 +47,8 @@ class InputStationSm(StationProcessFSM):
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
-        self._current_batch_index = 0
+        self._status['batch_index'] = 0
         self.to_init_state()
-
-    def _print_state(self):
-        print(f'[{self.__class__.__name__}]: current state is {self.state}')
         
 class CrystalWorkflowInputStationSm(StationProcessFSM):
     
@@ -67,8 +62,6 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
             State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
             State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
         
-        self.machine = Machine(self, states=states, initial='init_state')
-
         ''' Transitions '''
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'pickup_batch', 'prepare':'update_assigned_batches', 'conditions':'all_batches_assigned'},
@@ -81,12 +74,12 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
         self.init_state_machine(states=states, transitions=transitions)
 
     def update_assigned_batches(self):
-        self._current_batches_count = len(self._station.assigned_batches)
+        self._status['batches_count'] = len(self._station.assigned_batches)
 
     def request_pickup_batch(self):
-        robot_job = KukaLBRTask.from_args(name='PickupInputRack',params=[False,self._current_batch_index+1],
+        robot_job = KukaLBRTask.from_args(name='PickupInputRack',params=[False,self._status['batch_index']+1],
                                         type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job, current_batch_id)
 
     def request_pickup_pxrd_plate(self):
@@ -97,6 +90,3 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
         self.to_init_state()
-
-    def _print_state(self):
-        print(f'[{self.__class__.__name__}]: current state is {self.state}')
