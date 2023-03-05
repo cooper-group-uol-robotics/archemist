@@ -122,16 +122,16 @@ class Robot:
             return complete_op
 
     def repeat_assigned_op(self):
-        if self.has_assigned_op() and self.state == RobotState.EXECUTING_OP:
+        if self.has_assigned_op():
             self._update_state(RobotState.REPEAT_OP)
         else:
-            self._log_robot('Unable to repeat op since it is not under execution')
+            self._log_robot('Unable to repeat. No op assigned')
 
     def skip_assigned_op(self):
-        if self.has_assigned_op() and self.state == RobotState.EXECUTING_OP:
+        if self.has_assigned_op():
             self._update_state(RobotState.SKIP_OP)
         else:
-            self._log_robot('Unable to skip op since it is not under execution')
+            self._log_robot('Unable to skip. No op assigned')
 
     def _log_robot(self, message: str):
         print(f'[{self}]: {message}')

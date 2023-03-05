@@ -61,11 +61,11 @@ class RobotHandler:
                 op_successful = self.get_op_result()
                 self._robot.complete_assigned_op(op_successful)
                 self._robot.set_to_execution_complete()
-        elif self._robot.state == StationState.REPEAT_OP:
+        elif self._robot.state == RobotState.REPEAT_OP:
             self._robot.start_executing_op()
             self.execute_op()
-        elif self._robot.state == StationState.SKIP_OP:
-            self._robot.complete_assigned_op(True)
+        elif self._robot.state == RobotState.SKIP_OP:
+            self._robot.complete_assigned_op(True) #TODO might need to pass that operation was skipped
             self._robot.set_to_execution_complete()
 
     def run(self):
