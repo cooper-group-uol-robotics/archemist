@@ -1,4 +1,4 @@
-from .model import WaitingStationStatus, WaitingStationModel, WaitingStationAvailabity
+from .model import WaitingStationStatus, WaitingStationModel, WaitingStationAvailabity, WaitingStationOpDescriptorModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -63,20 +63,20 @@ class WaitingStation(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 class WaitingOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: WaitingStationOpDescriptorModel)-> None:
         self._model = stationOpModel
 
-    # @classmethod
-    # def from_args(cls, **kwargs):
-    #     model = WaitingStationOpDescriptorModel()
-    #     model._type = cls.__name__
-    #     model._module = cls.__module__
-    #     model.duration = int(kwargs['duration'])
-    #     return cls(model)
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = WaitingStationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.duration = int(kwargs['duration'])
+        return cls(model)
 
-    # @property
-    # def duration(self) -> int:
-    #     return self._model.duration
+    @property
+    def duration(self) -> int:
+        return self._model.duration
     
 
     @classmethod
