@@ -11,15 +11,15 @@ class SolubilityStationSM(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
-        self._currently_loaded_samples = 0
-        self.operation_complete = False
+        if 'loaded_samples' not in self._status.keys():
+            self._status['loaded_samples'] = 0
 
         ''' States '''
-        states = [State(name='init_state', on_enter='_print_state'), 
-            State(name='load_sample', on_enter=['request_load_sample_job','_print_state']),
-            State(name='unload_sample', on_enter=['request_unload_sample_job','_print_state']),
-            State(name='station_process', on_enter=['request_process_data_job', '_print_state']),
-            State(name='update_batch_index', on_enter=['request_batch_index_update', '_print_state']),
+        states = [State(name='init_state'), 
+            State(name='load_sample', on_enter=['request_load_sample_job']),
+            State(name='unload_sample', on_enter=['request_unload_sample_job']),
+            State(name='station_process', on_enter=['request_process_data_job']),
+            State(name='update_batch_index', on_enter=['request_batch_index_update']),
             State(name='final_state', on_enter='finalize_batch_processing')]
 
         ''' Transitions '''
@@ -37,38 +37,39 @@ class SolubilityStationSM(StationProcessFSM):
         
 
     def are_all_samples_loaded(self):
-        return self._currently_loaded_samples == self._station.assigned_batches[self._current_batch_index].num_samples
+        return self._status['loaded_samples'] == self._station.assigned_batches[self._status['batch_index']].num_samples
 
     def are_all_batches_processed(self):
-        return self._current_batches_count == self._station.batch_capacity
+        return self._status['batches_count'] == self._station.batch_capacity
 
 
     def reset_station(self):
-        self._currently_loaded_samples = 0
+        self._status['loaded_samples'] = 0
 
     def request_load_sample_job(self):
-        self._currently_loaded_samples += 1
-        sample_index = self._currently_loaded_samples
-        robot_job = PandaRobotTask.from_args(name='PresentVial',params=[self._current_batch_index+1, sample_index],
+        self._status['loaded_samples'] += 1
+        sample_index = self._status['loaded_samples']
+        robot_job = PandaRobotTask.from_args(name='PresentVial',params=[self._status['batch_index']+1, sample_index],
                                         type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_unload_sample_job(self):
-        sample_index = self._currently_loaded_samples
-        robot_job = PandaRobotTask.from_args(name='ReturnVial',params=[self._current_batch_index+1, sample_index],
+        sample_index = self._status['loaded_samples']
+        robot_job = PandaRobotTask.from_args(name='ReturnVial',params=[self._status['batch_index']+1, sample_index],
                                             type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_batch_index_update(self):
-        self._current_batch_index += 1
-        self._current_batches_count += 1
+        self._status['batch_index'] += 1
+        self._status['batches_count'] += 1
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
-        self._current_batch_index = 0
-        self._current_batches_count = 0
+        self._status['batch_index'] = 0
+        self._status['batches_count'] = 0
+        self._status['loaded_samples'] = 0
         self.to_init_state()
         
     def request_process_data_job(self):
@@ -76,9 +77,6 @@ class SolubilityStationSM(StationProcessFSM):
 
     def process_sample(self):
         last_operation_op = self._station.station_op_history[-1]
-        self._station.assigned_batches[self._current_batch_index].add_station_op_to_current_sample(last_operation_op)
-        self._station.assigned_batches[self._current_batch_index].process_current_sample()
-
-    def _print_state(self):
-        print(f'[{self.__class__.__name__}]: current state is {self.state}')
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
 

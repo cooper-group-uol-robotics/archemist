@@ -13,23 +13,23 @@ class ChemSpeedRackSm(StationProcessFSM):
     
     def __init__(self, station: Station, params_dict: Dict):
         super().__init__(station, params_dict)
-        self.operation_complete = False
-        self._current_batch_index = 0
+        if 'operation_complete' not in self._status.keys():
+            self._status['operation_complete'] = False
 
         ''' States '''
-        states = [ State(name='init_state', on_enter='_print_state'), 
-            State(name='open_chemspeed_door', on_enter=['request_open_door', '_print_state']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions', '_print_state']),
-            State(name='navigate_to_chemspeed', on_enter=['request_navigate_to_chemspeed', '_print_state']),
-            State(name='retreat_from_chemspeed', on_enter=['request_navigate_to_chemspeed', '_print_state']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions', '_print_state']), 
-            State(name='chemspeed_process', on_enter=['request_process_operation', '_print_state']),
-            State(name='load_batch', on_enter=['request_load_batch', '_print_state']),
-            State(name='added_batch_update', on_enter=['update_loaded_batch', '_print_state']),
-            State(name='close_chemspeed_door', on_enter=['request_close_door', '_print_state']), 
-            State(name='unload_batch', on_enter=['request_unload_batch', '_print_state']),
-            State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
-            State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
+        states = [ State(name='init_state'), 
+            State(name='open_chemspeed_door', on_enter=['request_open_door']),
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
+            State(name='navigate_to_chemspeed', on_enter=['request_navigate_to_chemspeed']),
+            State(name='retreat_from_chemspeed', on_enter=['request_navigate_to_chemspeed']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']), 
+            State(name='chemspeed_process', on_enter=['request_process_operation']),
+            State(name='load_batch', on_enter=['request_load_batch']),
+            State(name='added_batch_update', on_enter=['update_loaded_batch']),
+            State(name='close_chemspeed_door', on_enter=['request_close_door']), 
+            State(name='unload_batch', on_enter=['request_unload_batch']),
+            State(name='removed_batch_update', on_enter=['update_unloaded_batch']),
+            State(name='final_state', on_enter=['finalize_batch_processing'])]
 
         ''' Transitions '''
         transitions = [
@@ -54,7 +54,7 @@ class ChemSpeedRackSm(StationProcessFSM):
         self.init_state_machine(states=states, transitions=transitions)
 
     def is_station_operation_complete(self):
-        return self.operation_complete
+        return self._status['operation_complete']
 
     def request_open_door(self):
         self._station.assign_station_op(CSOpenDoorOpDescriptor.from_args())
@@ -63,15 +63,15 @@ class ChemSpeedRackSm(StationProcessFSM):
         self._station.assign_station_op(CSCloseDoorOpDescriptor.from_args())
 
     def request_load_batch(self):
-        robot_job = KukaLBRTask.from_args(name='LoadChemSpeed',params=[True,self._current_batch_index+1], 
+        robot_job = KukaLBRTask.from_args(name='LoadChemSpeed',params=[True,self._status['batch_index']+1], 
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
 
     def request_unload_batch(self):
-        robot_job = KukaLBRTask.from_args(name='UnloadChemSpeed',params=[False,self._current_batch_index+1],
+        robot_job = KukaLBRTask.from_args(name='UnloadChemSpeed',params=[False,self._status['batch_index']+1],
                                 type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._current_batch_index].id
+        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
         
 
@@ -103,15 +103,13 @@ class ChemSpeedRackSm(StationProcessFSM):
             for _ in range(0, batch.num_samples):
                     batch.add_station_op_to_current_sample(last_operation_op)
                     batch.process_current_sample()
-        self.operation_complete = True
+        self._status['operation_complete'] = True
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
-        self.operation_complete = False
+        self._status['operation_complete'] = False
+        self._status['batch_index'] = 0
         self.to_init_state()
-
-    def _print_state(self):
-        print(f'[{self.__class__.__name__}]: current state is {self.state}')
 
 
 

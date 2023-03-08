@@ -11,6 +11,7 @@ class StationModel(Document):
     location = fields.DictField()
     batch_capacity = fields.IntField(min_value=1, default=1)
     process_state_machine = fields.DictField(required=True)
+    process_status = fields.DictField(default={})
     selected_handler = fields.StringField(required=True)
     operational = fields.BooleanField(default=True)
     state = fields.EnumField(StationState, default=StationState.IDLE)

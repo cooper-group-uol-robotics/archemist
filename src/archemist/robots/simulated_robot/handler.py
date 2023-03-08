@@ -24,7 +24,7 @@ class GenericRobotHandler(RobotHandler):
         self._thread.start()
 
     def is_op_execution_complete(self):
-        if self._thread.is_alive():
+        if self._thread is not None and self._thread.is_alive():
             return False
         else:
             return True

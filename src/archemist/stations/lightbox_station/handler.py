@@ -46,8 +46,8 @@ class LightBoxROSHandler(StationHandler):
     def _colorimetry_callback(self, msg: ColorimetryResult):
         self._received_results = True
         self._op_results['result_filename'] = msg.result_file_name
-        self._op_results['red_intensity'] = msg.red
-        self._op_results['green_intensity'] = msg.green
-        self._op_results['blue_intensity'] = msg.blue
+        self._op_results['L_intensity'] = msg.averageL
+        self._op_results['A_intensity'] = msg.averageA
+        self._op_results['B_intensity'] = msg.averageB
 
     
