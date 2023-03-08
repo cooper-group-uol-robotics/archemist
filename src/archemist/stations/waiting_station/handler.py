@@ -1,5 +1,3 @@
-#test comment
-
 import rospy
 from typing import Tuple, Dict
 from archemist.core.state.station import Station
@@ -10,9 +8,6 @@ from archemist.core.processing.handler import StationHandler
 class WaitingStationHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
-        self._cmd_time = -1
-        self._task_finished = False
-        self._total_waiting_duration = 120
         self._thread = None
         rospy.init_node(f'{self._station}_handler')
                
@@ -26,28 +21,31 @@ class WaitingStationHandler(StationHandler):
             rospy.loginfo(f'{self._station}_handler is terminating!!!')
 
     def execute_op(self):
-        self._thread = Thread(target=self._mock_execution)
-        self._thread.start()
+        current_op = self._station.get_assigned_station_op()
+        if (isinstance(current_op, WaitingOpDescriptor)):
+            self._thread = Thread(target=self._mock_execution, kwargs={'duration':current_op.duration})
+            self._thread.start()
+        else:
+            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
     def is_op_execution_complete(self) -> bool:
-        if self._thread.is_alive():
-            return False
+        if self._thread is not None:
+            if self._thread.is_alive():
+                return False
+            else:
+                self._thread = None
+                return True
         else:
-            return True
+            raise RuntimeError("op execution check is called before calling executing op")
 
     def get_op_result(self) -> Tuple[bool, Dict]:
         return True, {}
     
-    def _mock_execution(self):
-        current_op = self._station.get_assigned_station_op()
-        print(f'performing operation {current_op}')  
-        if (isinstance(current_op,WaitingOpDescriptor)):
-            rospy.loginfo('120s Waiting is started')
-            self._cmd_time = rospy.get_time()
-            while True:
-                elepsed_duration = rospy.get_time() - self._cmd_time
-                if elepsed_duration > self._total_waiting_duration:
-                    self._task_finished = True
-                    break    
-        else:
-            rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+    def _mock_execution(self, **kwargs):
+        target_duration = kwargs['duration']
+        rospy.loginfo(f'Starting waiting operation for {target_duration} seconds')
+        start_time = rospy.get_time()
+        elepsed_duration = 0
+        while elepsed_duration < target_duration:
+            rospy.sleep(1)
+            elepsed_duration = rospy.get_time() - start_time
