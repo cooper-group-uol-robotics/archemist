@@ -77,7 +77,7 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
         self._status['batches_count'] = len(self._station.assigned_batches)
 
     def request_pickup_batch(self):
-        robot_job = KukaLBRTask.from_args(name='PickupInputRack',params=[False,self._status['batch_index']+1],
+        robot_job = KukaLBRTask.from_args(name='PickupEightWRack',params=[False,self._status['batch_index']+1],
                                         type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job, current_batch_id)
