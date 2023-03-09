@@ -15,6 +15,8 @@ class YumiShakerPlateSm(StationProcessFSM):
 
         ''' States '''
         states = [ State(name='init_state'), 
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='load_shaker_plate', on_enter=['request_load_shaker_plate']),
             State(name='shake', on_enter=['request_shake_op']),
             State(name='unload_shaker_plate', on_enter=['request_unload_shaker_plate']),
@@ -24,13 +26,15 @@ class YumiShakerPlateSm(StationProcessFSM):
             State(name='final_state', on_enter=['finalize_batch_processing'])]
 
         transitions = [
-            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'load_shaker_plate', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'load_shaker_plate', 'conditions':'all_batches_assigned'},
             {'trigger':self._trigger_function,'source':'load_shaker_plate','dest':'shake', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'shake','dest':'unload_shaker_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unload_shaker_plate','dest':'unscrew_caps', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unscrew_caps','dest':'pick_pxrd_rack', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'pick_pxrd_rack','dest':'pick_eightw_rack', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'pick_eightw_rack','dest':'final_state', 'conditions':'is_station_job_ready'}
+            {'trigger':self._trigger_function, 'source':'pick_eightw_rack','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -71,4 +75,11 @@ class YumiShakerPlateSm(StationProcessFSM):
         self._station.process_assigned_batches()
         self._status['batch_index'] = 0
         self.to_init_state()
+
+    def request_disable_auto_functions(self):
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+
+    def request_enable_auto_functions(self):
+        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+
 
