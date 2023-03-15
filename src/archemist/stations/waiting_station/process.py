@@ -116,18 +116,12 @@ class WaitingStationSm(StationProcessFSM):
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
-        self._status['batch_waiting'] += 1
-        self.batch_index = self._status['batch_index']
-        self._t.insert(self.batch_index, f'batch_{self.batch_index}')    #to be moved to core/stationprocessfsm (update_batch)
 
     def request_unload_batch(self):
         robot_job = KukaLBRTask.from_args(name='UnloadWaitingStation',params=[False,self._status['batch_index']+1],
                                 type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
-        self._status['batch_waiting'] -= 1
-        self.batch_index = self._status['batch_index']
-        self._t.pop(self.batch_index) #to be moved to core/stationprocessfsm (update_batch)
         
     def request_disable_auto_functions(self):
         self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
