@@ -67,7 +67,7 @@ class WaitingStationSm(StationProcessFSM):
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='queue_racks_timer', on_enter=['request_process_operation']),
-            State(name='waiting', on_enter=['check_loaded_racks']),
+            State(name='waiting', on_enter=['check_loaded_racks', 'check_for_new_racks']),
             State(name='load_batch', on_enter=['request_load_batch']),
             State(name='added_batch_update', on_enter=['update_loaded_batch']),
             State(name='unload_batch', on_enter=['request_unload_batch']),
@@ -104,12 +104,15 @@ class WaitingStationSm(StationProcessFSM):
             return True
         else:
             return False
+    
+    def check_for_new_racks(self):
+        pass
         
     def new_racks_assigned(self) ->bool:
         return True
 
     def are_no_racks_assigned(self) -> bool:
-        return 
+        return True
 
     def request_load_batch(self):
         robot_job = KukaLBRTask.from_args(name='LoadWaitingStation',params=[True,self._status['batch_index']+1], 
@@ -138,7 +141,7 @@ class WaitingStationSm(StationProcessFSM):
     def request_process_operation(self):
         # current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
         # self._station.assign_station_op(current_op)
-       
+        self.batch_index = self._status['batch_index']
         self._t[self.batch_index-1] =  WaitingTimer(self.batch_index)
 
     def check_loaded_racks(self):
