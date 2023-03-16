@@ -91,7 +91,7 @@ class WaitingStationSm(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'waiting', 'conditions':['is_station_job_ready','are_all_batches_unloaded']},
             {'trigger':self._trigger_function, 'source':'waiting','dest':'disable_auto_functions', 'conditions':['is_station_job_ready', 'new_racks_assigned']},
             {'trigger':self._trigger_function, 'source':'disable_auto_functions','dest':'load_batch', 'unless':'is_station_operation_complete','conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'waiting','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete','are_no_racks_waiting','are_no_racks_assigned']}
+            {'trigger':self._trigger_function, 'source':'waiting','dest':'final_state','unless':'new_racks_assigned', 'conditions':['is_station_job_ready','is_station_operation_complete','are_no_racks_waiting']}
         ]   
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -109,9 +109,6 @@ class WaitingStationSm(StationProcessFSM):
         pass
         
     def new_racks_assigned(self) ->bool:
-        return True
-
-    def are_no_racks_assigned(self) -> bool:
         return True
 
     def request_load_batch(self):
