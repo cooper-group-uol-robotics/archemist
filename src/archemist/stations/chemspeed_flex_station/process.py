@@ -87,12 +87,14 @@ class ChemSpeedRackSm(StationProcessFSM):
     def request_process_operation(self):
         current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
         if isinstance (current_op,CSCSVJobOpDescriptor):
-            contacnated_csv = ''
+            combined_dispense_info = {k: [] for k in self._station.used_liquids_names}
             for batch in self._station.assigned_batches:
                 current_op = batch.recipe.get_current_task_op()
-                contacnated_csv += current_op.csv_string
-            current_op.csv_string = contacnated_csv
-            self._station.assign_station_op(current_op)
+                current_op_dispense_info = current_op.dispense_info
+                for liquid, dispense_vals in current_op_dispense_info.items():
+                    combined_dispense_info[liquid] += dispense_vals
+            combined_op = CSCSVJobOpDescriptor.from_args(dispense_info=combined_dispense_info)
+            self._station.assign_station_op(combined_op)
         elif isinstance(current_op, CSProcessingOpDescriptor):
             self._station.assign_station_op(current_op)
 
@@ -100,8 +102,11 @@ class ChemSpeedRackSm(StationProcessFSM):
     def process_batches(self):
         last_operation_op = self._station.station_op_history[-1]
         for batch in self._station.assigned_batches:
-            for _ in range(0, batch.num_samples):
-                    batch.add_station_op_to_current_sample(last_operation_op)
+            for i in range(0, batch.num_samples):
+                    sample_op = CSCSVJobOpDescriptor.clone_object(last_operation_op)
+                    sample_op.dispense_info = {k: v[i] for k,v in 
+                                               batch.recipe.get_current_task_op().dispense_info.items()}
+                    batch.add_station_op_to_current_sample(sample_op)
                     batch.process_current_sample()
         self._status['operation_complete'] = True
 

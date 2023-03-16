@@ -45,7 +45,7 @@ class ChemSpeedFlexROSHandler(StationHandler):
             self._desired_cs_status =  CSFlexStatus.JOB_COMPLETE
         elif (isinstance(current_op,CSCSVJobOpDescriptor)):
             rospy.loginfo('uploading csv file to rosparam server')
-            rospy.set_param('chemspeed_input_csv', current_op.csv_string)
+            rospy.set_param('chemspeed_input_csv', current_op.get_csv_string())
             rospy.sleep(3) # wait for csv to be uploaded
             rospy.loginfo('starting chemspeed job')
             for i in range(10):

@@ -71,7 +71,7 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
             {'trigger':self._trigger_function,'source':'pickup_batch','dest':'pickup_pxrd_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'pickup_pxrd_plate','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'removed_batch_update','dest':'pickup_batch', 'unless':'are_all_batches_unloaded', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','are_all_batches_unloaded']}
+            {'trigger':self._trigger_function, 'source':'removed_batch_update','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','are_all_batches_unloaded']},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 

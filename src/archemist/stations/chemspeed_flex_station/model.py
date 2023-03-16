@@ -11,7 +11,8 @@ class ChemSpeedStatus(Enum):
 
 class ChemSpeedFlexStationModel(StationModel):
     machine_status = fields.EnumField(ChemSpeedStatus, null=True)
+    liquids_dict = fields.DictField(default={})
 
 class CSCSVJobOpDescriptorModel(StationOpDescriptorModel):
-    csv_string = fields.StringField(required=True)
+    dispense_info = fields.DictField(required=True)
     result_file = fields.StringField()

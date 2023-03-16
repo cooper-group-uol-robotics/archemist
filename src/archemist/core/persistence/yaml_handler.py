@@ -1,5 +1,5 @@
 import yaml
-from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, load
+from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, load, dirty_load
 from pkg_resources import resource_string
 from pathlib import Path
 
@@ -134,7 +134,7 @@ class YamlHandler:
     def _load_and_validate_schema(file_path, schema):
         with open(file_path, 'r') as config_file:
             yaml_str = config_file.read()
-            return load(yaml_str, schema=schema)
+            return dirty_load(yaml_str, schema=schema, allow_flow_style=True)
 
     @staticmethod
     def load_config_file(file_path: Path) -> dict:

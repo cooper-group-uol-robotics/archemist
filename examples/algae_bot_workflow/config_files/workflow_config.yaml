@@ -13,6 +13,49 @@ general:
     node_id: 25
     graph_id: 1
 
+# materials: this section describes the materials used in the workflow
+#   liquids:
+#     name: the liquid name
+#     id: the liquid unique workflow id
+#     amount_stored: the liquid stored amount
+#     unit: the unit representing stored amount, accepted units l, ml, ul
+#     denisty: liquid density in g/l
+#     pump_id: id of the pump responsible for the liquid handling
+#     expiry_date: expiry date of the liquid
+#   solids:
+#     name: the solid name
+#     id: the solid unique workflow id
+#     amount_stored: the solid stored amount
+#     unit: the unit representing stored amount, accepted units g, mg, ug
+#     dispense_src: name of the solid hanlder, accepted value quantos
+#     cartridge_id: id of the catridge where the solid is stored
+#     expiry_date: expiry date of the solid
+#
+# for every solid and liquid used in the workflow, add a new entry and fill its fields as defined
+materials:
+  liquids:
+    - name: water
+      id: 1
+      amount_stored: 500
+      unit: ml
+      density: 1000 
+      pump_id: chemspeed
+      expiry_date: 31/03/2023
+    - name: dye_A
+      id: 1
+      amount_stored: 50
+      unit: ml
+      density: 1000 
+      pump_id: chemspeed
+      expiry_date: 31/03/2023
+    - name: dye_B
+      id: 1
+      amount_stored: 60
+      unit: ml
+      density: 1000 
+      pump_id: chemspeed
+      expiry_date: 31/03/2023
+
 # robots: this section describes the robots used in the workflow
 #   type: the robot's class name as defined in archemist.robots.X.state 
 #         note that X stands for the robot's given module found in archemist's robots 
@@ -67,6 +110,10 @@ stations:
       args:
         batch_mode: true
     parameters:
+      used_liquids:
+        - water
+        - dye_A
+        - dye_B
   - type: LightBoxStation
     id: 13
     location: 

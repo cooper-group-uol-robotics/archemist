@@ -2,6 +2,7 @@ from .model import ChemSpeedStatus, ChemSpeedFlexStationModel, CSCSVJobOpDescrip
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.persistence.object_factory import MaterialFactory
 from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 from datetime import datetime
@@ -16,6 +17,13 @@ class ChemSpeedFlexStation(Station):
         model = ChemSpeedFlexStationModel()
         cls._set_model_common_fields(station_dict,model)
         model._module = cls.__module__
+        parameters = station_dict['parameters']
+        if parameters is not None:
+            used_liquids = parameters['used_liquids']
+            for liquid_name in used_liquids:
+                for liquid in liquids:
+                    if liquid_name == liquid.name:
+                        model.liquids_dict[liquid_name] = liquid.model.id
         model.save()
         return cls(model)
 
@@ -23,10 +31,18 @@ class ChemSpeedFlexStation(Station):
     def status(self) -> ChemSpeedStatus:
         self._model.reload('machine_status')
         return self._model.machine_status
+    
+    @property
+    def used_liquids_names(self) -> List[str]:
+        return list(self._model.liquids_dict.keys())
 
     @status.setter
     def status(self, new_status: ChemSpeedStatus):
         self._model.update(machine_status=new_status)
+
+    def get_liquid(self, liquid_name: str) -> Liquid:
+        liquid_obj_id = self._model.liquids_dict[liquid_name]
+        return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
     def assign_station_op(self, stationOp: Any):
         if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
@@ -39,9 +55,12 @@ class ChemSpeedFlexStation(Station):
             self.status = ChemSpeedStatus.DOORS_OPEN
         elif isinstance(current_op, CSCloseDoorOpDescriptor):
             self.status = ChemSpeedStatus.DOORS_CLOSED
-        elif (isinstance(current_op, CSCSVJobOpDescriptor) or 
-                isinstance(current_op, CSCSVJobOpDescriptor) and 
-                current_op.was_successful):
+        elif isinstance(current_op, CSCSVJobOpDescriptor):
+            for liquid_name,dispense_vals in current_op.dispense_info.items():
+                liquid_obj = self.get_liquid(liquid_name)
+                liquid_obj.volume -= sum(dispense_vals)/1000
+            self.status = ChemSpeedStatus.JOB_COMPLETE
+        elif isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.JOB_COMPLETE
         super().complete_assigned_station_op(success, **kwargs)
 
@@ -81,6 +100,8 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
+    
+
 
 class CSCSVJobOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: CSCSVJobOpDescriptorModel):
@@ -91,21 +112,38 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         model = CSCSVJobOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.csv_string = kwargs['csv_string']
+        model.dispense_info = kwargs['dispense_info']
+        for k, v in model.dispense_info.items():
+            model.dispense_info[k] = list(map(float, v))
         return cls(model)
-
+    
+    @classmethod
+    def clone_object(cls, obj):
+        model = CSCSVJobOpDescriptorModel()
+        model = obj._model
+        return cls(model)
+    
     @property
-    def csv_string(self) -> str:
-        return self._model.csv_string
-
-    @csv_string.setter
-    def csv_string(self, new_csv_str: str):
-        self._model.csv_string = new_csv_str
-
+    def dispense_info(self):
+        return self._model.dispense_info
+    
+    @dispense_info.setter
+    def dispense_info(self, new_dispense_info):
+        self._model.dispense_info = new_dispense_info
+    
     @property
     def result_file(self) -> str:
         if self._model.has_result and self._model.was_successful:
             return self._model.result_file
+
+    def get_csv_string(self) -> str:
+        dispence_lists = [l for l in self._model.dispense_info.values()]
+        zipped_tuples = zip(*[l for l in dispence_lists])
+        csv_string = ""
+        for tup in zipped_tuples:
+            tmp = ','.join(map(str,tup))
+            csv_string += tmp + r"\n"
+        return csv_string
 
     def complete_op(self, success: bool, **kwargs):
         self._model.has_result = True
