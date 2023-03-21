@@ -2,6 +2,7 @@ from transitions import State
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.robots.yumi_robot.state import YuMiRobotTask
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
+from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from archemist.core.state.robot import RobotTaskType
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.state.station import Station
@@ -27,7 +28,7 @@ class YumiShakerPlateSm(StationProcessFSM):
 
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'load_shaker_plate', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'load_shaker_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'load_shaker_plate','dest':'shake', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'shake','dest':'unload_shaker_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unload_shaker_plate','dest':'unscrew_caps', 'conditions':'is_station_job_ready'},

@@ -3,6 +3,7 @@ from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.yumi_robot.state import YuMiRobotTask
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
+from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.state.station import Station
 from typing import Dict
@@ -26,7 +27,7 @@ class IKAStirPlateSm(StationProcessFSM):
 
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'place_8_well_rack', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'place_8_well_rack', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'place_8_well_rack', 'dest': 'place_pxrd_rack', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'place_pxrd_rack', 'dest': 'load_stir_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'load_stir_plate','dest':'stir', 'conditions':'is_station_job_ready'},

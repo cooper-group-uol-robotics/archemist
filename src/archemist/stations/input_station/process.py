@@ -56,18 +56,18 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
         super().__init__(station, params_dict)        
 
         ''' States '''
-        states = [ State(name='init_state', on_enter='_print_state'), 
+        states = [ State(name='init_state'), 
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
-            State(name='pickup_batch', on_enter=['request_pickup_batch', '_print_state']),
-            State(name='pickup_pxrd_plate', on_enter=['request_pickup_pxrd_plate', '_print_state']),
-            State(name='removed_batch_update', on_enter=['update_unloaded_batch', '_print_state']),
-            State(name='final_state', on_enter=['finalize_batch_processing', '_print_state'])]
+            State(name='pickup_batch', on_enter=['request_pickup_batch']),
+            State(name='pickup_pxrd_plate', on_enter=['request_pickup_pxrd_plate']),
+            State(name='removed_batch_update', on_enter=['update_unloaded_batch']),
+            State(name='final_state', on_enter=['finalize_batch_processing'])]
         
         ''' Transitions '''
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'prepare':'update_assigned_batches', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'pickup_batch', 'prepare':'update_assigned_batches', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'pickup_batch', 'prepare':'update_assigned_batches', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'pickup_batch','dest':'pickup_pxrd_plate', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'pickup_pxrd_plate','dest':'removed_batch_update', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'removed_batch_update','dest':'pickup_batch', 'unless':'are_all_batches_unloaded', 'conditions':'is_station_job_ready'},
