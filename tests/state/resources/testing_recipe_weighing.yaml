@@ -1,0 +1,13 @@
+general:
+  name: test_archemist_recipe_weighing
+  id: 250
+process:
+  - state_name: weighing
+    station:
+      type: WeightingStation
+      id: 5
+      operation:
+        type: SampleWeighingOpDescriptor
+    transitions:
+      on_success: end_state
+      on_fail: end_state

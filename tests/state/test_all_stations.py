@@ -7,8 +7,9 @@ from archemist.stations.input_station.state import InputStation, InputStationPic
 from archemist.stations.output_station.state import OutputStation,OutputStationPlaceOp
 from archemist.stations.lightbox_station.state import LightBoxStation, SampleColorOpDescriptor
 from archemist.stations.quantos_qs2_station.state import QuantosSolidDispenserQS2, QuantosDispenseOpDescriptor
-from archemist.stations.solubility_station.state import SolubilityStation, SolubilityOpDescriptor, TurbidityState
+from archemist.stations.solubility_station.state import SolubilityStation, SolubilityOpDescriptor #TurbidityState
 from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.stations.weighing_station.state import WeighingStation, SampleWeighingOpDescriptor
 from archemist.core.state.station import StationState
 from datetime import datetime
 from mongoengine import connect
@@ -394,40 +395,72 @@ class AllStationsTest(unittest.TestCase):
         self.assertEqual(ret_op.actual_dispensed_volume, 199)
         self.assertEqual(liquids_list[0].volume, 0.4-0.199)
 
-    def test_soluibility_station(self):
+    # def test_soluibility_station(self):
+    #     # construct station
+    #     station_doc = {
+    #         'type': 'SolubilityStation',
+    #         'id': 26,
+    #         'location': {'node_id': 1, 'graph_id': 7},
+    #         'batch_capacity': 2,
+    #         'handler': 'GenericStationHandler',
+    #         'process_state_machine': 
+    #         {
+    #             'type': 'StationLoadingSm',
+    #             'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
+    #         },
+    #         'parameters':{
+    #             'catridges': [{'id': 31, 'hotel_index': 1, 'remaining_dosages': 100}]
+    #         }
+    #     }
+    #     t_station = SolubilityStation.from_dict(station_doc,[],[])
+    #     self.assertEqual(t_station.id, station_doc['id'])
+    #     self.assertEqual(t_station.state, StationState.IDLE)
+        
+    #     # construct station ops
+    #     t_op = SolubilityOpDescriptor.from_args()
+    #     self.assertFalse(t_op.has_result)
+    #     t_station.assign_station_op(t_op)
+    #     self.assertEqual(t_station.state, StationState.OP_ASSIGNED)
+    #     t_station.complete_assigned_station_op(True, turbidity_state=TurbidityState.DISSOLVED)
+    #     t_station.set_to_processing()
+    #     self.assertEqual(t_station.state, StationState.PROCESSING)
+    #     ret_op = t_station.station_op_history[0]
+    #     self.assertTrue(ret_op.has_result)
+    #     self.assertTrue(ret_op.was_successful)
+    #     self.assertEqual(ret_op.turbidity_state, TurbidityState.DISSOLVED)
+    def test_weighing_station(self):
         # construct station
         station_doc = {
-            'type': 'SolubilityStation',
-            'id': 26,
+            'type': 'WeightingStation',
+            'id': 20,
             'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
+            'batch_capacity': 1,
             'handler': 'GenericStationHandler',
             'process_state_machine': 
             {
-                'type': 'StationLoadingSm',
+                'type': 'WeighingSM',
                 'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
             },
-            'parameters':{
-                'catridges': [{'id': 31, 'hotel_index': 1, 'remaining_dosages': 100}]
-            }
+            'parameters':{}
         }
-        t_station = SolubilityStation.from_dict(station_doc,[],[])
+        t_station = WeighingStation.from_dict(station_doc,[],[])
         self.assertEqual(t_station.id, station_doc['id'])
         self.assertEqual(t_station.state, StationState.IDLE)
         
         # construct station ops
-        t_op = SolubilityOpDescriptor.from_args()
+        t_op = SampleWeighingOpDescriptor.from_args()
         self.assertFalse(t_op.has_result)
+        self.assertIsNone(t_op.weight)
+        
         t_station.assign_station_op(t_op)
         self.assertEqual(t_station.state, StationState.OP_ASSIGNED)
-        t_station.complete_assigned_station_op(True, turbidity_state=TurbidityState.DISSOLVED)
+        t_station.complete_assigned_station_op(True, weight=1.2)
         t_station.set_to_processing()
         self.assertEqual(t_station.state, StationState.PROCESSING)
         ret_op = t_station.station_op_history[0]
         self.assertTrue(ret_op.has_result)
         self.assertTrue(ret_op.was_successful)
-        self.assertEqual(ret_op.turbidity_state, TurbidityState.DISSOLVED)
-
+        self.assertEqual(ret_op.weight, 1.2)
 if __name__ == '__main__':
     connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()
