@@ -25,10 +25,10 @@ class WeighingSM(StationProcessFSM):
             
         ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
+            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions'}, #'conditions':'all_batches_assigned'
             {'trigger':self._trigger_function, 'source':'disable_auto_functions','dest':'load_sample', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'load_sample','dest':'station_process', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready', 'before':'process_sample'},
+            {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready'}, #'before':'process_sample'
             {'trigger':self._trigger_function, 'source':'unload_sample','dest':'update_batch_index', 'conditions':'is_station_job_ready', 'before':'reset_station'},
             {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
@@ -43,10 +43,12 @@ class WeighingSM(StationProcessFSM):
         return self._status['batches_count'] == self._station.batch_capacity
 
     def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        pass
 
     def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        pass
 
     def reset_station(self):
         self._status['loaded_samples'] = 0
@@ -56,19 +58,20 @@ class WeighingSM(StationProcessFSM):
         sample_index = self._status['loaded_samples']
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         allow_auto_func = False # to stop auto charing and calibration when presentig the sample
-        robot_job = KukaLBRTask.from_args(name='PresentVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
-                                        type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        # robot_job = KukaLBRTask.from_args(name='PresentVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
+        #                                 type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+
 
     def request_unload_sample_job(self):
         sample_index = self._status['loaded_samples']
         perform_6p = False
         allow_auto_func = False
-        robot_job = KukaLBRTask.from_args(name='ReturnVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
-                                            type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        # robot_job = KukaLBRTask.from_args(name='ReturnVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
+        #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
         self._status['loaded_samples'] += 1
     
     def request_batch_index_update(self):
