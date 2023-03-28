@@ -42,6 +42,25 @@ class Sample:
     def add_material(self, material: str):
         self._model.materials.append(material)
 
+    def extract_op_data(self, op_field_dict: dict) -> dict:
+        out_data = {}
+        for op_type, fields in op_field_dict.items():
+            op_instances = 0 # for duplicate ops
+            for op in self.operation_ops:
+                if op_type == op.type:
+                    instance_suffix = "" if op_instances == 0 else f"_{op_instances}"
+                    for field in fields:
+                        field_value = getattr(op, field)
+                        if type(field_value) is not dict:
+                            out_data[field+instance_suffix] = field_value
+                            #out_data[field] = field_value
+                        else:
+                            out_data.update({sub_field+instance_suffix:val for sub_field,val in field_value.items()})
+                            #out_data.update({sub_field:val for sub_field,val in field_value.items()})
+                    op_instances += 1
+        return out_data
+
+
 class Batch:
     def __init__(self, batch_model: BatchModel) -> None:
         self._model = batch_model
@@ -114,6 +133,20 @@ class Batch:
     def get_samples_list(self) -> List[Sample]:
         self._model.reload('samples')
         return [Sample(model) for model in self._model.samples]
+    
+    def extract_samples_op_data(self, op_field_dict: dict):
+        out_data = {}
+        samples = self.get_samples_list()
+        for index,sample in enumerate(samples):
+            sample_data = sample.extract_op_data(op_field_dict)
+            for field, val in sample_data.items():
+                if index == 0:
+                    out_data[field]= [val]
+                else:
+                    out_data[field].append(val)
+        return out_data
+
+                 
 
     def process_current_sample(self):
         self._model.update(inc__current_sample_index=1)
