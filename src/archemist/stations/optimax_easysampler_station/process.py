@@ -29,7 +29,8 @@ class WeighingSM(StationProcessFSM):
         transitions = [
             {'trigger':self._trigger_function,'source':'init_state','dest':'station_process', 'conditions':'is_station_job_ready'}, #'conditions':'all_batches_assigned'
             {'trigger':self._trigger_function,'source':'station_process','dest':'disable_auto_functions', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'move_sample_to_LCMS', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'unload_batch', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'unload_batch','dest':'move_sample_to_LCMS', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'move_sample_to_LCMS','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'move_sample_to_LCMS','dest':'station_process', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'station_process','dest':'final_state', 'conditions':'is_station_job_ready'}
