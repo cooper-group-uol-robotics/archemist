@@ -28,7 +28,6 @@ class SMTestWithBatchMode(unittest.TestCase):
                     }
             },
             'batch_capacity': 1,
-            'handler': 'IKAPlateDigitalROSHandler',
             'parameters':{}
         }
         liquid_dict = {
@@ -54,7 +53,7 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertFalse(t_sm.process_state_transitions())
 
         recipe_doc = dict()
-        with open('/home/satheesh/ARChemeist_ws/archemist/tests/state/resources/testing_recipe.yaml') as fs:
+        with open('/home/gilgamish/robot_chemist_ws/src/archemist/tests/state/resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         
         bat = Batch.from_arguments(31,2,Location(2,7,'table_frame'))
