@@ -21,6 +21,7 @@ class WeighingSM(StationProcessFSM):
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='unload_batch', on_enter=['request_unload_batch']),
             State(name='move_sample_to_LCMS', on_enter=['request_move_sample_to_LCMS']),
+            State(name='LCMS_process', on_enter=['request_LCMS_process']), #TODO confirm
             State(name='update_batch_index', on_enter=['request_batch_index_update']), #to check and remove
             State(name='final_state', on_enter='finalize_batch_processing')]
 
@@ -32,19 +33,21 @@ class WeighingSM(StationProcessFSM):
             {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'unload_batch', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'unload_batch','dest':'move_sample_to_LCMS', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'move_sample_to_LCMS','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'move_sample_to_LCMS','dest':'station_process', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'move_sample_to_LCMS','dest':'LCMS_process', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function,'source':'LCMS_process','dest':'station_process', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function,'source':'station_process','dest':'final_state', 'conditions':'is_station_job_ready'}
         ]
 
         self.init_state_machine(states=states, transitions=transitions)
         
-
     def request_unload_batch(self):
         robot_job = KukaLBRTask.from_args(name='UnloadEasySampler',params=[False,self._status['batch_index']+1],
                                 type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         #current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job)
 
+    def request_LCMS_process(self):
+        pass
 
     def request_disable_auto_functions(self):
         #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
