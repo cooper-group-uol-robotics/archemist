@@ -49,10 +49,9 @@ class WaitingStationSm(StationProcessFSM):
         self._status['batches_count'] = 0
         if 'batch_waiting' not in self._status.keys():
             self._status['batch_waiting'] = 0
-        # if 'no_racks_assigned' not in self._status.keys():
-        #     self._status['no_racks_assigned'] = False
-        if 'completed_batches' not in self._status.keys():
-            self._status['completed_batches'] = []
+        if 'no_racks_assigned' not in self._status.keys():
+            self._status['no_racks_assigned'] = False
+        self._status['_current_batch_timing'] = []
         self._t = []
 
         
@@ -148,9 +147,10 @@ class WaitingStationSm(StationProcessFSM):
 
     def _mock_execution(self):
         for batch in self._t:
-            if batch._timer['waiting_done']:
+            if self._t[batch]._timer['waiting_done']:
                 print(f'waiting of the batch {batch} is completed and unload them')
-                self._status['completed_batches'].append(batch)
+            else:
+                pass
     
     def process_batches(self):
         last_operation_op = self._station.station_op_history[-1]

@@ -9,10 +9,10 @@ class KernPcbROSHandler(StationHandler):
     def __init__(self, station:Station):
         super().__init__(station)
         rospy.init_node(f'{self._station}_handler')
-        self.pubBalanceTare = rospy.Publisher("Kern_Commands", KernCommand, queue_size=2)
-        rospy.Subscriber("Kern_Weights", KernReading, self.weight_callback)
+        self.pubBalanceTare = rospy.Publisher("/weighing_station_commands", KernCommand, queue_size=2)
         for i in range(10):
-            self.pubBalanceTare.publish(kern_command = KernCommand.ZERO)
+            self.pubBalanceTare.publish(weighing_station_command = KernCommand.ZERO)
+        rospy.Subscriber("/weighing_station_reading", KernReading, self.weight_callback)
         self._received_results = False
         self._op_results = 0.0
         rospy.sleep(1)
@@ -31,8 +31,8 @@ class KernPcbROSHandler(StationHandler):
         self._received_results = False
         self._op_results = {}
         if isinstance(current_op, SampleWeighingOpDescriptor):
-            for i in range(25):
-                self.pubBalanceTare.publish(kern_command = KernCommand.GET_MASS)
+            for i in range(10):
+                self.pubBalanceTare.publish(weighing_station_command = KernCommand.GET_MASS)
         else:
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
@@ -42,13 +42,13 @@ class KernPcbROSHandler(StationHandler):
     def get_op_result(self) -> Tuple[bool, Dict]:
         return True, self._op_results
 
-    def weight_callback(self, msg):
+    def weight_callback(self, msg: KernReading):
         if msg.weight > 0:
-            self._op_results['weight'] = msg.weight
+            self._op_results = msg
             rospy.loginfo(f'The weight of the funnel is [{self._op_results}]')
             self._received_results = True
-            # for i in range(10):
-            #     self.pubBalanceTare.publish(kern_command = KernCommand.ZERO)
+            for i in range(10):
+                self.pubBalanceTare.publish(weighing_station_command = KernCommand.ZERO)
         else:
             pass
 
