@@ -5,7 +5,7 @@ import glob
 from nested_lookup import nested_update
 import os
 
-class RecipeEditor:
+class RecipeUpdate:
     def __init__(self, path) -> None:
         self.files = glob.glob(path)
         super().__init__()
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     
     _pd = pd.DataFrame(optimised_values)
     new_file_name = 'algae_bot_recipe'
-    recipe = RecipeEditor(path)
+    recipe = RecipeUpdate(path)
     recipe.update_values(_pd)
     recipe.create_optimized_recipe(path2)
 
