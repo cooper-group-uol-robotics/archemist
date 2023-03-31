@@ -29,9 +29,8 @@ class RecipeUpdate:
                 self.find_placeholders(item)
         return self.placeholder_keys_any, self.placeholder_keys_all
              
-    def update_values(self, recipe_dict, _type, _pd_dict):
-        self.optimised_parameters_dict = _pd_dict
-        _keys_optimised_parameters_dict = list(optimised_parameters_dict.keys())
+    def update_values(self, recipe_dict, _type, param_dict):
+        _keys_optimised_parameters_dict = list(param_dict.keys())
         if _type == 'all':
            self.placeholder_keys = self.placeholder_keys_all
         elif _type == 'any':
@@ -39,20 +38,19 @@ class RecipeUpdate:
         else:
             logging.error('improper placeholder type')
         for _key in self.placeholder_keys:
-            for col in range(len(optimised_parameters_dict)):
-                _head = _keys_optimised_parameters_dict[col]
-                if _key == _head:
+            for col in range(len(param_dict)):
+                if _key == _keys_optimised_parameters_dict[col]:
                     if _type == 'all':
-                        _value = list(optimised_parameters_dict[_keys_optimised_parameters_dict[col]].values())
+                        _value = list(param_dict[_keys_optimised_parameters_dict[col]].values())
                     elif _type == 'any':
                         pass
-                        _value = float(optimised_parameters_dict[_keys_optimised_parameters_dict[col]][0])
+                        _value = float(param_dict[_keys_optimised_parameters_dict[col]][0])
                     else:
                         logging.error('improper placeholder type')
                     print(_value)
                     _data_update = nested_update(recipe_dict, key = str(_key), value = _value)
                     recipe_dict = _data_update
-                elif _key != _head:
+                elif _key != _keys_optimised_parameters_dict[col]:
                     pass
         return recipe_dict    
 
