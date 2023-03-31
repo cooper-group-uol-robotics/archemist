@@ -103,9 +103,10 @@ class ChemSpeedRackSm(StationProcessFSM):
         last_operation_op = self._station.station_op_history[-1]
         for batch in self._station.assigned_batches:
             for i in range(0, batch.num_samples):
-                    sample_op = CSCSVJobOpDescriptor.clone_object(last_operation_op)
-                    sample_op.dispense_info = {k: v[i] for k,v in 
+                    dispense_info = {k: [v[i]] for k,v in 
                                                batch.recipe.get_current_task_op().dispense_info.items()}
+                    sample_op = CSCSVJobOpDescriptor.from_args(dispense_info=dispense_info)
+                    sample_op.copy_stamps(last_operation_op)
                     batch.add_station_op_to_current_sample(sample_op)
                     batch.process_current_sample()
         self._status['operation_complete'] = True

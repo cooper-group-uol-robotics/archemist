@@ -33,6 +33,7 @@ class WaitingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = WaitingStationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=WaitingStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.duration = int(kwargs['duration'])

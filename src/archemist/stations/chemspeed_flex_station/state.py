@@ -74,6 +74,7 @@ class CSOpenDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -86,6 +87,7 @@ class CSCloseDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -97,6 +99,7 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -110,17 +113,12 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = CSCSVJobOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.dispense_info = kwargs['dispense_info']
         for k, v in model.dispense_info.items():
             model.dispense_info[k] = list(map(float, v))
-        return cls(model)
-    
-    @classmethod
-    def clone_object(cls, obj):
-        model = CSCSVJobOpDescriptorModel()
-        model = obj._model
         return cls(model)
     
     @property

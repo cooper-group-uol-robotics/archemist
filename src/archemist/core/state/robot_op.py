@@ -1,18 +1,28 @@
+from __future__ import annotations
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
 from archemist.core.util.enums import RobotTaskType
 from archemist.core.util import Location
 from bson.objectid import ObjectId
 from datetime import datetime
 from typing import List
+import uuid
 
 
 class RobotOpDescriptor:
     def __init__(self, op_model: RobotOpDescriptorModel) -> None:
         self._model = op_model
+        
+    @classmethod
+    def _set_model_common_fields(cls, op_model: RobotOpDescriptorModel):
+        op_model.uuid = uuid.uuid4()
 
     @property
     def model(self) -> RobotOpDescriptorModel:
         return self._model
+    
+    @property
+    def uuid(self) -> uuid.UUID:
+        return self._model.uuid
 
     @property
     def origin_station(self) -> ObjectId:
@@ -67,14 +77,15 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
     def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, params: List[str]=[], 
                     location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
         model = RobotTaskOpDescriptorModel()
+        cls._set_model_common_fields(model)
         model._type = cls.__name__
         model._module = cls.__module__
         model.name = name
         model.task_type = type
         model.params = [str(param) for param in params]
         model.location = location.to_dict() if location is not None else None
-        model.origin_station = origin_station if origin_station is not None else None
-        model.related_batch_id = related_batch_id if related_batch_id is not None else None
+        model.origin_station = origin_station
+        model.related_batch_id = related_batch_id
         return cls(model)
     
     @property

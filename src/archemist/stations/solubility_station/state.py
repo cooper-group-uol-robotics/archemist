@@ -28,6 +28,7 @@ class SolubilityOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = SolubilityOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=SolubilityStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

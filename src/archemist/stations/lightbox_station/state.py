@@ -28,6 +28,7 @@ class SampleColorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = SampleColorOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

@@ -7,6 +7,7 @@ from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory
+from bson.objectid import ObjectId
 
 class Station:
     def __init__(self, station_model: StationModel) -> None:
@@ -29,6 +30,10 @@ class Station:
     def model(self) -> StationModel:
         self._model.reload()
         return self._model
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model.id
 
 
     @property
@@ -185,6 +190,8 @@ class Station:
             return StationFactory.create_op_from_model(self._model.assigned_station_op)
 
     def assign_station_op(self, station_op: StationOpDescriptor):
+        if station_op.requested_by is None:
+            station_op.add_request_info(self.object_id)
         self._model.update(assigned_station_op=station_op.model)
         self._update_state(StationState.OP_ASSIGNED)
         self._log_station(f'Requesting station job ({station_op})')

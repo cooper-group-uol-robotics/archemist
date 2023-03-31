@@ -46,6 +46,7 @@ class PXRDAnalysisOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = PXRDAnalysisOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

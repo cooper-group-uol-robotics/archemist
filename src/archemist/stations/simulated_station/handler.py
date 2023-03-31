@@ -34,4 +34,4 @@ class GenericStationHandler(StationHandler):
             print(f'{self._station}_handler is terminating!!!')
 
     def _mock_execution(self):
-        time.sleep(1)
+        time.sleep(0.1)

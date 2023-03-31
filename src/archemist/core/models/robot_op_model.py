@@ -4,6 +4,7 @@ from archemist.core.util.enums import RobotTaskType
 class RobotOpDescriptorModel(EmbeddedDocument):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
+    uuid = fields.UUIDField(binary=False, required=True)
     origin_station = fields.ObjectIdField(null=True)
     related_batch_id = fields.IntField(null=True)
 

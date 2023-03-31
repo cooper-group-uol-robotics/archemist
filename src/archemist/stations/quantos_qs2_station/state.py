@@ -152,6 +152,7 @@ class OpenDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -164,6 +165,7 @@ class CloseDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -191,6 +193,7 @@ class QuantosDispenseOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = QuantosDispenseOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.solid_name = kwargs['solid_name']

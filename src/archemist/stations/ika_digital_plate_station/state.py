@@ -122,6 +122,7 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_temperature = int(kwargs['temperature'])
         model.target_stirring_speed = int(kwargs['stirring_speed'])
         model.target_duration = float(kwargs['duration'])
@@ -148,6 +149,7 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_temperature = int(kwargs['temperature'])
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
@@ -170,6 +172,7 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_stirring_speed = int(kwargs['stirring_speed'])
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
