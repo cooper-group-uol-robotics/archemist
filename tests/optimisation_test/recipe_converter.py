@@ -3,58 +3,85 @@ import yaml
 from archemist.core.persistence.yaml_handler import YamlHandler
 from nested_lookup import nested_update
 from pathlib import Path
+import logging
 
 class RecipeUpdate:
     def __init__(self) -> None:
         self.placeholder_keys = []
+        self.placeholder_keys_all = []
+        self.placeholder_keys_any = []
         self.placeholders =[]
         super().__init__()
 
-    def find_placeholders(self, data):
-        self._data = data
-        if isinstance(self._data, dict):
-            for key, value in self._data.items():
-                if isinstance(value, str) and '{{' in value and '}}' in value:
-                    self.placeholder_keys.append(key)
+    def find_placeholders(self, recipe_dict):
+        if isinstance(recipe_dict, dict):
+            for key, value in recipe_dict.items():
+                if isinstance(value, str) and '{{' in value and 'all' in value and '}}' in value:
+                    self.placeholder_keys_all.append(key)
+                    self.placeholders.append(value)
+                elif isinstance(value, str) and '{{' in value and 'any' in value and '}}' in value:
+                    self.placeholder_keys_any.append(key)
                     self.placeholders.append(value)
                 else:
                     self.find_placeholders(value)
-        elif isinstance(self._data, list):
-            for item in self._data:
+        elif isinstance(recipe_dict, list):
+            for item in recipe_dict:
                 self.find_placeholders(item)
+        return self.placeholder_keys_any, self.placeholder_keys_all
              
-    def update_values(self,data, *args):
-        self.data = data
-        _output_pd = args[0]
-        _shape = _output_pd.shape
-        _total_columns = _shape[1]
+    def update_values(self, recipe_dict, _type, _pd_dict):
+        self.optimised_parameters_dict = _pd_dict
+        _keys_optimised_parameters_dict = list(optimised_parameters_dict.keys())
+        if _type == 'all':
+           self.placeholder_keys = self.placeholder_keys_all
+        elif _type == 'any':
+            self.placeholder_keys = self.placeholder_keys_any
+        else:
+            logging.error('improper placeholder type')
         for _key in self.placeholder_keys:
-            for col in range(_total_columns):
-                _head = _output_pd.columns[col]
+            for col in range(len(optimised_parameters_dict)):
+                _head = _keys_optimised_parameters_dict[col]
                 if _key == _head:
-                    _values = _output_pd[_head].tolist()
-                    print(_key,_values)
-                    _data_update = nested_update(self.data, key = str(_key), value = _values)
-                    self.data = _data_update
+                    if _type == 'all':
+                        _value = list(optimised_parameters_dict[_keys_optimised_parameters_dict[col]].values())
+                    elif _type == 'any':
+                        pass
+                        _value = float(optimised_parameters_dict[_keys_optimised_parameters_dict[col]][0])
+                    else:
+                        logging.error('improper placeholder type')
+                    print(_value)
+                    _data_update = nested_update(recipe_dict, key = str(_key), value = _value)
+                    recipe_dict = _data_update
                 elif _key != _head:
-                    pass      
+                    pass
+        return recipe_dict    
 
-    def create_optimized_recipe(self, path):
+    def generate_recipe(self, _recipe_dict, path):
         with open(path, 'w') as file:
-            print(self.data)
-            yaml.dump(self.data, file)
+            print(_recipe_dict)
+            yaml.dump(_recipe_dict, file)
 
 if __name__ == "__main__": 
-    path = Path.cwd() / "tests" / "optimisation_test" / "algae_bot_recipe_template.yaml"
-    optimised_values = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0], 'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44], 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
-    _pd = pd.DataFrame(optimised_values)
-    new_file_name = 'algae_bot_recipe'
-    data = YamlHandler.load_recipe_file(path)
+    cwd_path = Path.cwd()
+    recipe_path = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe_template.yaml")
+    optimised_parameters = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0], 'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44], 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
+    _pd = pd.DataFrame(optimised_parameters)
+    optimised_parameters_dict = _pd.to_dict()
+    recipe_dict = YamlHandler.load_recipe_file(recipe_path)
+    print(recipe_dict)
     recipe = RecipeUpdate()
-    recipe.find_placeholders(data)
-    recipe.update_values(data, _pd)
-    recipe.create_optimized_recipe(path)
-    optimised_parameters = _pd.to_dict()
+    any, all = recipe.find_placeholders(recipe_dict)
+    if len(any) != 0:
+        recipe_dict = recipe.update_values(recipe_dict,'any', optimised_parameters_dict)
+    else:
+        print('.any place holders NOT found')
+
+    if len(all) != 0:
+        recipe_dict = recipe.update_values(recipe_dict, 'all', optimised_parameters_dict)
+    else:
+        print('no .all place holders NOT found')    
+    recipe.generate_recipe(recipe_dict, recipe_path)
+
 
 
 
