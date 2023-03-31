@@ -1,57 +1,82 @@
+# ============ Workflow Recipe ============
+#
+# general: this section describes the recipe general details
+#   name: the given recipe name
+#   id: the recipe unique workflow id
+#
+# materials: recipe materials section
+#   liquids: this section describes the liquids used in the recipe
+#     name: liquid name
+#     id: liquid unique workflow id
+#   solids: this section describes the solids used in the recipe
+#     name: solid name
+#     id: solid unique workflow id
+#
+# process: this section describes the experiment process. The process
+#             is represented using a finite state machine that is composed of
+#             state and their transitions. Currently only sequential process are 
+#             possible. Note that a workflow can have any number of states
+#             and their transitions.
+#   state_name: name of the state
+#   station: this section describes the station involved in this state
+#     type: the station's class name as defined in archemist.stations.X.state
+#           note that X stands for the stations's given module found in archemist's 
+#           stations module
+#     id: station unique workflow id
+#     operation: this section describes the operation involved in the state
+#       type: station operation class name as defined in archemist.stations.X.state
+#             note that X stands for the stations's given module found in archemist's 
+#             stations module
+#       properties: operation properties
+#   transitions: this section describes current state transitions
+#     on_success: the new state the workflow will transition to in case the current state
+#                 is executed successfully
+#     on_success: the new state the workflow will transition to in case the current state
+#                 execution fails
+# note that the process is considered complete when it reaches the end_state so
+# make sure your process teminates with the end_state
 general:
-  id: 198
   name: algae_bot_recipe
+  id: 198
 process:
-- state_name: pickup
-  station:
-    id: 11
-    operation:
-      type: InputStationPickupOp
-    type: InputStation
-  transitions:
-    on_fail: end_state
-    on_success: dispense_liquid
-- state_name: dispense_liquid
-  station:
-    id: 12
-    operation:
-      properties:
-        dispense_info:
-          dye_A: 0.3
-          dye_B:
-          - 0.31
-          - 0.34
-          - 0.36
-          - 0.39
-          - 0.42
-          - 0.45
-          water:
-          - 29.0
-          - 32.0
-          - 34.0
-          - 37.0
-          - 40.0
-          - 43.0
-      type: CSCSVJobOpDescriptor
-    type: ChemSpeedFlexStation
-  transitions:
-    on_fail: end_state
-    on_success: analyse
-- state_name: analyse
-  station:
-    id: 13
-    operation:
-      type: SampleColorOpDescriptor
-    type: LightBoxStation
-  transitions:
-    on_fail: end_state
-    on_success: dispose
-- state_name: dispose
-  station:
-    id: 14
-    operation:
-      type: OutputStationPlaceOp
-    type: OutputStation
-  transitions:
-    on_fail: end_state
-    on_success: end_state
+  - state_name: pickup
+    station:
+      type: InputStation
+      id: 11
+      operation:
+        type: InputStationPickupOp
+    transitions:
+      on_success: dispense_liquid
+      on_fail: end_state
+  - state_name: dispense_liquid
+    station:
+      type: ChemSpeedFlexStation
+      id: 12
+      operation:
+        type: CSCSVJobOpDescriptor
+        properties:
+          dispense_info:
+            water: "{{float.all}}"
+            dye_A: "{{float.all}}"
+            dye_B: "{{float.all}}"
+    transitions:
+      on_success: analyse
+      on_fail: end_state
+  - state_name: analyse
+    station:
+      type: LightBoxStation
+      id: 13
+      operation:
+        type: SampleColorOpDescriptor
+    transitions:
+      on_success: dispose
+      on_fail: end_state
+  - state_name: dispose
+    station:
+      type: OutputStation
+      id: 14
+      operation:
+        type: OutputStationPlaceOp
+    transitions:
+      on_success: end_state
+      on_fail: end_state

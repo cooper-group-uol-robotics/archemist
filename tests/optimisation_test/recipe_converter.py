@@ -4,6 +4,7 @@ from archemist.core.persistence.yaml_handler import YamlHandler
 from nested_lookup import nested_update
 from pathlib import Path
 import logging
+import re
 
 class RecipeUpdate:
     def __init__(self) -> None:
@@ -16,10 +17,10 @@ class RecipeUpdate:
     def find_placeholders(self, recipe_dict):
         if isinstance(recipe_dict, dict):
             for key, value in recipe_dict.items():
-                if isinstance(value, str) and '{{' in value and 'all' in value and '}}' in value:
+                if isinstance(value, str) and re.search(r"^{{float+.+?all}}$", value):
                     self.placeholder_keys_all.append(key)
                     self.placeholders.append(value)
-                elif isinstance(value, str) and '{{' in value and 'any' in value and '}}' in value:
+                elif isinstance(value, str) and re.search(r"^{{float+.+?any}}$", value):
                     self.placeholder_keys_any.append(key)
                     self.placeholders.append(value)
                 else:
@@ -68,16 +69,16 @@ if __name__ == "__main__":
     recipe_dict = YamlHandler.load_recipe_file(recipe_path)
     print(recipe_dict)
     recipe = RecipeUpdate()
-    any, all = recipe.find_placeholders(recipe_dict)
-    if len(any) != 0:
+    _keys_values, _keys_lists = recipe.find_placeholders(recipe_dict)
+    if len(_keys_values) != 0:
         recipe_dict = recipe.update_values(recipe_dict,'any', optimised_parameters_dict)
     else:
-        print('.any place holders NOT found')
+        print('{{float.any}} place holders NOT found')
 
-    if len(all) != 0:
+    if len(_keys_lists) != 0:
         recipe_dict = recipe.update_values(recipe_dict, 'all', optimised_parameters_dict)
     else:
-        print('no .all place holders NOT found')    
+        print('{{float.all}} place holders NOT found')    
     recipe.generate_recipe(recipe_dict, recipe_path)
 
 
