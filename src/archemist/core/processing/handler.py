@@ -5,9 +5,25 @@ from typing import Tuple,Dict
 
 
 class StationHandler:
+    class ProcessHandler:
+        def __init__(self, station: Station) -> None:
+            self._station = station
+            self._running_process = StationFactory.create_state_machine(self._station)
+
+        def _process_assigned_batches(self):
+            pass
+
+        def _handle_processes(self):
+            self._running_process.process_state_transitions()
+
+        def run_process(self):
+            self._process_assigned_batches()
+            self._handle_processes()
+    
     def __init__(self, station: Station):
         self._station = station
-        self._station_sm = StationFactory.create_state_machine(self._station)
+        self._process_handler = self.ProcessHandler(station)
+        #self._station_sm = StationFactory.create_state_machine(self._station) # <==== this will be called inside StationProcessHandler
 
     def execute_op(self):
         pass
@@ -19,7 +35,8 @@ class StationHandler:
         pass
 
     def handle(self):
-        self._station_sm.process_state_transitions()
+        #self._station_sm.process_state_transitions()# <==== this will be replaced with StationProcessHandler.tick()
+        self._process_handler.run_process()
         if self._station.state == StationState.OP_ASSIGNED:
             self._station.start_executing_op()
             self.execute_op()
