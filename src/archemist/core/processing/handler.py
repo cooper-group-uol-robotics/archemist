@@ -1,10 +1,12 @@
 from archemist.core.state.robot import Robot, RobotState
 from archemist.core.state.station import Station, StationState
 from archemist.core.persistence.object_factory import StationFactory
-from typing import Tuple,Dict
+from typing import Tuple, Dict
 
 
 class StationHandler:
+    """FIXME"""
+
     def __init__(self, station: Station):
         self._station = station
         self._station_sm = StationFactory.create_state_machine(self._station)
@@ -15,7 +17,7 @@ class StationHandler:
     def is_op_execution_complete(self) -> bool:
         pass
 
-    def get_op_result(self) -> Tuple[bool,Dict]:
+    def get_op_result(self) -> Tuple[bool, Dict]:
         pass
 
     def handle(self):
@@ -38,7 +40,10 @@ class StationHandler:
     def run(self):
         pass
 
+
 class RobotHandler:
+    """FIXME"""
+
     def __init__(self, robot: Robot):
         self._robot = robot
 
@@ -50,7 +55,6 @@ class RobotHandler:
 
     def get_op_result(self) -> bool:
         pass
-
 
     def handle(self):
         if self._robot.state == RobotState.OP_ASSIGNED:
@@ -65,7 +69,9 @@ class RobotHandler:
             self._robot.start_executing_op()
             self.execute_op()
         elif self._robot.state == RobotState.SKIP_OP:
-            self._robot.complete_assigned_op(True) #TODO might need to pass that operation was skipped
+            self._robot.complete_assigned_op(
+                True
+            )  # TODO might need to pass that operation was skipped
             self._robot.set_to_execution_complete()
 
     def run(self):

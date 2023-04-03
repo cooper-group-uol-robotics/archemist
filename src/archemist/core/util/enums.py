@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+
 class RobotState(Enum):
     OP_ASSIGNED = auto()
     SKIP_OP = auto()
@@ -8,11 +9,13 @@ class RobotState(Enum):
     EXECUTION_COMPLETE = auto()
     IDLE = auto()
 
+
 class RobotTaskType(Enum):
     LOAD_TO_ROBOT = auto()
     UNLOAD_FROM_ROBOT = auto()
     MANIPULATION = auto()
     OTHER = auto()
+
 
 class StationState(Enum):
     IDLE = auto()

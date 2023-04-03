@@ -10,6 +10,7 @@ from threading import Thread
 
 ##### TESTING WORKFLOW (FAKE SCANS)
 
+
 class PXRDStationROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
@@ -17,7 +18,7 @@ class PXRDStationROSHandler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-        print(f'performing pxrd operation {current_op}')    
+        print(f"performing pxrd operation {current_op}")
         self._thread = Thread(target=self._mock_execution)
         self._thread.start()
 
@@ -31,29 +32,20 @@ class PXRDStationROSHandler(StationHandler):
         return True, {}
 
     def run(self):
-        print(f'{self._station}_handler is running')
+        print(f"{self._station}_handler is running")
         try:
             while True:
                 self.handle()
                 time.sleep(2)
         except KeyboardInterrupt:
-            print(f'{self._station}_handler is terminating!!!')
+            print(f"{self._station}_handler is terminating!!!")
 
     def _mock_execution(self):
         time.sleep(1)
 
 
-
-
-
-
-
-
-
-
-
 #### ACTUAL WORKFLOW (REAL SCANS + PXRD PYTHON DRIVER )
-#class PXRDStationROSHandler(StationHandler):
+# class PXRDStationROSHandler(StationHandler):
 #    def __init__(self, station: Station):
 #        super().__init__(station)
 #        self._current_cs_status = 'PXRDStatus.IDLE'
@@ -62,7 +54,7 @@ class PXRDStationROSHandler(StationHandler):
 #        self.PXRD_pub = rospy.Publisher("/PXRD/command", String, queue_size=1)
 #        rospy.Subscriber('/PXRD/status', String, self._cs_state_update, queue_size=1)
 #        rospy.sleep(1)
-        
+
 
 #    def run(self):
 #        rospy.loginfo(f'{self._station}_handler is running')
@@ -93,7 +85,7 @@ class PXRDStationROSHandler(StationHandler):
 #    def get_op_result(self) -> Tuple[bool, Dict]:
 #        if self._current_cs_status != 'pxrdStatus.ERROR':
 #            return True, {}
- #       else:
+#       else:
 #            return False
 
 #    def _cs_state_update(self, msg):

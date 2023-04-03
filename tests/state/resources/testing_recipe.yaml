@@ -17,7 +17,7 @@ process:
         type: IKAStirringOpDescriptor
         properties:
           stirring_speed: 200
-          duration: 10 
+          duration: 10
     transitions:
       on_success: weighing_operation
       on_fail: end_state

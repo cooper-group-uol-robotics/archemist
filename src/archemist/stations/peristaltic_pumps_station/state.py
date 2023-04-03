@@ -8,7 +8,6 @@ from archemist.core.exceptions.exception import InvalidLiquidError
 from datetime import datetime
 
 
-
 class PeristalticLiquidDispensing(Station):
     def __init__(self, station_model: PeristalticPumpStationModel) -> None:
         self._model = station_model
@@ -18,11 +17,11 @@ class PeristalticLiquidDispensing(Station):
         model = PeristalticPumpStationModel()
         cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
-        parameters = station_dict['parameters']
-        for _, pump_id in parameters['liquid_pump_map'].items():
-                for liquid in liquids:
-                    if liquid.pump_id == pump_id:
-                        model.pump_liquid_map[pump_id] = liquid.model.id
+        parameters = station_dict["parameters"]
+        for _, pump_id in parameters["liquid_pump_map"].items():
+            for liquid in liquids:
+                if liquid.pump_id == pump_id:
+                    model.pump_liquid_map[pump_id] = liquid.model.id
         model.save()
         return cls(model)
 
@@ -42,7 +41,9 @@ class PeristalticLiquidDispensing(Station):
 
     def add_to_pump_liquid_level(self, pump_id: str, added_value: float):
         modified_liquid = self.get_liquid(pump_id)
-        modified_liquid.volume = modified_liquid.volume + added_value/1000 #assume value in ml
+        modified_liquid.volume = (
+            modified_liquid.volume + added_value / 1000
+        )  # assume value in ml
 
     def add_liquid(self, liquid_nam: str, added_volume: float):
         pump_id = self.get_pump_id(liquid_nam)
@@ -50,7 +51,9 @@ class PeristalticLiquidDispensing(Station):
 
     def reduce_pump_liquid_level(self, pump_id: str, value: float):
         modified_liquid = self.get_liquid(pump_id)
-        modified_liquid.volume = modified_liquid.volume - value/1000 # assume value in ml
+        modified_liquid.volume = (
+            modified_liquid.volume - value / 1000
+        )  # assume value in ml
 
     def dispense_liquid(self, liquid_nam: str, dispensed_volume: float):
         pump_id = self.get_pump_id(liquid_nam)
@@ -60,27 +63,30 @@ class PeristalticLiquidDispensing(Station):
         current_op = self.get_assigned_station_op()
         if isinstance(current_op, PeristalticPumpOpDescriptor):
             if success:
-                if 'actual_dispensed_volume' in kwargs:
-                    self.dispense_liquid(current_op.liquid_name, kwargs['actual_dispensed_volume'])
+                if "actual_dispensed_volume" in kwargs:
+                    self.dispense_liquid(
+                        current_op.liquid_name, kwargs["actual_dispensed_volume"]
+                    )
                 else:
                     self.dispense(current_op.liquid_name, current_op.dispense_volume)
         super().complete_assigned_station_op(success, **kwargs)
 
-''' ==== Station Operation Descriptors ==== '''
+
+""" ==== Station Operation Descriptors ==== """
+
+
 class PeristalticPumpOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: PeristalticPumpOpDescriptorModel):
         self._model = op_model
-
 
     @classmethod
     def from_args(cls, **kwargs):
         model = PeristalticPumpOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.liquid_name = kwargs['liquid_name']
-        model.dispense_volume = float(kwargs['dispense_volume'])
+        model.liquid_name = kwargs["liquid_name"]
+        model.dispense_volume = float(kwargs["dispense_volume"])
         return cls(model)
-        
 
     @property
     def liquid_name(self) -> str:
@@ -99,7 +105,7 @@ class PeristalticPumpOpDescriptor(StationOpDescriptor):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'actual_dispensed_volume' in kwargs:
-            self._model.actual_dispensed_volume = kwargs['actual_dispensed_volume']
+        if "actual_dispensed_volume" in kwargs:
+            self._model.actual_dispensed_volume = kwargs["actual_dispensed_volume"]
         else:
-            print('missing actual dispensed volume!!')
+            print("missing actual dispensed volume!!")

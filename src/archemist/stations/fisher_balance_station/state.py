@@ -6,7 +6,9 @@ from typing import List, Dict
 from archemist.core.state.material import Liquid, Solid
 from datetime import datetime
 
-''' ==== Station Description ==== '''
+""" ==== Station Description ==== """
+
+
 class FisherWeightingStation(Station):
     def __init__(self, station_model: StationModel) -> None:
         self._model = station_model
@@ -14,12 +16,15 @@ class FisherWeightingStation(Station):
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = StationModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
         model.save()
         return cls(model)
 
-''' ==== Station Operation Descriptors ==== '''
+
+""" ==== Station Operation Descriptors ==== """
+
+
 class FisherWeightOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: FisherWeightOpDescriptorModel):
         self._model = op_model
@@ -40,7 +45,7 @@ class FisherWeightOpDescriptor(StationOpDescriptor):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'weight' in kwargs:
-            self._model.weight = kwargs['weight']
+        if "weight" in kwargs:
+            self._model.weight = kwargs["weight"]
         else:
-            pass #print('missing read weight!!')
+            pass  # print('missing read weight!!')

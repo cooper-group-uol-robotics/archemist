@@ -5,7 +5,7 @@
 #   samples_per_batch: number of samples in a workflow batch
 #   default_batch_input_location: default navigation graph location where a batch is added
 #                                 where node_id stands for the node number in the navigation
-# 
+#
 general:
   name: algae_bot_workflow
   samples_per_batch: 6
@@ -38,27 +38,27 @@ materials:
       id: 1
       amount_stored: 500
       unit: ml
-      density: 1000 
+      density: 1000
       pump_id: chemspeed
       expiry_date: 31/03/2023
     - name: dye_A
       id: 1
       amount_stored: 50
       unit: ml
-      density: 1000 
+      density: 1000
       pump_id: chemspeed
       expiry_date: 31/03/2023
     - name: dye_B
       id: 1
       amount_stored: 60
       unit: ml
-      density: 1000 
+      density: 1000
       pump_id: chemspeed
       expiry_date: 31/03/2023
 
 # robots: this section describes the robots used in the workflow
-#   type: the robot's class name as defined in archemist.robots.X.state 
-#         note that X stands for the robot's given module found in archemist's robots 
+#   type: the robot's class name as defined in archemist.robots.X.state
+#         note that X stands for the robot's given module found in archemist's robots
 #         module
 #   id: the robot unique workflow id
 #   batch_capacity: the number of batches the robot can carry/handle at a time
@@ -73,15 +73,15 @@ robots:
 
 # stations: this section describes the stations used in the workflow
 #   type: the station's class name as defined in archemist.stations.X.state
-#         note that X stands for the stations's given module found in archemist's 
+#         note that X stands for the stations's given module found in archemist's
 #         stations module
 #   id: the station unique workflow id
-#   location: station's location in the robot navigation graph where node_id stands for the 
-#             node number in the navigation graph whose id is given 
+#   location: station's location in the robot navigation graph where node_id stands for the
+#             node number in the navigation graph whose id is given
 #   batch_capacity: number of batches the station can handle at a time
 #   handler: station handler class name as defined in archemist.stations.X.handler
 #   parameters: any additional parameters need to be passed to the station when initialized
-#   process_state_machine: state machine describing the station process 
+#   process_state_machine: state machine describing the station process
 #   type: the station process state machine class name as defined in archemist.stations.X.process
 #   args: any additional arguments that need to be passed to the state machine constructor
 #
@@ -116,14 +116,14 @@ stations:
         - dye_B
   - type: LightBoxStation
     id: 13
-    location: 
+    location:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
     handler: LightBoxROSHandler
-    process_state_machine: 
+    process_state_machine:
       type: LightBoxSM
-      args: 
+      args:
         batch_mode: true
     parameters:
   - type: OutputStation

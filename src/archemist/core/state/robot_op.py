@@ -1,9 +1,15 @@
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
-from archemist.core.util.enums import RobotTaskType
-from archemist.core.util import Location
+# External
 from bson.objectid import ObjectId
 from datetime import datetime
 from typing import List
+
+# Core
+from archemist.core.models.robot_op_model import (
+    RobotOpDescriptorModel,
+    RobotTaskOpDescriptorModel,
+)
+from archemist.core.util.enums import RobotTaskType
+from archemist.core.util import Location
 
 
 class RobotOpDescriptor:
@@ -59,13 +65,21 @@ class RobotOpDescriptor:
         self._model.robot_stamp = robot_stamp
         self._model.end_timestamp = datetime.now()
 
+
 class RobotTaskOpDescriptor(RobotOpDescriptor):
     def __init__(self, op_model: RobotTaskOpDescriptorModel):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, params: List[str]=[], 
-                    location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
+    def from_args(
+        cls,
+        name: str,
+        type: RobotTaskType = RobotTaskType.MANIPULATION,
+        params: List[str] = [],
+        location: Location = Location(),
+        origin_station: ObjectId = None,
+        related_batch_id: int = None,
+    ):
         model = RobotTaskOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
@@ -74,9 +88,11 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         model.params = [str(param) for param in params]
         model.location = location.to_dict() if location is not None else None
         model.origin_station = origin_station if origin_station is not None else None
-        model.related_batch_id = related_batch_id if related_batch_id is not None else None
+        model.related_batch_id = (
+            related_batch_id if related_batch_id is not None else None
+        )
         return cls(model)
-    
+
     @property
     def name(self):
         return self._model.name
@@ -92,7 +108,10 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
     @property
     def location(self):
         loc_dict = self._model.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        return Location(
+            node_id=loc_dict["node_id"], graph_id=loc_dict["graph_id"], frame_name=""
+        )
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__} with task: {self.name}, params: {self.params} @{self.location.get_map_coordinates()}'
+        return f"{self.__class__.__name__} with task: {self.name}, \
+                params: {self.params} @{self.location.get_map_coordinates()}"

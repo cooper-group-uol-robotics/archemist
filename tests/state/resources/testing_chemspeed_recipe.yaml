@@ -1,9 +1,9 @@
 name: test_archemist_recipe
 id: 198
 materials:
-  liquids: 
+  liquids:
     - water
-  solids: 
+  solids:
     - sodium_chloride
 stations:
   - name: ChemSpeedFlexStation.id_9

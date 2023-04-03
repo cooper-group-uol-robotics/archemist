@@ -5,7 +5,9 @@ from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 
 
-''' ==== Station Description ==== '''
+""" ==== Station Description ==== """
+
+
 class IkaPlateDigital(Station):
     def __init__(self, station_model: IkaPlateDigitalModel) -> None:
         self._model = station_model
@@ -13,14 +15,14 @@ class IkaPlateDigital(Station):
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = IkaPlateDigitalModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
         model.save()
         return cls(model)
 
     @property
     def current_temperature(self) -> int:
-        self._model.reload('current_temperature')
+        self._model.reload("current_temperature")
         return self._model.current_temperature
 
     @current_temperature.setter
@@ -29,7 +31,7 @@ class IkaPlateDigital(Station):
 
     @property
     def target_temperature(self) -> int:
-        self._model.reload('target_temperature')
+        self._model.reload("target_temperature")
         return self._model.target_temperature
 
     @target_temperature.setter
@@ -38,7 +40,7 @@ class IkaPlateDigital(Station):
 
     @property
     def current_stirring_speed(self) -> int:
-        self._model.reload('current_stirring_speed')
+        self._model.reload("current_stirring_speed")
         return self._model.current_stirring_speed
 
     @current_stirring_speed.setter
@@ -47,7 +49,7 @@ class IkaPlateDigital(Station):
 
     @property
     def target_stirring_speed(self) -> int:
-        self._model.reload('target_stirring_speed')
+        self._model.reload("target_stirring_speed")
         return self._model.target_stirring_speed
 
     @target_stirring_speed.setter
@@ -56,7 +58,7 @@ class IkaPlateDigital(Station):
 
     @property
     def target_duration(self) -> int:
-        self._model.reload('target_duration')
+        self._model.reload("target_duration")
         return self._model.target_duration
 
     @target_duration.setter
@@ -65,7 +67,7 @@ class IkaPlateDigital(Station):
 
     @property
     def external_temperature(self) -> int:
-        self._model.reload('external_temperature')
+        self._model.reload("external_temperature")
         return self._model.external_temperature
 
     @external_temperature.setter
@@ -74,7 +76,7 @@ class IkaPlateDigital(Station):
 
     @property
     def viscosity_trend(self) -> float:
-        self._model.reload('viscosity_trend')
+        self._model.reload("viscosity_trend")
         return self._model.viscosity_trend
 
     @viscosity_trend.setter
@@ -83,7 +85,7 @@ class IkaPlateDigital(Station):
 
     @property
     def mode(self) -> IKAMode:
-        self._model.reload('mode')
+        self._model.reload("mode")
         return self._model.mode
 
     @mode.setter
@@ -114,7 +116,9 @@ class IkaPlateDigital(Station):
         super().complete_assigned_station_op(success, **kwargs)
 
 
-''' ==== Station Operation Descriptors ==== '''
+""" ==== Station Operation Descriptors ==== """
+
+
 class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: IKAOpDescriptorModel) -> None:
         self._model = op_model
@@ -122,9 +126,9 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = int(kwargs['temperature'])
-        model.target_stirring_speed = int(kwargs['stirring_speed'])
-        model.target_duration = float(kwargs['duration'])
+        model.target_temperature = int(kwargs["temperature"])
+        model.target_stirring_speed = int(kwargs["stirring_speed"])
+        model.target_duration = float(kwargs["duration"])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -141,6 +145,7 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     def target_duration(self) -> int:
         return self._model.target_duration
 
+
 class IKAHeatingOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: IKAOpDescriptorModel) -> None:
         self._model = op_model
@@ -148,8 +153,8 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_temperature = int(kwargs['temperature'])
-        model.target_duration = float(kwargs['duration'])
+        model.target_temperature = int(kwargs["temperature"])
+        model.target_duration = float(kwargs["duration"])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -170,8 +175,8 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
-        model.target_stirring_speed = int(kwargs['stirring_speed'])
-        model.target_duration = float(kwargs['duration'])
+        model.target_stirring_speed = int(kwargs["stirring_speed"])
+        model.target_duration = float(kwargs["duration"])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

@@ -1,5 +1,6 @@
 {
-    "python.linting.enabled": false,
-    "cmake.configureOnOpen": false,
-    "cSpell.language": "en-GB"
+  "python.linting.enabled": true,
+  "cmake.configureOnOpen": false,
+  "cSpell.language": "en-GB",
+  "ros.distro": "noetic"
 }

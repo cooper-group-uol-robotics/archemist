@@ -1,4 +1,7 @@
+# External
 from mongoengine import Document, fields
+
+# Core
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 from archemist.core.util.enums import RobotState
 
@@ -14,9 +17,16 @@ class RobotModel(Document):
     assigned_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
     complete_op = fields.EmbeddedDocumentField(RobotOpDescriptorModel, null=True)
     state = fields.EnumField(RobotState, default=RobotState.IDLE)
-    robot_op_history = fields.EmbeddedDocumentListField(RobotOpDescriptorModel, default=[])
+    robot_op_history = fields.EmbeddedDocumentListField(
+        RobotOpDescriptorModel, default=[]
+    )
 
-    meta = {'collection': 'robots', 'db_alias': 'archemist_state', 'allow_inheritance': True}
+    meta = {
+        "collection": "robots",
+        "db_alias": "archemist_state",
+        "allow_inheritance": True,
+    }
+
 
 class MobileRobotModel(RobotModel):
-    onboard_batches = fields.ListField(fields.IntField(),default=[])
+    onboard_batches = fields.ListField(fields.IntField(), default=[])

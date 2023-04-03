@@ -14,18 +14,18 @@
 #
 # process: this section describes the experiment process. The process
 #             is represented using a finite state machine that is composed of
-#             state and their transitions. Currently only sequential process are 
+#             state and their transitions. Currently only sequential process are
 #             possible. Note that a workflow can have any number of states
 #             and their transitions.
 #   state_name: name of the state
 #   station: this section describes the station involved in this state
 #     type: the station's class name as defined in archemist.stations.X.state
-#           note that X stands for the stations's given module found in archemist's 
+#           note that X stands for the stations's given module found in archemist's
 #           stations module
 #     id: station unique workflow id
 #     operation: this section describes the operation involved in the state
 #       type: station operation class name as defined in archemist.stations.X.state
-#             note that X stands for the stations's given module found in archemist's 
+#             note that X stands for the stations's given module found in archemist's
 #             stations module
 #       properties: operation properties
 #   transitions: this section describes current state transitions
@@ -56,9 +56,9 @@ process:
         type: CSCSVJobOpDescriptor
         properties:
           dispense_info:
-            water: [11,14,17,20,23,26]
-            dye_A: [0.12,0.15,0.18,0.21,0.24,0.27]
-            dye_B: [0.13,0.16,0.19,0.22,0.25,0.28]
+            water: [11, 14, 17, 20, 23, 26]
+            dye_A: [0.12, 0.15, 0.18, 0.21, 0.24, 0.27]
+            dye_B: [0.13, 0.16, 0.19, 0.22, 0.25, 0.28]
     transitions:
       on_success: analyse
       on_fail: end_state

@@ -1,6 +1,7 @@
 from datetime import datetime
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 
+
 class StationOpDescriptor:
     def __init__(self, stationOpModel: StationOpDescriptorModel) -> None:
         self._model = stationOpModel

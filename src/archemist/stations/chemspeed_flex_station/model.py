@@ -1,7 +1,11 @@
-from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+# External
 from mongoengine import fields
 from enum import Enum
+
+# Core
+from archemist.core.models.station_model import StationModel
+from archemist.core.models.station_op_model import StationOpDescriptorModel
+
 
 class ChemSpeedStatus(Enum):
     DOORS_OPEN = 0
@@ -9,9 +13,11 @@ class ChemSpeedStatus(Enum):
     RUNNING_JOB = 2
     JOB_COMPLETE = 3
 
+
 class ChemSpeedFlexStationModel(StationModel):
     machine_status = fields.EnumField(ChemSpeedStatus, null=True)
     liquids_dict = fields.DictField(default={})
+
 
 class CSCSVJobOpDescriptorModel(StationOpDescriptorModel):
     dispense_info = fields.DictField(required=True)

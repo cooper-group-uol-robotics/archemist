@@ -4,6 +4,7 @@ from archemist.core.state.station_op import StationOpDescriptor
 from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 
+
 class ShakerPlateStation(Station):
     def __init__(self, station_model: ShakerPlateStationModel) -> None:
         self._model = station_model
@@ -11,14 +12,14 @@ class ShakerPlateStation(Station):
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = ShakerPlateStationModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
         model.save()
         return cls(model)
 
     @property
     def status(self):
-        self._model.reload('machine_status')
+        self._model.reload("machine_status")
         return self._model.machine_status
 
     @status.setter
@@ -36,6 +37,7 @@ class ShakerPlateStation(Station):
             self.status = ShakerStatus.NOT_SHAKING
         super().complete_assigned_station_op(success, **kwargs)
 
+
 class ShakeOpDescriptor(StationOpDescriptor):
     def __init__(self, stationOpModel: ShakeOpDescriptorModel) -> None:
         self._model = stationOpModel
@@ -45,7 +47,7 @@ class ShakeOpDescriptor(StationOpDescriptor):
         model = ShakeOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.duration = int(kwargs['duration'])
+        model.duration = int(kwargs["duration"])
         return cls(model)
 
     @property

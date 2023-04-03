@@ -5,7 +5,9 @@ from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 from datetime import datetime
 
-''' ==== Station Description ==== '''
+""" ==== Station Description ==== """
+
+
 class PXRDStation(Station):
     def __init__(self, station_model: PXRDStationModel) -> None:
         self._model = station_model
@@ -13,14 +15,14 @@ class PXRDStation(Station):
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = PXRDStationModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
         model.save()
         return cls(model)
 
     @property
     def status(self) -> PXRDStatus:
-        self._model.reload('machine_status')
+        self._model.reload("machine_status")
         return self._model.machine_status
 
     @status.setter
@@ -34,11 +36,17 @@ class PXRDStation(Station):
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
-        if isinstance(current_op, PXRDAnalysisOpDescriptor) and current_op.was_successful:
+        if (
+            isinstance(current_op, PXRDAnalysisOpDescriptor)
+            and current_op.was_successful
+        ):
             self.status = PXRDStatus.JOB_COMPLETE
         super().complete_assigned_station_op(success, **kwargs)
 
-''' ==== Station Operation Descriptors ==== '''
+
+""" ==== Station Operation Descriptors ==== """
+
+
 class PXRDAnalysisOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: PXRDAnalysisOpDescriptorModel):
         self._model = op_model
@@ -59,7 +67,7 @@ class PXRDAnalysisOpDescriptor(StationOpDescriptor):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'result_file' in kwargs:
-            self._model.result_file = kwargs['result_file']
+        if "result_file" in kwargs:
+            self._model.result_file = kwargs["result_file"]
         else:
-            pass #print('missing result_file!!')
+            pass  # print('missing result_file!!')

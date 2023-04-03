@@ -45,7 +45,7 @@ stations:
       type: StationLoadingSm
       args:
         batch_mode: true
-        load_frame: '/liquidStation/loadFrame'
+        load_frame: "/liquidStation/loadFrame"
     parameters:
       liquid_pump_map:
         water: pUmP1
@@ -60,7 +60,7 @@ stations:
       type: StationLoadingSm
       args:
         batch_mode: true
-        load_frame: '/ikaStation/loadFrame'
+        load_frame: "/ikaStation/loadFrame"
     parameters:
   - type: FisherWeightingStation
     id: 5
@@ -73,7 +73,7 @@ stations:
       type: StationLoadingSm
       args:
         batch_mode: true
-        load_frame: '/fisherScaleStation/loadFrame'
+        load_frame: "/fisherScaleStation/loadFrame"
     parameters:
   - type: ChemSpeedFlexStation
     id: 9

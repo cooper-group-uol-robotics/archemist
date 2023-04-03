@@ -7,7 +7,9 @@ from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 from datetime import datetime
 
-''' ==== Station Description ==== '''
+""" ==== Station Description ==== """
+
+
 class ChemSpeedFlexStation(Station):
     def __init__(self, station_model: ChemSpeedFlexStationModel) -> None:
         self._model = station_model
@@ -15,11 +17,11 @@ class ChemSpeedFlexStation(Station):
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
         model = ChemSpeedFlexStationModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
-        parameters = station_dict['parameters']
+        parameters = station_dict["parameters"]
         if parameters is not None:
-            used_liquids = parameters['used_liquids']
+            used_liquids = parameters["used_liquids"]
             for liquid_name in used_liquids:
                 for liquid in liquids:
                     if liquid_name == liquid.name:
@@ -29,9 +31,9 @@ class ChemSpeedFlexStation(Station):
 
     @property
     def status(self) -> ChemSpeedStatus:
-        self._model.reload('machine_status')
+        self._model.reload("machine_status")
         return self._model.machine_status
-    
+
     @property
     def used_liquids_names(self) -> List[str]:
         return list(self._model.liquids_dict.keys())
@@ -45,7 +47,9 @@ class ChemSpeedFlexStation(Station):
         return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
     def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
+        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(
+            stationOp, CSCSVJobOpDescriptor
+        ):
             self.status = ChemSpeedStatus.RUNNING_JOB
         super().assign_station_op(stationOp)
 
@@ -56,16 +60,17 @@ class ChemSpeedFlexStation(Station):
         elif isinstance(current_op, CSCloseDoorOpDescriptor):
             self.status = ChemSpeedStatus.DOORS_CLOSED
         elif isinstance(current_op, CSCSVJobOpDescriptor):
-            for liquid_name,dispense_vals in current_op.dispense_info.items():
+            for liquid_name, dispense_vals in current_op.dispense_info.items():
                 liquid_obj = self.get_liquid(liquid_name)
-                liquid_obj.volume -= sum(dispense_vals)/1000
+                liquid_obj.volume -= sum(dispense_vals) / 1000
             self.status = ChemSpeedStatus.JOB_COMPLETE
         elif isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.JOB_COMPLETE
         super().complete_assigned_station_op(success, **kwargs)
 
 
-''' ==== Station Operation Descriptors ==== '''
+""" ==== Station Operation Descriptors ==== """
+
 
 class CSOpenDoorOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
@@ -90,6 +95,7 @@ class CSCloseDoorOpDescriptor(StationOpDescriptor):
         model._module = cls.__module__
         return cls(model)
 
+
 class CSProcessingOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
         self._model = op_model
@@ -100,7 +106,6 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
-    
 
 
 class CSCSVJobOpDescriptor(StationOpDescriptor):
@@ -112,25 +117,25 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         model = CSCSVJobOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.dispense_info = kwargs['dispense_info']
+        model.dispense_info = kwargs["dispense_info"]
         for k, v in model.dispense_info.items():
             model.dispense_info[k] = list(map(float, v))
         return cls(model)
-    
+
     @classmethod
     def clone_object(cls, obj):
         model = CSCSVJobOpDescriptorModel()
         model = obj._model
         return cls(model)
-    
+
     @property
     def dispense_info(self):
         return self._model.dispense_info
-    
+
     @dispense_info.setter
     def dispense_info(self, new_dispense_info):
         self._model.dispense_info = new_dispense_info
-    
+
     @property
     def result_file(self) -> str:
         if self._model.has_result and self._model.was_successful:
@@ -141,7 +146,7 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         zipped_tuples = zip(*[l for l in dispence_lists])
         csv_string = ""
         for tup in zipped_tuples:
-            tmp = ','.join(map(str,tup))
+            tmp = ",".join(map(str, tup))
             csv_string += tmp + r"\n"
         return csv_string
 
@@ -149,7 +154,7 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'result_file' in kwargs:
-            self._model.result_file = kwargs['result_file']
+        if "result_file" in kwargs:
+            self._model.result_file = kwargs["result_file"]
         else:
-            pass #print('missing result_file!!')
+            pass  # print('missing result_file!!')

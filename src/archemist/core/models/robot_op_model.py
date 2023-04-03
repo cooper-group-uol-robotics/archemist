@@ -1,7 +1,13 @@
+# Externsl
 from mongoengine import EmbeddedDocument, fields
+
+# Core
 from archemist.core.util.enums import RobotTaskType
 
+
 class RobotOpDescriptorModel(EmbeddedDocument):
+    """Description FIXME"""
+
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
     origin_station = fields.ObjectIdField(null=True)
@@ -13,9 +19,12 @@ class RobotOpDescriptorModel(EmbeddedDocument):
     start_timestamp = fields.ComplexDateTimeField()
     end_timestamp = fields.ComplexDateTimeField()
 
-    meta = {'allow_inheritance':True}
+    meta = {"allow_inheritance": True}
+
 
 class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
+    """Description FIXME"""
+
     name = fields.StringField(required=True)
     task_type = fields.EnumField(RobotTaskType, required=True)
     params = fields.ListField(fields.StringField(), default=True)
