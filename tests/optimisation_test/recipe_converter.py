@@ -17,10 +17,10 @@ class RecipeUpdate:
     def find_placeholders(self, recipe_dict):
         if isinstance(recipe_dict, dict):
             for key, value in recipe_dict.items():
-                if isinstance(value, str) and re.search(r"^{{float+.+?all}}$", value):
+                if isinstance(value, str) and re.search(r"^{{.+?all}}$", value):
                     self.placeholder_keys_all.append(key)
                     self.placeholders.append(value)
-                elif isinstance(value, str) and re.search(r"^{{float+.+?any}}$", value):
+                elif isinstance(value, str) and re.search(r"^{{.+?any}}$$", value):
                     self.placeholder_keys_any.append(key)
                     self.placeholders.append(value)
                 else:
