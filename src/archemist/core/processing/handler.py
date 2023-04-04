@@ -1,6 +1,7 @@
 from archemist.core.state.robot import Robot, RobotState
 from archemist.core.state.station import Station, StationState
 from archemist.core.persistence.object_factory import StationFactory
+from archemist.core.state.station_process import StationProcessData
 from typing import Tuple,Dict
 
 
@@ -8,22 +9,36 @@ class StationHandler:
     class ProcessHandler:
         def __init__(self, station: Station) -> None:
             self._station = station
-            self._running_process = StationFactory.create_state_machine(self._station)
+            self._running_process = [StationFactory.create_station_process(self._station, process_data) 
+                                     for process_data in self._station.get_all_processes_data()]
 
         def _process_assigned_batches(self):
-            pass
+            assigned_batches = self._station.assigned_batches
+            new_batches = [batch for batch in assigned_batches + self._in_process_batches 
+                           if batch in assigned_batches and batch not in self._in_process_batches]
+            if len(new_batches) == self._station.process_batch_capacity:
+                process_data = StationProcessData.from_args(new_batches)
+                process = StationFactory.create_station_process(self._station, process_data)
+                self._running_process.append(process)
+
 
         def _handle_processes(self):
-            self._running_process.process_state_transitions()
+            self._in_process_batches = []
+            for process in list(self._running_process):
+                if process.data.status['state'] != 'final_state':
+                    process.process_state_transitions()
+                    self._in_process_batches.extend(process.data.batches)
+                else:
+                    self._running_process.remove(process)
+                    self._station.delete_process_data(process.data.uuid)
 
-        def run_process(self):
-            self._process_assigned_batches()
+        def run_processes(self):
             self._handle_processes()
+            self._process_assigned_batches()
     
     def __init__(self, station: Station):
         self._station = station
         self._process_handler = self.ProcessHandler(station)
-        #self._station_sm = StationFactory.create_state_machine(self._station) # <==== this will be called inside StationProcessHandler
 
     def execute_op(self):
         pass
@@ -35,8 +50,7 @@ class StationHandler:
         pass
 
     def handle(self):
-        #self._station_sm.process_state_transitions()# <==== this will be replaced with StationProcessHandler.tick()
-        self._process_handler.run_process()
+        self._process_handler.run_processes()
         if self._station.state == StationState.OP_ASSIGNED:
             self._station.start_executing_op()
             self.execute_op()

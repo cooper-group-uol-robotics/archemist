@@ -4,6 +4,7 @@ from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask
 from archemist.core.processing.station_process_fsm import StationProcessFSM
+from archemist.core.state.station_process import StationProcess, StationProcessData
 
 class InputStationSm(StationProcessFSM):
     
@@ -100,3 +101,55 @@ class CrystalWorkflowInputStationSm(StationProcessFSM):
 
     def request_enable_auto_functions(self):
         self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+
+class RefactoredInputStationSm(StationProcess):
+    
+    def __init__(self, station: Station, process_data: StationProcessData, **kwargs): 
+        ''' States '''
+        states = [ State(name='init_state'),
+            State(name='prep_state', on_enter='initialise_process_data'), 
+            State(name='pickup_batch', on_enter=['request_pickup_batch']),
+            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
+            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
+            State(name='removed_batch_update', on_enter=['update_unloaded_batch']),
+            State(name='final_state', on_enter=['finalize_batch_processing'])]
+        
+        ''' Transitions '''
+        transitions = [
+            {'source':'init_state','dest':'prep_state'},
+            {'source':'prep_state','dest':'disable_auto_functions'},
+            {'source':'disable_auto_functions','dest':'pickup_batch', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'pickup_batch','dest':'removed_batch_update', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'removed_batch_update','dest':'pickup_batch', 'unless':'are_all_batches_unloaded'},
+            {'source':'removed_batch_update','dest':'enable_auto_functions', 'conditions':'are_all_batches_unloaded'},
+            {'source':'enable_auto_functions','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
+        ]
+
+        super().__init__(station, process_data, states, transitions)
+
+    def initialise_process_data(self):
+        self._process_data.status['batch_index'] = 0
+
+    def update_unloaded_batch(self):
+        self._process_data.status['batch_index'] += 1
+
+    def are_all_batches_unloaded(self):
+        return self._process_data.status['batch_index'] == len(self._process_data.batches)
+
+    def request_pickup_batch(self):
+        batch_index = self._process_data.status['batch_index']
+        robot_op = KukaLBRTask.from_args(name='PickupInputRack',params=[False,batch_index+1],
+                                        type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
+        current_batch_id = self._process_data.batches[batch_index].id
+        self.request_robot_op(robot_op, current_batch_id)
+
+    def request_disable_auto_functions(self):
+        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
+        self.request_robot_op(robot_op)
+
+    def request_enable_auto_functions(self):
+        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
+        self.request_robot_op(robot_op)
+
+    def finalize_batch_processing(self):
+        self._station.process_assigned_batches()

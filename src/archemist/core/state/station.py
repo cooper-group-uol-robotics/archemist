@@ -1,13 +1,51 @@
 from typing import List, Any
 from archemist.core.util.enums import StationState
-from archemist.core.models.station_model import StationModel
+from archemist.core.models.station_model import StationModel, StationProcessDataModel
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory
+from archemist.core.util.list_field_adapter import EmbedOpListAdapter
 from bson.objectid import ObjectId
+import uuid
+
+class StationProcessData:
+    def __init__(self, process_data_model: StationProcessDataModel) -> None:
+        self._model = process_data_model
+
+    @classmethod
+    def from_args(cls, batches: List[Batch]):
+        model = StationProcessDataModel()
+        model.uuid = uuid.uuid4()
+        model.batches = [batch.model for batch in batches]
+        model.status['state'] = 'init_state'
+        return cls(model)
+
+    @property
+    def model(self) -> StationProcessDataModel:
+        return self._model
+
+    @property
+    def uuid(self) -> uuid.UUID:
+        return self._model.uuid
+
+    @property
+    def batches(self) -> List[Batch]:
+        return [Batch(batch_model) for batch_model in self._model.batches]
+    
+    @property
+    def status(self) -> dict:
+        return self._model.status
+    
+    @property
+    def req_robot_ops(self) -> List[Any]:
+        return EmbedOpListAdapter(self._model, 'req_robot_ops', RobotFactory)
+    
+    @property
+    def req_station_ops(self) -> List[Any]:
+        return EmbedOpListAdapter(self._model, 'req_station_ops', StationFactory)
 
 class Station:
     def __init__(self, station_model: StationModel) -> None:
@@ -23,6 +61,7 @@ class Station:
         station_model.exp_id = station_dict['id']
         station_model.location = station_dict['location']
         station_model.batch_capacity = station_dict['batch_capacity']
+        station_model.process_batch_capacity = station_dict['process_batch_capacity']
         station_model.process_state_machine = station_dict['process_state_machine']
         station_model.selected_handler = station_dict['handler']
 
@@ -78,6 +117,20 @@ class Station:
         self._model.reload('process_status')
         return self._model.process_status
     
+    def get_all_processes_data(self):
+        self._model.reload('process_data_map')
+        return [StationProcessData(process_data) for process_data in self._model.process_data_map.values()]
+    
+    def get_process_data(self, process_uuid: uuid.UUID):
+        self._model.reload('process_data_map')
+        return self._model.process_data_map[str(process_uuid)]
+    
+    def set_process_data(self, process_data: StationProcessDataModel):
+        return self._model.update(**{f"set__process_data_map__{process_data.uuid}":process_data})
+    
+    def delete_process_data(self, process_uuid: uuid.UUID):
+        self._model.update(**{f"unset__process_data_map__{process_uuid}":True})
+    
     @process_status.setter
     def process_status(self, new_status: dict):
         self._model.update(process_status=new_status)
@@ -91,6 +144,10 @@ class Station:
     @property
     def batch_capacity(self) -> int:
         return self._model.batch_capacity
+    
+    @property
+    def process_batch_capacity(self) -> int:
+        return self._model.process_batch_capacity
 
     def load_sample(self):
         self._model.update(inc__loaded_samples=1)

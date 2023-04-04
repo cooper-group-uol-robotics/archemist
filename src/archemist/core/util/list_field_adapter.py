@@ -135,6 +135,86 @@ class StateObjListAdapter(ListFieldAdapter):
 
     def __setitem__(self, index: int, object: Any):
         return super().__setitem__(index, object.model)
+    
+class EmbedListFieldAdapter:
+    def __init__(self, model: EmbeddedDocument, field_name: str):
+        self._model = model
+        self._field_name = field_name
+
+    def append(self, object: Union[Document, EmbeddedDocument]):
+        objects_list = getattr(self._model, self._field_name)
+        objects_list.append(object)
+
+    def pop(self, index: int = -1) -> Union[Document, EmbeddedDocument]:
+        objects_list = getattr(self._model,self._field_name)
+        try:
+            return objects_list.pop(index)
+        except IndexError:
+            raise
+
+    def extend(self, objects_list: List[Union[Document, EmbeddedDocument]]):
+        objects_list = getattr(self._model, self._field_name)
+        objects_list.extend(objects_list)
+
+    def remove(self, object: Union[Document, EmbeddedDocument]):
+        objects_list = getattr(self._model, self._field_name)
+        objects_list.remove(object)
+
+    def __getitem__(self, index: int) -> Union[Document, EmbeddedDocument]:
+        objects_list = getattr(self._model,self._field_name)
+        return objects_list[index]
+
+    def __setitem__(self, index: int, value: Any):
+        objects_list = getattr(self._model,self._field_name)
+        objects_list[index] = value
+
+    def __iter__(self) -> Iterator:
+        objects_list = getattr(self._model, self._field_name)
+        return iter([object for object in objects_list])
+
+    def __next__(self) -> Union[Document, EmbeddedDocument]: 
+        objects_list = getattr(self._model, self._field_name)
+        return next([object for object in objects_list])
+
+    def __bool__(self):
+        objects_list = getattr(self._model, self._field_name)
+        return True if objects_list else False
+
+    def __len__(self):
+        objects_list = getattr(self._model, self._field_name)
+        return len(objects_list)
+    
+class EmbedOpListAdapter(EmbedListFieldAdapter):
+    def __init__(self, model: EmbeddedDocument, field_name: str, factory_cls: Union[RobotFactory,StationFactory]):
+        self._factory_cls = factory_cls
+        super().__init__(model, field_name)
+
+    def append(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+        return super().append(object.model)
+
+    def pop(self, index: int = -1) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+        return self._factory_cls.create_op_from_model(super().pop(index))
+
+
+    def extend(self, objects_list: List[Union[RobotOpDescriptor,StationOpDescriptor]]):
+        return super().extend([object.model for object in objects_list])
+
+    def remove(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+        return super().remove(object.model)
+
+    def __iter__(self) -> Iterator:
+        objects_list = getattr(self._model, self._field_name)
+        return iter([self._factory_cls.create_op_from_model(object) for object in objects_list])
+
+    def __next__(self) -> List[Union[RobotOpDescriptor,StationOpDescriptor]]: 
+        objects_list = getattr(self._model, self._field_name)
+        return next([self._factory_cls.create_op_from_model(object) for object in objects_list])
+
+    def __getitem__(self, index: int) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+        return self._factory_cls.create_op_from_model(super().__getitem__(index))
+
+    def __setitem__(self, index: int, op: Union[RobotOpDescriptor,StationOpDescriptor]):
+        super().__setitem__(index, op.model)
 
     
 

@@ -55,6 +55,7 @@ class WorkflowSchemas:
                 'id': Int(),
                 'location': Map({'node_id': Int(), 'graph_id': Int()}),
                 'batch_capacity': Int(),
+                'process_batch_capacity': Int(),
                 'handler': Str(),
                 'process_state_machine': Map(
                     {

@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from archemist.core.state.material import Material,Liquid, Solid
     from archemist.core.state.batch import Batch
     from archemist.core.state.robot import Robot, RobotOpDescriptor, RobotModel
-    from archemist.core.state.station import Station, StationOpDescriptor, StationModel
+    from archemist.core.state.station import Station, StationOpDescriptor, StationModel, StationProcessData
 
 import importlib
 import pkgutil
@@ -132,6 +132,20 @@ class StationFactory:
             if hasattr(module,station_sm_dict['type']):
                 cls = getattr(module,station_sm_dict['type'])
                 return cls(station, station_sm_dict['args'])
+            
+    @staticmethod
+    def create_station_process(station: Station, process_data: StationProcessData):
+        station_sm_dict = station.process_sm_dict
+        pkg = importlib.import_module('archemist.stations')
+        for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+            process_module = f'{module_itr.name}.process'
+            module = importlib.import_module(process_module)
+            if hasattr(module,station_sm_dict['type']):
+                cls = getattr(module,station_sm_dict['type'])
+                if station_sm_dict['args']:
+                    return cls(station, process_data, **station_sm_dict['args'])
+                else:
+                    return cls(station, process_data)
 
     @staticmethod
     def create_handler(station: Station, use_sim_handler: bool=False):
