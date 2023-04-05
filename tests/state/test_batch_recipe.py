@@ -11,6 +11,7 @@ from archemist.stations.ika_digital_plate_station.state import (
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
 from archemist.core.util.location import Location
+from ..file_paths import TestFiles
 
 
 class BatchRecipeTest(unittest.TestCase):
@@ -19,7 +20,8 @@ class BatchRecipeTest(unittest.TestCase):
 
     def test_batch_from_dict(self):
         recipe_doc = []
-        with open("resources/testing_recipe.yaml") as fs:
+        test_file = TestFiles.recipe_yaml
+        with open(test_file) as fs:
             recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
 
         batch = Batch.from_arguments(31, 2, Location(1, 3, "table_frame"))
