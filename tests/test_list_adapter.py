@@ -24,7 +24,7 @@ class TestModel(Document):
 
 class ListAdapterTest(unittest.TestCase):
     def test_op_list(self):
-        rob_op1 = KukaLBRTask.from_args("op1")
+        rob_op1 = KukaLBRTask.from_args(task_name="op1")
         rob_op2 = KukaLBRMaintenanceTask.from_args("op2", [])
         rob_op3 = KukaLBRTask.from_args("op3")
         robot_op_models = [rob_op1.model, rob_op2.model, rob_op3.model]
