@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from setuptools import setup, find_packages
 
 setup(
@@ -8,8 +6,7 @@ setup(
     author="stoic-roboticist",
     author_email="hatem.fakhruldeen@gmail.com",
     url="https://github.com/cooper-group-uol-robotics/archemist",
-    packages=find_packages("src"),
-    package_dir={"": "src"},
+    packages=find_packages(),
     install_requires=[
         "pyyaml==6.0",
         "mongoengine==0.24.2",
@@ -21,5 +18,6 @@ setup(
         "watchdog==2.1.9",
         "strictyaml==1.6.2",
     ],
+    include_package_data=True,
     entry_points={"console_scripts": ["archemist = archemist.__main__:main"]},
 )
