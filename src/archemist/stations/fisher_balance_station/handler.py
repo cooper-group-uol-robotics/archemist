@@ -33,7 +33,7 @@ class FisherWeighingROSHandler(StationHandler):
         self._op_results = {}
         if isinstance(current_op, FisherWeightOpDescriptor):
             rospy.loginfo("reading stable weight")
-            for i in range(10):
+            for _ in range(10):
                 self._fisher_pu.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
         else:
             rospy.logwarn(f"[{self.__class__.__name__}] Unkown operation was received")

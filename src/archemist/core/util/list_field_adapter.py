@@ -13,8 +13,8 @@ class ListFieldAdapter:
         self._model = model
         self._field_name = field_name
 
-    def append(self, object: Union[Document, EmbeddedDocument]):
-        self._model.update(**{f"push__{self._field_name}": object})
+    def append(self, field_object: Union[Document, EmbeddedDocument]):
+        self._model.update(**{f"push__{self._field_name}": field_object})
 
     def popleft(self) -> Union[Document, EmbeddedDocument]:
         return self._pop(left=True)
@@ -23,12 +23,10 @@ class ListFieldAdapter:
         return self._pop(left=False)
 
     def extend(self, objects_list: List[Union[Document, EmbeddedDocument]]):
-        self._model.update(
-            **{f"push_all__{self._field_name}": [obj for obj in objects_list]}
-        )
+        self._model.update(**{f"push_all__{self._field_name}": list(objects_list)})
 
-    def remove(self, object: Union[Document, EmbeddedDocument]):
-        self._model.update(**{f"pull__{self._field_name}": object})
+    def remove(self, field_object: Union[Document, EmbeddedDocument]):
+        self._model.update(**{f"pull__{self._field_name}": field_object})
 
     def _pop(self, left: bool) -> Union[Document, EmbeddedDocument]:
         self._model.reload(self._field_name)
@@ -36,9 +34,9 @@ class ListFieldAdapter:
         if objects_list:
             list_pop_indx = 0 if left else -1
             field_pop_indx = -1 if left else 1
-            object = objects_list.pop(list_pop_indx)
+            new_list = objects_list.pop(list_pop_indx)
             self._model.update(**{f"pop__{self._field_name}": field_pop_indx})
-            return object
+            return new_list
         else:
             raise IndexError("pop from empty list")
 
@@ -53,12 +51,12 @@ class ListFieldAdapter:
     def __iter__(self) -> Iterator:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
-        return iter([object for object in objects_list])
+        return iter(list(objects_list))
 
     def __next__(self) -> Union[Document, EmbeddedDocument]:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
-        return next([object for object in objects_list])
+        return next(list(objects_list))
 
     def __bool__(self):
         self._model.reload(self._field_name)
@@ -81,8 +79,8 @@ class OpListAdapter(ListFieldAdapter):
         self._factory_cls = factory_cls
         super().__init__(model, field_name)
 
-    def append(self, object: Union[RobotOpDescriptor, StationOpDescriptor]):
-        return super().append(object.model)
+    def append(self, adapter_object: Union[RobotOpDescriptor, StationOpDescriptor]):
+        return super().append(adapter_object.model)
 
     def pop(self) -> Union[RobotOpDescriptor, StationOpDescriptor]:
         return self._factory_cls.create_op_from_model(super().pop())
@@ -91,23 +89,29 @@ class OpListAdapter(ListFieldAdapter):
         return self._factory_cls.create_op_from_model(super().popleft())
 
     def extend(self, objects_list: List[Union[RobotOpDescriptor, StationOpDescriptor]]):
-        return super().extend([object.model for object in objects_list])
+        return super().extend(list(objects_list))
 
-    def remove(self, object: Union[RobotOpDescriptor, StationOpDescriptor]):
-        return super().remove(object.model)
+    def remove(self, adapter_object: Union[RobotOpDescriptor, StationOpDescriptor]):
+        return super().remove(adapter_object.model)
 
     def __iter__(self) -> Iterator:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
         return iter(
-            [self._factory_cls.create_op_from_model(object) for object in objects_list]
+            [
+                self._factory_cls.create_op_from_model(adapter)
+                for adapter in objects_list
+            ]
         )
 
     def __next__(self) -> List[Union[RobotOpDescriptor, StationOpDescriptor]]:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
         return next(
-            [self._factory_cls.create_op_from_model(object) for object in objects_list]
+            [
+                self._factory_cls.create_op_from_model(adapter)
+                for adapter in objects_list
+            ]
         )
 
     def __getitem__(self, index: int) -> Union[RobotOpDescriptor, StationOpDescriptor]:
@@ -124,8 +128,8 @@ class StateObjListAdapter(ListFieldAdapter):
         self.state_obj_cls = state_obj_cls
         super().__init__(model, field_name)
 
-    def append(self, object: Any):
-        return super().append(object.model)
+    def append(self, state_object: Any):
+        return super().append(state_object.model)
 
     def pop(self) -> Any:
         return self.state_obj_cls(super().pop())
@@ -134,23 +138,23 @@ class StateObjListAdapter(ListFieldAdapter):
         return self.state_obj_cls(super().popleft())
 
     def extend(self, objects_list: List[Any]):
-        return super().extend([object.model for object in objects_list])
+        return super().extend([state.model for state in objects_list])
 
-    def remove(self, object: Any):
-        return super().remove(object.model)
+    def remove(self, state_object: Any):
+        return super().remove(state_object.model)
 
     def __iter__(self) -> Iterator:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
-        return iter([self.state_obj_cls(object) for object in objects_list])
+        return iter([self.state_obj_cls(state) for state in objects_list])
 
     def __next__(self) -> List[Any]:
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
-        return next([self.state_obj_cls(object) for object in objects_list])
+        return next([self.state_obj_cls(state) for state in objects_list])
 
     def __getitem__(self, index: int) -> Any:
         return self.state_obj_cls(super().__getitem__(index))
 
-    def __setitem__(self, index: int, object: Any):
-        return super().__setitem__(index, object.model)
+    def __setitem__(self, index: int, state_object: Any):
+        return super().__setitem__(index, state_object.model)

@@ -29,10 +29,10 @@ class PXRDStation(Station):
     def status(self, new_status: PXRDStatus):
         self._model.update(machine_status=new_status)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, PXRDAnalysisOpDescriptor):
+    def assign_station_op(self, station_op: Any):
+        if isinstance(station_op, PXRDAnalysisOpDescriptor):
             self.status = PXRDStatus.RUNNING_JOB
-        super().assign_station_op(stationOp)
+        super().assign_station_op(station_op)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()

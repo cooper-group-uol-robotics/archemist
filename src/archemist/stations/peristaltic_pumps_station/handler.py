@@ -34,7 +34,7 @@ class PeristalticLiquidDispensingROSHandler(StationHandler):
         self._received_results = False
         if isinstance(current_op, PeristalticPumpOpDescriptor):
             # TODO depending on the liquid we can select the correct pump
-            for i in range(10):
+            for _ in range(10):
                 self._pump_pub.publish(
                     dispenser_command=DispenserCommand.DISPENSEPID,
                     dispenser_ml=current_op.dispense_volume,

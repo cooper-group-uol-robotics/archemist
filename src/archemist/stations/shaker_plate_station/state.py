@@ -26,10 +26,10 @@ class ShakerPlateStation(Station):
     def status(self, new_status: ShakerStatus):
         self._model.update(machine_status=new_status)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, ShakeOpDescriptor):
+    def assign_station_op(self, station_op: Any):
+        if isinstance(station_op, ShakeOpDescriptor):
             self.status = ShakerStatus.SHAKING
-        super().assign_station_op(stationOp)
+        super().assign_station_op(station_op)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -39,8 +39,8 @@ class ShakerPlateStation(Station):
 
 
 class ShakeOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: ShakeOpDescriptorModel) -> None:
-        self._model = stationOpModel
+    def __init__(self, station_model: ShakeOpDescriptorModel) -> None:
+        self._model = station_model
 
     @classmethod
     def from_args(cls, **kwargs):

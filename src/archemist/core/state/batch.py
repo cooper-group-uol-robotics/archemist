@@ -75,7 +75,7 @@ class Batch:
         return self._model
 
     @property
-    def id(self) -> int:
+    def batch_id(self) -> int:
         return self._model.exp_id
 
     @property

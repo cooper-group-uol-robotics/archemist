@@ -58,7 +58,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = FisherWeightingStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops
@@ -91,7 +91,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = IkaPlateDigital.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops
@@ -168,7 +168,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = ChemSpeedFlexStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
         self.assertIsNone(t_station.status)
 
@@ -227,7 +227,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = InputStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops
@@ -257,7 +257,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = OutputStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops
@@ -287,7 +287,7 @@ class AllStationsTest(unittest.TestCase):
             "parameters": {},
         }
         t_station = LightBoxStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops
@@ -342,7 +342,7 @@ class AllStationsTest(unittest.TestCase):
         t_station = QuantosSolidDispenserQS2.from_dict(
             station_doc, solids=solids_list, liquids=[]
         )
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
         self.assertIsNone(t_station.current_catridge)
 
@@ -405,7 +405,7 @@ class AllStationsTest(unittest.TestCase):
         t_station = PeristalticLiquidDispensing.from_dict(
             station_dict=station_doc, liquids=liquids_list, solids=[]
         )
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
         self.assertEqual(
             t_station.get_liquid(pump_id="pUmP1").name, liquids_list[0].name
@@ -445,7 +445,7 @@ class AllStationsTest(unittest.TestCase):
             },
         }
         t_station = SolubilityStation.from_dict(station_doc, [], [])
-        self.assertEqual(t_station.id, station_doc["id"])
+        self.assertEqual(t_station.station_id, station_doc["id"])
         self.assertEqual(t_station.state, StationState.IDLE)
 
         # construct station ops

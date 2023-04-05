@@ -1,19 +1,16 @@
 from .model import IKAMode, IkaPlateDigitalModel, IKAOpDescriptorModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
-from archemist.core.state.material import Liquid, Solid
-
-
-""" ==== Station Description ==== """
+from typing import Any, Dict
 
 
 class IkaPlateDigital(Station):
+    """ ==== Station Description ==== """
     def __init__(self, station_model: IkaPlateDigitalModel) -> None:
         self._model = station_model
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = IkaPlateDigitalModel()
         cls._set_model_common_fields(station_dict, model)
         model._module = cls.__module__
@@ -92,21 +89,21 @@ class IkaPlateDigital(Station):
     def mode(self, new_mode: IKAMode):
         self._model.update(mode=new_mode)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, IKAHeatingStirringOpDescriptor):
-            self.target_temperature = stationOp.target_temperature
-            self.target_stirring_speed = stationOp.target_stirring_speed
-            self.target_duration = stationOp.target_duration
+    def assign_station_op(self, station_op: Any):
+        if isinstance(station_op, IKAHeatingStirringOpDescriptor):
+            self.target_temperature = station_op.target_temperature
+            self.target_stirring_speed = station_op.target_stirring_speed
+            self.target_duration = station_op.target_duration
             self.mode = IKAMode.HEATINGSTIRRING
-        elif isinstance(stationOp, IKAHeatingOpDescriptor):
-            self.target_temperature = stationOp.target_temperature
-            self.target_duration = stationOp.target_duration
+        elif isinstance(station_op, IKAHeatingOpDescriptor):
+            self.target_temperature = station_op.target_temperature
+            self.target_duration = station_op.target_duration
             self.mode = IKAMode.HEATING
-        elif isinstance(stationOp, IKAStirringOpDescriptor):
-            self.target_stirring_speed = stationOp.target_stirring_speed
-            self.target_duration = stationOp.target_duration
+        elif isinstance(station_op, IKAStirringOpDescriptor):
+            self.target_stirring_speed = station_op.target_stirring_speed
+            self.target_duration = station_op.target_duration
             self.mode = IKAMode.STIRRING
-        super().assign_station_op(stationOp)
+        super().assign_station_op(station_op)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         self._model.update(unset__target_temperature=True)
@@ -116,10 +113,8 @@ class IkaPlateDigital(Station):
         super().complete_assigned_station_op(success, **kwargs)
 
 
-""" ==== Station Operation Descriptors ==== """
-
-
 class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
+    """ ==== Station Operation Descriptors ==== """
     def __init__(self, op_model: IKAOpDescriptorModel) -> None:
         self._model = op_model
 

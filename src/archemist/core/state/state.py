@@ -42,7 +42,7 @@ class State:
         self._model = state_model
 
     @classmethod
-    def from_dict(cls, state_dict: dict = {}):
+    def from_dict(cls, state_dict: dict = None):
         model = StateModel()
         model.workflow_name = state_dict["name"]
         model.samples_per_batch = state_dict["samples_per_batch"]
@@ -136,7 +136,7 @@ class State:
             return Batch(model)
 
     @dispatch(int)
-    def get_batch(self, batch_id: int) -> Batch:
+    def get_batch(self, batch_id: int) -> Batch:  # noqa: F811
         model = BatchModel.objects.get(exp_id=batch_id)
         if model is not None:
             return Batch(model)
@@ -151,7 +151,7 @@ class State:
         return StationFactory.create_from_object_id(object_id)
 
     @dispatch(str, int)
-    def get_station(self, station_type: str, station_id: int) -> Station:
+    def get_station(self, station_type: str, station_id: int) -> Station:  # noqa: F811
         model = StationModel.objects.get(_type=station_type, exp_id=station_id)
         if model is not None:
             return StationFactory.create_from_model(model)
@@ -161,7 +161,7 @@ class State:
         return RobotFactory.create_from_object_id(object_id)
 
     @dispatch(str, int)
-    def get_robot(self, robot_type: str, robot_id: int):
+    def get_robot(self, robot_type: str, robot_id: int):  # noqa: F811
         model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)

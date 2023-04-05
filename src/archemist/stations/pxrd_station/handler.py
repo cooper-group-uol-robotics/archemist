@@ -1,14 +1,16 @@
-import rospy
+# Not Simulation, ignore errors for now
+import rospy  # noqa: F401
+from .state import PXRDAnalysisOpDescriptor  # noqa: F401
+from std_msgs.msg import String  # noqa: F401
+
+# External
 from typing import Tuple, Dict
-from archemist.core.state.station import Station
-from .state import PXRDAnalysisOpDescriptor
-from archemist.core.processing.handler import StationHandler
-from std_msgs.msg import String
 import time
 from threading import Thread
 
-
-##### TESTING WORKFLOW (FAKE SCANS)
+# Core
+from archemist.core.state.station import Station
+from archemist.core.processing.handler import StationHandler
 
 
 class PXRDStationROSHandler(StationHandler):
@@ -44,7 +46,8 @@ class PXRDStationROSHandler(StationHandler):
         time.sleep(1)
 
 
-#### ACTUAL WORKFLOW (REAL SCANS + PXRD PYTHON DRIVER )
+# TODO Implement simulation mode
+# ACTUAL WORKFLOW (REAL SCANS + PXRD PYTHON DRIVER )
 # class PXRDStationROSHandler(StationHandler):
 #    def __init__(self, station: Station):
 #        super().__init__(station)
@@ -69,11 +72,12 @@ class PXRDStationROSHandler(StationHandler):
 #        current_op = self._station.get_assigned_station_op()
 #        if (isinstance(current_op,PXRDAnalysisOpDescriptor)):
 #            rospy.loginfo('opening pxrd door')
-#            for i in range(10):
+#            for _ in range(10):
 #                self.PXRD_pub.publish('start_analysis')
 #            self._desired_cs_status = 'PXRDStatus.JOB_COMPLETE'
 #        else:
-#            rospy.logwarn(f'[{self.__class__.__name__}] Unknown operation was received')
+#            rospy.logwarn(f'[{self.__class__.__name__}] Unknown \
+#                         operation was received')
 
 #    def is_op_execution_complete(self) -> bool:
 #        if self._desired_cs_status == self._current_cs_status:

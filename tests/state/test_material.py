@@ -1,7 +1,10 @@
+# External
 import unittest
 from mongoengine import connect, errors
-from archemist.core.state.material import Liquid, Material, Solid
-from datetime import date, timedelta
+from datetime import date
+
+# Core
+from archemist.core.state.material import Liquid, Solid
 
 
 class MaterialTest(unittest.TestCase):

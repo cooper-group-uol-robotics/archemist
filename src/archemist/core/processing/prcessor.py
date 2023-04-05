@@ -58,9 +58,9 @@ class WorkflowManager:
                             break
 
                 # process unassigned batches
-                batches_buffer_copy = [
-                    batch for batch in self._workflow_state.batches_buffer
-                ]
+                # FIXME Check iterator
+                batches_buffer_copy = list(self._workflow_state.batches_buffer)
+
                 for batch in batches_buffer_copy:  # here the list gets copied
                     if batch.recipe.is_complete():
                         self._log_processor(

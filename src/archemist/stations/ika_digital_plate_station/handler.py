@@ -33,21 +33,21 @@ class IKAPlateDigitalROSHandler(StationHandler):
 
         if isinstance(current_op, IKAHeatingOpDescriptor):
             rospy.loginfo("executing heating operation")
-            for i in range(10):
+            for _ in range(10):
                 self._ika_pub.publish(
                     ika_command=IKACommand.HEATAT,
                     ika_param=current_op.target_temperature,
                 )
         elif isinstance(current_op, IKAStirringOpDescriptor):
             rospy.loginfo("executing stirring operation")
-            for i in range(10):
+            for _ in range(10):
                 self._ika_pub.publish(
                     ika_command=IKACommand.STIRAT,
                     ika_param=current_op.target_stirring_speed,
                 )
         elif isinstance(current_op, IKAHeatingStirringOpDescriptor):
             rospy.loginfo("executing heating and stirring operation")
-            for i in range(10):
+            for _ in range(10):
                 self._ika_pub.publish(
                     ika_command=IKACommand.HEATAT,
                     ika_param=current_op.target_temperature,
@@ -76,5 +76,5 @@ class IKAPlateDigitalROSHandler(StationHandler):
 
     def _sleep_for_duration(self, **kwargs):
         rospy.sleep(kwargs["duration"])
-        for i in range(10):
+        for _ in range(10):
             self._ika_pub.publish(ika_command=IKACommand.ALLOFF)

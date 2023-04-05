@@ -11,8 +11,14 @@ class CMDCategory(Enum):
     STATION = 3
 
 
+# FIXME Check params None
 class CMDMessage:
-    def __init__(self, category: CMDCategory, cmd: str, params: List[Any] = []) -> None:
+    def __init__(
+        self,
+        category: CMDCategory,
+        cmd: str,
+        params: List[Any] = None
+    ) -> None:
         self.category = category
         self.cmd = cmd
         self.params = params

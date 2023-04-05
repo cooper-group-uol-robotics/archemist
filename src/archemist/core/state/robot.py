@@ -29,7 +29,7 @@ class Robot:
             robot_model.batch_capacity = robot_dict["batch_capacity"]
 
     @property
-    def id(self) -> int:
+    def robot_id(self) -> int:
         return self._model.exp_id
 
     @property

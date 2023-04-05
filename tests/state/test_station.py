@@ -47,7 +47,7 @@ class StationTest(unittest.TestCase):
         )
 
         # general properties
-        self.assertEqual(t_station.id, 23)
+        self.assertEqual(t_station.station_id, 23)
         self.assertEqual(t_station.state, StationState.IDLE)
         self.assertEqual(t_station.batch_capacity, 2)
         self.assertEqual(t_station.operational, True)
@@ -68,9 +68,9 @@ class StationTest(unittest.TestCase):
         # Batch
         self.assertFalse(t_station.assigned_batches)
 
-        recipe_doc = dict()
+        recipe_doc = []
         with open("resources/testing_recipe.yaml") as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+            recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
         batch1 = Batch.from_arguments(31, 2, Location(1, 3, "table_frame"))
         recipe1 = Recipe.from_dict(recipe_doc)
         batch1.attach_recipe(recipe1)

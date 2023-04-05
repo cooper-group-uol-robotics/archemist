@@ -1,11 +1,14 @@
-import rospy
+# External
 from typing import Dict, Tuple
+
+# Core
 from archemist.core.processing.handler import StationHandler
 from archemist.core.state.station import Station
 from .state import SolubilityOpDescriptor
-from archemist_msgs.msg import CameraCommand
 
-from rospy.core import is_shutdown
+# ROS
+import rospy
+from archemist_msgs.msg import CameraCommand
 
 
 class SolubilityStationROSHandler(StationHandler):

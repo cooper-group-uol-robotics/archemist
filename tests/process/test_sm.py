@@ -53,11 +53,13 @@ class SMTestWithBatchMode(unittest.TestCase):
         self.assertEqual(t_sm.state, "init_state")
         self.assertFalse(t_sm.process_state_transitions())
 
-        recipe_doc = dict()
+        recipe_doc = []
+        # FIXME create root folders. Path finder
         with open(
-            "/home/gilgamish/robot_chemist_ws/src/archemist/tests/state/resources/testing_recipe.yaml"
+            "/home/gilgamish/robot_chemist_ws/src/archemist/tests/state/resources\
+                /testing_recipe.yaml"
         ) as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+            recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
 
         bat = Batch.from_arguments(31, 2, Location(2, 7, "table_frame"))
         recipe = Recipe.from_dict(recipe_doc)

@@ -80,7 +80,7 @@ class ArchemistServer:
                         robots = self._state.robots
                         robots_dict = {
                             "names": [robot.__class__.__name__ for robot in robots],
-                            "ids": [robot.id for robot in robots],
+                            "ids": [robot.robot_id for robot in robots],
                         }
                         json_msg = json.dumps(robots_dict)
                         self._server.send_json(json_msg)
@@ -110,7 +110,7 @@ class ArchemistServer:
                             "names": [
                                 station.__class__.__name__ for station in stations
                             ],
-                            "ids": [station.id for station in stations],
+                            "ids": [station.station_id for station in stations],
                         }
                         json_msg = json.dumps(stations_dict)
                         self._server.send_json(json_msg)

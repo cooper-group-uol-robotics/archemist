@@ -133,66 +133,66 @@ class KmriiwaROSHandler(RobotHandler):
             rospy.sleep(0.1)
         self._lbr_done = False
 
-    def _process_kmriiwa_task_op(self, robotOp):
+    def _process_kmriiwa_task_op(self, robot_op):
         lbr_task = None
         kmr_task = None
-        if isinstance(robotOp, KukaLBRMaintenanceTask):
+        if isinstance(robot_op, KukaLBRMaintenanceTask):
             self._lbr_cmd_seq += 1
             lbr_task = LBRCommand(
                 cmd_seq=self._lbr_cmd_seq,
                 priority_task=True,
-                task_name=robotOp.name,
-                task_parameters=robotOp.params,
+                task_name=robot_op.name,
+                task_parameters=robot_op.params,
             )
-        elif isinstance(robotOp, KukaLBRTask):
+        elif isinstance(robot_op, KukaLBRTask):
             if (
-                robotOp.location.get_map_coordinates()
+                robot_op.location.get_map_coordinates()
                 != self._robot.location.get_map_coordinates()
             ):
                 self._kmr_cmd_seq += 1
                 kmr_task = NavCommand(
                     cmd_seq=self._kmr_cmd_seq,
                     priority_task=False,
-                    robot_id=self._robot.id,
-                    graph_id=robotOp.location.graph_id,
-                    node_id=robotOp.location.node_id,
+                    robot_id=self._robot.robot_id,
+                    graph_id=robot_op.location.graph_id,
+                    node_id=robot_op.location.node_id,
                     fine_localization=True,
                 )
-                robotOp.params[0] = "True"  # Six point calibration is needed
+                robot_op.params[0] = "True"  # Six point calibration is needed
             else:
-                robotOp.params[0] = "False"
+                robot_op.params[0] = "False"
             self._lbr_cmd_seq += 1
             lbr_task = LBRCommand(
                 cmd_seq=self._lbr_cmd_seq,
                 priority_task=False,
-                task_name=robotOp.name,
-                task_parameters=robotOp.params,
+                task_name=robot_op.name,
+                task_parameters=robot_op.params,
             )
-        elif isinstance(robotOp, KukaNAVTask):
+        elif isinstance(robot_op, KukaNAVTask):
             robot_at_location = (
-                robotOp.target_location.get_map_coordinates()
+                robot_op.target_location.get_map_coordinates()
                 == self._robot.location.get_map_coordinates()
             )
             if not robot_at_location or (
-                robot_at_location and robotOp.fine_localisation
+                robot_at_location and robot_op.fine_localisation
             ):
                 self._kmr_cmd_seq += 1
                 kmr_task = NavCommand(
                     cmd_seq=self._kmr_cmd_seq,
                     priority_task=False,
-                    robot_id=self._robot.id,
-                    graph_id=robotOp.target_location.graph_id,
-                    node_id=robotOp.target_location.node_id,
-                    fine_localization=robotOp.fine_localisation,
+                    robot_id=self._robot.robot_id,
+                    graph_id=robot_op.target_location.graph_id,
+                    node_id=robot_op.target_location.node_id,
+                    fine_localization=robot_op.fine_localisation,
                 )
             else:
                 kmr_task = NavCommand(
                     cmd_seq=-1,
                     priority_task=False,
-                    robot_id=self._robot.id,
-                    graph_id=robotOp.target_location.graph_id,
-                    node_id=robotOp.target_location.node_id,
-                    fine_localization=robotOp.fine_localisation,
+                    robot_id=self._robot.robot_id,
+                    graph_id=robot_op.target_location.graph_id,
+                    node_id=robot_op.target_location.node_id,
+                    fine_localization=robot_op.fine_localisation,
                 )
         else:
             rospy.logerr("unknown KUKAIIWA robot op")
@@ -228,7 +228,7 @@ class KmriiwaROSHandler(RobotHandler):
                     f"executing task {self._kmr_task_name} with \
                         cmd_seq: {self._kmr_cmd_seq}"
                 )
-                for i in range(10):
+                for _ in range(10):
                     self._kmrCmdPub.publish(self._kmr_task)
             else:
                 self._kmr_done = True
@@ -238,7 +238,7 @@ class KmriiwaROSHandler(RobotHandler):
                 f"executing task {self._lbr_task_name} \
                     with cmd_seq: {self._lbr_cmd_seq}"
             )
-            for i in range(10):
+            for _ in range(10):
                 self._lbrCmdPub.publish(self._lbr_task)
 
     def is_op_execution_complete(self):
@@ -258,7 +258,7 @@ class KmriiwaROSHandler(RobotHandler):
                     f"executing task {self._lbr_task_name} with \
                         cmd_seq: {self._lbr_cmd_seq}"
                 )
-                for i in range(10):
+                for _ in range(10):
                     self._lbrCmdPub.publish(self._lbr_task)
             else:
                 job_complete = True

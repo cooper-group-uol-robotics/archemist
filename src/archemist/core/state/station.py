@@ -40,7 +40,7 @@ class Station:
         return self._model.state
 
     @property
-    def id(self) -> int:
+    def station_id(self) -> int:
         return self._model.exp_id
 
     @property

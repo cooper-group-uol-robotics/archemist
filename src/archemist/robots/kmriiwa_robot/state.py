@@ -1,3 +1,8 @@
+# External
+from bson.objectid import ObjectId
+from typing import List
+
+# Core
 from archemist.core.models.robot_model import MobileRobotModel
 from archemist.core.models.robot_op_model import RobotTaskOpDescriptorModel
 from archemist.core.state.robot import (
@@ -8,27 +13,28 @@ from archemist.core.state.robot import (
 )
 from archemist.core.util import Location
 from .model import KukaNAVTaskModel
-from bson.objectid import ObjectId
-from typing import List
 
 
 class KukaLBRTask(RobotTaskOpDescriptor):
     def __init__(self, op_model: RobotTaskOpDescriptorModel):
         super().__init__(op_model)
 
+    # FIXME Check is Location defaults to location()
     @classmethod
     def from_args(
         cls,
-        name: str,
-        type: RobotTaskType = RobotTaskType.MANIPULATION,
-        params: List[str] = [],
-        location: Location = Location(),
+        location: Location,
+        task_name: str,
+        task_type: RobotTaskType = RobotTaskType.MANIPULATION,
+        params: List[str] = None,
         origin_station: ObjectId = None,
         related_batch_id: int = None,
     ):
         model = (
             super()
-            .from_args(name, type, params, location, origin_station, related_batch_id)
+            .from_args(
+                task_name, task_type, params, location, origin_station, related_batch_id
+            )
             .model
         )
         model._type = cls.__name__

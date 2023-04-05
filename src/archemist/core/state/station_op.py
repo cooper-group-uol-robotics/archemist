@@ -3,8 +3,8 @@ from archemist.core.models.station_op_model import StationOpDescriptorModel
 
 
 class StationOpDescriptor:
-    def __init__(self, stationOpModel: StationOpDescriptorModel) -> None:
-        self._model = stationOpModel
+    def __init__(self, station_op_model: StationOpDescriptorModel) -> None:
+        self._model = station_op_model
 
     @property
     def model(self):

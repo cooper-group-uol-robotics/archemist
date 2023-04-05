@@ -1,5 +1,5 @@
 from typing import Dict
-from transitions import Machine, State
+from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask

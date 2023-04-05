@@ -32,12 +32,14 @@ class RecipeFilesWatchdog(Observer):
         self._recipes_dir = recipes_dir
         self._recipes_dir_handler = RecipesDirHandler()
 
-        # add already existing recipes to the queue
+        # add already existing recipes to the queue FIXME loggin
         print("checking recipes directory for existing recipes")
-        for file in Path(recipes_dir).glob("*"):
-            if file.name[-5:] == ".yaml":
-                print(f"recipe file was added: {file.name}")
-                self._recipes_dir_handler.recipes_queue.append(file)
+
+        recipes = Path(recipes_dir).glob("*")
+        for recipe in recipes:
+            if recipe.name[-5:] == ".yaml":
+                print(f"recipe file was added: {recipe.name}")
+                self._recipes_dir_handler.recipes_queue.append(recipe)
 
         self.schedule(
             event_handler=self._recipes_dir_handler,

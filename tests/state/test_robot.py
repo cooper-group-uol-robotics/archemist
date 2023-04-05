@@ -17,7 +17,7 @@ class RobotTest(unittest.TestCase):
         }
 
         t_robot = KukaLBRIIWA.from_dict(robot_dict)
-        self.assertEqual(t_robot.id, 187)
+        self.assertEqual(t_robot.robot_id, 187)
         self.assertEqual(
             t_robot.location, Location(node_id=-1, graph_id=-1, frame_name="")
         )

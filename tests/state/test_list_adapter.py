@@ -145,10 +145,10 @@ class ListAdapterTest(unittest.TestCase):
         # pop operation
         rpop_batch = batches_list_adapter.pop()
         self.assertEqual(len(batches_list_adapter), 2)
-        self.assertEqual(rpop_batch.id, batch3.id)
+        self.assertEqual(rpop_batch.batch_id, batch3.id)
         lpop_batch = batches_list_adapter.popleft()
         self.assertEqual(len(batches_list_adapter), 1)
-        self.assertEqual(lpop_batch.id, batch1.id)
+        self.assertEqual(lpop_batch.batch_id, batch1.id)
 
         # extend operation
         batches_list_adapter.extend([batch1, batch3])
@@ -161,7 +161,7 @@ class ListAdapterTest(unittest.TestCase):
         i = 0
         ids = [2, 1, 3]
         for batch in batches_list_adapter:
-            self.assertEqual(batch.id, ids[i])
+            self.assertEqual(batch.batch_id, ids[i])
             i += 1
 
         # remove operation

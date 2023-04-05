@@ -53,11 +53,11 @@ class YuMiROSHandler(RobotHandler):
                 self._task_complete = True
                 self._op_result = False
 
-    def _process_op(self, robotOp) -> YuMiTask:
+    def _process_op(self, robot_op) -> YuMiTask:
         task = None
-        if isinstance(robotOp, YuMiRobotTask):
+        if isinstance(robot_op, YuMiRobotTask):
             self._task_counter += 1
-            task = YuMiTask(task_name=f"{robotOp.name}", cmd_seq=self._task_counter)
+            task = YuMiTask(task_name=f"{robot_op.name}", cmd_seq=self._task_counter)
         else:
             rospy.logerr("unknown robot op")
         return task
@@ -67,7 +67,7 @@ class YuMiROSHandler(RobotHandler):
         self._yumi_task = self._process_op(robot_op)
         rospy.loginfo("executing " + self._yumi_task.task_name)
         self._task_complete = False
-        for i in range(10):
+        for _ in range(10):
             self._yumi_pub.publish(self._yumi_task)
 
     def is_op_execution_complete(self) -> bool:

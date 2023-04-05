@@ -54,10 +54,10 @@ class PandaROSHandler(RobotHandler):
                 self._task_complete = True
                 self._op_result = False
 
-    def _process_op(self, robotOp):
+    def _process_op(self, robot_op):
         task = None
-        if isinstance(robotOp, PandaRobotTask):
-            task = PandaTask(task_name=f"{robotOp.name}", cmd_seq=self._task_counter)
+        if isinstance(robot_op, PandaRobotTask):
+            task = PandaTask(task_name=f"{robot_op.name}", cmd_seq=self._task_counter)
             self._task_counter += 1
         else:
             rospy.logerr("unknown robot op")
@@ -69,7 +69,7 @@ class PandaROSHandler(RobotHandler):
         self._panda_task = self._process_op(robot_op)
         rospy.loginfo("executing " + self._panda_task.task_name)
         self._task_complete = False
-        for i in range(10):
+        for _ in range(10):
             self._panda_pub.publish(self._panda_task)
 
     def is_op_execution_complete(self) -> bool:

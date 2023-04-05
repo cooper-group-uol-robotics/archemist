@@ -1,9 +1,11 @@
+# External
 import unittest
-from archemist.core.persistence.persistence_manager import PersistenceManager
-from archemist.core.util.location import Location
-from archemist.core.state.recipe import Recipe
 import yaml
 import os
+
+# Core
+from archemist.core.persistence.persistence_manager import PersistenceManager
+from archemist.core.state.recipe import Recipe
 
 
 class StateTest(unittest.TestCase):
@@ -20,10 +22,10 @@ class StateTest(unittest.TestCase):
         self.assertEqual(stations[0].id, 5)
         obj_id_station = state.get_station(stations[0]._model.id)
         self.assertEqual(obj_id_station.__class__.__name__, "FisherWeightingStation")
-        self.assertEqual(obj_id_station.id, 5)
+        self.assertEqual(obj_id_station.station_id, 5)
         string_id_station = state.get_station("FisherWeightingStation", 5)
         self.assertEqual(string_id_station.__class__.__name__, "FisherWeightingStation")
-        self.assertEqual(string_id_station.id, 5)
+        self.assertEqual(string_id_station.station_id, 5)
         string_id_station = state.get_station("ChemSpeedFlexStation", 9)
         self.assertEqual(stations[1].__class__.__name__, "ChemSpeedFlexStation")
         self.assertEqual(stations[1].id, 9)
@@ -36,7 +38,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(robots[0].id, 99)
         obj_id_robot = state.get_robot(robots[0]._model.id)
         self.assertEqual(obj_id_robot.__class__.__name__, "PandaFranka")
-        self.assertEqual(obj_id_robot.id, 99)
+        self.assertEqual(obj_id_robot.robot_id, 99)
         string_id_robot = state.get_robot("PandaFranka", 99)
         self.assertEqual(string_id_robot.__class__.__name__, "PandaFranka")
         self.assertEqual(string_id_robot.id, 99)
@@ -52,12 +54,11 @@ class StateTest(unittest.TestCase):
         self.assertEqual(solids[0].id, 345)
 
         self.assertEqual(len(state.batches), 0)
-        recipe_doc = dict()
+        recipe_doc = []
         recipe_dir = os.path.join(dir_path, "resources/testing_recipe.yaml")
         with open(recipe_dir) as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+            recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
         batch1 = state.add_clean_batch()
-        batch2 = state.add_clean_batch()
 
         batches = state.batches
         self.assertEqual(len(batches), 2)
@@ -74,7 +75,7 @@ class StateTest(unittest.TestCase):
         batch1.recipe.advance_state(True)
 
         obj_id_batch = state.get_batch(batch1._model.id)
-        self.assertEqual(obj_id_batch.id, batch1.id)
+        self.assertEqual(obj_id_batch.batch_id, batch1.batch_id)
         self.assertTrue(obj_id_batch.recipe.is_complete())
 
         only_id_batch = state.get_batch(1)
@@ -101,7 +102,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(stations[2].id, 2)
         string_id_station = state.get_station("ChemSpeedFlexStation", 9)
         self.assertEqual(string_id_station.__class__.__name__, "ChemSpeedFlexStation")
-        self.assertEqual(string_id_station.id, 9)
+        self.assertEqual(string_id_station.station_id, 9)
 
         robots = state.robots
         self.assertEqual(len(robots), 2)

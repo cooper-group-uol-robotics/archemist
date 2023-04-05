@@ -145,11 +145,11 @@ class YamlHandler:
     """FIXME"""
 
     @staticmethod
-    def loadYamlFile(filePath):
-        with open(filePath) as fs:
-            return yaml.load(fs, Loader=yaml.SafeLoader)
+    def load_yaml_file(file_path: str):
+        with open(file_path) as fs:
+            return yaml.safe_load(fs, Loader=yaml.SafeLoader)
 
-    def _load_and_validate_schema(file_path, schema):
+    def _load_and_validate_schema(self, file_path, schema):
         with open(file_path) as config_file:
             yaml_str = config_file.read()
             return dirty_load(yaml_str, schema=schema, allow_flow_style=True)

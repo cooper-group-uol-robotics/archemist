@@ -73,18 +73,18 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
     @classmethod
     def from_args(
         cls,
-        name: str,
-        type: RobotTaskType = RobotTaskType.MANIPULATION,
-        params: List[str] = [],
-        location: Location = Location(),
+        location: Location,
+        task_name: str,
+        task_type: RobotTaskType = RobotTaskType.MANIPULATION,
+        params: List[str] = None,
         origin_station: ObjectId = None,
         related_batch_id: int = None,
     ):
         model = RobotTaskOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
-        model.name = name
-        model.task_type = type
+        model.name = task_name
+        model.task_type = task_type
         model.params = [str(param) for param in params]
         model.location = location.to_dict() if location is not None else None
         model.origin_station = origin_station if origin_station is not None else None

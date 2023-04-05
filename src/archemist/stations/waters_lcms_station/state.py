@@ -1,8 +1,11 @@
+# External
+from typing import List, Any, Dict
+
+# Core
 from .model import WatersLCMSStationModel, LCMSStatus, LCMSOpModel
 from archemist.core.state.station import Station
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
 from archemist.core.state.material import Liquid, Solid
 
 """ ==== Station Description ==== """
@@ -29,10 +32,10 @@ class WatersLCMSStation(Station):
     def status(self, new_status: LCMSStatus):
         self._model.update(machine_status=new_status)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, LCMSAnalysisOpDescriptor):
+    def assign_station_op(self, station_op: Any):
+        if isinstance(station_op, LCMSAnalysisOpDescriptor):
             self.status = LCMSStatus.RUNNING_ANALYSIS
-        super().assign_station_op(stationOp)
+        super().assign_station_op(station_op)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()

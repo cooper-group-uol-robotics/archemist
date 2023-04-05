@@ -1,3 +1,7 @@
+# External
+from datetime import datetime
+
+# Core
 from .model import (
     QuantosCatridgeModel,
     QuantosSolidDispenserQS2Model,
@@ -10,10 +14,8 @@ from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Solid, Liquid
 from typing import Dict, List
 from archemist.core.exceptions.exception import (
-    UsingConsumedCatridgeError,
     QuantosCatridgeLoadedError,
 )
-from datetime import datetime
 
 
 class QuantosCatridge:
@@ -21,9 +23,11 @@ class QuantosCatridge:
         self._model = catridge_model
 
     @classmethod
-    def from_args(cls, id: int, solid: Solid, hotel_index: int, remaining_dosages: int):
+    def from_args(
+        cls, exp_id: int, solid: Solid, hotel_index: int, remaining_dosages: int
+    ):
         model = QuantosCatridgeModel()
-        model.exp_id = id
+        model.exp_id = exp_id
         model.associated_solid = solid.model
         model.hotel_index = hotel_index
         model.remaining_dosages = remaining_dosages
@@ -34,7 +38,7 @@ class QuantosCatridge:
         return self._model
 
     @property
-    def id(self) -> int:
+    def exp_id(self) -> int:
         return self._model.exp_id
 
     @property
@@ -144,11 +148,13 @@ class QuantosSolidDispenserQS2(Station):
             )
             if current_catridge.consumed:
                 self._log_station(
-                    f"the catridge {current_catridge.id} does not have any dosages left anymore. Please replace it."
+                    f"the catridge {current_catridge.id} does not have any dosages left\
+                        anymore. Please replace it."
                 )
         else:
             self._log_station(
-                f"Current catridge {current_catridge.id} is either consumed or blocked. Cannot Dispense solid!!!"
+                f"Current catridge {current_catridge.id} is either consumed or blocked.\
+                    Cannot Dispense solid!!!"
             )
 
     def complete_assigned_station_op(self, success: bool, **kwargs):

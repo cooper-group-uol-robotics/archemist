@@ -43,17 +43,17 @@ class ChemSpeedFlexROSHandler(StationHandler):
         current_op = self._station.get_assigned_station_op()
         if isinstance(current_op, CSOpenDoorOpDescriptor):
             rospy.loginfo("opening chemspeed door")
-            for i in range(10):
+            for _ in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.OPEN_DOOR)
             self._desired_cs_status = CSFlexStatus.DOOR_OPEN
         elif isinstance(current_op, CSCloseDoorOpDescriptor):
             rospy.loginfo("closing chemspeed door")
-            for i in range(10):
+            for _ in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
             self._desired_cs_status = CSFlexStatus.DOOR_CLOSED
         elif isinstance(current_op, CSProcessingOpDescriptor):
             rospy.loginfo("starting chemspeed job")
-            for i in range(10):
+            for _ in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
             self._desired_cs_status = CSFlexStatus.JOB_COMPLETE
         elif isinstance(current_op, CSCSVJobOpDescriptor):
@@ -61,7 +61,7 @@ class ChemSpeedFlexROSHandler(StationHandler):
             rospy.set_param("chemspeed_input_csv", current_op.get_csv_string())
             rospy.sleep(3)  # wait for csv to be uploaded
             rospy.loginfo("starting chemspeed job")
-            for i in range(10):
+            for _ in range(10):
                 self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
             self._desired_cs_status = CSFlexStatus.JOB_COMPLETE
         else:

@@ -46,12 +46,12 @@ class ChemSpeedFlexStation(Station):
         liquid_obj_id = self._model.liquids_dict[liquid_name]
         return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(
-            stationOp, CSCSVJobOpDescriptor
+    def assign_station_op(self, station_op: Any):
+        if isinstance(station_op, CSCSVJobOpDescriptor) or isinstance(
+            station_op, CSCSVJobOpDescriptor
         ):
             self.status = ChemSpeedStatus.RUNNING_JOB
-        super().assign_station_op(stationOp)
+        super().assign_station_op(station_op)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -118,8 +118,9 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         model.dispense_info = kwargs["dispense_info"]
-        for k, v in model.dispense_info.items():
-            model.dispense_info[k] = list(map(float, v))
+        # FIXME check what key, value means for this dict
+        for key, value in model.dispense_info.items():
+            model.dispense_info[key] = list(map(float, value))
         return cls(model)
 
     @classmethod
@@ -142,8 +143,8 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
             return self._model.result_file
 
     def get_csv_string(self) -> str:
-        dispence_lists = [l for l in self._model.dispense_info.values()]
-        zipped_tuples = zip(*[l for l in dispence_lists])
+        dispense_lists = list(self._model.dispense_info.values())
+        zipped_tuples = zip(*list(dispense_lists))
         csv_string = ""
         for tup in zipped_tuples:
             tmp = ",".join(map(str, tup))

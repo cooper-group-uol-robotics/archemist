@@ -1,12 +1,14 @@
+# External
 from typing import Dict
 from transitions import State
+
+# Core
 from .state import PXRDStatus
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import (
     KukaLBRTask,
     KukaLBRMaintenanceTask,
-    KukaNAVTask,
 )
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.util import Location

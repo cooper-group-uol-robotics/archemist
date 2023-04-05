@@ -1,7 +1,10 @@
-from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+# External
 from mongoengine import fields
 from enum import Enum, auto
+
+# Core
+from archemist.core.models.station_model import StationModel
+from archemist.core.models.station_op_model import StationOpDescriptorModel
 
 
 class LCMSStatus(Enum):

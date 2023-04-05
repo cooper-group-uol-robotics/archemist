@@ -1,26 +1,29 @@
+# External
 import unittest
+import yaml
+from mongoengine import connect
+
+# Core
 from archemist.stations.ika_digital_plate_station.state import (
     IKAHeatingOpDescriptor,
     IKAStirringOpDescriptor,
 )
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
-import yaml
-from mongoengine import connect
 from archemist.core.util.location import Location
 
 
 class BatchRecipeTest(unittest.TestCase):
-    def setUp(self):
+    def set_up(self):
         self.batch_obj_id = None
 
     def test_batch_from_dict(self):
-        recipe_doc = dict()
+        recipe_doc = []
         with open("resources/testing_recipe.yaml") as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+            recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
 
         batch = Batch.from_arguments(31, 2, Location(1, 3, "table_frame"))
-        self.assertEqual(batch.id, 31)
+        self.assertEqual(batch.batch_id, 31)
         self.assertEqual(batch.location, Location(1, 3, "table_frame"))
         batch.location = Location(1, 3, "chair_frame")
         self.assertEqual(batch.location, Location(1, 3, "chair_frame"))
@@ -79,19 +82,19 @@ class BatchRecipeTest(unittest.TestCase):
         )
 
         # Test batch construction from objectId
-        batch2 = Batch.from_object_id(batch._model.id)
+        batch2 = Batch.from_object_id(batch._model.batch_id)
         self.assertEqual(batch2.id, 31)
         self.assertEqual(batch2.location, Location(1, 3, "chair_frame"))
         self.assertEqual(len(batch2.station_history), 2)
         self.assertEqual(batch2.recipe.current_state, "stirring_operation")
 
-        self.assertEqual(batch2.recipe.id, batch.recipe.id)
+        self.assertEqual(batch2.recipe.recipe_id, batch.recipe.recipe_id)
         self.assertEqual(batch2.recipe.current_state, batch.recipe.current_state)
 
     def test_recipe(self):
-        recipe_doc = dict()
+        recipe_doc = []
         with open("resources/testing_recipe.yaml") as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+            recipe_doc = yaml.safe_load(fs, Loader=yaml.SafeLoader)
 
         batch = Batch.from_arguments(31, 2, Location(1, 3, "table_frame"))
         self.assertFalse(batch.recipe_attached)
@@ -101,7 +104,7 @@ class BatchRecipeTest(unittest.TestCase):
         batch.attach_recipe(recipe)
         self.assertTrue(batch.recipe_attached)
 
-        self.assertEqual(batch.recipe.id, 198)
+        self.assertEqual(batch.recipe.recipe_id, 198)
         self.assertEqual(batch.recipe.name, "test_archemist_recipe")
         self.assertEqual(batch.recipe.liquids[0], {"name": "water", "id": 1})
         self.assertEqual(batch.recipe.solids[0], {"name": "sodium_chloride", "id": 2})

@@ -22,7 +22,7 @@ class SimpleRobotScheduler(RobotScheduler):
         super().__init__()
 
     def schedule(self, state: State):
-        unassigned_jobs = list()
+        unassigned_jobs = []
         while state.robot_ops_queue:
             station_robot_job = state.robot_ops_queue.pop()
             job_assigned = False
@@ -62,7 +62,7 @@ class MultiBatchRobotScheduler(RobotScheduler):
         return next_station_free
 
     def schedule(self, state: State):
-        unassigned_jobs = list()
+        unassigned_jobs = []
         while state.robot_ops_queue:
             robot_job = state.robot_ops_queue.pop()
             job_assigned = False

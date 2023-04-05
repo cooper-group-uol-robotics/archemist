@@ -1,9 +1,12 @@
+# External
 from transitions import State
-from archemist.core.persistence.object_factory import StationFactory
+
+# Core
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.yumi_robot.state import YuMiRobotTask
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
 from archemist.core.processing.station_process_fsm import StationProcessFSM
+from archemist.robots.kmriiwa_robot.state import KukaLBRMaintenanceTask
 from archemist.core.state.station import Station
 from typing import Dict
 

@@ -146,7 +146,8 @@ class LightBoxSM(StationProcessFSM):
             self.are_all_samples_loaded()
             and (self._status["batches_count"] - 1) == self._station.batch_capacity
         ):
-            allow_auto_func = True  # enable auto charge and calibration since we are done un/loading samples
+            # Enable auto charge and calibration since we are done un/loading samples
+            allow_auto_func = True
         else:
             allow_auto_func = False
         robot_job = KukaLBRTask.from_args(

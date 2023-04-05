@@ -23,15 +23,11 @@ class Recipe:
         model.exp_id = recipe_document["general"]["id"]
         if "materials" in recipe_document:
             if "solids" in recipe_document["materials"]:
-                model.solids = [
-                    liquid_dict
-                    for liquid_dict in recipe_document["materials"]["solids"]
-                ]
+                model.solids = list(recipe_document["materials"]["solids"])
+
             if "liquids" in recipe_document["materials"]:
-                model.liquids = [
-                    liquid_dict
-                    for liquid_dict in recipe_document["materials"]["liquids"]
-                ]
+                model.liquids = list(recipe_document["materials"]["liquids"])
+
         for state_dict in recipe_document["process"]:
             model.states.append(state_dict["state_name"])
             model.transitions.extend(
@@ -67,7 +63,7 @@ class Recipe:
         return self._model.name
 
     @property
-    def id(self):
+    def recipe_id(self):
         return self._model.exp_id
 
     @property
@@ -94,7 +90,7 @@ class Recipe:
         self._update_recipe_sm_state()
         self._station_sm.on_success() if success else self._station_sm.on_fail()
         self._model.update(current_state=self._station_sm.state)
-        self._logRecipe("Current state advanced to " + self._station_sm.state)
+        self._log_recipe("Current state advanced to " + self._station_sm.state)
 
     def is_complete(self):
         return self.current_state == "end_state"
@@ -125,5 +121,5 @@ class Recipe:
             self.current_state
         )  # update state machine state to be inline with db
 
-    def _logRecipe(self, message: str):
+    def _log_recipe(self, message: str):
         print(f"Recipe [{self.id}]: " + message)

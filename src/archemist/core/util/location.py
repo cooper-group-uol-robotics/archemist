@@ -16,11 +16,11 @@ class Location:
     def frame_name(self):
         return self._frame_name
 
-    def __eq__(self, o: object) -> bool:
+    def __eq__(self, location_obj: object) -> bool:
         return (
-            o._node_id == self._node_id
-            and o._graph_id == self._graph_id
-            and o._frame_name == self._frame_name
+            location_obj._node_id == self._node_id
+            and location_obj._graph_id == self._graph_id
+            and location_obj._frame_name == self._frame_name
         )
 
     def get_map_coordinates(self):

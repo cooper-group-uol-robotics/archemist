@@ -36,7 +36,7 @@ class LightBoxROSHandler(StationHandler):
         if isinstance(current_op, SampleColorOpDescriptor):
             op_msg = ColorimetryCommand()
             op_msg.op_name = "take_pic"
-            for i in range(10):
+            for _ in range(10):
                 self.pubCamera.publish(op_msg)
         else:
             rospy.logwarn(f"[{self.__class__.__name__}] Unkown operation was received")

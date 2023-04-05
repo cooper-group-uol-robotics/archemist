@@ -43,7 +43,7 @@ class ShakePlateROSHandler(StationHandler):
             msg = ShakerCommand(
                 shake_duration=current_op.duration, task_seq=self._task_seq
             )
-            for i in range(10):
+            for _ in range(10):
                 self._shaker_plate_pu.publish(msg)
 
         else:

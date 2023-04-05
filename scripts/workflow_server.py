@@ -16,7 +16,7 @@ from archemist.robots.kmriiwa_robot.state import KukaLBRMaintenanceTask
 if __name__ == "__main__":
     current_dir = Path.cwd()
     server_config_file_path = current_dir.joinpath("server_settings.yaml")
-    server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
+    server_setttings = YamlHandler.load_yaml_file(server_config_file_path)
 
     workflow_dir = Path(server_setttings["workflow_dir_path"])
     # FIXME Check if this works
@@ -63,13 +63,13 @@ if __name__ == "__main__":
             if recipe_to_loop is None:
                 if recipes_watcher.recipes_queue:
                     recipe_file_path = recipes_watcher.recipes_queue.pop()
-                    recipe_to_loop = YamlHandler.loadYamlFile(recipe_file_path)
+                    recipe_to_loop = YamlHandler.load_yaml_file(recipe_file_path)
             elif len(wm_manager.recipes_queue) == 0:
                 wm_manager.queue_recipe(recipe_to_loop)
         else:
             while recipes_watcher.recipes_queue:
                 recipe_file_path = recipes_watcher.recipes_queue.pop()
-                recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
+                recipe_dict = YamlHandler.load_yaml_file(recipe_file_path)
                 wm_manager.queue_recipe(recipe_dict)
                 print("new recipe file queued")
 

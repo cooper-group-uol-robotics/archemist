@@ -27,7 +27,7 @@ class Material:
         return self._model.name
 
     @property
-    def id(self) -> int:
+    def material_id(self) -> int:
         return self._model.exp_id
 
     @property

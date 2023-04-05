@@ -1,5 +1,7 @@
-import rospy
+# External
 from typing import Tuple, Dict
+
+# Core
 from archemist.core.state.station import Station
 from .state import (
     OpenDoorOpDescriptor,
@@ -7,12 +9,15 @@ from .state import (
     QuantosDispenseOpDescriptor,
     MoveCarouselOpDescriptor,
 )
-from mettler_toledo_quantos_q2_msgs.msg import QuantosCommand
 from archemist.core.processing.handler import StationHandler
+
+# ROS
+import rospy
 from std_msgs.msg import String
+from mettler_toledo_quantos_q2_msgs.msg import QuantosCommand
 
-
-"""TODO write a subscriber that publish quantos status such as dispensed weight, door status, sampler position and possibly dispensed solid"""
+# TODO write a subscriber that publish quantos status such as dispensed
+# weight,door status, sampler position and possibly dispensed solid
 
 
 class QuantosSolidDispenserQS2ROSHandler(StationHandler):
@@ -27,7 +32,9 @@ class QuantosSolidDispenserQS2ROSHandler(StationHandler):
 
         # put quantos in the correct place before robott
         # rospy.sleep(3)
-        # self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int= 20)
+        # self._quantos_pub.publish(
+        #      quantos_command=QuantosCommand.SETSAMPLEPOS,
+        #      quantos_int=20)
         # rospy.wait_for_message("/Quantos_Done", String)
         # self._station.carousel_pos = 20
 

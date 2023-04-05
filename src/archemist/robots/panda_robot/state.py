@@ -20,16 +20,18 @@ class PandaRobotTask(RobotTaskOpDescriptor):
     @classmethod
     def from_args(
         cls,
-        name: str,
-        type: RobotTaskType = RobotTaskType.MANIPULATION,
-        params: List[str] = [],
-        location: Location = Location(),
+        location: Location,
+        task_name: str,
+        task_type: RobotTaskType = RobotTaskType.MANIPULATION,
+        params: List[str] = None,
         origin_station: ObjectId = None,
         related_batch_id: int = None,
     ):
         model = (
             super()
-            .from_args(name, type, params, location, origin_station, related_batch_id)
+            .from_args(
+                task_name, task_type, params, location, origin_station, related_batch_id
+            )
             .model
         )
         model._type = cls.__name__
