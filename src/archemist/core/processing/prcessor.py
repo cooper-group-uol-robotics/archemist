@@ -1,5 +1,4 @@
 from archemist.core.state.state import State
-from archemist.core.state.station import StationState
 from archemist.core.state.batch import Batch
 from archemist.core.util.location import Location
 from archemist.core.processing.scheduler import MultiBatchRobotScheduler
@@ -69,7 +68,7 @@ class WorkflowManager:
                         station_name, station_id = batch.recipe.get_current_station()
                         current_station = self._workflow_state.get_station(station_name, station_id)
                         self._log_processor(f'Trying to assign ({batch}) to {current_station}')
-                        if current_station.state == StationState.IDLE and current_station.has_free_batch_capacity():
+                        if current_station.has_free_batch_capacity():
                             current_station.add_batch(batch)
                             self._workflow_state.batches_buffer.remove(batch)
                         else:
@@ -78,10 +77,10 @@ class WorkflowManager:
 
                 # process workflow stations
                 for station in self._workflow_state.stations:
-                    if station.state == StationState.PROCESSING and station.has_requested_robot_op():
-                        robot_job = station.get_requested_robot_op()
-                        self._log_processor(f'{robot_job} is added to robot scheduling queue.')
-                        self._workflow_state.robot_ops_queue.append(robot_job)
+                    if station.has_requested_robot_ops():
+                        robot_jobs = station.get_requested_robot_ops()
+                        self._log_processor(f'{robot_jobs} is added to robot scheduling queue.')
+                        self._workflow_state.robot_ops_queue.extend(robot_jobs)
                     elif station.has_processed_batch():
                         processed_batch = station.get_processed_batch()
                         processed_batch.recipe.advance_state(True)

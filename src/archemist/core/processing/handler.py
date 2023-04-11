@@ -1,5 +1,5 @@
 from archemist.core.state.robot import Robot, RobotState
-from archemist.core.state.station import Station, StationState
+from archemist.core.state.station import Station, OpState
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.state.station_process import StationProcessData
 from typing import Tuple,Dict
@@ -18,7 +18,7 @@ class StationHandler:
                            if batch in assigned_batches and batch not in self._in_process_batches]
             if len(new_batches) == self._station.process_batch_capacity:
                 process_data = StationProcessData.from_args(new_batches)
-                process = StationFactory.create_station_process(self._station, process_data)
+                process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
                 self._running_process.append(process)
 
 
@@ -51,20 +51,19 @@ class StationHandler:
 
     def handle(self):
         self._process_handler.run_processes()
-        if self._station.state == StationState.OP_ASSIGNED:
-            self._station.start_executing_op()
+        self._station.update_assigned_op()
+        if self._station.assigned_op_state == OpState.ASSIGNED:
+            self._station.add_timestamp_to_assigned_op()
+            self._station.assigned_op_state = OpState.EXECUTING
             self.execute_op()
-        elif self._station.state == StationState.EXECUTING_OP:
+        elif self._station.assigned_op_state == OpState.EXECUTING:
             if self.is_op_execution_complete():
                 op_successful, op_results = self.get_op_result()
                 self._station.complete_assigned_station_op(op_successful, **op_results)
-                self._station.set_to_processing()
-        elif self._station.state == StationState.REPEAT_OP:
-            self._station.start_executing_op()
-            self.execute_op()
-        elif self._station.state == StationState.SKIP_OP:
+        elif self._station.assigned_op_state == OpState.TO_BE_REPEATED:
+            self._station.assigned_op_state = OpState.ASSIGNED
+        elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
             self._station.complete_assigned_station_op(True, **{})
-            self._station.set_to_processing()
 
     def run(self):
         pass

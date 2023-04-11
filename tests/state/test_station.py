@@ -2,7 +2,8 @@ import unittest
 from archemist.core.state.material import Liquid
 from archemist.core.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
-from archemist.core.state.station import StationModel, StationState
+from archemist.core.state.station import StationState, OpState, StationProcessData
+from archemist.core.state.station_process import StationProcess, State
 from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
@@ -13,15 +14,13 @@ from datetime import datetime
 class StationTest(unittest.TestCase):
 
     def setUp(self):
-        self.station_object_id = None
-
-    def test_station(self):
         station_dict = {
             'type': 'PeristalticLiquidDispensing',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
             'handler': 'GenericStationHandler',
+            'process_batch_capacity': 2,
             'process_state_machine': 
             {
                 'type': 'StationLoadingSm',
@@ -41,31 +40,29 @@ class StationTest(unittest.TestCase):
             'pump_id': 'pUmP1',
             'expiry_date': datetime.fromisoformat('2025-02-11')
         }
-        liquids_list = []
-        liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
+        liquids_list = [Liquid.from_dict(liquid_dict)]
+        self.station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
                         liquids=liquids_list, solids=[])
+        self.station_object_id = None
 
-        # general properties
-        self.assertEqual(t_station.id, 23)
-        self.assertEqual(t_station.state, StationState.IDLE)
-        self.assertEqual(t_station.batch_capacity, 2)
-        self.assertEqual(t_station.operational, True)
-        self.assertEqual(t_station.location, Location(1,7,''))
-        self.assertEqual(t_station.process_sm_dict, station_dict['process_state_machine'])
+    def test_general_members(self):
+        self.assertEqual(self.station.id, 23)
+        self.station_object_id = self.station.object_id
+        self.assertEqual(self.station.state, StationState.INACTIVE)
+        self.assertEqual(self.station.batch_capacity, 2)
+        self.assertEqual(self.station.selected_handler_dict,
+                         {
+                            'type': 'GenericStationHandler',
+                            'module': 'archemist.stations.peristaltic_pumps_station'
+                         })
+        self.assertEqual(self.station.location, Location(1,7,''))
 
-        # Loaded samples
-        self.assertEqual(t_station.loaded_samples, 0)
-        t_station.load_sample()
-        t_station.load_sample()
-        self.assertEqual(t_station.loaded_samples, 2)
-        t_station.unload_sample()
-        t_station.unload_sample()
-        self.assertEqual(t_station.loaded_samples, 0)
+    def test_batch_members(self):
+        # assert empty members
+        self.assertFalse(self.station.assigned_batches)
+        self.assertFalse(self.station.processed_batches)
 
-        # Batch
-        self.assertFalse(t_station.assigned_batches)
-        
+        # batches creation
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:
             recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
@@ -75,154 +72,215 @@ class StationTest(unittest.TestCase):
         batch2 = Batch.from_arguments(32,2,Location(1,3,'table_frame'))
         recipe2 = Recipe.from_dict(recipe_doc)
         batch2.attach_recipe(recipe2)
+        batch3 = Batch.from_arguments(33,2,Location(1,3,'table_frame'))
+        recipe3 = Recipe.from_dict(recipe_doc)
+        batch3.attach_recipe(recipe3)
 
-        self.assertTrue(t_station.has_free_batch_capacity())
-        t_station.add_batch(batch1)
-        self.assertEqual(t_station.state, StationState.IDLE)
-        t_station.add_batch(batch2)
-        self.assertEqual(t_station.state, StationState.PROCESSING)
-        self.assertFalse(t_station.has_free_batch_capacity())
+        # batch assignment
+        self.assertTrue(self.station.has_free_batch_capacity())
+        self.station.add_batch(batch1)
+        self.station.add_batch(batch2)
+        self.assertFalse(self.station.has_free_batch_capacity())
 
-        asigned_batches = t_station.assigned_batches
+        asigned_batches = self.station.assigned_batches
         self.assertEqual(len(asigned_batches),2)
         self.assertEqual(asigned_batches[0].id, batch1.id)
         self.assertEqual(asigned_batches[1].location, batch2.location)
-        self.assertFalse(t_station.has_processed_batch())
 
-        t_station.process_assigned_batches()
-        self.assertFalse(t_station.assigned_batches)
-        self.assertTrue(t_station.has_processed_batch())
-        self.assertEqual(len(t_station.processed_batches),2)
+        # all batch processing
+        self.station.process_assigned_batches()
+        self.assertFalse(self.station.assigned_batches)
+        self.assertTrue(self.station.has_processed_batch())
+        self.assertEqual(len(self.station.processed_batches),2)
 
-        procssed_batch1 = t_station.get_processed_batch()
+        procssed_batch1 = self.station.get_processed_batch()
         self.assertTrue(procssed_batch1 is not None)
         self.assertEqual(procssed_batch1.id, batch1.id)
         self.assertEqual(procssed_batch1.location, batch1.location)
-        self.assertEqual(t_station.state, StationState.PROCESSING)
 
-        procssed_batch2 = t_station.get_processed_batch()
+        procssed_batch2 = self.station.get_processed_batch()
         self.assertTrue(procssed_batch2 is not None)
         self.assertEqual(procssed_batch2.id, batch2.id)
         self.assertEqual(procssed_batch2.location, batch2.location)
-        self.assertEqual(t_station.state, StationState.IDLE)
-        self.assertTrue(t_station.get_processed_batch() is None)
+        self.assertFalse(self.station.processed_batches)
+        self.assertTrue(self.station.get_processed_batch() is None)
 
-        # Robot Job
-        self.assertEqual(len(t_station.requested_robot_op_history), 0)
-        self.assertFalse(t_station.has_requested_robot_op())
-        self.assertTrue(t_station.get_requested_robot_op() is None)
+        # single batch processing
+        self.station.add_batch(batch3)
+        self.assertTrue(self.station.has_free_batch_capacity())
+        self.station.process_assinged_batch(batch3)
+        self.assertEqual(len(self.station.processed_batches),1)
+        rocssed_batch3 = self.station.get_processed_batch()
+        self.assertTrue(rocssed_batch3 is not None)
+        self.assertEqual(rocssed_batch3.id, batch3.id)
 
-        robot_op = RobotTaskOpDescriptor.from_args('test_task', params=['False','1'])
-        t_station.request_robot_op(robot_op, current_batch_id=31)
-        self.assertTrue(t_station.has_requested_robot_op())
-        ret_robot_job = t_station.get_requested_robot_op()
-        self.assertTrue(ret_robot_job is not None)
-        self.assertEqual(robot_op.name, ret_robot_job.name)
-        self.assertEqual(robot_op.params, ret_robot_job.params)
-        self.assertEqual(ret_robot_job.origin_station, t_station._model.id)
-        self.assertEqual(ret_robot_job.related_batch_id, 31)
-        self.assertEqual(ret_robot_job.task_type, RobotTaskType.MANIPULATION)
-        self.assertEqual(t_station.state, StationState.WAITING_ON_ROBOT)
+    def test_robot_ops_members(self):
+        # assert empty members
+        self.assertEqual(len(self.station.completed_robot_ops), 0)
+        self.assertFalse(self.station.has_requested_robot_ops())
+        self.assertEqual(len(self.station.get_requested_robot_ops()), 0)
 
-        t_station.complete_robot_op_request(robot_op)
-        self.assertEqual(t_station.state, StationState.PROCESSING)
-        self.assertFalse(t_station.has_requested_robot_op())
-        self.assertEqual(len(t_station.requested_robot_op_history), 1)
+        # op creation
+        robot_op1 = RobotTaskOpDescriptor.from_args('test_task1', params=['False','1'])
+        robot_op2 = RobotTaskOpDescriptor.from_args('test_task2', params=['False','2'])
+        
+        # op assignment
+        self.station.request_robot_op(robot_op1, current_batch_id=31)
+        self.station.request_robot_op(robot_op2, current_batch_id=32)
+        self.assertTrue(self.station.has_requested_robot_ops())
+        
+        ret_robot_jobs = self.station.get_requested_robot_ops()
+        self.assertFalse(self.station.has_requested_robot_ops())
+        self.assertEqual(len(ret_robot_jobs), 2)
+        self.assertEqual(robot_op1.name, ret_robot_jobs[0].name)
+        self.assertEqual(robot_op1.params, ret_robot_jobs[0].params)
+        self.assertEqual(ret_robot_jobs[0].origin_station, self.station.object_id)
+        self.assertEqual(ret_robot_jobs[0].related_batch_id, 31)
+        self.assertEqual(ret_robot_jobs[0].task_type, RobotTaskType.MANIPULATION)
+        self.assertEqual(robot_op2.name, ret_robot_jobs[1].name)
+        self.assertEqual(robot_op2.params, ret_robot_jobs[1].params)
 
-        # Station op
-        self.assertEqual(len(t_station.station_op_history), 0)
-        self.assertFalse(t_station.has_assigned_station_op())
-        self.assertEqual(t_station.state,StationState.PROCESSING)
+        self.station.complete_robot_op_request(robot_op1)
+        self.assertEqual(len(self.station.completed_robot_ops), 1)
+        self.assertTrue(str(robot_op1.uuid) in 
+                        self.station.completed_robot_ops.keys())
+        self.station.complete_robot_op_request(robot_op2)
+        self.assertEqual(len(self.station.completed_robot_ops), 2)
+        self.assertTrue(str(robot_op2.uuid) in 
+                        self.station.completed_robot_ops.keys())
+        
+    def test_station_ops_members(self):
+        # assert empty members
+        self.assertFalse(self.station.has_queued_ops())
+        self.assertFalse(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
+        self.assertEqual(len(self.station.completed_station_ops), 0)
+
+        # op creation
         station_op1 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.01)
-        t_station.assign_station_op(station_op1)
-        self.assertTrue(t_station.has_assigned_station_op())
-        self.assertEqual(t_station.state,StationState.OP_ASSIGNED)
+        station_op2 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.02)
+
+        # op assignment
+        self.station.assign_station_op(station_op1)
+        self.station.assign_station_op(station_op2)
         
-        current_op = t_station.get_assigned_station_op()
-        self.assertEqual(current_op.liquid_name, station_op1.liquid_name)
-        self.assertEqual(current_op.dispense_volume, station_op1.dispense_volume)
-        t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.011)
-        self.assertFalse(t_station.has_assigned_station_op())
-        self.assertEqual(t_station.state,StationState.OP_ASSIGNED)
-        t_station.set_to_processing()
-        self.assertEqual(t_station.state,StationState.PROCESSING)
-        station_history = t_station.station_op_history
-        self.assertEqual(len(station_history), 1)
+        self.assertTrue(self.station.has_queued_ops())
+        self.assertFalse(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
+
+        # process station op1
+
+        self.station.update_assigned_op()
+        self.assertTrue(self.station.has_queued_ops())
+        self.assertTrue(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.ASSIGNED)
+
+        ret_op = self.station.get_assigned_station_op()
+        self.assertEqual(ret_op.uuid, station_op1.uuid)
+        self.assertIsNone(ret_op.start_timestamp)
         
-
-        station_op2 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.005)
-        t_station.assign_station_op(station_op2)
-        self.assertTrue(t_station.has_assigned_station_op())
-        t_station.complete_assigned_station_op(success=True, actual_dispensed_volume=0.0051)
-        t_station.set_to_processing()
+        self.station.assigned_op_state = OpState.EXECUTING
+        self.assertEqual(self.station.assigned_op_state, OpState.EXECUTING)
         
-        station_history = t_station.station_op_history
-        self.assertEqual(len(station_history), 2)
-        self.assertEqual(station_history[-1].liquid_name, station_op2.liquid_name)
-        self.assertEqual(station_history[-1].dispense_volume, station_op2.dispense_volume)
+        # complete station op1
 
-        self.station_object_id = t_station._model.id
+        self.station.add_timestamp_to_assigned_op()
+        self.station.complete_assigned_station_op(True, actual_dispensed_volume=0.0102)
+        self.assertFalse(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
+        self.assertEqual(len(self.station.completed_station_ops), 1)
+        
+        complete_op = self.station.completed_station_ops[str(station_op1.uuid)]
+        self.assertIsNotNone(complete_op.start_timestamp)
+        self.assertTrue(complete_op.has_result)
+        self.assertTrue(complete_op.was_successful)
+        self.assertEqual(complete_op.actual_dispensed_volume, 0.0102)
 
-        model = StationModel.objects.get(id=self.station_object_id)
-        t_station2 = PeristalticLiquidDispensing(model)
-        self.assertEqual(t_station2.id, 23)
-        self.assertEqual(t_station2.state, StationState.PROCESSING)
-        self.assertEqual(t_station2.batch_capacity, 2)
-        self.assertEqual(t_station2.operational, True)
-        self.assertEqual(t_station2.location, Location(1,7,''))
-        self.assertEqual(len(t_station2.station_op_history), 2)
-        self.assertEqual(len(t_station2.requested_robot_op_history), 1)
-        self.assertTrue(t_station2.has_free_batch_capacity())
-        self.assertFalse(t_station2.assigned_batches)
-        self.assertFalse(t_station2.processed_batches)
+        # process station op 2
 
-    def test_specific_station(self):
-        station_dict = {
-            'type': 'PeristalticLiquidDispensing',
-            'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_state_machine': 
-            {
-                'type': 'StationLoadingSm',
-                'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
-            },
-            'parameters':
-            {
-                'liquid_pump_map': {'water': 'pUmP1'}
-            }
-        }
-        liquid_dict = {
-            'name': 'water',
-            'id': 1235,
-            'amount_stored': 400,
-            'unit': 'ml',
-            'density': 997,
-            'pump_id': 'pUmP1',
-            'expiry_date': datetime.fromisoformat('2025-02-11')
-        }
-        liquids_list = []
-        liquids_list.append(Liquid.from_dict(liquid_dict))
-        t_station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
-                        liquids=liquids_list, solids=[])
+        self.station.update_assigned_op()
+        self.assertFalse(self.station.has_queued_ops())
+        self.assertTrue(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.ASSIGNED)
 
-        liquid = t_station.get_liquid('pUmP1')
-        self.assertEqual(liquid.name, 'water')
-        self.assertEqual(liquid.id, 1235)
-        self.assertEqual(liquid.volume, 0.4)
+        # test repeat and skip op
+        self.station.repeat_assigned_op()
+        self.assertEqual(self.station.assigned_op_state, OpState.TO_BE_REPEATED)
 
-        pump_id = t_station.get_pump_id('water')
-        self.assertEqual(pump_id, 'pUmP1')
-        t_station.add_liquid('water', 0.05)
-        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.40005)
-        t_station.dispense_liquid('water', 0.1)
-        self.assertEqual(t_station.get_liquid('pUmP1').volume, 0.39995)
+        self.station.skip_assigned_op()
+        self.assertEqual(self.station.assigned_op_state, OpState.TO_BE_SKIPPED)
+
+        # complete station op 2
+        self.station.add_timestamp_to_assigned_op()
+        self.station.complete_assigned_station_op(True, actual_dispensed_volume=0.0103)
+        self.assertFalse(self.station.has_assigned_station_op())
+        self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
+        self.assertEqual(len(self.station.completed_station_ops), 2)
+        complete_op = self.station.completed_station_ops[str(station_op2.uuid)]
+        self.assertIsNotNone(complete_op.start_timestamp)
+        self.assertTrue(complete_op.has_result)
+        self.assertTrue(complete_op.was_successful)
+        self.assertEqual(complete_op.actual_dispensed_volume, 0.0103)
+
+        
+    def test_process_members(self):
+        # assert empty members
+        self.assertEqual(len(self.station.get_all_processes_data()),0)
+
+        # process parameters
+
+        process_dict = { 'type': 'StationLoadingSm',
+                'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}}
+        self.assertEqual(self.station.process_sm_dict, 
+                         process_dict)
+        self.assertEqual(self.station.process_batch_capacity, 2)
+
+        # create batches
+
+        recipe_doc = dict()
+        with open('resources/testing_recipe.yaml') as fs:
+            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
+        batch1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
+        recipe1 = Recipe.from_dict(recipe_doc)
+        batch1.attach_recipe(recipe1)
+        batch2 = Batch.from_arguments(32,2,Location(1,3,'table_frame'))
+        recipe2 = Recipe.from_dict(recipe_doc)
+        batch2.attach_recipe(recipe2)
+        batch3 = Batch.from_arguments(33,2,Location(1,3,'table_frame'))
+        recipe3 = Recipe.from_dict(recipe_doc)
+        batch3.attach_recipe(recipe3)
+        batch4 = Batch.from_arguments(34,2,Location(1,3,'table_frame'))
+        recipe4 = Recipe.from_dict(recipe_doc)
+        batch4.attach_recipe(recipe4)
+
+        # construct process data objects
+        process_data_1 = StationProcessData.from_args([batch1, batch2])
+        process_data_2= StationProcessData.from_args([batch3, batch4])
+
+        # add prcess data
+        self.station.set_process_data(process_data_1)
+        self.assertEqual(len(self.station.get_all_processes_data()),1)
+        self.station.set_process_data(process_data_2)
+        self.assertEqual(len(self.station.get_all_processes_data()),2)
+
+        # get process data 1
+        ret_process_data = self.station.get_process_data(process_data_1.uuid)
+        self.assertListEqual(process_data_1.batches, ret_process_data.batches)
+
+        # delete process data 1
+        self.station.delete_process_data(process_data_1.uuid)
+        self.assertEqual(len(self.station.get_all_processes_data()),1)
+        self.assertIsNone(self.station.get_process_data(process_data_1.uuid))
+
+        # get process data 2
+        ret_process_data = self.station.get_process_data(process_data_2.uuid)
+        self.assertListEqual(process_data_2.batches, ret_process_data.batches)
+
+        # delete process data 2
+        self.station.delete_process_data(process_data_2.uuid)
+        self.assertEqual(len(self.station.get_all_processes_data()),0)
+        self.assertIsNone(self.station.get_process_data(process_data_2.uuid))
     
-
-        
-
-
 
 if __name__ == '__main__':
     connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
