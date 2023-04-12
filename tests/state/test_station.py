@@ -1,21 +1,19 @@
 import unittest
-from archemist.core.state.material import Liquid
 from archemist.core.state.robot import RobotTaskOpDescriptor, RobotTaskType
 from mongoengine import connect
-from archemist.core.state.station import StationState, OpState, StationProcessData
-from archemist.core.state.station_process import StationProcess, State
-from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
+from archemist.core.state.station import Station, StationState, OpState, StationProcessData
+from archemist.core.state.station_op import StationOpDescriptor, StationOpDescriptorModel
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
 from archemist.core.util.location import Location
 import yaml
-from datetime import datetime
+import uuid
 
 class StationTest(unittest.TestCase):
 
     def setUp(self):
         station_dict = {
-            'type': 'PeristalticLiquidDispensing',
+            'type': 'TestStation',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -26,23 +24,8 @@ class StationTest(unittest.TestCase):
                 'type': 'StationLoadingSm',
                 'args': {'batch_mode': True, 'load_frame': '/liquidStation/loadFrame'}
             },
-            'parameters':
-            {
-                'liquid_pump_map': {'water': 'pUmP1'}
-            }
         }
-        liquid_dict = {
-            'name': 'water',
-            'id': 1235,
-            'amount_stored': 400,
-            'unit': 'ml',
-            'density': 997,
-            'pump_id': 'pUmP1',
-            'expiry_date': datetime.fromisoformat('2025-02-11')
-        }
-        liquids_list = [Liquid.from_dict(liquid_dict)]
-        self.station = PeristalticLiquidDispensing.from_dict(station_dict=station_dict, 
-                        liquids=liquids_list, solids=[])
+        self.station: Station = Station.from_dict(station_dict=station_dict, liquids=[], solids=[])
         self.station_object_id = None
 
     def test_general_members(self):
@@ -53,7 +36,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.selected_handler_dict,
                          {
                             'type': 'GenericStationHandler',
-                            'module': 'archemist.stations.peristaltic_pumps_station'
+                            'module': 'archemist.core.state'
                          })
         self.assertEqual(self.station.location, Location(1,7,''))
 
@@ -157,8 +140,12 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.completed_station_ops), 0)
 
         # op creation
-        station_op1 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.01)
-        station_op2 = PeristalticPumpOpDescriptor.from_args(liquid_name='water', dispense_volume=0.02)
+        op_model_1 = StationOpDescriptorModel(uuid=uuid.uuid4(), associated_station='TestStation',
+                                              _type='StationOpDescriptor', _module='archemist.core.state.station_op')
+        station_op1 = StationOpDescriptor(op_model_1)
+        op_model_2 = StationOpDescriptorModel(uuid=uuid.uuid4(), associated_station='TestStation',
+                                              _type='StationOpDescriptor', _module='archemist.core.state.station_op')
+        station_op2 = StationOpDescriptor(op_model_2)
 
         # op assignment
         self.station.assign_station_op(station_op1)
@@ -185,7 +172,7 @@ class StationTest(unittest.TestCase):
         # complete station op1
 
         self.station.add_timestamp_to_assigned_op()
-        self.station.complete_assigned_station_op(True, actual_dispensed_volume=0.0102)
+        self.station.complete_assigned_station_op(True)
         self.assertFalse(self.station.has_assigned_station_op())
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertEqual(len(self.station.completed_station_ops), 1)
@@ -194,7 +181,6 @@ class StationTest(unittest.TestCase):
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
         self.assertTrue(complete_op.was_successful)
-        self.assertEqual(complete_op.actual_dispensed_volume, 0.0102)
 
         # process station op 2
 
@@ -212,7 +198,7 @@ class StationTest(unittest.TestCase):
 
         # complete station op 2
         self.station.add_timestamp_to_assigned_op()
-        self.station.complete_assigned_station_op(True, actual_dispensed_volume=0.0103)
+        self.station.complete_assigned_station_op(True)
         self.assertFalse(self.station.has_assigned_station_op())
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertEqual(len(self.station.completed_station_ops), 2)
@@ -220,8 +206,6 @@ class StationTest(unittest.TestCase):
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
         self.assertTrue(complete_op.was_successful)
-        self.assertEqual(complete_op.actual_dispensed_volume, 0.0103)
-
         
     def test_process_members(self):
         # assert empty members

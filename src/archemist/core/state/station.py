@@ -62,7 +62,11 @@ class Station:
 
     @classmethod
     def from_dict(cls, station_dict: dict, liquids: List[Liquid], solids: List[Solid]):
-        pass
+        model = StationModel()
+        cls._set_model_common_fields(station_dict,model)
+        model._module = cls.__module__
+        model.save()
+        return cls(model)
 
     @staticmethod
     def _set_model_common_fields(station_dict: dict, station_model: StationModel):
@@ -269,7 +273,6 @@ class Station:
         station_op.complete_op(success, **kwargs)
         self._model.update(unset__assigned_op=True)
         self.assigned_op_state = OpState.INVALID
-        self._model.update(push__station_op_history=station_op.model)
         self._model.update(**{f"set__completed_station_ops__{station_op.uuid}":station_op.model})
         self._log_station(f'Station op is complete.')
 
