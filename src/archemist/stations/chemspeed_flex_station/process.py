@@ -207,15 +207,14 @@ class RefactoredChemSpeedRackSm(StationProcess):
                 for liquid, dispense_vals in current_op_dispense_info.items():
                     combined_dispense_info[liquid] += dispense_vals
             combined_op = CSCSVJobOpDescriptor.from_args(dispense_info=combined_dispense_info)
-            #self._process_data.status['combined_op'] = combined_op.model
             self.request_station_op(combined_op)
         elif isinstance(current_op, CSProcessingOpDescriptor):
             self.request_station_op(current_op)
 
 
     def process_batches(self):
-        req_operation_op = self._station.station_op_history[-1]
-        #req_operation_op = self._process_data.status['combined_op']
+        last_complete_station_op_uuid = self._process_data.station_ops_history[-1]
+        req_operation_op = self._station.completed_station_ops[last_complete_station_op_uuid]
         for batch in self._process_data.batches:
             for i in range(0, batch.num_samples):
                 dispense_info = {k: [v[i]] for k,v in 
@@ -227,10 +226,14 @@ class RefactoredChemSpeedRackSm(StationProcess):
         self._process_data.status['operation_complete'] = True
 
     def update_loaded_batch(self):
+        batch_index = self._process_data.status['batch_index']
+        self._update_batch_loc_to_station(batch_index)
         self._process_data.status['batch_index'] += 1
 
     def update_unloaded_batch(self):
         self._process_data.status['batch_index'] -= 1
+        batch_index = self._process_data.status['batch_index']
+        self._update_batch_loc_to_robot(batch_index)
 
     def are_all_batches_loaded(self):
         return self._process_data.status['batch_index'] == len(self._process_data.batches)

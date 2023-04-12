@@ -2,6 +2,7 @@ from transitions import Machine, State
 from typing import Dict, List, Any
 from archemist.core.state.station import Station, StationProcessData
 from archemist.core.state.batch import Batch
+from archemist.core.util.location import Location
 
 class StationProcess:
     TRIGGER_METHOD = 'process_state_transitions'
@@ -30,15 +31,17 @@ class StationProcess:
             complete_op = self._station.completed_robot_ops.get(str(req_op.uuid))
             if complete_op and complete_op.was_successful:
                 self._process_data.req_robot_ops.pop(index)
+                self._process_data.robot_ops_history.append(str(req_op.uuid))
                 break
         return len(self._process_data.req_robot_ops) == 0
     
     def are_req_station_ops_completed(self) -> bool:
         for index,req_op in enumerate(self._process_data.req_station_ops):
-            for complete_op in self._station.station_op_history:
-                if req_op.uuid == complete_op.uuid and complete_op.was_successful:
-                    self._process_data.req_station_ops.pop(index)
-                    break
+            complete_op = self._station.completed_station_ops.get(str(req_op.uuid))
+            if complete_op and complete_op.was_successful:
+                self._process_data.req_station_ops.pop(index)
+                self._process_data.station_ops_history.append(str(req_op.uuid))
+                break
         return len(self._process_data.req_station_ops) == 0
     
     def _update_data_model(self):
@@ -53,13 +56,15 @@ class StationProcess:
             state.add_callback('enter', self._default_entry_callback)
         return Machine(self, states=states, initial=self._process_data.status['state'], transitions=transitions)
 
-    def _update_batch_loc_to_station(self, batch: Batch):
+    def _update_batch_loc_to_station(self, batch_index: int):
+        batch = self._process_data.batches[batch_index]
         batch.location = self._station.location
 
-    def _update_batch_loc_to_robot(self, batch: Batch):
-        pass #TODO
-        # last_executed_robot_op = self._station.completed_robot_ops.values()[-1]
-        # batch.location = Location(-1,-1,f'{last_executed_robot_op.robot_stamp}/Deck')
+    def _update_batch_loc_to_robot(self, batch_index: int):
+        batch = self._process_data.batches[batch_index]
+        last_robot_op_uuid = self._process_data.robot_ops_history[-1]
+        last_robot_op = self._station.completed_robot_ops[last_robot_op_uuid]
+        batch.location = Location(-1,-1,f'{last_robot_op.robot_stamp}/Deck')
 
     def _default_entry_callback(self):
         print(f'[{self.__class__.__name__}]: current state is {self.state}')

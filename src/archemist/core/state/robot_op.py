@@ -58,7 +58,7 @@ class RobotOpDescriptor:
 
     @property
     def robot_stamp(self):
-        self._model.robot_stamp
+        return self._model.robot_stamp
 
     def add_start_timestamp(self):
         self._model.start_timestamp = datetime.now()

@@ -5,11 +5,20 @@ from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 
 class StationProcessDataModel(EmbeddedDocument):
+    ''' general '''
     uuid = fields.UUIDField(binary=False)
-    batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    req_robot_ops = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
-    req_station_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
     status = fields.DictField(default={})
+
+    ''' batches '''
+    batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
+
+    ''' robot ops '''
+    req_robot_ops = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
+    robot_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
+    
+    '''station ops'''
+    req_station_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
+    station_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
 
 class StationModel(Document):
     ''' internal '''
@@ -37,8 +46,6 @@ class StationModel(Document):
     completed_robot_ops = fields.MapField(fields.EmbeddedDocumentField(RobotOpDescriptorModel, default={}))
     
     ''' station ops '''
-    station_op_history = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-
     queued_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
     assigned_op = fields.EmbeddedDocumentField(StationOpDescriptorModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)

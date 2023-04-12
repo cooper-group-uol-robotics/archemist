@@ -131,6 +131,8 @@ class RefactoredInputStationSm(StationProcess):
         self._process_data.status['batch_index'] = 0
 
     def update_unloaded_batch(self):
+        batch_index = self._process_data.status['batch_index']
+        self._update_batch_loc_to_robot(batch_index)
         self._process_data.status['batch_index'] += 1
 
     def are_all_batches_unloaded(self):

@@ -7,7 +7,7 @@ from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory
-from archemist.core.util.list_field_adapter import EmbedOpListAdapter, OpListAdapter
+from archemist.core.util.list_field_adapter import EmbedOpListAdapter, EmbedListFieldAdapter
 from bson.objectid import ObjectId
 import uuid
 
@@ -46,6 +46,15 @@ class StationProcessData:
     @property
     def req_station_ops(self) -> List[Any]:
         return EmbedOpListAdapter(self._model, 'req_station_ops', StationFactory)
+    
+    @property
+    def robot_ops_history(self) -> List[str]:
+        return EmbedListFieldAdapter(self._model, 'robot_ops_history')
+    
+    @property
+    def station_ops_history(self) -> List[str]:
+        return EmbedListFieldAdapter(self._model, 'station_ops_history')
+
 
 class Station:
     def __init__(self, station_model: StationModel) -> None:
@@ -219,11 +228,6 @@ class Station:
         self._model.reload('completed_station_ops')
         return {op_uuid:  StationFactory.create_op_from_model(op_model) for op_uuid, op_model 
                 in self._model.completed_station_ops.items()}
-
-    @property
-    def station_op_history(self) -> List[StationOpDescriptor]:
-        self._model.reload('station_op_history')
-        return [StationFactory.create_op_from_model(op_model) for op_model in self._model.station_op_history]
     
     @property
     def assigned_op_state(self) -> OpState:
