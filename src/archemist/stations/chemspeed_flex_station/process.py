@@ -118,7 +118,7 @@ class ChemSpeedRackSm(StationProcessFSM):
         self._status['batch_index'] = 0
         self.to_init_state()
 
-class RefactoredChemSpeedRackSm(StationProcess):
+class ChemSpeedCSVProcess(StationProcess):
     
     def __init__(self, station: Station, process_data: StationProcessData, **kwargs):
         ''' States '''

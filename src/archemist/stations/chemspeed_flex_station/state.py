@@ -44,10 +44,11 @@ class ChemSpeedFlexStation(Station):
         liquid_obj_id = self._model.liquids_dict[liquid_name]
         return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, CSCSVJobOpDescriptor) or isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.RUNNING_JOB
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -58,7 +59,7 @@ class ChemSpeedFlexStation(Station):
         elif isinstance(current_op, CSCSVJobOpDescriptor):
             for liquid_name,dispense_vals in current_op.dispense_info.items():
                 liquid_obj = self.get_liquid(liquid_name)
-                liquid_obj.volume -= sum(dispense_vals)/1000
+                liquid_obj.volume -= sum(dispense_vals)/1000 #TODO add unit
             self.status = ChemSpeedStatus.JOB_COMPLETE
         elif isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.JOB_COMPLETE
