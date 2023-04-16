@@ -1,7 +1,9 @@
 import unittest
 from typing import List
 from datetime import datetime
-from mongoengine import connect
+
+import mongoengine
+
 from archemist.core.state.material import Liquid
 from archemist.core.state.station import StationProcessData
 from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStation, 
@@ -28,7 +30,7 @@ class ChemspeedFlexStationTest(unittest.TestCase, ProcessTestingMixin):
             'process_batch_capacity': 2,
             'process_state_machine': 
             {
-                'type': 'ChemSpeedRackSm',
+                'type': 'ChemSpeedCSVProcess',
                 'args': {}
             },
             'parameters':
@@ -306,5 +308,5 @@ class ChemspeedFlexStationTest(unittest.TestCase, ProcessTestingMixin):
 
 
 if __name__ == '__main__':
-    connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
+    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

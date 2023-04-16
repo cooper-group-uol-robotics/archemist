@@ -93,9 +93,10 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: InputStationHandler
     process_state_machine:
-      type: InputStationSm
+      type: InputStationProcess
       args:
     parameters:
   - type: ChemSpeedFlexStation
@@ -104,9 +105,10 @@ stations:
       node_id: 27
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: ChemSpeedFlexROSHandler
     process_state_machine:
-      type: ChemSpeedRackSm
+      type: ChemSpeedCSVProcess
       args:
         batch_mode: true
     parameters:
@@ -120,9 +122,10 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: LightBoxROSHandler
     process_state_machine: 
-      type: LightBoxSM
+      type: LightBoxProcess
       args: 
         batch_mode: true
     parameters:
@@ -132,8 +135,9 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: OutputStationHandler
     process_state_machine:
-      type: OutputStationSm
+      type: OutputStationProcess
       args:
     parameters:
