@@ -4,71 +4,84 @@ from archemist.core.state.robot import RobotTaskType
 from archemist.robots.yumi_robot.state import YuMiRobotTask
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from archemist.core.processing.station_process_fsm import StationProcessFSM
-from archemist.core.state.station import Station
+from archemist.core.state.station_process import StationProcess
+from archemist.core.state.station import Station, StationProcessData
 from typing import Dict
 
 from archemist.stations.ika_digital_plate_station.state import IKAStirringOpDescriptor
 
 
-class IKAStirPlateSm(StationProcessFSM):
-    def __init__(self, station: Station, params_dict: Dict):
-        super().__init__(station, params_dict)
-
+class CrystalBotWorkflowProcess(StationProcess):
+    def __init__(self, station: Station, process_data: StationProcessData, **kwargs):
         ''' States '''
         states = [ State(name='init_state'),
+            State(name='prep_state', on_enter='initialise_process_data'), 
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='place_8_well_rack', on_enter=['request_8_well_rack']),
             State(name='place_pxrd_rack', on_enter=['request_pxrd_rack']),
+            State(name='added_batch_update', on_enter=['update_loaded_batch']),
             State(name='load_stir_plate', on_enter=['request_load_stir_plate']),
             State(name='stir', on_enter=['request_stir_op']),
             State(name='final_state', on_enter=['finalize_batch_processing'])]
 
+        ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function, 'source':'disable_auto_functions', 'dest': 'place_8_well_rack', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'place_8_well_rack', 'dest': 'place_pxrd_rack', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'place_pxrd_rack', 'dest': 'load_stir_plate', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'load_stir_plate','dest':'stir', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'stir','dest':'enable_auto_functions', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
+            {'source':'init_state', 'dest': 'prep_state'},
+            {'source':'prep_state','dest':'disable_auto_functions', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'disable_auto_functions', 'dest': 'place_8_well_rack', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'place_8_well_rack', 'dest': 'place_pxrd_rack', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'place_pxrd_rack', 'dest': 'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'added_batch_update', 'dest': 'load_stir_plate'},
+            {'source':'load_stir_plate','dest':'stir', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'stir','dest':'enable_auto_functions', 'conditions':'are_req_station_ops_completed'},
+            {'source':'enable_auto_functions','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
         ]
+        super().__init__(station, process_data, states, transitions)
 
-        self.init_state_machine(states=states, transitions=transitions)
+    ''' states callbacks '''
+
+    def initialise_process_data(self):
+        self._process_data.status['batch_index'] = 0
+
+    def request_disable_auto_functions(self):
+        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
+        self.request_robot_op(robot_op)
+
+    def request_enable_auto_functions(self):
+        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
+        self.request_robot_op(robot_op)
 
     def request_8_well_rack(self):
-        robot_job = KukaLBRTask.from_args(name='LoadEightWRackYumiStation',params=[True], 
+        perform_6p = True
+        batch_index = self._process_data.status['batch_index']
+        robot_op = KukaLBRTask.from_args(name='LoadEightWRackYumiStation',params=[perform_6p], 
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        current_batch_id = self._process_data.batches[batch_index].id
+        self.request_robot_op(robot_op,current_batch_id)
 
     def request_pxrd_rack(self):
-        robot_job = KukaLBRTask.from_args(name='LoadPXRDRackYumiStation',params=[False], 
+        perform_6p = False
+        batch_index = self._process_data.status['batch_index']
+        robot_op = KukaLBRTask.from_args(name='LoadPXRDRackYumiStation',params=[perform_6p], 
                                             type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        current_batch_id = self._process_data.batches[batch_index].id
+        self.request_robot_op(robot_op,current_batch_id)
 
     def request_load_stir_plate(self):
-        robot_job = YuMiRobotTask.from_args(name='loadIKAPlate', location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job, current_batch_id)
+        batch_index = self._process_data.status['batch_index']
+        robot_op = YuMiRobotTask.from_args(name='loadIKAPlate', location=self._station.location)
+        current_batch_id = self._process_data.batches[batch_index].id
+        self.request_robot_op(robot_op,current_batch_id)
+
+    def update_loaded_batch(self):
+        batch_index = self._process_data.status['batch_index']
+        self._update_batch_loc_to_station(batch_index)
 
     def request_stir_op(self):
-        current_op = self._station.assigned_batches[self._status['batch_index']].recipe.get_current_task_op()
-        if isinstance(current_op, IKAStirringOpDescriptor):
-            self._station.assign_station_op(current_op)
+        batch_index = self._process_data.status['batch_index']
+        current_op = self._process_data.batches[batch_index].recipe.get_current_task_op()
+        self.request_station_op(current_op)
     
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
-        self._status['batch_index'] = 0
-        self.to_init_state()
-
-    def _print_state(self):
-        print(f'[{self.__class__.__name__}]: current state is {self.state}')
-
-    def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
-
-    def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))

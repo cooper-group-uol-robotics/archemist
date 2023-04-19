@@ -11,7 +11,7 @@ from archemist.core.util.enums import StationState
 from archemist.core.util.location import Location
 from utils import ProcessTestingMixin
 
-class InputStationTest(unittest.TestCase, ProcessTestingMixin):
+class OutputStationTest(unittest.TestCase, ProcessTestingMixin):
     def setUp(self):
         self.station_doc = {
             'type': 'OutputStation',
