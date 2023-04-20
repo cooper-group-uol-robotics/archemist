@@ -17,17 +17,18 @@ class RecipeGenerator:
 
     # Methods
     def generate_recipe(self, optimised_parameters_data):
+        recipe_dict = self._recipe_dict
         optimised_parameters_dict = optimised_parameters_data.to_dict()
         if self._placeholder_keys_any:
-            self._recipe_dict = self._update_recipe(self._recipe_dict,'any', optimised_parameters_dict)
+            recipe_dict = self._update_recipe(recipe_dict,'any', optimised_parameters_dict)
         else:
             print('{{*.any}} place holders NOT found')
             
         if self._placeholder_keys_all:
-            self._recipe_dict = self._update_recipe(self._recipe_dict, 'all', optimised_parameters_dict)
+            recipe_dict = self._update_recipe(recipe_dict, 'all', optimised_parameters_dict)
         else:
             print('{{*.all}} place holders NOT found')    
-        self._write_recipe(self._recipe_dict, self._recipe_dir)
+        self._write_recipe(recipe_dict, self._recipe_dir)
     
     # internal functions
     def _find_placeholders(self, recipe_dict: Dict):
@@ -93,12 +94,3 @@ class RecipeGenerator:
         with open(path, 'w') as file:
             yaml.dump(recipe_dict, file, default_flow_style=None)
 
-# if __name__ == "__main__":
-#     cwd_path = Path.cwd()
-#     path_to_template_recipe = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe_template.yaml")
-#     path_to_recipes_dir = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe.yaml")
-#     optimised_parameters = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0], 'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44], 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
-#     optimised_parameters_data_frame = pd.DataFrame(optimised_parameters)
-
-#     recipe_converter = RecipeGenerator(path_to_template_recipe, path_to_recipes_dir)
-#     recipe_converter.generate_recipe(optimised_parameters_data_frame)

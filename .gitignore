@@ -2,5 +2,3 @@
 build/
 dist/
 **/*.egg-info
-src/archemist/core/optimisation/.vscode/c_cpp_properties.json
-tests/optimisation_test/optimisation_manager_backup.py
