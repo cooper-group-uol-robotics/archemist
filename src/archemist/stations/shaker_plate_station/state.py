@@ -24,11 +24,12 @@ class ShakerPlateStation(Station):
     @status.setter
     def status(self, new_status: ShakerStatus):
         self._model.update(machine_status=new_status)
-
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, ShakeOpDescriptor):
+    
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, ShakeOpDescriptor):
             self.status = ShakerStatus.SHAKING
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
