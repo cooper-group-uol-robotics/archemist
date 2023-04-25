@@ -7,7 +7,7 @@ from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquid
 from archemist.core.state.material import Liquid
 from archemist.core.util.enums import StationState
 
-class FisherBalanceStationTest(unittest.TestCase):
+class PeristalticLiquidDispensingTest(unittest.TestCase):
     def setUp(self):
         self.station_doc = {
             'type': 'PeristalticLiquidDispensing',

@@ -13,7 +13,7 @@ from archemist.stations.quantos_qs2_station.state import (QuantosSolidDispenserQ
 from archemist.core.state.material import Solid
 from archemist.core.util.enums import StationState
 
-class FisherBalanceStationTest(unittest.TestCase):
+class QuantosSolidDispenserQS2Test(unittest.TestCase):
     def setUp(self):
         self.station_doc = {
             'type': 'QuantosSolidDispenserQS2',
