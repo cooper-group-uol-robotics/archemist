@@ -26,7 +26,7 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
             'process_batch_capacity': 2,
             'process_state_machine': 
             {
-                'type': 'IKAStirPlateSm',
+                'type': 'CrystalBotWorkflowProcess',
                 'args': {}
             },
             'parameters':{}
