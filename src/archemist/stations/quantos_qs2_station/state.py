@@ -1,10 +1,12 @@
-from .model import QuantosCatridgeModel, QuantosSolidDispenserQS2Model, QuantosDispenseOpDescriptorModel, MoveCarouselOpDescriptorModel
+from .model import (QuantosCatridgeModel, QuantosSolidDispenserQS2Model,
+                    QuantosDispenseOpDescriptorModel, MoveCarouselOpDescriptorModel,
+                    QuantosStatus)
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Solid, Liquid
 from typing import Dict, List
-from archemist.core.exceptions.exception import UsingConsumedCatridgeError, QuantosCatridgeLoadedError
+from archemist.core.exceptions.exception import QuantosCatridgeLoadedError
 from datetime import datetime
 
 class QuantosCatridge:
@@ -97,13 +99,13 @@ class QuantosSolidDispenserQS2(Station):
                 i += 1
 
     @property
-    def doors_open(self) -> bool:
-        self._model.reload('doors_open')
-        return self._model.doors_open
+    def status(self) -> QuantosStatus:
+        self._model.reload('machine_status')
+        return self._model.machine_status
 
-    @doors_open.setter
-    def doors_open(self, new_state: bool):
-        self._model.update(doors_open=new_state)
+    @status.setter
+    def status(self, new_state: QuantosStatus):
+        self._model.update(machine_status=new_state)
 
     def get_cartridge_id(self, solid_name: str):
         for catridge_model in self._model.catridges:
@@ -142,6 +144,12 @@ class QuantosSolidDispenserQS2(Station):
                     self.dispense(kwargs['actual_dispensed_mass'])
                 else:
                     self.dispense(current_op.dispense_mass)
+        elif isinstance(current_op, OpenDoorOpDescriptor):
+            self.status = QuantosStatus.DOORS_OPEN
+        elif isinstance(current_op, CloseDoorOpDescriptor):
+            self.status = QuantosStatus.DOORS_CLOSED
+        elif isinstance(current_op, MoveCarouselOpDescriptor):
+            self.carousel_pos = current_op.carousel_pos
         super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
@@ -156,7 +164,6 @@ class OpenDoorOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
-
 
 class CloseDoorOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
@@ -177,6 +184,7 @@ class MoveCarouselOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = MoveCarouselOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.carousel_pos = kwargs['carousel_pos']

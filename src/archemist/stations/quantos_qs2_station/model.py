@@ -2,6 +2,11 @@ from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.models.material_model import SolidMaterialModel
 from mongoengine import EmbeddedDocument, fields
+from enum import Enum, auto
+
+class QuantosStatus(Enum):
+    DOORS_OPEN = auto()
+    DOORS_CLOSED = auto()
 
 class QuantosCatridgeModel(EmbeddedDocument):
     exp_id = fields.IntField()
@@ -14,7 +19,7 @@ class QuantosSolidDispenserQS2Model(StationModel):
     carousel_pos = fields.IntField(min_value=1, max_value=20, default=1)
     catridges = fields.EmbeddedDocumentListField(QuantosCatridgeModel, default=[])
     loaded_ctridge_id = fields.IntField(min_value=0, null=True)
-    doors_open = fields.BooleanField(default=False)
+    machine_status = fields.EnumField(QuantosStatus, default=None)
 
 class QuantosDispenseOpDescriptorModel(StationOpDescriptorModel):
     solid_name = fields.StringField(required=True)
@@ -22,4 +27,4 @@ class QuantosDispenseOpDescriptorModel(StationOpDescriptorModel):
     actual_dispensed_mass = fields.FloatField(min_value=0)
 
 class MoveCarouselOpDescriptorModel(StationOpDescriptorModel):
-    carousel_pos = fields.IntField(min_value=1, default=1)
+    carousel_pos = fields.IntField(min_value=1, max_value=20, default=1)
