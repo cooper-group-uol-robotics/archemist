@@ -2,3 +2,5 @@
 build/
 dist/
 **/*.egg-info
+.vscode/c_cpp_properties.json
+src/archemist/core/optimisation/.vscode/c_cpp_properties.json
