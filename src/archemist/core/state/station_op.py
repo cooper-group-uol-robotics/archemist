@@ -38,11 +38,11 @@ class StationOpDescriptor:
         return self._model.was_successful
 
     @property
-    def start_timestamp(self):
+    def start_timestamp(self) -> datetime:
         return self._model.start_timestamp
 
     @property
-    def end_timestamp(self):
+    def end_timestamp(self) -> datetime:
         return self._model.end_timestamp
     
     def add_request_info(self, station_id: ObjectId):
