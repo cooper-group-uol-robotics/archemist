@@ -25,3 +25,8 @@ class OpState(Enum):
     EXECUTING = auto()
     TO_BE_REPEATED = auto()
     TO_BE_SKIPPED = auto()
+
+class TimeUnit(Enum):
+    SECONDS = auto()
+    MINUTES = auto()
+    HOURS = auto()
