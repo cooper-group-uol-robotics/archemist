@@ -27,10 +27,11 @@ class WatersLCMSStation(Station):
     def status(self, new_status: LCMSStatus):
         self._model.update(machine_status=new_status)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, LCMSAnalysisOpDescriptor):
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, LCMSAnalysisOpDescriptor):
             self.status = LCMSStatus.RUNNING_ANALYSIS
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -54,12 +55,12 @@ class LCMSInsertBatchOpDescriptor(StationOpDescriptor):
         cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
-        model.rack = int(kwargs['rack'])
+        model.rack = int(kwargs['used_rack_index'])
         return cls(model)
 
     @property
-    def rack(self) -> int:
-        return self._model.rack
+    def used_rack_index(self) -> int:
+        return self._model.used_rack_index
 
 class LCMSExtractBatchOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: LCMSOpModel):
@@ -71,12 +72,12 @@ class LCMSExtractBatchOpDescriptor(StationOpDescriptor):
         cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
-        model.rack = kwargs['rack']
+        model.rack = kwargs['used_rack_index']
         return cls(model)
 
     @property
-    def rack(self) -> int:
-        return self._model.rack
+    def used_rack_index(self) -> int:
+        return self._model.used_rack_index
 
 class LCMSAnalysisOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
