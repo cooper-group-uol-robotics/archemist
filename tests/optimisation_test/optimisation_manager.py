@@ -23,7 +23,7 @@ class OptimisationManager():
         :param data:
 
         """
-        self._probed_points = self._probed_points.append(data)
+        self._probed_points += data
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
             self.model.register(param, target)
@@ -49,7 +49,7 @@ class OptimisationManager():
         """
         module = importlib.import_module(self._config_dict['optimizer']['module'])
         optimizer_class = getattr(module, self._config_dict['optimizer']['class'])
-        return optimizer_class(**self._config_dict['optimizer']['hyperparameters'], **kwargs)
+        return optimizer_class(**self._config_dict['optimizer']['hyperparameters'])
 
     def _pandas_to_params_targets(self, data: pd.DataFrame):
         """
