@@ -3,15 +3,16 @@ from archemist.core.models.station_op_model import StationOpDescriptorModel
 from mongoengine import fields
 from enum import Enum
 
-class SyringePumpMode(Enum):
+class SyringePumpStatus(Enum):
     DISPENSE = 1
     WITHDRAW = 2
+    JOB_COMPLETE = 3
 
 class SyringePumpStationModel(StationModel):
-    mode = fields.EnumField(SyringePumpMode, null = True)
+    machine_status = fields.EnumField(SyringePumpStatus, null = True)
 
 class SyringePumpOpDescriptorModel(StationOpDescriptorModel):
-    port = fields.StringField(required=True)
+    port = fields.IntField(required=True)
     volume = fields.FloatField(min_value=0, required=True)
     speed = fields.FloatField(min_value=0)
 

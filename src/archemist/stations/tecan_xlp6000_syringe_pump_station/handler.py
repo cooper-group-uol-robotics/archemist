@@ -15,7 +15,7 @@ class SyringePumpStationROSHandler(StationHandler):
         super().__init__(station)
         self._syringe_pump_current_task_complete = False
         rospy.init_node(f'{self._station}_handler')
-        self.pub_pxrd = rospy.Publisher("/Tecan_XLP6000_Commands", TecanXlp6000Cmd, queue_size=1)
+        self.pub_pump = rospy.Publisher("/Tecan_XLP6000_Commands", TecanXlp6000Cmd, queue_size=1)
         rospy.Subscriber('/Tecan_XLP6000_Readings', TecanXlp6000Reading, self._syringe_pump_readings, queue_size=1)
         rospy.Subscriber('/tecan_xlp/task_complete', bool, self._syringe_pump_state_update, queue_size=1)
         
@@ -53,14 +53,14 @@ class SyringePumpStationROSHandler(StationHandler):
 
     def _real_execution(self):
         current_op = self._station.get_assigned_station_op()
-        print(f'performing pxrd operation {current_op}')
+        print(f'performing syringe pump operation {current_op}')
         if self._syringe_pump_current_task_complete == True:
             if (isinstance(current_op,SyringePumpDispenseOpDescriptor)):
                 rospy.loginfo('starting dispence operation')
                 for i in range(10):
-                    self.pub_pxrd.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_port = current_op.port, xlp_volume = current_op.dispense_volume , xlp_speed = current_op.dispense_speed)
+                    self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_port = current_op.port, xlp_volume = current_op.dispense_volume , xlp_speed = current_op.dispense_speed)
             elif (isinstance(current_op,SyringePumpWithdrawOpDescriptor)):
                 rospy.loginfo('starting withdraw operation')
                 for i in range(10):
-                    self.pub_pxrd.publish(tecan_xlp_command=TecanXlp6000Cmd.WITHDRAW, xlp_port = current_op.port, xlp_volume = current_op.withdraw_volume, xlp_speed = current_op.withdraw_speed)
+                    self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.WITHDRAW, xlp_port = current_op.port, xlp_volume = current_op.withdraw_volume, xlp_speed = current_op.withdraw_speed)
         time.sleep(1)

@@ -1,4 +1,4 @@
-from .model import SyringePumpMode, SyringePumpStationModel, SyringePumpOpDescriptorModel
+from .model import SyringePumpStatus, SyringePumpStationModel, SyringePumpOpDescriptorModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid, Solid
@@ -11,7 +11,7 @@ from datetime import datetime
 ''' ==== Station Description ==== '''
 class SyringePump(Station):
     def __init__(self, station_model: SyringePumpStationModel) -> None:
-        super().__init__(station_model)
+        self._model = station_model
 
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
@@ -22,20 +22,28 @@ class SyringePump(Station):
         return cls(model)
 
     @property
-    def mode(self) -> SyringePumpMode:
-        self._model.reload('mode')
-        return self._model.mode
+    def status(self) -> SyringePumpStatus:
+        self._model.reload('machine_status')
+        return self._model.machine_status
 
-    @mode.setter
-    def mode(self, new_mode: SyringePumpMode):
-        self._model.update(mode=new_mode)
+    @status.setter
+    def status(self, new_status: SyringePumpStatus):
+        self._model.update(machine_status=new_status)
     
+    #to check if the station is idle 
+
     def assign_station_op(self, station_op: Any):
         if isinstance(station_op, SyringePumpDispenseOpDescriptor):
-            self.mode = SyringePumpMode.DISPENSE
+            self.status = SyringePumpStatus.DISPENSE
         elif isinstance(station_op, SyringePumpWithdrawOpDescriptor):
-            self.mode = SyringePumpMode.WITHDRAW
+            self.status = SyringePumpStatus.WITHDRAW
         return super().assign_station_op(station_op)
+    
+    def complete_assigned_station_op(self, success: bool, **kwargs):
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, (SyringePumpDispenseOpDescriptor,SyringePumpWithdrawOpDescriptor)) and current_op.was_successful:
+            self.status = SyringePumpStatus.JOB_COMPLETE
+        super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
 class SyringePumpDispenseOpDescriptor(StationOpDescriptor):
@@ -43,11 +51,11 @@ class SyringePumpDispenseOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, dispense_port: int, dispense_speed: float, dispense_volume: float):
         model = SyringePumpOpDescriptorModel()
-        model.port = int(kwargs['port'])
-        model.speed = int(kwargs['dispense_speed'])
-        model.volume = float(kwargs['dispense_volume'])
+        model.port = dispense_port
+        model.speed = dispense_speed
+        model.volume = dispense_volume
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -69,11 +77,11 @@ class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, withdraw_port: int, withdraw_speed: float, withdraw_volume: float):
         model = SyringePumpOpDescriptorModel()
-        model.port = int(kwargs['port'])
-        model.speed = int(kwargs['withdraw_speed'])
-        model.volume = float(kwargs['withdraw_volume'])
+        model.port = withdraw_port
+        model.speed = withdraw_speed
+        model.volume = withdraw_volume
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
