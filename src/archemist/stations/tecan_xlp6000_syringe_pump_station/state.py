@@ -51,11 +51,11 @@ class SyringePumpDispenseOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, dispense_port: int, dispense_speed: float, dispense_volume: float):
+    def from_args(cls, **kwargs):
         model = SyringePumpOpDescriptorModel()
-        model.port = dispense_port
-        model.speed = dispense_speed
-        model.volume = dispense_volume
+        model.port = kwargs["dispense_port"]
+        model.speed = kwargs["dispense_speed"]
+        model.volume = kwargs["dispense_volume"]
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -77,11 +77,11 @@ class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
         self._model = op_model
 
     @classmethod
-    def from_args(cls, withdraw_port: int, withdraw_speed: float, withdraw_volume: float):
+    def from_args(cls, **kwargs):
         model = SyringePumpOpDescriptorModel()
-        model.port = withdraw_port
-        model.speed = withdraw_speed
-        model.volume = withdraw_volume
+        model.port = int(kwargs["withdraw_port"])
+        model.speed = float(kwargs["withdraw_speed"])
+        model.volume = float(kwargs["withdraw_volume"])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
