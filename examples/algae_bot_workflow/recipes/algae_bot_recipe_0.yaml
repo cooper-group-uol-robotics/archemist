@@ -69,6 +69,27 @@ process:
       operation:
         type: SampleColorOpDescriptor
     transitions:
+      on_success: wait
+      on_fail: end_state
+  - state_name: wait
+    station:
+      type: WaitingStation
+      id: 15
+      operation:
+        type: WaitingOpDescriptor
+        properties:
+          duration: 3
+          time_unit: sec
+    transitions:
+      on_success: analyse_again
+      on_fail: end_state
+  - state_name: analyse_again
+    station:
+      type: LightBoxStation
+      id: 13
+      operation:
+        type: SampleColorOpDescriptor
+    transitions:
       on_success: dispose
       on_fail: end_state
   - state_name: dispose

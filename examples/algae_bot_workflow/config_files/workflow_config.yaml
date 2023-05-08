@@ -129,6 +129,18 @@ stations:
       args: 
         batch_mode: true
     parameters:
+  - type: WaitingStation
+    id: 15
+    location: 
+      node_id: 25
+      graph_id: 1
+    batch_capacity: 2
+    process_batch_capacity: 2
+    handler: WaitingStationHandler
+    process_state_machine: 
+      type: WaitingStationProcess
+      args: 
+    parameters:
   - type: OutputStation
     id: 14
     location:
