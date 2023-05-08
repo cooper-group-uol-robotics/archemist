@@ -61,15 +61,14 @@ general:
 #
 # for every station used in the workflow, add a new entry and fill its fields as defined
 stations:
-  - type: tecan_xlp6000_syringe_pump_station
+  - type: SyringePump
     id: 13
     location: 
       node_id: 25
       graph_id: 1
-    batch_capacity: 2
+    batch_capacity: 1
     handler: SyringePumpStationROSHandler
     process_state_machine: 
       type: SyringePumpStationSm
       args: 
-        batch_mode: true
     parameters:

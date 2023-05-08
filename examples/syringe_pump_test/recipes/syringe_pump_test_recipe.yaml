@@ -41,14 +41,15 @@ general:
 process:
   - state_name: pump_liquid
     station:
-      type: tecan_xlp6000_syringe_pump_station
+      type: SyringePump
       id: 12
       operation:
         type: SyringePumpWithdrawOpDescriptor
         properties:
-            withdraw_port: 4
-            withdraw_speed: 150 
-            withdraw_volume: 20
+          pump_info:
+            port: 4
+            speed: 50
+            volume: 20          
     transitions:
       on_success: end_state
       on_fail: end_state
