@@ -1,8 +1,34 @@
 from archemist.core.persistence.yaml_handler import YamlHandler
+from optimisation_model import OptimisationModel
 from optimiser_base import OptimizerBase
 import pandas as pd
 from pathlib import Path
 import importlib
+
+class OptimizationState:
+    def __init__(self, optimization_model: OptimisationModel) -> None:
+        self._model = optimization_model
+
+    @classmethod
+    def from_dict(cls, state_dict: dict={}):
+        model = OptimisationModel()
+        model.optimizer_module = state_dict['module']
+        model.optimizer_class = state_dict['class']
+        model.optimizer_hyperparameters = state_dict['optimiser_hyperparameters']
+        model.save()
+        return cls(model)
+    
+    @property
+    def optimizer_module(self) -> str:
+        return self._model.optimizer_module
+    
+    @property
+    def optimizer_class(self) -> str:
+        return self._model.optimizer_class
+    
+    @property
+    def optimizer_hyperparameters(self):
+        return self._model.optimizer_hyperparameters
     
 class OptimisationManager():
     
@@ -14,8 +40,12 @@ class OptimisationManager():
         bound = self._generate_bound_from_config()
         self._component_keys = bound.keys() 
         #self.target_name = None  
+        self._optimizer = self.construct_optimiser_from_config_file(self._config_dict)
         self.model = self._generate_model(pbounds=bound)
         self._probed_points = pd.DataFrame([])
+
+    def construct_optimiser_from_config_file(self, config_dict:dict):
+        return OptimizationState.from_dict(config_dict['optimizer'])
     
     def update_model(self, data: pd.DataFrame, **kwargs):
         """
@@ -47,9 +77,9 @@ class OptimisationManager():
         Generate optimization model from config file based on the 'optimizer' part.
         If the model requires constraint information, please pass it via kwargs.
         """
-        module = importlib.import_module(self._config_dict['optimizer']['module'])
-        optimizer_class = getattr(module, self._config_dict['optimizer']['class'])
-        return optimizer_class(**self._config_dict['optimizer']['hyperparameters'])
+        module = importlib.import_module(self._optimizer.optimizer_module)
+        optimizer_class = getattr(module, self._optimizer.optimizer_class)
+        return optimizer_class(self._optimizer.optimizer_hyperparameters)
 
     def _pandas_to_params_targets(self, data: pd.DataFrame):
         """

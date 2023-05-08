@@ -4,9 +4,9 @@ from archemist.core.models.batch_model import BatchModel
 from archemist.core.models.recipe_model import RecipeModel
 
 class OptimisationModel(Document):
-    optimiser_module = fields.StringField(required=True)
-    optimiser_class = fields.StringField(required=True)
-    optimiser_hyperparameters = fields.DictField()
+    optimizer_module = fields.StringField(required=True)
+    optimizer_class = fields.StringField(required=True)
+    optimizer_hyperparameters = fields.DictField()
 
 
     meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}

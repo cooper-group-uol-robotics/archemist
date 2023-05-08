@@ -37,4 +37,4 @@ optimizer:
   module: bayes_opt.bayesian_optimization  # optimizer module
   class: BayesianOptimization  # optimizer class
   hyperparameters:  # necessary parameters to build the optimizer
-    f:
+  additional_args: #additional arguments TODO to call these into model
