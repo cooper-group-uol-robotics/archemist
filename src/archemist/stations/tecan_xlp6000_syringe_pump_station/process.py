@@ -66,8 +66,8 @@ class SyringePumpStationSm(StationProcessFSM):
         return self._status['spliting_done']
 
     def request_split_volume(self):
-        current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
-        self.current_op_dispense_info = current_op.pump_info
+        #current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
+        #self.current_op_dispense_info = current_op.pump_info
         iterations, last_iteration_volume = divmod(self._status['total_volume'], self._status['pump_capacity'])
         for i in range(iterations):
             self._status['split_volume'].append(self._status['pump_capacity'])
