@@ -4,7 +4,6 @@ from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid, Solid
 from archemist.core.persistence.object_factory import MaterialFactory
 from typing import Dict, List, Any
-from archemist.core.exceptions.exception import InvalidLiquidError
 from datetime import datetime
 
 
@@ -53,24 +52,22 @@ class SyringePumpDispenseOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = SyringePumpOpDescriptorModel()
-        model.port = kwargs["dispense_port"]
-        model.speed = kwargs["dispense_speed"]
-        model.volume = kwargs["dispense_volume"]
+        model.pump_info = kwargs['pump_info']
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
 
     @property
-    def port(self) -> int:
-        return self._model.port
+    def dispense_port(self) -> int:
+        return self._model.pump_info.get('port')
 
     @property
-    def dispense_speed(self) -> int:
-        return self._model.speed
+    def dispense_speed(self) -> float:
+        return self._model.pump_info.get('speed')
 
     @property
-    def dispense_volume(self) -> int:
-        return self._model.volume
+    def dispense_volume(self) -> float:
+        return self._model.pump_info.get('volume')
 
 class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: SyringePumpOpDescriptorModel) -> None:
@@ -79,21 +76,20 @@ class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = SyringePumpOpDescriptorModel()
-        model.port = int(kwargs["withdraw_port"])
-        model.speed = float(kwargs["withdraw_speed"])
-        model.volume = float(kwargs["withdraw_volume"])
+        model.pump_info = kwargs['pump_info']
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
 
     @property
-    def port(self) -> int:
-        return self._model.port
+    def withdraw_port(self) -> int:
+        return self._model.pump_info.get('port')
+        
 
     @property
-    def withdraw_speed(self) -> int:
-        return self._model.speed
+    def withdraw_speed(self) -> float:
+        return self._model.pump_info.get('speed')
 
     @property
-    def withdraw_volume(self) -> int:
-        return self._model.volume
+    def withdraw_volume(self) -> float:
+        return self._model.pump_info.get('volume')
