@@ -27,12 +27,12 @@ class SyringePumpStationSm(StationProcessFSM):
 
 
         self.current_op_dispense_info = {}
-        self.current_op_dispense_info['port'] = 4
+        self.current_op_dispense_info['port'] = 3
         self.current_op_dispense_info['speed'] = 50
         #self.current_op_dispense_info['volume'] = 25
 
         self.current_op_withdraw_info = {}
-        self.current_op_withdraw_info['port'] = 7
+        self.current_op_withdraw_info['port'] = 3
         self.current_op_withdraw_info['speed'] = 50
         #self.current_op_withdraw_info['volume'] = 25
 
