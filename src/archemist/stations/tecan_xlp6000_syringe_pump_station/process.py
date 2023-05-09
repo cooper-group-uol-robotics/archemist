@@ -18,16 +18,23 @@ class SyringePumpStationSm(StationProcessFSM):
         super().__init__(station, params_dict)
         if 'operation_complete' not in self._status.keys():
             self._status['operation_complete'] = False
-        self._status['withdraw_port'] = 4
-        self._status['dispense_port'] = 7
-        self._status['withdraw_speed'] = 150
-        self._status['dispense_speed'] = 150
-        self._status['total_volume'] = 30
+        self._status['recipe_volume'] = 55
         self._status['pump_capacity'] = 25
         self._status['split_volume'] = []
         self._status['spliting_done'] = False
         self._status['iterations'] = 0
         self._status['iterations_done'] = False
+
+
+        self.current_op_dispense_info = {}
+        self.current_op_dispense_info['port'] = 4
+        self.current_op_dispense_info['speed'] = 50
+        #self.current_op_dispense_info['volume'] = 25
+
+        self.current_op_withdraw_info = {}
+        self.current_op_withdraw_info['port'] = 7
+        self.current_op_withdraw_info['speed'] = 50
+        #self.current_op_withdraw_info['volume'] = 25
 
         ''' States '''
         states = [ State(name='init_state'), 
@@ -38,11 +45,11 @@ class SyringePumpStationSm(StationProcessFSM):
         
         ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'split_volume', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'split_volume', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
             {'trigger':self._trigger_function, 'source':'split_volume', 'dest': 'withdraw', 'conditions':['is_station_job_ready','is_splitting_done']},
             {'trigger':self._trigger_function, 'source':'withdraw', 'dest': 'dispense', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'dispense', 'dest': 'withdraw', 'conditions':'is_station_job_ready','unless':'is_station_operation_complete'},
-            {'trigger':self._trigger_function, 'source':'dispense','dest':'final_state', 'conditions':'is_station_operation_complete'}
+            {'trigger':self._trigger_function, 'source':'dispense','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
         ]   
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -51,12 +58,14 @@ class SyringePumpStationSm(StationProcessFSM):
         return self._status['operation_complete']
 
     def request_withdraw_operation(self):
-        self._station.assign_station_op(SyringePumpWithdrawOpDescriptor)
-        #self._station.assign_station_op(SyringePumpWithdrawOpDescriptor.from_args(self.current_op_dispense_info))
+        self.current_op_withdraw_info['volume'] = self._status['split_volume'][self._status['iterations']]
+        op = SyringePumpWithdrawOpDescriptor.from_args(pump_info = self.current_op_withdraw_info)
+        self._station.assign_station_op(op)
 
     def request_dispense_operation(self):
-        self._station.assign_station_op(SyringePumpDispenseOpDescriptor)
-        #self._station.assign_station_op(SyringePumpDispenseOpDescriptor.from_args(self.current_op_dispense_info))
+        self.current_op_dispense_info['volume'] = self._status['split_volume'][self._status['iterations']]
+        op = SyringePumpDispenseOpDescriptor.from_args(pump_info = self.current_op_dispense_info)
+        self._station.assign_station_op(op)
         self._status['iterations'] += 1
         if self._status['iterations'] == len(self._status['split_volume']):
              self._status['operation_complete'] = True
@@ -66,9 +75,7 @@ class SyringePumpStationSm(StationProcessFSM):
         return self._status['spliting_done']
 
     def request_split_volume(self):
-        #current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()
-        #self.current_op_dispense_info = current_op.pump_info
-        iterations, last_iteration_volume = divmod(self._status['total_volume'], self._status['pump_capacity'])
+        iterations, last_iteration_volume = divmod(self._status['recipe_volume'], self._status['pump_capacity'])
         for i in range(iterations):
             self._status['split_volume'].append(self._status['pump_capacity'])
         if last_iteration_volume is not 0:
@@ -76,6 +83,7 @@ class SyringePumpStationSm(StationProcessFSM):
         self._status['spliting_done'] = True
 
     def finalize_batch_processing(self):
+        self._station.process_assigned_batches()
         self._status['operation_complete'] = False
         self._status['spliting_done'] = False
         self._status['iterations'] = 0

@@ -62,7 +62,7 @@ general:
 # for every station used in the workflow, add a new entry and fill its fields as defined
 stations:
   - type: SyringePump
-    id: 13
+    id: 12
     location: 
       node_id: 25
       graph_id: 1
