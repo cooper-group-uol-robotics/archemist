@@ -65,8 +65,8 @@ class SyringePumpStationROSHandler(StationHandler):
         pass
 
     def _syringe_pump_state_update(self, msg):
-        if msg == True:
+        if msg.data == True:
             self._syringe_pump_current_task_complete = True
-        else:
+        elif msg.data == False:
             self._syringe_pump_current_task_complete = False
         print("status", self._syringe_pump_current_task_complete)
