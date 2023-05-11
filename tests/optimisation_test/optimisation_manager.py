@@ -14,7 +14,8 @@ class OptimizationState:
         model = OptimisationModel()
         model.optimizer_module = state_dict['module']
         model.optimizer_class = state_dict['class']
-        model.optimizer_hyperparameters = state_dict['optimiser_hyperparameters']
+        model.optimizer_hyperparameters = state_dict['hyperparameters']
+        model.allowed_recipe_count = state_dict['allowed_recipe_count']
         model.save()
         return cls(model)
     
@@ -30,22 +31,30 @@ class OptimizationState:
     def optimizer_hyperparameters(self):
         return self._model.optimizer_hyperparameters
     
+    @property
+    def allowed_recipe_count(self) -> int:
+        return self._model.allowed_recipe_count
+    
 class OptimisationManager():
     
     def __init__(self,
                  config_file: str,
                  batch_size: int = 15,) -> None:
-        self._config_dict = YamlHandler.load_config_file(config_file)
+        self._config_dict = YamlHandler.loadYamlFile(config_file)
+        print(self._config_dict)
         self._batch_size = batch_size
         bound = self._generate_bound_from_config()
         self._component_keys = bound.keys() 
-        #self.target_name = None  
+        self.target_name = None  
         self._optimizer = self.construct_optimiser_from_config_file(self._config_dict)
-        self.model = self._generate_model(pbounds=bound)
+        #self.model = self._generate_model(pbounds=bound)
         self._probed_points = pd.DataFrame([])
 
     def construct_optimiser_from_config_file(self, config_dict:dict):
         return OptimizationState.from_dict(config_dict['optimizer'])
+    
+    def recipe_count(self):
+        return self._optimizer.allowed_recipe_count
     
     def update_model(self, data: pd.DataFrame, **kwargs):
         """
@@ -61,7 +70,6 @@ class OptimisationManager():
     def is_recipe_template_available(self, _template_path):
         _template_path = Path(_template_path)
         return _template_path.is_file()
-
 
     #internal functions
     
@@ -101,11 +109,15 @@ class OptimisationManager():
             params.append(data.iloc[row_index].to_dict())
         return params, targets
 
-if __name__ == "main":
-    test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
-    opt = OptimisationManager('test_config.yaml')
-    opt.update_model(test_data)
-    cwd_path = Path.cwd()
-    path_to_template_recipe = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe_template.yaml")
-    opt.is_recipe_template_available(path_to_template_recipe)
-
+# if __name__ == "__main__":
+    # test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
+    # cwd_path = Path.cwd()
+    # path_to_config_file = Path.joinpath(cwd_path, "tests/optimisation_test/optimization_config.yaml")
+    # opt = OptimisationManager(path_to_config_file)
+    # opt.update_model(test_data)
+    # cwd_path = Path.cwd()
+    # path_to_template_recipe = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe_template.yaml")
+    # if opt.is_recipe_template_available(path_to_template_recipe) == True:
+    #     print ('True')
+    # else:
+    #     print('false')
