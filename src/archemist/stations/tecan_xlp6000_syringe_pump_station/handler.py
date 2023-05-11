@@ -31,15 +31,21 @@ class SyringePumpStationROSHandler(StationHandler):
         #self._syringe_pump_current_task_complete = True
         current_op = self._station.get_assigned_station_op()
         print(f'performing syringe pump operation {current_op}')
+
         if (isinstance(current_op,SyringePumpDispenseOpDescriptor)):
+            while True:
+                if self._syringe_pump_current_task_complete:
+                    break
             rospy.loginfo('starting dispence operation')
             self._syringe_pump_current_task_complete = False
-            for i in range(10):
+            time.sleep(5)
+            for i in range(1):
                 self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_port = current_op.dispense_port, xlp_volume = current_op.dispense_volume , xlp_speed = current_op.dispense_speed)
         elif (isinstance(current_op,SyringePumpWithdrawOpDescriptor)):
             rospy.loginfo('starting withdraw operation')
             self._syringe_pump_current_task_complete = False
-            for i in range(10):
+            time.sleep(5)
+            for i in range(1):
                 self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.WITHDRAW, xlp_port = current_op.withdraw_port, xlp_volume = current_op.withdraw_volume, xlp_speed = current_op.withdraw_speed)
         else:
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
