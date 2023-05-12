@@ -3,4 +3,4 @@ from mongoengine import fields
 
 
 class WeightOpDescriptorModel(StationOpDescriptorModel):
-    weight = fields.FloatField()
+    mass = fields.FloatField(min_value=0)

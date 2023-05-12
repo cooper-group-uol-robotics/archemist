@@ -34,14 +34,14 @@ class SampleWeighingOpDescriptor(StationOpDescriptor):
 
     @property
     def weight(self) -> int:
-        return self._model.weight
+        return self._model.mass
 
     def complete_op(self, success: bool, **kwargs):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'weight' in kwargs:
-            self._model.weight = kwargs['weight']
+        if 'mass' in kwargs:
+            self._model.mass = kwargs['mass']
         else:
             pass
     
