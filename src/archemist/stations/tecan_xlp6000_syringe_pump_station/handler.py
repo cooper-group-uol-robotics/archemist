@@ -6,9 +6,6 @@ from archemist.core.processing.handler import StationHandler
 from std_msgs.msg import String
 from roslabware_msgs.msg import TecanXlp6000Cmd, TecanXlp6000Reading
 from std_msgs.msg import Bool
-#from roslabware_msgs.msg.tecan_xlp6000 import TecanXlp6000Cmd, TecanXlp6000Reading
-#from roslabware_msg.msg.tecan_xlp6000 import TecanXlp6000Cmd, TecanXlp6000Reading
-#from pxrd_msgs.msg import PxrdCommand, PxrdStatus
 import time
 from threading import Thread
 
@@ -26,9 +23,6 @@ class SyringePumpStationROSHandler(StationHandler):
         self._thread = None
 
     def execute_op(self):
-        # self._thread = Thread(target=self._real_execution)
-        # self._thread.start()
-        #self._syringe_pump_current_task_complete = True
         current_op = self._station.get_assigned_station_op()
         print(f'performing syringe pump operation {current_op}')
 
@@ -38,14 +32,12 @@ class SyringePumpStationROSHandler(StationHandler):
                     break
             rospy.loginfo('starting dispence operation')
             self._syringe_pump_current_task_complete = False
-            time.sleep(5)
-            for i in range(1):
+            for i in range(10):
                 self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_port = current_op.dispense_port, xlp_volume = current_op.dispense_volume , xlp_speed = current_op.dispense_speed)
         elif (isinstance(current_op,SyringePumpWithdrawOpDescriptor)):
             rospy.loginfo('starting withdraw operation')
             self._syringe_pump_current_task_complete = False
-            time.sleep(5)
-            for i in range(1):
+            for i in range(10):
                 self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.WITHDRAW, xlp_port = current_op.withdraw_port, xlp_volume = current_op.withdraw_volume, xlp_speed = current_op.withdraw_speed)
         else:
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
@@ -75,4 +67,3 @@ class SyringePumpStationROSHandler(StationHandler):
             self._syringe_pump_current_task_complete = True
         elif msg.data == False:
             self._syringe_pump_current_task_complete = False
-        print("status", self._syringe_pump_current_task_complete)
