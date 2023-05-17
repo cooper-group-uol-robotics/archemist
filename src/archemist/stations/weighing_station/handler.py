@@ -18,8 +18,8 @@ class KernPcbROSHandler(StationHandler):
         self._current_door_status = None
         self._desired_door_status = None
         rospy.sleep(2)
-        for i in range(10):
-            self._pub_balance.publish(kern_command = 0)
+        # for i in range(10):
+        #     self._pub_balance.publish(kern_command = 0)
         self._received_results = False
         self._op_results = {}
         rospy.sleep(1)
@@ -41,15 +41,16 @@ class KernPcbROSHandler(StationHandler):
             for i in range(25):
                 self._pub_balance.publish(kern_command = KernPCB2500Cmd.GET_MASS)
         elif isinstance(current_op, BalanceOpenDoorOpDescriptor):
+            self._desired_door_status = "Door_Opened"
             rospy.loginfo('Opening weighing station door')
             for i in range(10):
                 self._pub_door.publish(kern_door_command = KernDoorCmd.OPEN_DOOR)
-            self._desired_door_status = "Door_Opened"
         elif isinstance(current_op, BalanceCloseDoorOpDescriptor):
+            self._desired_door_status = "Door_Closed"
+            self._received_results = False
             rospy.loginfo('Closing weighing station door')
             for i in range(10):
                 self._pub_door.publish(kern_door_command = KernDoorCmd.CLOSE_DOOR)
-            self._desired_door_status = "Door_Closed"
         else:
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 

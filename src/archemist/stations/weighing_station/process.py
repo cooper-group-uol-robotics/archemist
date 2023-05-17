@@ -7,6 +7,7 @@ from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenance
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.util import Location
+import time
 
 class WeighingSM(StationProcessFSM):
     
@@ -36,7 +37,7 @@ class WeighingSM(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'load_sample', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'load_sample','dest':'station_process', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'station_process','dest':'unload_sample', 'conditions':'is_station_job_ready'}, #'before':'process_sample'
-            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_loaded']},
+            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_unloaded']},
             {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'update_batch_index', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'update_batch_index','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','are_all_batches_processed']},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
@@ -48,9 +49,11 @@ class WeighingSM(StationProcessFSM):
         return self._status['operation_complete']
 
     def is_funnel_loaded(self):
+        time.sleep(5)
         return True
     
     def is_funnel_unloaded(self):
+        time.sleep(5)
         return True
 
     def are_all_batches_processed(self):
@@ -72,25 +75,28 @@ class WeighingSM(StationProcessFSM):
         pass
 
     def request_load_sample_job(self):
-        self._status['loaded_samples'] += 1
-        sample_index = self._status['loaded_samples']
-        perform_6p = False # this will be later evaluated by the KMRiiwa handler
-        allow_auto_func = False # to stop auto charing and calibration when presentig the sample
-        # robot_job = KukaLBRTask.from_args(name='PresentVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
-        #                                 type=RobotTaskType.MANIPULATION, location=self._station.location)
-        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        # self._station.request_robot_op(robot_job,current_batch_id)
+        pass
+
+        # self._status['loaded_samples'] += 1
+        # sample_index = self._status['loaded_samples']
+        # perform_6p = False # this will be later evaluated by the KMRiiwa handler
+        # allow_auto_func = False # to stop auto charing and calibration when presentig the sample
+        # # robot_job = KukaLBRTask.from_args(name='PresentVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
+        # #                                 type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # # self._station.request_robot_op(robot_job,current_batch_id)
 
 
     def request_unload_sample_job(self):
-        sample_index = self._status['loaded_samples']
-        perform_6p = False
-        allow_auto_func = False
-        # robot_job = KukaLBRTask.from_args(name='ReturnVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
-        #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
-        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        # self._station.request_robot_op(robot_job,current_batch_id)
-        self._status['loaded_samples'] += 1
+        pass
+        # sample_index = self._status['loaded_samples']
+        # perform_6p = False
+        # allow_auto_func = False
+        # # robot_job = KukaLBRTask.from_args(name='ReturnVial',params=[perform_6p,self._status['batch_index']+1,sample_index,allow_auto_func],
+        # #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # # self._station.request_robot_op(robot_job,current_batch_id)
+        # self._status['loaded_samples'] += 1
     
 
     def finalize_batch_processing(self):

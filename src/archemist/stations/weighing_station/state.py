@@ -36,6 +36,7 @@ class WeighingStation(Station):
             self.status = BalanceDoorStatus.DOORS_CLOSED
         elif isinstance(current_op, BalanceOpenDoorOpDescriptor):
             self.status = BalanceDoorStatus.DOORS_OPEN
+        super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''
 
