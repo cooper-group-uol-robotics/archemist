@@ -6,7 +6,7 @@ class OptimisationModel(Document):
     optimizer_module = fields.StringField(required=True)
     optimizer_class = fields.StringField(required=True)
     optimizer_hyperparameters = fields.DictField()
-    allowed_recipe_count = fields.IntField()
+    max_recipe_count = fields.IntField()
 
 
     # meta = {'collection': 'optimisation', 'db_alias': 'optimization_state'}

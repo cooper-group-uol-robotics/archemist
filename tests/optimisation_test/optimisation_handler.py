@@ -1,5 +1,3 @@
-# thread to watch recipe queue
-# thread to watch completed 
 import time
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.state.state import State
@@ -10,18 +8,10 @@ from threading import Thread
 import pandas as pd
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir) -> None:
-        self._path_to_config_file = Path.joinpath(Path.cwd(), "tests/optimisation_test/optimization_config.yaml")
-        self._path_to_template_recipe = Path.joinpath(Path.cwd(), "tests/optimisation_test/algae_bot_recipe_template.yaml")
-        self._opt_mgr = OptimisationManager(self._path_to_config_file)
-        self._allowed_number_of_recipes = int(self._opt_mgr.recipe_count())
+    def __init__(self, recipe_dir, max_recipe_count, templete_recipe_dir) -> None:
         self._recipe_path = recipe_dir
-
-        self._watch_optimization_thread = Thread(target=self.watch_batch_complete)
-        self._watch_recipe_thread = Thread(target=self.watch_recipe_queue)
-        self._watch_optimization_thread.start()
-        self._watch_recipe_thread.start()
-
+        self._templete_recipe_path = templete_recipe_dir
+        self._max_number_of_recipes = max_recipe_count
 
         ### variables to be replaced with functions
         optimised_parameters = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0], 'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44], 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
@@ -39,10 +29,6 @@ class OptimizationHandler:
                 code to get the probed points(pd.DataFrame) and feed it to opt_manager.updatemodel
 
                 """
-                self._opt_mgr.update_model()
-
-
-
 
     def watch_recipe_queue(self):
         # add a max_recipe field in the config.yaml
@@ -52,9 +38,9 @@ class OptimizationHandler:
         recipe_watcher.start()
         recipe_queue = recipe_watcher.recipes_queue
         if len(recipe_queue) == 0:
-            for recipe in range(self._allowed_number_of_recipes):
+            for recipe in range(self._max_number_of_recipes):
                 recipe_name = Path.joinpath(self._recipe_path, f"algae_bot_recipe_{recipe+1}.yaml")
-                new_recipe = RecipeGenerator(self._path_to_template_recipe, recipe_name)
+                new_recipe = RecipeGenerator(self._templete_recipe_path, recipe_name)
                 new_recipe.generate_recipe(self._opt_pd) 
         time.sleep(1)
 
