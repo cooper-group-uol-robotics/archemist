@@ -1,7 +1,7 @@
 from archemist.core.state.state import State
 from archemist.core.state.batch import Batch
 from archemist.core.util.location import Location
-from archemist.core.processing.scheduler import MultiBatchRobotScheduler
+from archemist.core.processing.scheduler import MultiBatchRobotScheduler, LazyRobotScheduler
 from collections import deque
 from threading import Thread
 from time import sleep
@@ -10,7 +10,7 @@ from time import sleep
 class WorkflowManager:
     def __init__(self, workflow_state: State):
         self._workflow_state = workflow_state
-        self._robot_scheduler = MultiBatchRobotScheduler()
+        self._robot_scheduler = LazyRobotScheduler()
         self._processor_thread = None
         self._running = False
         self._pause_workflow = False
