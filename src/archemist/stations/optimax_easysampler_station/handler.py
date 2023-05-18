@@ -30,7 +30,7 @@ class KernPcbROSHandler(StationHandler):
         self._op_results = {}
         if isinstance(current_op, OptimaxTempStirringOpDescriptor):
             for i in range(10):
-                self.pubOptimax.publish(optimax_command = MettlerOptimaxCmd.SET_HEAT, optimax_param = current_op.target_temperature)
+                self.pubOptimax.publish(optimax_command = MettlerOptimaxCmd.ADD_TEMP_STIR, optimax_param = current_op.target_temperature)
                 self.pubOptimax.publish(optimax_command = MettlerOptimaxCmd.SET_STIR, optimax_param = current_op.target_stirring_speed)
                 self.pubOptimax.publish(optimax_command = MettlerOptimaxCmd.SET_TIME, optimax_param = current_op.target_duration)
                 self.pubOptimax.publish(optimax_command = MettlerOptimaxCmd.HEAT_ON)
