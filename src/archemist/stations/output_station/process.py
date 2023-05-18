@@ -47,7 +47,7 @@ class OutputStationProcess(StationProcess):
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         robot_job = KukaLBRTask.from_args(name='PlaceRack',
                                           params=[perform_6p,batch_index+1],
-                                        type=RobotTaskType.MANIPULATION, location=self._station.location)
+                                        type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._process_data.batches[batch_index].id
         self.request_robot_op(robot_job,current_batch_id)
 
