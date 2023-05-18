@@ -20,7 +20,7 @@ class KernPcbROSHandler(StationHandler):
         rospy.sleep(2)
         # for i in range(10):
         #     self._pub_balance.publish(kern_command = 0)
-        self._received_results = False
+        self._received_mass = False
         self._op_results = {}
         rospy.sleep(1)
         
@@ -37,7 +37,7 @@ class KernPcbROSHandler(StationHandler):
         current_op = self._station.get_assigned_station_op()
         if isinstance(current_op, SampleWeighingOpDescriptor):
             rospy.loginfo('Publishing weighing command')
-            self._received_results = False
+            self._received_mass = False
             for i in range(25):
                 self._pub_balance.publish(kern_command = KernPCB2500Cmd.GET_MASS)
         elif isinstance(current_op, BalanceOpenDoorOpDescriptor):
@@ -47,7 +47,7 @@ class KernPcbROSHandler(StationHandler):
                 self._pub_door.publish(kern_door_command = KernDoorCmd.OPEN_DOOR)
         elif isinstance(current_op, BalanceCloseDoorOpDescriptor):
             self._desired_door_status = "Door_Closed"
-            self._received_results = False
+            self._received_mass = False
             rospy.loginfo('Closing weighing station door')
             for i in range(10):
                 self._pub_door.publish(kern_door_command = KernDoorCmd.CLOSE_DOOR)
@@ -55,7 +55,7 @@ class KernPcbROSHandler(StationHandler):
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
     def is_op_execution_complete(self) -> bool:
-        if self._received_results or self._desired_door_status == self._current_door_status:
+        if self._received_mass or self._desired_door_status == self._current_door_status:
             self._desired_door_status = None
             return True
 
@@ -66,10 +66,9 @@ class KernPcbROSHandler(StationHandler):
         if not msg.mass == 0:
             self._op_results['mass'] = msg.mass
             rospy.loginfo(f'The weight of the funnel is [{self._op_results}]')
-            self._received_results = True
+            self._received_mass = True
         else:
             rospy.loginfo('Invalid message from the driver !!!')
-
 
     def door_callback(self, msg):
         if self._current_door_status != str(msg.status):
