@@ -50,7 +50,7 @@ class SynthesisStation(Station):
 
     def assign_station_op(self, stationOp: Any):
         if isinstance(stationOp, OptimaxTempStirringOpDescriptor):
-            self.status = SynthesisStatus.T_AND_S
+            self.status = SynthesisStatus.TEMP_AND_STIRRING
         elif isinstance(stationOp, OptimaxTempOpDescriptor):
             self.status = SynthesisStatus.TEMP_CONTROL
         elif isinstance(stationOp, OptimaxStirringOpDescriptor):
@@ -59,25 +59,25 @@ class SynthesisStation(Station):
             self.status = SynthesisStatus.LCMS
         super().assign_station_op(stationOp)
     
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        self._model.update(unset__target_temperature=True)
-        self._model.update(unset__target_stirring_speed=True)
-        self._model.update(unset__target_duration=True)
-        self._model.update(unset__mode=True)
-        super().complete_assigned_station_op(success, **kwargs)
+    # def complete_assigned_station_op(self, success: bool, **kwargs):
+    #     self._model.update(unset__target_temperature=True)
+    #     self._model.update(unset__target_stirring_speed=True)
+    #     self._model.update(unset__target_duration=True)
+    #     self._model.update(unset__mode=True)
+    #     super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''    
-class OptimaxTempStirringOpDescriptor(OptimaxOpDescriptorModel):
-    def __init__(self, op_model: OptimaxOpDescriptorModel) -> None:
+class OptimaxTempStirringOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: OptimaxOpDescriptorModel):
         self._model = op_model
 
     @classmethod
     def from_args(cls, **kwargs):
         model = OptimaxOpDescriptorModel()
         model.temperature = int(kwargs['temperature'])
-        model.temp_duration = float(kwargs['temp_duration'])
+        model.temp_duration = int(kwargs['temp_duration'])
         model.stir_speed = int(kwargs['stir_speed'])
-        model.stir_duration = float(kwargs['stir_duration'])
+        model.stir_duration = int(kwargs['stir_duration'])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -98,8 +98,8 @@ class OptimaxTempStirringOpDescriptor(OptimaxOpDescriptorModel):
     def stir_duration(self) -> int:
         return self._model.stir_duration
 
-class OptimaxTempOpDescriptor(OptimaxOpDescriptorModel):
-    def __init__(self, op_model: OptimaxOpDescriptorModel) -> None:
+class OptimaxTempOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: OptimaxOpDescriptorModel):
         self._model = op_model
 
     @classmethod
@@ -119,8 +119,8 @@ class OptimaxTempOpDescriptor(OptimaxOpDescriptorModel):
     def temp_duration(self) -> int:
         return self._model.temp_duration
     
-class OptimaxStirringOpDescriptor(OptimaxOpDescriptorModel):
-    def __init__(self, op_model: OptimaxOpDescriptorModel) -> None:
+class OptimaxStirringOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: OptimaxOpDescriptorModel):
         self._model = op_model
 
     @classmethod
@@ -140,8 +140,8 @@ class OptimaxStirringOpDescriptor(OptimaxOpDescriptorModel):
     def stir_duration(self) -> int:
         return self._model.stir_duration
     
-class OptimaxSamplingOpDescriptor(OptimaxOpDescriptorModel):
-    def __init__(self, op_model: OptimaxOpDescriptorModel) -> None:
+class OptimaxSamplingOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: OptimaxOpDescriptorModel):
         self._model = op_model
 
     @classmethod
@@ -157,7 +157,7 @@ class OptimaxSamplingOpDescriptor(OptimaxOpDescriptorModel):
         return self._model.dilution
     
 class LcmsOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel) -> None:
+    def __init__(self, op_model: StationOpDescriptorModel):
         self._model = op_model
 
     @classmethod
