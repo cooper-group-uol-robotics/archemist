@@ -118,16 +118,6 @@ class PXRDStationTest(unittest.TestCase, ProcessTestingMixin):
         self.assertEqual(process.data.status['batch_index'], 0)
         self.assertFalse(process.data.status['operation_complete'])
 
-        # disable_auto_functions
-        self.assert_process_transition(process, 'disable_auto_functions')
-        req_robot_ops = self.station.get_requested_robot_ops()
-        self.assertEqual(len(req_robot_ops),1)
-        robot_op = req_robot_ops[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'DiableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
-
         # open_pxrd_door
         self.assert_process_transition(process, 'open_pxrd_door')
         robot_op = self.station.get_requested_robot_ops()[0]
@@ -156,29 +146,12 @@ class PXRDStationTest(unittest.TestCase, ProcessTestingMixin):
                                 'params':['True']})
         self.complete_robot_op(self.station, robot_op)
 
-        # enable_auto_functions
-        self.assert_process_transition(process, 'enable_auto_functions')
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_CLOSED)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'EnableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
-
         # pxrd_process
         self.assert_process_transition(process, 'pxrd_process')
         station_op = process.data.req_station_ops[0]
         self.assert_station_op(station_op, 'PXRDAnalysisOpDescriptor')
         self.complete_station_op(self.station)
         self.assertEqual(self.station.status, PXRDStatus.JOB_COMPLETE)
-
-        # disable_auto_functions
-        self.assert_process_transition(process, 'disable_auto_functions')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'DiableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
 
          # open_pxrd_door
         self.assert_process_transition(process, 'open_pxrd_door')
@@ -206,15 +179,6 @@ class PXRDStationTest(unittest.TestCase, ProcessTestingMixin):
         self.assert_robot_op(robot_op, 'KukaLBRTask',
                                 {'name': 'CloseDoors',
                                 'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
-
-        # enable_auto_functions
-        self.assert_process_transition(process, 'enable_auto_functions')
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_CLOSED)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'EnableAutoFunctions',
-                                      'params':['False']})
         self.complete_robot_op(self.station, robot_op)
 
         # final_state

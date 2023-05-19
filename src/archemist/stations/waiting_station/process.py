@@ -14,8 +14,6 @@ class WaitingStationProcess(StationProcess):
         ''' States '''
         states = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='waiting_process', on_enter=['request_process_operation']),
             State(name='load_batch', on_enter=['request_load_batch']),
             State(name='added_batch_update', on_enter=['update_loaded_batch']),
@@ -26,22 +24,14 @@ class WaitingStationProcess(StationProcess):
         ''' Transitions '''
         transitions = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'disable_auto_functions'},
-            {'source':'disable_auto_functions','dest':'load_batch', 'unless':'is_station_operation_complete',
-             'conditions':'are_req_robot_ops_completed'},
+            {'source':'prep_state', 'dest': 'load_batch'},
             {'source':'load_batch','dest':'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'added_batch_update','dest':'load_batch', 'unless':'are_all_batches_loaded'},
-            {'source':'added_batch_update','dest':'enable_auto_functions', 'conditions':'are_all_batches_loaded'},
-            {'source':'enable_auto_functions','dest':'waiting_process', 'unless':'is_station_operation_complete',
-             'conditions':['are_req_robot_ops_completed','are_all_batches_loaded']},
-            {'source':'waiting_process','dest':'disable_auto_functions', 'conditions':'is_timer_done', 'before':'process_batches'},
-            {'source':'disable_auto_functions','dest':'unload_batch',
-             'conditions':['is_station_operation_complete','are_req_robot_ops_completed']},
+            {'source':'added_batch_update','dest':'waiting_process', 'conditions':'are_all_batches_loaded'},
+            {'source':'waiting_process','dest':'unload_batch', 'conditions':'is_timer_done', 'before':'process_batches'},
             {'source':'unload_batch','dest':'removed_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'removed_batch_update','dest':'unload_batch', 'unless':'are_all_batches_unloaded'},
-            {'source':'removed_batch_update','dest':'enable_auto_functions', 'conditions':'are_all_batches_unloaded'},
-            {'source':'enable_auto_functions','dest':'final_state', 
-             'conditions':['are_req_robot_ops_completed','is_station_operation_complete']}
+            {'source':'removed_batch_update','dest':'final_state', 'conditions':'are_all_batches_unloaded'},
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -49,7 +39,6 @@ class WaitingStationProcess(StationProcess):
 
     def initialise_process_data(self):
         self._process_data.status['batch_index'] = 0
-        self._process_data.status['operation_complete'] = False
         self._process_data.status['timer_expiry_datetime'] = ""
         self._process_data.status['stored_op'] = None
 
@@ -76,14 +65,6 @@ class WaitingStationProcess(StationProcess):
         self._process_data.status['batch_index'] -= 1
         batch_index = self._process_data.status['batch_index']
         self._update_batch_loc_to_robot(batch_index)
-        
-    def request_disable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
-
-    def request_enable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
 
     def request_process_operation(self):
         current_op = self._process_data.batches[-1].recipe.get_current_task_op()
@@ -110,9 +91,6 @@ class WaitingStationProcess(StationProcess):
     
     def are_all_batches_unloaded(self):
         return self._process_data.status['batch_index'] == 0
-    
-    def is_station_operation_complete(self):
-            return self._process_data.status['operation_complete']
         
     def process_batches(self):
         op_model = self._process_data.status['stored_op']
@@ -122,7 +100,6 @@ class WaitingStationProcess(StationProcess):
             for _ in range(0, batch.num_samples):
                     batch.add_station_op_to_current_sample(completed_op)
                     batch.process_current_sample()
-        self._process_data.status['operation_complete'] = True
 
     def finalize_batch_processing(self):
         for batch in self._process_data.batches:

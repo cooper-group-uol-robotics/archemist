@@ -16,8 +16,6 @@ class CrystalBotWorkflowProcess(StationProcess):
         ''' States '''
         states = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'), 
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='place_8_well_rack', on_enter=['request_8_well_rack']),
             State(name='place_pxrd_rack', on_enter=['request_pxrd_rack']),
             State(name='added_batch_update', on_enter=['update_loaded_batch']),
@@ -28,14 +26,12 @@ class CrystalBotWorkflowProcess(StationProcess):
         ''' Transitions '''
         transitions = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state','dest':'disable_auto_functions', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'disable_auto_functions', 'dest': 'place_8_well_rack', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'prep_state','dest':'place_8_well_rack'},
             {'source':'place_8_well_rack', 'dest': 'place_pxrd_rack', 'conditions':'are_req_robot_ops_completed'},
             {'source':'place_pxrd_rack', 'dest': 'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'added_batch_update', 'dest': 'load_stir_plate'},
             {'source':'load_stir_plate','dest':'stir', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'stir','dest':'enable_auto_functions', 'conditions':'are_req_station_ops_completed'},
-            {'source':'enable_auto_functions','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
+            {'source':'stir','dest':'final_state', 'conditions':'are_req_station_ops_completed'},
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -43,14 +39,6 @@ class CrystalBotWorkflowProcess(StationProcess):
 
     def initialise_process_data(self):
         self._process_data.status['batch_index'] = 0
-
-    def request_disable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
-
-    def request_enable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
 
     def request_8_well_rack(self):
         perform_6p = True

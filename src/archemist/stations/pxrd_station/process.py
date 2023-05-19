@@ -13,8 +13,6 @@ class PXRDProcess(StationProcess):
         states = [ State(name='init_state'), 
             State(name='prep_state', on_enter='initialise_process_data'),
             State(name='open_pxrd_door', on_enter=['request_open_pxrd_door']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']), 
             State(name='pxrd_process', on_enter=['request_pxrd_process']),
             State(name='load_pxrd', on_enter=['request_load_pxrd']),
             State(name='added_batch_update', on_enter=['update_loaded_batch']),
@@ -26,21 +24,20 @@ class PXRDProcess(StationProcess):
         ''' Transitions '''
         transitions = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'disable_auto_functions'},
-            {'source':'disable_auto_functions','dest':'open_pxrd_door', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'prep_state', 'dest': 'open_pxrd_door'},
             {'source':'open_pxrd_door','dest':'load_pxrd', 'unless':'is_station_operation_complete' ,
                 'conditions':'are_req_robot_ops_completed', 'before':'set_doors_to_open'},
             {'source':'open_pxrd_door','dest':'unload_pxrd', 'conditions':['is_station_operation_complete','are_req_robot_ops_completed']
                 ,'before':'set_doors_to_open'},
             {'source':'load_pxrd','dest':'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'added_batch_update','dest':'close_pxrd_door'},
-            {'source':'close_pxrd_door','dest':'enable_auto_functions', 'conditions':'are_req_robot_ops_completed',
-                'before':'set_doors_to_closed'},
-            {'source':'enable_auto_functions','dest':'pxrd_process', 'unless':'is_station_operation_complete', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'pxrd_process','dest':'disable_auto_functions', 'conditions':'are_req_station_ops_completed', 'before':'process_batches'},
+            {'source':'close_pxrd_door','dest':'pxrd_process', 'conditions':'are_req_robot_ops_completed',
+                'unless': 'is_station_operation_complete', 'before':'set_doors_to_closed'},            
+            {'source':'pxrd_process','dest':'open_pxrd_door', 'conditions':'are_req_station_ops_completed', 'before':'process_batches'},
             {'source':'unload_pxrd','dest':'removed_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'removed_batch_update','dest':'close_pxrd_door'},
-            {'source':'enable_auto_functions','dest':'final_state', 'conditions':['are_req_robot_ops_completed','is_station_operation_complete']}
+            {'source':'close_pxrd_door','dest':'final_state', 'conditions':['are_req_robot_ops_completed','is_station_operation_complete'],
+                'before':'set_doors_to_closed'}
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -82,14 +79,6 @@ class PXRDProcess(StationProcess):
     def update_unloaded_batch(self):
         batch_index = self._process_data.status['batch_index']
         self._update_batch_loc_to_robot(batch_index)
-
-    def request_disable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
-
-    def request_enable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
 
     def request_pxrd_process(self):
         current_op = self._process_data.batches[-1].recipe.get_current_task_op()

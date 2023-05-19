@@ -33,6 +33,9 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
         }
 
         self.station = IkaPlateDigital.from_dict(self.station_doc,[],[])
+
+    def tearDown(self):
+        self.station.model.delete()
     
     def test_state(self):
         # test station is constructed properly
@@ -174,16 +177,6 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
         self.assert_process_transition(process, 'prep_state')
         self.assertEqual(process.data.status['batch_index'], 0)
 
-        # disabe_auto_functions_state
-        self.assert_process_transition(process, 'disable_auto_functions')
-        req_robot_ops = self.station.get_requested_robot_ops()
-        self.assertEqual(len(req_robot_ops),1)
-        robot_op = req_robot_ops[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                        {'name':'DiableAutoFunctions',
-                        'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
-
         # place_8_well_rack
         self.assert_process_transition(process, 'place_8_well_rack')
         self.assertEqual(process.data.status['batch_index'], 0)
@@ -220,14 +213,6 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
                                {'target_stirring_speed': 1200,
                                 'target_duration': 10})
         self.complete_station_op(self.station)
-
-        # enable_auto_functions_state
-        self.assert_process_transition(process, 'enable_auto_functions')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask', 
-                        {'name':'EnableAutoFunctions',
-                        'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
 
         # final_state
         self.assertFalse(self.station.has_processed_batch())

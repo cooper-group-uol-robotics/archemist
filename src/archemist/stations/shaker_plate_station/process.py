@@ -11,8 +11,6 @@ class YumiShakerPlateProcess(StationProcess):
         ''' States '''
         states = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='load_shaker_plate', on_enter=['request_load_shaker_plate']),
             State(name='shake', on_enter=['request_shake_op']),
             State(name='unload_shaker_plate', on_enter=['request_unload_shaker_plate']),
@@ -25,16 +23,14 @@ class YumiShakerPlateProcess(StationProcess):
         ''' Transitions '''
         transitions = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state','dest':'disable_auto_functions'},
-            {'source':'disable_auto_functions', 'dest': 'load_shaker_plate', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'prep_state','dest':'load_shaker_plate'},
             {'source':'load_shaker_plate','dest':'shake', 'conditions':'are_req_robot_ops_completed'},
             {'source':'shake','dest':'unload_shaker_plate', 'conditions':'are_req_station_ops_completed'},
             {'source':'unload_shaker_plate','dest':'unscrew_caps', 'conditions':'are_req_robot_ops_completed'},
             {'source':'unscrew_caps','dest':'pick_pxrd_rack', 'conditions':'are_req_robot_ops_completed'},
             {'source':'pick_pxrd_rack','dest':'pick_eightw_rack', 'conditions':'are_req_robot_ops_completed'},
             {'source':'pick_eightw_rack','dest':'removed_batch_update', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'removed_batch_update','dest':'enable_auto_functions'},
-            {'source':'enable_auto_functions','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
+            {'source':'removed_batch_update','dest':'final_state'},
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -89,13 +85,5 @@ class YumiShakerPlateProcess(StationProcess):
     def finalize_batch_processing(self):
         for batch in self._process_data.batches:
             self._station.process_assinged_batch(batch)
-
-    def request_disable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
-
-    def request_enable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
 
 

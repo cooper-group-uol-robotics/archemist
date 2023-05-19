@@ -108,19 +108,9 @@ class WaitingStationTest(unittest.TestCase, ProcessTestingMixin):
         # prep_state
         self.assert_process_transition(process, 'prep_state')
         self.assertEqual(process.data.status['batch_index'], 0)
-        self.assertEqual(process.data.status['operation_complete'], False)
         self.assertEqual(process.data.status['timer_expiry_datetime'], "")
         self.assertIsNone(process.data.status['stored_op'])
 
-        # disabe_auto_functions_state
-        self.assert_process_transition(process, 'disable_auto_functions')
-        req_robot_ops = self.station.get_requested_robot_ops()
-        self.assertEqual(len(req_robot_ops),1)
-        robot_op = req_robot_ops[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                        {'name':'DiableAutoFunctions',
-                        'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
 
         for i in range(self.station_doc['process_batch_capacity']):
             # load_batch
@@ -135,34 +125,12 @@ class WaitingStationTest(unittest.TestCase, ProcessTestingMixin):
             self.assert_process_transition(process, 'added_batch_update')
             self.assertEqual(process.data.status['batch_index'], i+1)
 
-        # enable_auto_functions
-        self.assert_process_transition(process, 'enable_auto_functions')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'EnableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
-
         # waiting_process
         self.assert_process_transition(process, 'waiting_process')
         for i in range(WAITING_DURATION - 1):
             self.assert_process_transition(process, 'waiting_process')
             time.sleep(1)
         time.sleep(1)
-
-        # disable_auto_functions
-        self.assert_process_transition(process, 'disable_auto_functions')
-        
-        complete_station_ops = list(self.station.completed_station_ops.values())
-        self.assertEqual(len(complete_station_ops), 1)
-        complete_op = complete_station_ops[0]
-        complete_op_duration = complete_op.end_timestamp - complete_op.start_timestamp
-        self.assertTrue(complete_op_duration > timedelta(seconds=3))
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'DiableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
 
         for i in range(self.station_doc['process_batch_capacity'], 0, -1):
             # unload_batch
@@ -176,14 +144,6 @@ class WaitingStationTest(unittest.TestCase, ProcessTestingMixin):
             # removed_batch_update
             self.assert_process_transition(process, 'removed_batch_update')
             self.assertEqual(process.data.status['batch_index'], i-1)
-
-        # enable_auto_functions
-        self.assert_process_transition(process, 'enable_auto_functions')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRMaintenanceTask',
-                                     {'name':'EnableAutoFunctions',
-                                      'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
 
         # final_state
         self.assertFalse(self.station.has_processed_batch())

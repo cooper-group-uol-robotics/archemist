@@ -13,10 +13,8 @@ class ChemSpeedCSVProcess(StationProcess):
         states = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'), 
             State(name='open_chemspeed_door', on_enter=['request_open_door']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
             State(name='navigate_to_chemspeed', on_enter=['request_navigate_to_chemspeed']),
             State(name='retreat_from_chemspeed', on_enter=['request_navigate_to_chemspeed']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']), 
             State(name='chemspeed_process', on_enter=['request_process_operation']),
             State(name='load_batch', on_enter=['request_load_batch']),
             State(name='added_batch_update', on_enter=['update_loaded_batch']),
@@ -28,22 +26,20 @@ class ChemSpeedCSVProcess(StationProcess):
         ''' Transitions '''
         transitions = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'disable_auto_functions'},
-            {'source':'disable_auto_functions','dest':'navigate_to_chemspeed', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'prep_state', 'dest': 'navigate_to_chemspeed'},
             {'source':'navigate_to_chemspeed','dest':'open_chemspeed_door', 'conditions':'are_req_robot_ops_completed'},
             {'source':'open_chemspeed_door','dest':'load_batch', 'unless':'is_station_operation_complete' ,'conditions':'are_req_station_ops_completed'},
             {'source':'load_batch','dest':'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'added_batch_update','dest':'load_batch', 'unless':'are_all_batches_loaded'},
             {'source':'added_batch_update','dest':'close_chemspeed_door', 'conditions':'are_all_batches_loaded'},
-            {'source':'close_chemspeed_door','dest':'enable_auto_functions', 'conditions':'are_req_station_ops_completed'},
-            {'source':'enable_auto_functions','dest':'retreat_from_chemspeed', 'unless':'is_station_operation_complete', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'retreat_from_chemspeed','dest':'chemspeed_process', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'chemspeed_process','dest':'disable_auto_functions', 'conditions':'are_req_station_ops_completed', 'before':'process_batches'},
+            {'source':'close_chemspeed_door','dest':'retreat_from_chemspeed', 'conditions':'are_req_station_ops_completed'},            
+            {'source':'retreat_from_chemspeed','dest':'chemspeed_process', 'unless':'is_station_operation_complete', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'chemspeed_process','dest':'navigate_to_chemspeed', 'conditions':'are_req_station_ops_completed', 'before':'process_batches'},
             {'source':'open_chemspeed_door','dest':'unload_batch', 'conditions':['is_station_operation_complete','are_req_station_ops_completed']},
             {'source':'unload_batch','dest':'removed_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'removed_batch_update','dest':'unload_batch', 'unless':'are_all_batches_unloaded', 'conditions':'are_req_robot_ops_completed'},
             {'source':'removed_batch_update','dest':'close_chemspeed_door', 'conditions':'are_all_batches_unloaded'},
-            {'source':'enable_auto_functions','dest':'final_state', 'conditions':['are_req_robot_ops_completed','is_station_operation_complete']}
+            {'source':'retreat_from_chemspeed','dest':'final_state', 'conditions':['are_req_robot_ops_completed','is_station_operation_complete']}
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -77,14 +73,6 @@ class ChemSpeedCSVProcess(StationProcess):
 
     def request_navigate_to_chemspeed(self):
         robot_op = KukaNAVTask.from_args(Location(26,1,''), False) #TODO get this property from the config
-        self.request_robot_op(robot_op)
-
-    def request_disable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False])
-        self.request_robot_op(robot_op)
-
-    def request_enable_auto_functions(self):
-        robot_op = KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False])
         self.request_robot_op(robot_op)
 
     def request_process_operation(self):
