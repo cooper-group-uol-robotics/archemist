@@ -49,8 +49,7 @@ process:
           temperature: 100
           stir_speed: 100
           temp_duration: 5 
-          stir_duration: 5   
-          dilution: 10     
+          stir_duration: 5    
     transitions:
       on_success: end_state
       on_fail: end_state

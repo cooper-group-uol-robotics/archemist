@@ -97,6 +97,7 @@ class OptimaxTempStirringOpDescriptor(StationOpDescriptor):
     @property
     def stir_duration(self) -> int:
         return self._model.stir_duration
+    
 
 class OptimaxTempOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: OptimaxOpDescriptorModel):
