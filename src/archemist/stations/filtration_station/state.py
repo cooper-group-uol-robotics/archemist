@@ -1,4 +1,4 @@
-from .model import FiltrationValveStatus, FiltrationStationModel, FiltrationOpDescriptorModel
+from .model import FiltrationValveStatus, FiltrationStationModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -15,7 +15,7 @@ class FiltrationStation(Station):
 
     @classmethod
     def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
-        model = StationModel()
+        model = FiltrationStationModel()
         cls._set_model_common_fields(station_dict,model)
         model._module = cls.__module__
         model.save()
