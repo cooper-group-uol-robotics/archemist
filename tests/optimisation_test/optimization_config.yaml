@@ -38,4 +38,4 @@ optimizer:
   class: BayesianOptimization  # optimizer class
   hyperparameters: {} # necessary parameters to build the optimizer
   additional_args: None #additional arguments TODO to call these into model
-  allowed_recipe_count: '3'
+  max_recipe_count: '3'

@@ -2,6 +2,7 @@ from archemist.core.persistence.yaml_handler import YamlHandler
 from optimisation_model import OptimisationModel
 from optimiser_base import OptimizerBase
 from optimisation_handler import OptimizationHandler
+from recipe_generator import RecipeGenerator
 import pandas as pd
 from pathlib import Path
 from threading import Thread
@@ -54,10 +55,11 @@ class OptimisationManager():
 
         # optimization constructor
         self._optimizer = self.construct_optimiser_from_config_file(self._config_dict)
+        self._new_recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir)
     
         # Handler
         if self.is_recipe_template_available:
-            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._template_dir)
+            self._handler = OptimizationHandler(self._new_recipe_generator, self._max_recipe_count, self._template_dir, self._recipes_dir)
             self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue)
             self._watch_optimization_thread = Thread(target=self._handler.watch_batch_complete)
             self._watch_recipe_thread.start()
@@ -68,8 +70,8 @@ class OptimisationManager():
     def construct_optimiser_from_config_file(self, config_dict: dict):
         self._optimization_model = OptimizationState.from_dict(config_dict['optimizer'])
         self._max_recipe_count = self.recipe_count()
-        self._optimizer = OptimizerBase(opt_module=self._optimization_model.optimizer_module,
-                                        opt_class=self._optimization_model.optimizer_class, opt_hyperparameters=self._optimization_model.optimizer_hyperparameters)
+        # self._optimizer = OptimizerBase(opt_module=self._optimization_model.optimizer_module,
+        #                                 opt_class=self._optimization_model.optimizer_class, opt_hyperparameters=self._optimization_model.optimizer_hyperparameters)
 
     def recipe_count(self):
         return self._optimization_model.max_recipe_count
@@ -87,17 +89,6 @@ class OptimisationManager():
             constraint[key] = (self._config_dict['experiment']['components'][key]['lower_bound'],
                                self._config_dict['experiment']['components'][key]['upper_bound'])
         return constraint
-
-    def _generate_model(self):
-        """
-        Generate optimization model from config file based on the 'optimizer' part.
-        If the model requires constraint information, please pass it via kwargs.
-        """
-        module = importlib.import_module(
-            self._optimization_model.optimizer_module)
-        optimizer_class = getattr(
-            module, self._optimization_model.optimizer_class)
-        return optimizer_class(self._optimization_model.optimizer_hyperparameters)
 
     def _pandas_to_params_targets(self, data: pd.DataFrame):
         """
@@ -131,3 +122,13 @@ class OptimisationManager():
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
             self.model.register(param, target)
+
+
+
+if __name__ == "__main__":
+    cwd_path = Path.cwd()
+    path_to_template_recipe = Path.joinpath(cwd_path, "tests/optimisation_test/algae_bot_recipe_template.yaml")
+    path_to_recipes_dir = Path.joinpath(cwd_path, "tests/optimisation_test/recipes")
+    path_to_config_file = Path.joinpath(cwd_path, "tests/optimisation_test/optimization_config.yaml")
+    mgr = OptimisationManager(path_to_config_file, path_to_recipes_dir, path_to_template_recipe)
+
