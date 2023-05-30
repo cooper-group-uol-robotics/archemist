@@ -18,7 +18,7 @@ class OptimizationState:
         model.optimizer_module = state_dict['module']
         model.optimizer_class = state_dict['class']
         model.optimizer_hyperparameters = state_dict['hyperparameters']
-        model.max_recipe_count = state_dict['max_recipe_count']
+        model.max_recipe_count = state_dict['max_recipe_count']  # todo: what is this?
         model.save()
         return cls(model)
 
@@ -53,7 +53,7 @@ class OptimisationManager():
         self._template_dir = templete_dir
 
         # optimization constructor
-        self._optimizer = self.construct_optimiser_from_config_file(self._config_dict)
+        self.construct_optimiser_from_config_file(self._config_dict)
     
         # Handler
         if self.is_recipe_template_available:
@@ -64,16 +64,21 @@ class OptimisationManager():
             self._watch_optimization_thread.start()
         else:
             raise Exception('template file is missing')
+
+        self._probed_points = []  # could be a wrapper class
+        self._component_keys = None  # need input for this
+        self.target_name = None
+        self.model = None
         
     def construct_optimiser_from_config_file(self, config_dict: dict):
         self._optimization_model = OptimizationState.from_dict(config_dict['optimizer'])
         self._max_recipe_count = self.recipe_count()
+        # todo: the parameters doesn't match optimization base parameter name
         self._optimizer = OptimizerBase(opt_module=self._optimization_model.optimizer_module,
                                         opt_class=self._optimization_model.optimizer_class, opt_hyperparameters=self._optimization_model.optimizer_hyperparameters)
 
     def recipe_count(self):
         return self._optimization_model.max_recipe_count
-
 
     def is_recipe_template_available(self):
         _template_path = Path(self._template_dir)

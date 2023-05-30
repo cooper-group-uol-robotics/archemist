@@ -130,7 +130,8 @@ class YamlHandler:
     def loadYamlFile(filePath):
         with open(filePath, 'r') as fs:
             return yaml.load(fs, Loader=yaml.SafeLoader)
-    
+
+    @staticmethod
     def _load_and_validate_schema(file_path, schema):
         with open(file_path, 'r') as config_file:
             yaml_str = config_file.read()

@@ -1,7 +1,8 @@
 import pandas as pd
+from optimisation_manager import OptimisationManager
 import yaml
 from archemist.core.persistence.yaml_handler import YamlHandler
-from nested_lookup import nested_update
+# from nested_lookup import nested_update
 from pathlib import Path
 import logging
 
@@ -17,12 +18,6 @@ _keys_optimised_parameters_dict = list(optimised_parameters_dict.keys())
 print(_keys_optimised_parameters_dict[0])
 
 print(optimised_parameters_dict[str(_keys_optimised_parameters_dict[0])])
-
-
-
-
-
-
 
 
 

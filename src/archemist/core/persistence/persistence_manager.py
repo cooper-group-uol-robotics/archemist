@@ -29,7 +29,6 @@ class PersistenceManager:
                 for liquid_dict in config_dict['materials']['liquids']:
                     liquids.append(MaterialFactory.create_liquid_from_dict(liquid_dict))
 
-            
             if 'solids' in config_dict['materials']:
                 for solid_dict in config_dict['materials']['solids']:
                     solids.append(MaterialFactory.create_solid_from_dict(solid_dict))
