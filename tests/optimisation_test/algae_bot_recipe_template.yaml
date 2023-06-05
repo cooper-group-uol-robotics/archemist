@@ -56,8 +56,8 @@ process:
         type: CSCSVJobOpDescriptor
         properties:
           dispense_info:
-            water: "{{str.any}}"
-            dye_A: "{{str.all}}"
+            water: "{{float.all}}"
+            dye_A: "{{float.all}}"
             dye_B: "{{float.all}}"
     transitions:
       on_success: analyse
