@@ -9,12 +9,10 @@ class StationHandler:
     class ProcessHandler:
         def __init__(self, station: Station) -> None:
             self._station = station
-            self._running_process = [StationFactory.create_station_process(self._station, process_data) 
-                                     for process_data in self._station.get_all_processes_data()]
             num_slots = int(station.batch_capacity/station.process_batch_capacity)
-            self._processing_slots = {slot: False for slot in range(num_slots)}
-            for process in self._running_process:
-                self._processing_slots[process.processing_slot] = True
+            self._processing_slots = {slot: None for slot in range(num_slots)}
+            for process_data in self._station.get_all_processes_data():
+                self._processing_slots[process_data.processing_slot] = StationFactory.create_station_process(self._station, process_data)
             
 
         def _process_assigned_batches(self):
@@ -22,25 +20,24 @@ class StationHandler:
             new_batches = [batch for batch in assigned_batches + self._in_process_batches 
                            if batch in assigned_batches and batch not in self._in_process_batches]
             if len(new_batches) == self._station.process_batch_capacity:
-                for slot, slot_occupied in self._processing_slots.items():
-                    if not slot_occupied:
+                for slot, process in self._processing_slots.items():
+                    if process is None:
                         process_data = StationProcessData.from_args(new_batches, slot)
-                        process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
-                        self._running_process.append(process)
-                        self._processing_slots[slot] = True
+                        new_process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
+                        self._processing_slots[slot] = new_process
                         break
 
 
         def _handle_processes(self):
             self._in_process_batches = []
-            for process in list(self._running_process):
-                if process.data.status['state'] != 'final_state':
-                    process.process_state_transitions()
-                    self._in_process_batches.extend(process.data.batches)
-                else:
-                    self._processing_slots[process.data.processing_slot] = False
-                    self._running_process.remove(process)
-                    self._station.delete_process_data(process.data.uuid)
+            for slot, process in self._processing_slots.items():
+                if process is not None:
+                    if process.data.status['state'] != 'final_state':
+                        process.process_state_transitions()
+                        self._in_process_batches.extend(process.data.batches)
+                    else:
+                        self._station.delete_process_data(process.data.uuid)
+                        self._processing_slots[slot] = None
 
         def run_processes(self):
             self._handle_processes()
