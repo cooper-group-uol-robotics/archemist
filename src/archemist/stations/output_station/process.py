@@ -31,10 +31,11 @@ class OutputStationProcess(StationProcess):
         self._process_data.status['batch_index'] = 0
 
     def request_place_batch(self):
+        batch_offset = self._process_data.processing_slot*self._station.process_batch_capacity
         batch_index = self._process_data.status['batch_index']
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         robot_job = KukaLBRTask.from_args(name='PlaceRack',
-                                          params=[perform_6p,batch_index+1],
+                                          params=[perform_6p,batch_offset+batch_index+1],
                                         type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._process_data.batches[batch_index].id
         self.request_robot_op(robot_job,current_batch_id)
