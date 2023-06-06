@@ -16,11 +16,12 @@ class StationProcessData:
         self._model = process_data_model
 
     @classmethod
-    def from_args(cls, batches: List[Batch]):
+    def from_args(cls, batches: List[Batch], processing_slot: int=0):
         model = StationProcessDataModel()
         model.uuid = uuid.uuid4()
         model.batches = [batch.model for batch in batches]
         model.status['state'] = 'init_state'
+        model.processing_slot = processing_slot
         return cls(model)
 
     @property
@@ -30,6 +31,10 @@ class StationProcessData:
     @property
     def uuid(self) -> uuid.UUID:
         return self._model.uuid
+    
+    @property
+    def processing_slot(self) -> int:
+        return self._model.processing_slot
 
     @property
     def batches(self) -> List[Batch]:

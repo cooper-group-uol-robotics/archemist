@@ -8,6 +8,7 @@ class StationProcessDataModel(EmbeddedDocument):
     ''' general '''
     uuid = fields.UUIDField(binary=False)
     status = fields.DictField(default={})
+    processing_slot = fields.IntField(min_value=0)
 
     ''' batches '''
     batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
