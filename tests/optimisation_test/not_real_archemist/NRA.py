@@ -22,7 +22,6 @@ class NotRealArchemist():
         result = self._function()
         bat.add_result(result)
 
-
     def _find_parameters(self, recipe_dict: Dict):
         params = {}
         if isinstance(recipe_dict, dict):
@@ -38,7 +37,7 @@ class NotRealArchemist():
             for item in recipe_dict:
                 self._find_placeholders(item)
 
-    def _function(self):
+    def _function(self) -> Dict:
         result = {}
         x = self.params['x']
         y = self.params['y']

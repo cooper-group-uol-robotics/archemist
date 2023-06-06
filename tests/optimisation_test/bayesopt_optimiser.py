@@ -7,8 +7,8 @@ class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
                  config_file: str,
-                 recipe_dir: str,
-                 template_dir: str,
+                #  recipe_dir: str,
+                #  template_dir: str,
                  batch_size: int = 15,
                  ):
         """
@@ -19,8 +19,8 @@ class BayesOptOptimizer(OptimizerBase):
             Number of probe points for each iteration during optimization.
         """
         super(BayesOptOptimizer, self).__init__(config_file=config_file,
-                                                recipe_dir=recipe_dir,
-                                                template_dir=template_dir,
+                                                # recipe_dir=recipe_dir,
+                                                # template_dir=template_dir,
                                                 batch_size=batch_size)
 
         bound = self._generate_bound_from_config()
@@ -43,7 +43,7 @@ class BayesOptOptimizer(OptimizerBase):
             err_msg = 'Wrong module or class config provided, please check your config file'
             assert self._config_dict['optimizer']['module'] == 'bayes_opt.bayesian_optimization', err_msg
             assert self._config_dict['optimizer']['class'] == 'BayesianOptimization', err_msg
-            super(BayesOptOptimizer, self).generate_model()
+            super(BayesOptOptimizer, self).generate_model(**kwargs)
         else:
             from bayes_opt.bayesian_optimization import BayesianOptimization
             return BayesianOptimization(**kwargs)
@@ -112,5 +112,5 @@ class BayesOptOptimizer(OptimizerBase):
 
 test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
 
-opt = BayesOptOptimizer('test_config.yaml')
+opt = BayesOptOptimizer('/home/satheesh/ARChemeist_ws/src/archemist/tests/optimisation_test/optimization_config.yaml')
 opt.update_model(test_data)
