@@ -1,4 +1,4 @@
-from .model import SynthesisStatus, SynthesisStationModel, OptimaxOpDescriptorModel
+from .model import SynthesisStatus, SynthesisStationModel, OptimaxOpDescriptorModel, OptimaxSamplingOpDescriptorModel, LcmsOpDescriptorModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.state.station import Station
@@ -56,15 +56,9 @@ class SynthesisStation(Station):
         elif isinstance(stationOp, OptimaxStirringOpDescriptor):
             self.status = SynthesisStatus.STIRRING
         elif isinstance(stationOp, LcmsOpDescriptor):
-            self.status = SynthesisStatus.LCMS
+            self.status = SynthesisStatus.ANALYSIS
         super().assign_station_op(stationOp)
     
-    # def complete_assigned_station_op(self, success: bool, **kwargs):
-    #     self._model.update(unset__target_temperature=True)
-    #     self._model.update(unset__target_stirring_speed=True)
-    #     self._model.update(unset__target_duration=True)
-    #     self._model.update(unset__mode=True)
-    #     super().complete_assigned_station_op(success, **kwargs)
 
 ''' ==== Station Operation Descriptors ==== '''    
 class OptimaxTempStirringOpDescriptor(StationOpDescriptor):
@@ -142,12 +136,12 @@ class OptimaxStirringOpDescriptor(StationOpDescriptor):
         return self._model.stir_duration
     
 class OptimaxSamplingOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: OptimaxOpDescriptorModel):
+    def __init__(self, op_model: OptimaxSamplingOpDescriptorModel):
         self._model = op_model
 
     @classmethod
     def from_args(cls, **kwargs):
-        model = OptimaxOpDescriptorModel()
+        model = OptimaxSamplingOpDescriptorModel()
         model.dilution = int(kwargs['dilution'])
         model._type = cls.__name__
         model._module = cls.__module__
@@ -158,14 +152,26 @@ class OptimaxSamplingOpDescriptor(StationOpDescriptor):
         return self._model.dilution
     
 class LcmsOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel):
+    def __init__(self, op_model: LcmsOpDescriptorModel):
         self._model = op_model
 
     @classmethod
     def from_args(cls, **kwargs):
-        model = StationOpDescriptorModel()
+        model = LcmsOpDescriptorModel()
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
 
+    @property
+    def concentration(self) -> int:
+        return self._model.concentration_result
 
+    def complete_op(self, success: bool, **kwargs):
+        self._model.has_result = True
+        self._model.was_successful = success
+        self._model.end_timestamp = datetime.now()
+        if 'concentration' in kwargs:
+            self._model.concentration_result = kwargs['concentration']
+        else:
+            pass
+    

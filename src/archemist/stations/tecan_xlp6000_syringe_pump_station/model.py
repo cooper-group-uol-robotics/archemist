@@ -12,8 +12,8 @@ class SyringePumpStationModel(StationModel):
     machine_status = fields.EnumField(SyringePumpStatus, null = True)
 
 class SyringePumpOpDescriptorModel(StationOpDescriptorModel):
-    pump_info = fields.DictField(required=True)
-    # port = fields.IntField(min_value=0, max_value=12,null=True)
-    # volume = fields.FloatField(min_value=0, null=True)
-    # speed = fields.FloatField(min_value=0, null=True)
+    withdraw_port = fields.IntField(min_value=0, max_value=12,null=True)
+    dispense_port = fields.IntField(min_value=0, max_value=12,null=True)
+    volume = fields.FloatField(min_value=0, null=True)
+    speed = fields.FloatField(min_value=0, null=True)
 

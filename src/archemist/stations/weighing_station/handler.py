@@ -17,12 +17,12 @@ class KernPcbROSHandler(StationHandler):
         rospy.Subscriber("kern_Door_Status", KernDoorStatus, self.door_callback)
         self._current_door_status = None
         self._desired_door_status = None
+        self._received_mass = False
+        self._op_results = {}
         rospy.sleep(2)
         # for i in range(10):
         #     self._pub_balance.publish(kern_command = 0)
-        self._received_mass = False
-        self._op_results = {}
-        rospy.sleep(1)
+
         
     def run(self):
         rospy.loginfo(f'{self._station}_handler is running')
@@ -60,6 +60,7 @@ class KernPcbROSHandler(StationHandler):
             return True
 
     def get_op_result(self) -> Tuple[bool, Dict]:
+        self._received_mass = False
         return True, self._op_results
 
     def weight_callback(self, msg):

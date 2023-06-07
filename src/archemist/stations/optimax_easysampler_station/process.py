@@ -58,18 +58,10 @@ class SynthesisStationSm(StationProcessFSM):
                 'dest': 'unload_batch', 'conditions': 'is_station_job_ready'},
             {'trigger': self._trigger_function, 'source': 'unload_batch',
                 'dest': 'navigate_to_LCMS', 'conditions': 'is_station_job_ready'},
-            # {'trigger': self._trigger_function, 'source': 'removed_batch_update', 'dest': 'unload_batch',
-            #     'unless': 'are_all_batches_unloaded', 'conditions': 'is_station_job_ready'},
-            # {'trigger': self._trigger_function, 'source': 'removed_batch_update',
-            #     'dest': 'navigate_to_LCMS', 'conditions': 'is_station_job_ready'},
             {'trigger': self._trigger_function, 'source': 'navigate_to_LCMS',
                 'dest': 'load_batch', 'conditions': 'is_station_job_ready'},
             {'trigger': self._trigger_function, 'source': 'load_batch',
                 'dest': 'enable_auto_functions', 'conditions': 'is_station_job_ready'},
-            # {'trigger': self._trigger_function, 'source': 'added_batch_update', 'dest': 'load_batch',
-            #     'unless': 'are_all_batches_loaded', 'conditions': 'is_station_job_ready'},
-            # {'trigger': self._trigger_function, 'source': 'added_batch_update',
-            #     'dest': 'enable_auto_functions', 'conditions': 'is_station_job_ready'},
             {'trigger': self._trigger_function, 'source': 'enable_auto_functions',
                 'dest': 'LCMS_process', 'conditions': 'is_station_job_ready'},
             {'trigger': self._trigger_function, 'source': 'LCMS_process',
@@ -110,7 +102,7 @@ class SynthesisStationSm(StationProcessFSM):
 
     def request_unload_batch(self):
         robot_job = KukaLBRTask.from_args(name='UnloadOptimax',params=[False,self._status['batch_index']+1],
-                                type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
+                                type=RobotTaskType.MANIPULATION, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
 
