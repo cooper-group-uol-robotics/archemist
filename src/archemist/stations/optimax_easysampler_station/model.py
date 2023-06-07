@@ -7,7 +7,7 @@ class SynthesisStatus(Enum):
     TEMP_CONTROL = 0
     STIRRING = 1
     TEMP_AND_STIRRING = 2
-    LCMS = 3
+    ANALYSIS = 3
 
 class SynthesisStationModel(StationModel):
     machine_status = fields.EnumField(SynthesisStatus, null=True)
@@ -19,4 +19,10 @@ class OptimaxOpDescriptorModel(StationOpDescriptorModel):
     stir_speed = fields.IntField(min_value=0, max_value=1500, null=True)
     temp_duration = fields.IntField(null=True)
     stir_duration = fields.IntField(null=True)
+    
+
+class OptimaxSamplingOpDescriptorModel(StationOpDescriptorModel):
     dilution = fields.IntField(null=True)
+
+class LcmsOpDescriptorModel(StationOpDescriptorModel):
+    concentration_result = fields.FloatField()

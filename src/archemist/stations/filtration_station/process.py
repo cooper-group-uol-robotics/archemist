@@ -71,7 +71,7 @@ class FiltrationStationSm(StationProcessFSM):
 
     def request_pickup_funnel(self):
         robot_job = KukaLBRTask.from_args(name='UnloadFiltrationStation',params=[False,self._status['batch_index']+1],
-                                type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
+                                type=RobotTaskType.MANIPULATION, location=self._station.location)
         current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         self._station.request_robot_op(robot_job,current_batch_id)
         self._status['operation_complete'] = True

@@ -76,7 +76,7 @@ class SampleWeighingOpDescriptor(StationOpDescriptor):
 
     @property
     def weight(self) -> int:
-        return self._model.mass
+        return self._model.mass_reading
 
     def complete_op(self, success: bool, **kwargs):
         self._model.has_result = True

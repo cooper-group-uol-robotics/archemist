@@ -47,7 +47,8 @@ process:
         type: SyringePumpWithdrawOpDescriptor
         properties:
           pump_info:
-            port: 3
+            withdraw_port: 5
+            dispense_port: 3
             speed: 50
             volume: 20          
     transitions:

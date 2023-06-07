@@ -11,5 +11,5 @@ class WeighingStationModel(StationModel):
     machine_status = fields.EnumField(BalanceDoorStatus, null=True)
 
 class WeightOpDescriptorModel(StationOpDescriptorModel):
-    mass = fields.FloatField(min_value=0)
+    mass_reading = fields.FloatField(min_value=0)
 
