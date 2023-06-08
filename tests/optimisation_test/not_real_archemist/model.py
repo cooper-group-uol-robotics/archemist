@@ -1,6 +1,7 @@
-from mongoengine import Document, EmbeddedDocument, fields
-from archemist.core.models.recipe_model import RecipeModel
+from mongoengine import connect, Document, EmbeddedDocument, fields
 from archemist.core.models.station_op_model import StationOpDescriptorModel
+
+connect('opt_test_NRA_db', host='127.0.0.1', port=27017)
 
 class RecipeModel(Document):
     name = fields.StringField(required=True)
@@ -18,5 +19,5 @@ class BatchModel(Document):
     recipe = fields.ReferenceField(RecipeModel, null=True)
     result = fields.DictField()
 
-    meta = {'collection': 'batches', 'db_alias': 'archemist_state'}
+    # meta = {'collection': 'batches', 'db_alias': 'archemist_state'}
 

@@ -6,8 +6,8 @@ process:
     operation:
       properties:
         dispense_info:
-          dye_A: '10.0'
-          dye_B: '20.0'
+          dye_A: '5'
+          dye_B: '15'
       type: CSCSVJobOpDescriptor
     type: ChemSpeedFlexStation
   transitions: {on_fail: end_state, on_success: end_state}

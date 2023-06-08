@@ -37,5 +37,6 @@ optimizer:
   module: bayes_opt.bayesian_optimization  # optimizer module
   class: BayesianOptimization  # optimizer class
   hyperparameters: {} # necessary parameters to build the optimizer
-  additional_args: None #additional arguments TODO to call these into model
+  additional_args:
+  parameters_to_optimize: ['dye_A', 'dye_B'] # parameters to optimize
   max_recipe_count: '3'

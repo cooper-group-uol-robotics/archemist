@@ -1,5 +1,5 @@
 from typing import Dict, List
-from archemist.core.models.state_model import StateModel
+from archemist.core.models.state_model import StateModel, BatchModel, RecipeModel
 from model import BatchModel, RecipeModel
 from bson.objectid import ObjectId
 from archemist.core.util import Location
@@ -93,6 +93,10 @@ class Batch:
     def recipe(self) -> Recipe:
         if self.recipe_attached:
             return Recipe(self._model.recipe)
+    
+    @property
+    def result(self):
+        return self._model.result
 
     def attach_recipe(self, recipe: Recipe):
         self._model.update(recipe=recipe.model)
