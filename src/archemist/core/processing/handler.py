@@ -19,13 +19,16 @@ class StationHandler:
             assigned_batches = self._station.assigned_batches
             new_batches = [batch for batch in assigned_batches + self._in_process_batches 
                            if batch in assigned_batches and batch not in self._in_process_batches]
-            if len(new_batches) == self._station.process_batch_capacity:
-                for slot, process in self._processing_slots.items():
-                    if process is None:
-                        process_data = StationProcessData.from_args(new_batches, slot)
-                        new_process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
-                        self._processing_slots[slot] = new_process
-                        break
+            batches_per_process = self._station.process_batch_capacity
+            if len(new_batches) > 0 and (len(new_batches) % batches_per_process) == 0:
+                processes_split_batches_ = [new_batches[i: i + batches_per_process] for i in range(0, len(new_batches) , batches_per_process)]
+                for batches in processes_split_batches_:
+                    for slot, process in self._processing_slots.items():
+                        if process is None:
+                            process_data = StationProcessData.from_args(batches, slot)
+                            new_process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
+                            self._processing_slots[slot] = new_process
+                            break
 
 
         def _handle_processes(self):

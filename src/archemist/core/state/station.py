@@ -145,6 +145,11 @@ class Station:
     def delete_process_data(self, process_uuid: uuid.UUID):
         self._model.update(**{f"unset__process_data_map__{process_uuid}":True})
 
+    def get_batch_process_uuid(self, batch: Batch) -> uuid.UUID:
+        for process in self.get_all_processes_data():
+            if batch in process.batches:
+                return process.uuid
+
     ''' Batches properties and methods '''
 
     @property

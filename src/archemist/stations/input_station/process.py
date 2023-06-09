@@ -46,7 +46,8 @@ class InputStationProcess(StationProcess):
         self.request_robot_op(robot_op, current_batch_id)
 
     def finalize_batch_processing(self):
-        self._station.process_assigned_batches()
+        for batch in self._process_data.batches:
+            self._station.process_assinged_batch(batch)
 
     ''' transitions callbacks'''
 
@@ -103,7 +104,8 @@ class CrystalWorkflowInputStationProcess(StationProcess):
         self._process_data.status['batch_index'] += 1
 
     def finalize_batch_processing(self):
-        self._station.process_assigned_batches()
+        for batch in self._process_data.batches:
+            self._station.process_assinged_batch(batch)
 
     ''' transitions callbacks '''
     def are_all_batches_unloaded(self):

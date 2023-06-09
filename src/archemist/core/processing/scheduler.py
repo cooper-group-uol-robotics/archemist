@@ -140,10 +140,16 @@ class LazyRobotScheduler(RobotScheduler):
     
     def _are_batches_from_same_station(self, batch_id: int, other_batch_id: int, state: State) -> bool:
         batch = state.get_batch(batch_id)
-        station, station_id = batch.recipe.get_current_station()
+        station_type, station_id = batch.recipe.get_current_station()
         other_batch = state.get_batch(other_batch_id)
-        other_station, other_station_id = other_batch.recipe.get_current_station()
-        return station == other_station and station_id == other_station_id
+        other_station_type, other_station_id = other_batch.recipe.get_current_station()
+        if station_type == other_station_type and station_id == other_station_id:
+            station = state.get_station(station_type, station_id)
+            batch_process_id = station.get_batch_process_uuid(batch)
+            other_batch_process_id = station.get_batch_process_uuid(other_batch)
+            if batch_process_id == other_batch_process_id:
+                return True
+        return False
 
     def schedule(self, state: State):
         unassigned_jobs = list()
