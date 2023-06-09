@@ -59,6 +59,10 @@ class ArchemistServer:
                         self._workflow_mgr.pause_processor()
                     elif msg.cmd == 'add_batch':
                         self._state.add_clean_batch()
+                    elif msg.cmd == 'manual_batch_removal':
+                        for station in self._state.stations:
+                            if station.batches_need_removal:
+                                station.batches_need_removal = False
                     elif msg.cmd == 'terminate':
                         self.shut_down()
                         break

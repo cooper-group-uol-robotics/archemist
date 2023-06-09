@@ -45,6 +45,11 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.assigned_batches)
         self.assertFalse(self.station.processed_batches)
 
+        # assert batches_need_removal
+        self.assertFalse(self.station.batches_need_removal)
+        self.station.batches_need_removal = True
+        self.assertTrue(self.station.batches_need_removal)
+
         # batches creation
         recipe_doc = dict()
         with open('resources/testing_recipe.yaml') as fs:

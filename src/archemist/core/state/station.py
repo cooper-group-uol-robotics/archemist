@@ -168,6 +168,15 @@ class Station:
             processed_batches_list = [Batch(batch_model) for batch_model in self._model.processed_batches]
         return processed_batches_list 
 
+    @ property
+    def batches_need_removal(self) -> bool:
+        self._model.reload('batches_need_removal')
+        return self._model.batches_need_removal
+    
+    @batches_need_removal.setter
+    def batches_need_removal(self, new_value: bool):
+        self._model.update(batches_need_removal=new_value)
+
     def has_free_batch_capacity(self) -> bool:
         return len(self.assigned_batches) < self.batch_capacity
 

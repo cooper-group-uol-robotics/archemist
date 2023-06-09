@@ -97,7 +97,7 @@ class OutputStationTest(unittest.TestCase, ProcessTestingMixin):
         # prep_state
         self.assert_process_transition(process, 'prep_state')
         self.assertEqual(process.data.status['batch_index'], 0)
-
+        
         for i in range(self.station_doc['process_batch_capacity']):
             # place_batch
             self.assert_process_transition(process, 'place_batch')
@@ -111,6 +111,13 @@ class OutputStationTest(unittest.TestCase, ProcessTestingMixin):
             # added_batch_update
             self.assert_process_transition(process, 'added_batch_update')
             self.assertEqual(process.data.status['batch_index'], i+1)
+
+        # need_manual_batches_removal
+        self.assertFalse(self.station.batches_need_removal)
+        self.assert_process_transition(process, 'need_manual_batches_removal')
+        self.assertTrue(self.station.batches_need_removal)
+        self.assert_process_transition(process, 'need_manual_batches_removal')
+        self.station.batches_need_removal = False
 
         # final_state
         self.assertFalse(self.station.has_processed_batch())

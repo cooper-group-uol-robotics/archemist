@@ -13,6 +13,7 @@ class OutputStationProcess(StationProcess):
             State(name='prep_state', on_enter='initialise_process_data'),
             State(name='place_batch', on_enter='request_place_batch'),
             State(name='added_batch_update', on_enter='update_loaded_batch'),
+            State(name='need_manual_batches_removal', on_enter='request_manual_removal'),
             State(name='final_state', on_enter='finalize_batch_processing')]
 
         ''' Transitions '''
@@ -21,7 +22,8 @@ class OutputStationProcess(StationProcess):
             {'source':'prep_state','dest':'place_batch'},
             {'source':'place_batch','dest':'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
             {'source':'added_batch_update','dest':'place_batch', 'unless':'are_all_batches_loaded'},
-            { 'source':'added_batch_update','dest':'final_state', 'conditions':'are_all_batches_loaded'},
+            { 'source':'added_batch_update','dest':'need_manual_batches_removal', 'conditions':'are_all_batches_loaded'},
+            { 'source':'need_manual_batches_removal','dest':'final_state', 'conditions':'are_batches_manually_removed'},
         ]
         super().__init__(station, process_data, states, transitions)
 
@@ -45,13 +47,20 @@ class OutputStationProcess(StationProcess):
         self._update_batch_loc_to_station(batch_index)
         self._process_data.status['batch_index'] += 1
 
+    def request_manual_removal(self):
+        self._station.batches_need_removal = True
+
     def finalize_batch_processing(self):
-        self._station.process_assigned_batches()
+        for batch in self._process_data.batches:
+            self._station.process_assinged_batch(batch)
 
     ''' transitions callbacks'''
 
     def are_all_batches_loaded(self):
         return self._process_data.status['batch_index'] == len(self._process_data.batches)
+    
+    def are_batches_manually_removed(self):
+        return not self._station.batches_need_removal
 
     
 

@@ -18,7 +18,7 @@ class ArchemistCLI:
                 'type': 'list',
                 'name': 'main_menu',
                 'message': 'Please select from one of the options below:',
-                'choices': ['Start/Resume', 'Pause','Add clean batch','Stations', 'Robots', 'Terminate']
+                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Remove waiting batches','Stations', 'Robots', 'Terminate']
             }
         ]
         while True:
@@ -35,6 +35,10 @@ class ArchemistCLI:
                 elif selection['main_menu'] == 'Add clean batch':
                     print('Adding clean batch to the workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='add_batch')
+                    self._client.send_json(msg.to_json())
+                elif selection['main_menu'] == 'Remove waiting batches':
+                    print('Removing waiting batches from the workflow')
+                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='manual_batch_removal')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Stations':
                     msg = CMDMessage(category=CMDCategory.STATION, cmd='get_list')
