@@ -34,7 +34,7 @@ class FiltrationStationSm(StationProcessFSM):
         transitions = [
             {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'open_drain_valve', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
             {'trigger':self._trigger_function, 'source':'open_drain_valve','dest':'filtration_process', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'filtration_process','dest':'close_drain_valve', 'conditions':['is_station_job_ready', 'is_filtration_process_complete']},
+            {'trigger':self._trigger_function, 'source':'filtration_process','dest':'close_drain_valve', 'conditions':['is_station_job_ready', 'is_filtration_process_complete'], 'before':'process_sample'},
             {'trigger':self._trigger_function, 'source':'close_drain_valve','dest':'disable_auto_functions', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'disable_auto_functions','dest':'navigate_to_filtration_station', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'navigate_to_filtration_station','dest':'pickup_funnel', 'conditions':'is_station_job_ready'},
@@ -97,6 +97,11 @@ class FiltrationStationSm(StationProcessFSM):
         self._status['batch_index'] = 0
         self._status['batches_count'] = 0
         self.to_init_state()
+
+    def process_sample(self):
+        last_operation_op = self._station.station_op_history[-1]
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
 
 
 

@@ -34,7 +34,7 @@ class SyringePumpStationSm(StationProcessFSM):
         transitions = [
             {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'prep_state', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
             {'trigger':self._trigger_function, 'source':'prep_state', 'dest': 'dispense', 'conditions':['is_station_job_ready', 'is_prep_done']},
-            {'trigger':self._trigger_function, 'source':'dispense','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
+            {'trigger':self._trigger_function, 'source':'dispense','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete'], 'before':'process_sample'}
         ]   
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -71,3 +71,9 @@ class SyringePumpStationSm(StationProcessFSM):
         self.to_init_state()
 
     
+    def process_sample(self):
+        last_operation_op = self._station.station_op_history[-1]
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+
+

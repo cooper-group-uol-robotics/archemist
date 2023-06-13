@@ -38,7 +38,7 @@ class WeighingSM(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'load_sample', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'load_sample','dest':'close_balance_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'station_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'station_process','dest':'open_balance_door', 'conditions':'is_station_job_ready'}, 
+            {'trigger':self._trigger_function, 'source':'station_process','dest':'open_balance_door', 'conditions':'is_station_job_ready','before':'process_sample'}, 
             {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'unload_sample', 'conditions':['is_station_job_ready','is_station_operation_complete']}, 
             {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_unloaded']},
             {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']},
@@ -97,4 +97,10 @@ class WeighingSM(StationProcessFSM):
         op = SampleWeighingOpDescriptor.from_args()
         self._station.assign_station_op(op)
         self._status['operation_complete'] = True
+
+    def process_sample(self):
+        last_operation_op = self._station.station_op_history[-1]
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+
 

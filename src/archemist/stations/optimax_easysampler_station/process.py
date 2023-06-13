@@ -69,7 +69,7 @@ class SynthesisStationSm(StationProcessFSM):
             {'trigger': self._trigger_function, 'source': 'LCMS_process',
                 'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
             {'trigger': self._trigger_function, 'source': 'optimax_cooling_process',
-                'dest': 'final_state', 'conditions': 'is_station_job_ready'},
+                'dest': 'final_state', 'conditions': 'is_station_job_ready', 'before':'process_sample'},
         ]
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -144,3 +144,9 @@ class SynthesisStationSm(StationProcessFSM):
         self._status['batches_count'] = 0
         self._status['loaded_samples'] = 0
         self.to_init_state()
+
+    def process_sample(self):
+        last_operation_op = self._station.station_op_history[-1]
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+
