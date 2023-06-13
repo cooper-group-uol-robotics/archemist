@@ -5,7 +5,7 @@ from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from .state import SyringePump, SyringePumpDispenseOpDescriptor, SyringePumpWithdrawOpDescriptor
+from .state import SyringePump, SyringePumpDispenseOpDescriptor
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.processing.station_process_fsm import StationProcessFSM
 from archemist.core.persistence.object_factory import StationFactory
@@ -19,10 +19,10 @@ class SyringePumpStationSm(StationProcessFSM):
         if 'operation_complete' not in self._status.keys():
             self._status['operation_complete'] = False
         self._status['pump_capacity'] = 25
-        self._status['split_volume'] = []
+        #self._status['split_volume'] = []
         self._status['prep_done'] = False
-        self._status['iterations'] = 0
-        self._status['iterations_done'] = False
+        #self._status['iterations'] = 0
+        #self._status['iterations_done'] = False
 
         ''' States '''
         states = [ State(name='init_state'), 
@@ -43,12 +43,12 @@ class SyringePumpStationSm(StationProcessFSM):
         return self._status['operation_complete']
 
     def request_dispense_operation(self):
-        self._current_batch_pump_info['volume'] = self._status['split_volume'][self._status['iterations']]
+        #self._current_batch_pump_info['volume'] = self._status['split_volume'][self._status['iterations']]
         op = SyringePumpDispenseOpDescriptor.from_args(pump_info = self._current_batch_pump_info)
         self._station.assign_station_op(op)
-        self._status['iterations'] += 1
-        if self._status['iterations'] == len(self._status['split_volume']):
-             self._status['operation_complete'] = True
+        #self._status['iterations'] += 1
+        #if self._status['iterations'] == len(self._status['split_volume']):
+        self._status['operation_complete'] = True
              
     def is_prep_done(self):
         print('preperation_done')
@@ -66,8 +66,8 @@ class SyringePumpStationSm(StationProcessFSM):
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()
         self._status['operation_complete'] = False
-        self._status['spliting_done'] = False
-        self._status['iterations'] = 0
+        #self._status['spliting_done'] = False
+        #self._status['iterations'] = 0
         self.to_init_state()
 
     

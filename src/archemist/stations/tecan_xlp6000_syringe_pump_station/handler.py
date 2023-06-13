@@ -1,7 +1,7 @@
 import rospy
 from typing import Tuple, Dict
 from archemist.core.state.station import Station
-from .state import SyringePumpWithdrawOpDescriptor, SyringePumpDispenseOpDescriptor
+from .state import SyringePumpDispenseOpDescriptor
 from archemist.core.processing.handler import StationHandler
 from std_msgs.msg import String
 from roslabware_msgs.msg import TecanXlp6000Cmd, TecanXlp6000Reading
@@ -30,7 +30,7 @@ class SyringePumpStationROSHandler(StationHandler):
             rospy.loginfo('starting dispence operation')
             self._syringe_pump_current_task_complete = False
             for i in range(10):
-                self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_withdraw_port = current_op.withdraw_port, xlp_dispense_port = current_op.dispense_port, xlp_volume = current_op.dispense_volume , xlp_speed = current_op.dispense_speed)
+                self.pub_pump.publish(tecan_xlp_command=TecanXlp6000Cmd.DISPENSE, xlp_withdraw_port = current_op.withdraw_port, xlp_dispense_port = current_op.dispense_port, xlp_volume = current_op.volume , xlp_speed = current_op.speed)
         else:
             rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
