@@ -5,8 +5,7 @@ from enum import Enum
 
 class SyringePumpStatus(Enum):
     DISPENSE = 1
-    WITHDRAW = 2
-    JOB_COMPLETE = 3
+    JOB_COMPLETE = 2
 
 class SyringePumpStationModel(StationModel):
     machine_status = fields.EnumField(SyringePumpStatus, null = True)
@@ -14,6 +13,6 @@ class SyringePumpStationModel(StationModel):
 class SyringePumpOpDescriptorModel(StationOpDescriptorModel):
     withdraw_port = fields.IntField(min_value=0, max_value=12,null=True)
     dispense_port = fields.IntField(min_value=0, max_value=12,null=True)
-    volume = fields.FloatField(min_value=0, null=True)
-    speed = fields.FloatField(min_value=0, null=True)
+    volume = fields.IntField(min_value=0, null=True)
+    speed = fields.IntField(min_value=0, null=True)
 

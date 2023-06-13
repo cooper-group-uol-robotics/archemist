@@ -34,13 +34,11 @@ class SyringePump(Station):
     def assign_station_op(self, station_op: Any):
         if isinstance(station_op, SyringePumpDispenseOpDescriptor):
             self.status = SyringePumpStatus.DISPENSE
-        elif isinstance(station_op, SyringePumpWithdrawOpDescriptor):
-            self.status = SyringePumpStatus.WITHDRAW
         return super().assign_station_op(station_op)
     
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
-        if isinstance(current_op, (SyringePumpDispenseOpDescriptor,SyringePumpWithdrawOpDescriptor)) and current_op.was_successful:
+        if isinstance(current_op, (SyringePumpDispenseOpDescriptor,SyringePumpDispenseOpDescriptor)) and current_op.was_successful:
             self.status = SyringePumpStatus.JOB_COMPLETE
         super().complete_assigned_station_op(success, **kwargs)
 
@@ -52,53 +50,53 @@ class SyringePumpDispenseOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = SyringePumpOpDescriptorModel()
-        model.withdraw_port = kwargs['pump_info']['withdraw_port']
-        model.dispense_port = kwargs['pump_info']['dispense_port']
-        model.speed = kwargs['pump_info']['speed']
-        model.volume = kwargs['pump_info']['volume']
+        model.withdraw_port = int(kwargs['pump_info']['withdraw_port'])
+        model.dispense_port = int(kwargs['pump_info']['dispense_port'])
+        model.speed = int(kwargs['pump_info']['speed'])
+        model.volume = int(kwargs['pump_info']['volume'])
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
     
     @property
     def withdraw_port(self) -> int:
-        return self._model.port
+        return self._model.withdraw_port
 
     @property
     def dispense_port(self) -> int:
-        return self._model.port
+        return self._model.dispense_port
 
     @property
-    def dispense_speed(self) -> float:
+    def speed(self) -> int:
         return self._model.speed
 
     @property
-    def dispense_volume(self) -> float:
+    def volume(self) -> int:
         return self._model.volume
 
-class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: SyringePumpOpDescriptorModel) -> None:
-        self._model = op_model
+# class SyringePumpWithdrawOpDescriptor(StationOpDescriptor):
+#     def __init__(self, op_model: SyringePumpOpDescriptorModel) -> None:
+#         self._model = op_model
 
-    @classmethod
-    def from_args(cls, **kwargs):
-        model = SyringePumpOpDescriptorModel()
-        model.port = kwargs['pump_info']['port']
-        model.speed = kwargs['pump_info']['speed']
-        model.volume = kwargs['pump_info']['volume']
-        model._type = cls.__name__
-        model._module = cls.__module__
-        return cls(model)
+#     @classmethod
+#     def from_args(cls, **kwargs):
+#         model = SyringePumpOpDescriptorModel()
+#         model.port = kwargs['pump_info']['port']
+#         model.speed = kwargs['pump_info']['speed']
+#         model.volume = kwargs['pump_info']['volume']
+#         model._type = cls.__name__
+#         model._module = cls.__module__
+#         return cls(model)
 
-    @property
-    def withdraw_port(self) -> int:
-        return self._model.port
+#     @property
+#     def withdraw_port(self) -> int:
+#         return self._model.port
         
 
-    @property
-    def withdraw_speed(self) -> float:
-        return self._model.speed
+#     @property
+#     def withdraw_speed(self) -> float:
+#         return self._model.speed
 
-    @property
-    def withdraw_volume(self) -> float:
-        return self._model.volume
+#     @property
+#     def withdraw_volume(self) -> float:
+#         return self._model.volume
