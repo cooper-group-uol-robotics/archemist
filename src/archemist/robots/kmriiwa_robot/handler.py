@@ -146,14 +146,14 @@ class KmriiwaROSHandler(RobotHandler):
                 self._robot.operational_mode =  MobileRobotMode.MAINTENANCE
                 # enable auto functions
                 self._lbr_cmd_seq += 1
-                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='EnableAutoFunctions', task_parameters=[False])
+                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='EnableAutoFunctions', task_parameters=["False"])
                 for _ in range(10):
                     self._lbrCmdPub.publish(lbr_task)
         if self._robot.operational_mode ==  MobileRobotMode.MAINTENANCE:
             if not self._need_to_charge and self._lbr_current_op_state == "IDLE" and not self._need_to_calibrate:
                 # disable auto functions
                 self._lbr_cmd_seq += 1
-                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='DiableAutoFunctions', task_parameters=[False])
+                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='DiableAutoFunctions', task_parameters=["False"])
                 for _ in range(10):
                     self._lbrCmdPub.publish(lbr_task)
                 self._robot.operational_mode =  MobileRobotMode.OPERTIAONAL
