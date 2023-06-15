@@ -5,6 +5,7 @@ from archemist.core.state.station import Station
 from roslabware_msgs.msg import MettlerOptimaxCmd, MettlerOptimaxReading, LcmsCmd, LcmsStatus
 from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor
 from rospy.core import is_shutdown
+from std_msgs.msg import Bool
 
 class SynthesisStationROSHandler(StationHandler):
     def __init__(self, station: Station):
@@ -18,8 +19,10 @@ class SynthesisStationROSHandler(StationHandler):
                          MettlerOptimaxReading, self.optimax_callback)
         rospy.Subscriber("lcms_info",
                          LcmsStatus, self.lcms_callback)
+        rospy.Subscriber('/mettler_optimax/task_complete', Bool, self._optimax_state_update, queue_size=1)
         self._received_results = False
         self._op_results = 0.0
+        self._optimax_current_task_complete = False
         rospy.sleep(1)
 
     def run(self):
@@ -36,18 +39,22 @@ class SynthesisStationROSHandler(StationHandler):
         self._received_results = False
         self._op_results = {}
         if (isinstance(current_op, OptimaxTempStirringOpDescriptor)):
+            self._optimax_current_task_complete = False
             for i in range(10):
                 self.pubOptimax.publish(optimax_command=MettlerOptimaxCmd.ADD_TEMP_STIR, temperature=current_op.temperature,
                                         temp_duration=current_op.temp_duration, stir_speed=current_op.stir_speed, stir_duration=current_op.stir_duration)
         elif (isinstance(current_op, OptimaxTempOpDescriptor)):
+            self._optimax_current_task_complete = False
             for i in range(10):
                 self.pubOptimax.publish(optimax_command=MettlerOptimaxCmd.ADD_TEMP, temperature=current_op.temperature,
                                         temp_duration=current_op.temp_duration)
         elif (isinstance(current_op, OptimaxStirringOpDescriptor)):
+            self._optimax_current_task_complete = False
             for i in range(10):
                 self.pubOptimax.publish(optimax_command=MettlerOptimaxCmd.ADD_STIR,
                                         stir_speed=current_op.stir_speed, stir_duration=current_op.stir_duration)
         elif (isinstance(current_op, OptimaxSamplingOpDescriptor)):
+            self._optimax_current_task_complete = False
             for i in range(10):
                 self.pubOptimax.publish(optimax_command=MettlerOptimaxCmd.ADD_SAMPLE,
                                         dilution = current_op.dilution)
@@ -59,7 +66,7 @@ class SynthesisStationROSHandler(StationHandler):
                 f'[{self.__class__.__name__}] Unkown operation was received')
 
     def is_op_execution_complete(self) -> bool:
-        return True
+        return self._optimax_current_task_complete
 
     def get_op_result(self) -> Tuple[bool, Dict]:
         return True, self._op_results
@@ -69,3 +76,9 @@ class SynthesisStationROSHandler(StationHandler):
 
     def lcms_callback(self, msg):
         pass
+
+    def _optimax_state_update(self, msg):
+        if msg.data == True:
+            self._optimax_current_task_complete = True
+        elif msg.data == False:
+            self._optimax_current_task_complete = False

@@ -24,9 +24,9 @@ class SyringePumpStationROSHandler(StationHandler):
         print(f'performing syringe pump operation {current_op}')
 
         if (isinstance(current_op,SyringePumpDispenseOpDescriptor)):
-            while True:
-                if self._syringe_pump_current_task_complete:
-                    break
+            # while True:
+            #     if self._syringe_pump_current_task_complete:
+            #         break
             rospy.loginfo('starting dispence operation')
             self._syringe_pump_current_task_complete = False
             for i in range(10):
