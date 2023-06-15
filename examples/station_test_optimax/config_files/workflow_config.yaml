@@ -46,10 +46,10 @@ general:
 # for every robot used in the workflow, add a new entry and fill its fields as defined
 
 # robots:
-#   - type: KukaLBRIIWA
-#     id: 1
-#     batch_capacity: 1
-#     handler: KmriiwaROSHandler
+#  - type: KukaLBRIIWA
+#    id: 1
+#    batch_capacity: 1
+#    handler: KmriiwaROSHandler
 
 # stations: this section describes the stations used in the workflow
 #   type: the station's class name as defined in archemist.stations.X.state
@@ -67,14 +67,14 @@ general:
 #
 # for every station used in the workflow, add a new entry and fill its fields as defined
 stations:
-  - type: SyringePump
-    id: 12
+  - type: SynthesisStation
+    id: 13
     location: 
       node_id: 25
       graph_id: 1
     batch_capacity: 1
-    handler: SyringePumpStationROSHandler
+    handler: SynthesisStationROSHandler
     process_state_machine: 
-      type: SyringePumpStationSm
+      type: SynthesisStationSm
       args: 
     parameters:

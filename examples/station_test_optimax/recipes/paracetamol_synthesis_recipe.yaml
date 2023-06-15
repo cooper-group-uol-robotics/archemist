@@ -39,19 +39,18 @@ general:
   name: paracetamol_synthesis_recipe
   id: 198
 process:
-  - state_name: pump_liquid
+  - state_name: reaction
     station:
-      type: SyringePump
-      id: 12
+      type: SynthesisStation
+      id: 13
       operation:
-        type: SyringePumpDispenseOpDescriptor
-        properties:
-          pump_info:
-            withdraw_port: 4
-            dispense_port: 10
-            speed: 50
-            volume: 20          
+        type: OptimaxTempStirringOpDescriptor
+        properties: # No properties required for LCMS
+          temperature: 25
+          temp_duration: 1
+          stir_speed: 100
+          stir_duration: 20         
     transitions:
       on_success: end_state
       on_fail: end_state
-  
+

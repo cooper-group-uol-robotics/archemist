@@ -85,8 +85,8 @@ class SynthesisStationSm(StationProcessFSM):
         self.stir_duration = current_op.stir_duration
         self.dilution = 5
         
-        self._station.assign_station_op(OptimaxTempStirringOpDescriptor.from_args(
-            temperature=self.temperature, temp_duration=self.temp_duration, stir_speed=self.stir_speed, stir_duration=self.stir_duration, dilution=self.dilution))
+        self._station.assign_station_op(OptimaxStirringOpDescriptor.from_args(
+            stir_speed=self.stir_speed, stir_duration=self.stir_duration))
 
     def request_sampling_process(self):       
         self._station.assign_station_op(
@@ -96,38 +96,45 @@ class SynthesisStationSm(StationProcessFSM):
         self._station.assign_station_op(LcmsOpDescriptor.from_args())
 
     def request_cooling_process(self):
-        self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=self.temperature, temp_duration=self.temp_duration,))
+        _temperature = 10
+        _temp_duration = 5
+        self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=_temperature, temp_duration= _temp_duration))
 
     # robot process
 
     def request_unload_batch(self):
-        robot_job = KukaLBRTask.from_args(name='UnloadOptimax',params=[False,self._status['batch_index']+1],
-                                type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        # robot_job = KukaLBRTask.from_args(name='UnloadOptimax',params=[False,self._status['batch_index']+1],
+        #                         type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+        pass
 
 
     def request_load_batch(self):
-        robot_job = KukaLBRTask.from_args(name='LoadLCMS',params=[True,self._status['batch_index']+1],
-                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
-        
+        # robot_job = KukaLBRTask.from_args(name='LoadLCMS',params=[True,self._status['batch_index']+1],
+        #                                      type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+        pass
 
     def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        pass
         
 
     def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        pass
         
 
     def request_robot_navigation_to_optimax(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO change the node id and graph id for Optimax
+        # self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO change the node id and graph id for Optimax
+        pass
         
 
     def request_robot_navigation_to_LCMS(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO change the node id and graph id for LCMS
+        # self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO change the node id and graph id for LCMS
+        pass
     
 
     def is_LCMS_result_positive(self):
