@@ -1,4 +1,5 @@
 import time
+import yaml
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.state.state import State
 from optimisation_manager import OptimizationState, OptimisationManager
@@ -9,10 +10,12 @@ import pandas as pd
 
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir, max_recipe_count, templete_recipe_dir) -> None:
+    def __init__(self, recipe_dir, max_recipe_count, templete_recipe_dir, optimizer) -> None:
         self._recipe_path = recipe_dir
+        self._result_path = Path.joinpath(self._recipe_path, "result")
         self._templete_recipe_path = templete_recipe_dir
         self._max_number_of_recipes = max_recipe_count
+        self._optimizer = optimizer
 
         ### variables to be replaced with functions
         optimised_parameters = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0],
@@ -27,11 +30,19 @@ class OptimizationHandler:
         completed_batches = State().get_completed_batches()
         for batch in completed_batches:
             if batch.recipe_attached:
-                recipe = batch.recipe
-                """
-                code to get the probed points(pd.DataFrame) and feed it to opt_manager.updatemodel
-
-                """
+                batch_id = batch.id
+                result_watcher = RecipeFilesWatchdog(self._result_path)
+                result_watcher.start()
+                result_queue = result_watcher.recipes_queue
+                for result_file in result_queue == 0:
+                    with open(result_file) as file:
+                        result_dict = yaml.load(file, Loader=yaml.SafeLoader)
+                    if result_dict['batch_id'] == batch_id:
+                        result = {'output': result_dict['output']}
+                        result_data = pd.DataFrame.from_dict(result)
+                        self._optimizer.update_model(result_data)
+                    else:
+                        pass
 
     def watch_recipe_queue(self):
         # add a max_recipe field in the config.yaml
@@ -46,7 +57,6 @@ class OptimizationHandler:
                 new_recipe = RecipeGenerator(self._templete_recipe_path, recipe_name)
                 new_recipe.generate_recipe(self._opt_pd)
         time.sleep(1)
-
 
 if __name__ == '__main__':
     cwd_path = Path.cwd()

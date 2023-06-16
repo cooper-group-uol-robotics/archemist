@@ -5,9 +5,8 @@ process:
     id: 12
     operation:
       properties:
-        dispense_info:
-          dye_A: '5'
-          dye_B: '25'
+        dispense_info: {dye_A: '5', dye_B: '25'}
       type: CSCSVJobOpDescriptor
     type: ChemSpeedFlexStation
   transitions: {on_fail: end_state, on_success: end_state}
+result: {batch_id: 31, output: 25.495097567963924}
