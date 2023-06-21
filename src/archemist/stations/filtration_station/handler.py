@@ -57,7 +57,6 @@ class FiltrationStationROSHandler(StationHandler):
             for i in range(10):
                 self.pubFS.publish(filtration_system_command=FiltrationCmd.STOP)
 
-
     def is_op_execution_complete(self) -> bool:
         return self._Filtration_current_task_complete
 
