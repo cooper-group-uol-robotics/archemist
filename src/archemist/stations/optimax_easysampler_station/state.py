@@ -174,4 +174,15 @@ class LcmsOpDescriptor(StationOpDescriptor):
             self._model.concentration_result = kwargs['concentration']
         else:
             pass
+
+class BaseValveOpDescriptor(StationOpDescriptor):
+    def __init__(self, op_model: StationOpDescriptorModel):
+        self._model = op_model
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
     

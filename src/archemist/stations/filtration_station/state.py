@@ -1,4 +1,4 @@
-from .model import FiltrationValveStatus, FiltrationStationModel
+from .model import FiltrationStationModel, FiltrationStatus
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.state.station import Station
@@ -22,25 +22,30 @@ class FiltrationStation(Station):
         return cls(model)
     
     @property
-    def status(self) -> FiltrationValveStatus:
+    def status(self) -> FiltrationStatus:
         self._model.reload('machine_status')
         return self._model.machine_status
     
     @status.setter
-    def status(self, new_status: FiltrationValveStatus):
+    def status(self, new_status: FiltrationStatus):
         self._model.update(machine_status=new_status)
     
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
-        if isinstance(current_op, FiltrationValveOpenOpDescriptor):
-            self.status = FiltrationValveStatus.VALVE_OPEN
-        elif isinstance(current_op, FiltrationValveCloseOpDescriptor):
-            self.status = FiltrationValveStatus.VALVE_CLOSED
+        if isinstance(current_op, BaseValveOpenOpDescriptor):
+            self.status = FiltrationStatus.BASEVALVE_OPEN
+        elif isinstance(current_op, VacuumOpenOpDescriptor):
+            self.status = FiltrationStatus.VACUUMING_OPEN
+        elif isinstance(current_op, DrainValveOpenOpDescriptor):
+            self.status = FiltrationStatus.DRAINING_OPEN
+        elif isinstance(current_op, IdleOpDescriptor):
+            self.status = FiltrationStatus.STOP
+
         super().complete_assigned_station_op(success, **kwargs)
 
     
 ''' ==== Station Operation Descriptors ==== '''
-class FiltrationValveOpenOpDescriptor(StationOpDescriptor):
+class BaseValveOpenOpDescriptor(StationOpDescriptor):
     def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
         self._model = stationOpModel
 
@@ -51,7 +56,7 @@ class FiltrationValveOpenOpDescriptor(StationOpDescriptor):
         model._module = cls.__module__
         return cls(model)
 
-class FiltrationValveCloseOpDescriptor(StationOpDescriptor):
+class BaseValveCloseOpDescriptor(StationOpDescriptor):
     def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
         self._model = stationOpModel
 
@@ -61,3 +66,59 @@ class FiltrationValveCloseOpDescriptor(StationOpDescriptor):
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
+    
+class VacuumOpenOpDescriptor(StationOpDescriptor):
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+        self._model = stationOpModel
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class VacuumCloseOpDescriptor(StationOpDescriptor):
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+        self._model = stationOpModel
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class DrainValveOpenOpDescriptor(StationOpDescriptor):
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+        self._model = stationOpModel
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class DrainValveCloseOpDescriptor(StationOpDescriptor):
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+        self._model = stationOpModel
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+class IdleOpDescriptor(StationOpDescriptor):
+    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+        self._model = stationOpModel
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+

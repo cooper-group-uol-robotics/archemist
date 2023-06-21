@@ -2,8 +2,8 @@ import rospy
 from typing import Dict, Tuple
 from archemist.core.processing.handler import StationHandler
 from archemist.core.state.station import Station
-from roslabware_msgs.msg import MettlerOptimaxCmd, MettlerOptimaxReading, LcmsCmd, LcmsStatus
-from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor
+from roslabware_msgs.msg import MettlerOptimaxCmd, MettlerOptimaxReading, LcmsCmd, LcmsStatus, BaseValveCmd
+from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor, BaseValveOpDescriptor
 from rospy.core import is_shutdown
 from std_msgs.msg import Bool
 
@@ -15,6 +15,7 @@ class SynthesisStationROSHandler(StationHandler):
             "mettler_optimax", MettlerOptimaxCmd, queue_size=2)
         self.pubLCMS = rospy.Publisher(
             "Lcms", LcmsCmd, queue_size=2)
+        self.pubBaseValve = rospy.Publisher("Optimax_BaseValve_Commands", BaseValveCmd, queue_size=2)
         rospy.Subscriber("mettler_optimax_info",
                          MettlerOptimaxReading, self.optimax_callback)
         rospy.Subscriber("lcms_info",
@@ -61,6 +62,9 @@ class SynthesisStationROSHandler(StationHandler):
         elif (isinstance(current_op, LcmsOpDescriptor)):
             for i in range(10):
                 self.pubLCMS.publish(lcms_command=LcmsCmd.START)
+        elif (isinstance(current_op, BaseValveOpDescriptor)):
+            for i in range(10):
+                self.pubBaseValve.publish(valve_command = BaseValveCmd.OPEN)
         else:
             rospy.logwarn(
                 f'[{self.__class__.__name__}] Unkown operation was received')

@@ -1,19 +1,20 @@
 import rospy
 from typing import Tuple, Dict
 from archemist.core.state.station import Station
-from .state import FiltrationValveOpenOpDescriptor,FiltrationValveCloseOpDescriptor
+from .state import BaseValveCloseOpDescriptor, BaseValveOpenOpDescriptor, VacuumCloseOpDescriptor, VacuumOpenOpDescriptor, DrainValveCloseOpDescriptor, DrainValveOpenOpDescriptor, IdleOpDescriptor
 from archemist.core.processing.handler import StationHandler
-from roslabware_msgs.msg import FiltrationValveCmd,FiltrationValveStatus
+from roslabware_msgs.msg import FiltrationCmd,FiltrationStatus, BaseValveCmd
+from std_msgs.msg import Bool
 from rospy.core import is_shutdown
 
-class FiltrationStationHandler(StationHandler):
+class FiltrationStationROSHandler(StationHandler):
     def __init__(self, station: Station):
         super().__init__(station)
-        self._current_fs_status = FiltrationValveStatus.VALVE_CLOSED
-        self._desired_fs_status = None
+        self._Filtration_current_task_complete = False
         rospy.init_node(f'{self._station}_handler')
-        self.pub_FS = rospy.Publisher("/Filtration_station_commands", FiltrationValveCmd, queue_size=1)
-        rospy.Subscriber('/Filtration_station_status', FiltrationValveStatus, self._fs_state_update, queue_size=1)
+        self.pubBaseValve = rospy.Publisher("/Optimax_BaseValve_Commands", BaseValveCmd, queue_size=1)
+        self.pubFS = rospy.Publisher("/Filtration_Commands", FiltrationCmd, queue_size=1)
+        rospy.Subscriber('/filtration/task_complete', Bool, self._fs_state_update, queue_size=1)
         rospy.sleep(1)
                
     def run(self):
@@ -27,27 +28,44 @@ class FiltrationStationHandler(StationHandler):
 
     def execute_op(self):
         current_op = self._station.get_assigned_station_op()
-        if (isinstance(current_op, FiltrationValveCloseOpDescriptor)):
-            rospy.loginfo('opening chemspeed door')
+        if (isinstance(current_op, BaseValveOpenOpDescriptor)):
+            rospy.loginfo('opening base valve')
             for i in range(10):
-                self.pub_FS.publish(drain_valve_command=FiltrationValveCmd.CLOSE_VALVE)
-            self._desired_fs_status = FiltrationValveStatus.VALVE_CLOSED
-        elif (isinstance(current_op,FiltrationValveOpenOpDescriptor)):
-            rospy.loginfo('closing chemspeed door')
+                self.pubBaseValve.publish(valve_command=BaseValveCmd.OPEN)
+        elif (isinstance(current_op,BaseValveCloseOpDescriptor)):
+            rospy.loginfo('closing base valve')
             for i in range(10):
-                self.pub_FS.publish(drain_valve_command=FiltrationValveCmd.OPEN_VALVE)
-            self._desired_fs_status = FiltrationValveStatus.VALVE_OPENED
+                self.pubBaseValve.publish(valve_command=BaseValveCmd.CLOSE)
+        elif (isinstance(current_op,VacuumOpenOpDescriptor)):
+            rospy.loginfo('opening vacuum')
+            for i in range(10):
+                self.pubFS.publish(filtration_system_command=FiltrationCmd.VACUUM)
+        elif (isinstance(current_op,VacuumCloseOpDescriptor)):
+            rospy.loginfo('closing vacuum')
+            for i in range(10):
+                self.pubFS.publish(filtration_system_command=FiltrationCmd.STOP)
+        elif (isinstance(current_op,DrainValveOpenOpDescriptor)):
+            rospy.loginfo('opening drain')
+            for i in range(10):
+                self.pubFS.publish(filtration_system_command=FiltrationCmd.DRAIN)
+        elif (isinstance(current_op,DrainValveCloseOpDescriptor)):
+            rospy.loginfo('closing drain')
+            for i in range(10):
+                self.pubFS.publish(filtration_system_command=FiltrationCmd.STOP)
+        elif (isinstance(current_op,IdleOpDescriptor)):
+            rospy.loginfo('Stopping all')
+            for i in range(10):
+                self.pubFS.publish(filtration_system_command=FiltrationCmd.STOP)
+
 
     def is_op_execution_complete(self) -> bool:
-        if self._desired_fs_status == self._current_fs_status:
-            self._desired_fs_status = None
-            return True
-        else:
-            return False
+        return self._Filtration_current_task_complete
 
     def get_op_result(self) -> Tuple[bool, Dict]:
         return True, {}
     
     def _fs_state_update(self, msg):
-        if self._current_fs_status != msg.drain_valve_status:
-            self._current_fs_status = msg.drain_valve_status
+        if msg.data == True:
+            self._Filtration_current_task_complete = True
+        elif msg.data == False:
+            self._Filtration_current_task_complete = False

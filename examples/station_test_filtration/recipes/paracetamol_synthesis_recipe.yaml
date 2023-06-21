@@ -1,0 +1,52 @@
+# ============ Workflow Recipe ============
+#
+# general: this section describes the recipe general details
+#   name: the given recipe name
+#   id: the recipe unique workflow id
+#
+# materials: recipe materials section
+#   liquids: this section describes the liquids used in the recipe
+#     name: liquid name
+#     id: liquid unique workflow id
+#   solids: this section describes the solids used in the recipe
+#     name: solid name
+#     id: solid unique workflow id
+#
+# process: this section describes the experiment process. The process
+#             is represented using a finite state machine that is composed of
+#             state and their transitions. Currently only sequential process are 
+#             possible. Note that a workflow can have any number of states
+#             and their transitions.
+#   state_name: name of the state
+#   station: this section describes the station involved in this state
+#     type: the station's class name as defined in archemist.stations.X.state
+#           note that X stands for the stations's given module found in archemist's 
+#           stations module
+#     id: station unique workflow id
+#     operation: this section describes the operation involved in the state
+#       type: station operation class name as defined in archemist.stations.X.state
+#             note that X stands for the stations's given module found in archemist's 
+#             stations module
+#       properties: operation properties
+#   transitions: this section describes current state transitions
+#     on_success: the new state the workflow will transition to in case the current state
+#                 is executed successfully
+#     on_success: the new state the workflow will transition to in case the current state
+#                 execution fails
+# note that the process is considered complete when it reaches the end_state so
+# make sure your process teminates with the end_state
+general:
+  name: paracetamol_synthesis_recipe
+  id: 198
+process:
+  - state_name: filtration
+    station:
+      type: FiltrationStation
+      id: 13
+      operation:
+        type: BaseValveOpenOpDescriptor
+        properties: # No properties required for LCMS      
+    transitions:
+      on_success: end_state
+      on_fail: end_state
+
