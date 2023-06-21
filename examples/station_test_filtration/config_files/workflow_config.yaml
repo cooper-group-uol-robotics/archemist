@@ -1,0 +1,80 @@
+# ============ Workflow Configuration ============
+#
+# general: this section describes the workflow general settings
+#   name: the given workflow name
+#   samples_per_batch: number of samples in a workflow batch
+#   default_batch_input_location: default navigation graph location where a batch is added
+#                                 where node_id stands for the node number in the navigation
+# 
+general:
+  name: paracetamol_synthesis_workflow
+  samples_per_batch: 1
+  default_batch_input_location:
+    node_id: 25
+    graph_id: 1
+
+# materials: this section describes the materials used in the workflow
+#   liquids:
+#     name: the liquid name
+#     id: the liquid unique workflow id
+#     amount_stored: the liquid stored amount
+#     unit: the unit representing stored amount, accepted units l, ml, ul
+#     denisty: liquid density in g/l
+#     pump_id: id of the pump responsible for the liquid handling
+#     expiry_date: expiry date of the liquid
+#   solids:
+#     name: the solid name
+#     id: the solid unique workflow id
+#     amount_stored: the solid stored amount
+#     unit: the unit representing stored amount, accepted units g, mg, ug
+#     dispense_src: name of the solid hanlder, accepted value quantos
+#     cartridge_id: id of the catridge where the solid is stored
+#     expiry_date: expiry date of the solid
+#
+# for every solid and liquid used in the workflow, add a new entry and fill its fields as defined
+
+
+
+# robots: this section describes the robots used in the workflow
+#   type: the robot's class name as defined in archemist.robots.X.state 
+#         note that X stands for the robot's given module found in archemist's robots 
+#         module
+#   id: the robot unique workflow id
+#   batch_capacity: the number of batches the robot can carry/handle at a time
+#   handler: robot handler class name as defined in archemist.robots.X.handler
+#
+# for every robot used in the workflow, add a new entry and fill its fields as defined
+
+robots:
+  - type: KukaLBRIIWA
+    id: 1
+    batch_capacity: 1
+    handler: KmriiwaROSHandler
+
+# stations: this section describes the stations used in the workflow
+#   type: the station's class name as defined in archemist.stations.X.state
+#         note that X stands for the stations's given module found in archemist's 
+#         stations module
+#   id: the station unique workflow id
+#   location: station's location in the robot navigation graph where node_id stands for the 
+#             node number in the navigation graph whose id is given 
+#   batch_capacity: number of batches the station can handle at a time
+#   handler: station handler class name as defined in archemist.stations.X.handler
+#   parameters: any additional parameters need to be passed to the station when initialized
+#   process_state_machine: state machine describing the station process 
+#   type: the station process state machine class name as defined in archemist.stations.X.process
+#   args: any additional arguments that need to be passed to the state machine constructor
+#
+# for every station used in the workflow, add a new entry and fill its fields as defined
+stations:
+  - type: FiltrationStation
+    id: 13
+    location: 
+      node_id: 25
+      graph_id: 1
+    batch_capacity: 1
+    handler: FiltrationStationROSHandler
+    process_state_machine: 
+      type: FiltrationStationSm
+      args: 
+    parameters:

@@ -1,7 +1,7 @@
 from typing import Dict
 from transitions import State
 from archemist.core.state.station import Station
-from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxStirringOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor
+from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxStirringOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor, BaseValveOpDescriptor
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.core.persistence.object_factory import StationFactory
@@ -38,6 +38,8 @@ class SynthesisStationSm(StationProcessFSM):
                         'request_robot_navigation_to_LCMS']),
                   State(name='LCMS_process', on_enter=[
                         'request_LCMS_process']),
+                  State(name='Drain_process', on_enter=[
+                        'request_Drain_process']),
                 #   State(name='added_batch_update',
                 #         on_enter=['update_loaded_batch']),
                 #   State(name='removed_batch_update',
@@ -69,6 +71,8 @@ class SynthesisStationSm(StationProcessFSM):
             {'trigger': self._trigger_function, 'source': 'LCMS_process',
                 'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
             {'trigger': self._trigger_function, 'source': 'optimax_cooling_process',
+                'dest': 'Drain_process', 'conditions': 'is_station_job_ready'},
+            {'trigger': self._trigger_function, 'source': 'Drain_process',
                 'dest': 'final_state', 'conditions': 'is_station_job_ready', 'before':'process_sample'},
         ]
 
@@ -77,28 +81,33 @@ class SynthesisStationSm(StationProcessFSM):
     # station process
 
     def request_heating_process(self):
-        current_op = self._station.assigned_batches[0].recipe.get_current_task_op(
-        )
-        self.temperature = current_op.temperature
-        self.temp_duration = current_op.temp_duration
-        self.stir_speed = current_op.stir_speed
-        self.stir_duration = current_op.stir_duration
-        self.dilution = 5
+        # current_op = self._station.assigned_batches[0].recipe.get_current_task_op(
+        # )
+        # self.temperature = current_op.temperature
+        # self.temp_duration = current_op.temp_duration
+        # self.stir_speed = current_op.stir_speed
+        # self.stir_duration = current_op.stir_duration
+        # self.dilution = 5
+        pass
         
-        self._station.assign_station_op(OptimaxStirringOpDescriptor.from_args(
-            stir_speed=self.stir_speed, stir_duration=self.stir_duration))
+        # self._station.assign_station_op(OptimaxStirringOpDescriptor.from_args(
+        #     stir_speed=self.stir_speed, stir_duration=self.stir_duration))
+        pass
 
     def request_sampling_process(self):       
-        self._station.assign_station_op(
-            OptimaxSamplingOpDescriptor.from_args(dilution = self.dilution))
+        # self._station.assign_station_op(
+        #     OptimaxSamplingOpDescriptor.from_args(dilution = self.dilution))
+        pass
 
     def request_LCMS_process(self):
-        self._station.assign_station_op(LcmsOpDescriptor.from_args())
+        # self._station.assign_station_op(LcmsOpDescriptor.from_args())
+        pass
 
     def request_cooling_process(self):
-        _temperature = 10
-        _temp_duration = 5
-        self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=_temperature, temp_duration= _temp_duration))
+        # _temperature = 10
+        # _temp_duration = 5
+        # self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=_temperature, temp_duration= _temp_duration))
+        pass
 
     # robot process
 
@@ -139,6 +148,9 @@ class SynthesisStationSm(StationProcessFSM):
 
     def is_LCMS_result_positive(self):
         return True
+    
+    def request_Drain_process(self):
+        self._station.assign_station_op(BaseValveOpDescriptor.from_args())
 
 
     # def request_batch_index_update(self):
