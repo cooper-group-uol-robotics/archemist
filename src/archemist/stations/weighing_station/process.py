@@ -64,29 +64,32 @@ class WeighingSM(StationProcessFSM):
 
 
     def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        
+        pass
         
 
     def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
-    
-    def request_navigate_to_weighing(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
+        #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        pass
 
+    def request_navigate_to_weighing(self):
+        #self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
+        time.sleep(3)
 
     def request_load_sample_job(self):
-        robot_job = KukaLBRTask.from_args(name='LoadWeighingStation',params=[True,self._status['batch_index']+1], 
-                                            type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
-        
+        # robot_job = KukaLBRTask.from_args(name='LoadWeighingStation',params=[True,self._status['batch_index']+1], 
+        #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+        time.sleep(3)
 
     def request_unload_sample_job(self):
-        robot_job = KukaLBRTask.from_args(name='UnloadWeighingStation',params=[False,self._status['batch_index']+1],
-                                type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
-        
+        # robot_job = KukaLBRTask.from_args(name='UnloadWeighingStation',params=[False,self._status['batch_index']+1],
+        #                         type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+        time.sleep(3)
 
     def finalize_batch_processing(self):
         self._station.process_assigned_batches()

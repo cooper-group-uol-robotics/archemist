@@ -71,10 +71,19 @@ process:
   - state_name: filtration
     station:
       type: FiltrationStation
-      id: 13
+      id: 14
       operation:
         type: BaseValveOpenOpDescriptor
         properties: # No properties required for LCMS      
+    transitions:
+      on_success: weighing
+      on_fail: end_state
+  - state_name: weighing
+    station:
+      type: WeighingStation
+      id: 15
+      operation:
+        type: SampleWeighingOpDescriptor
     transitions:
       on_success: end_state
       on_fail: end_state

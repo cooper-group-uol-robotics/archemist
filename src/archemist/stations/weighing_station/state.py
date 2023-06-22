@@ -12,6 +12,14 @@ from datetime import datetime
 class WeighingStation(Station):
     def __init__(self, station_model: WeighingStationModel) -> None:
         self._model = station_model
+
+    @classmethod
+    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+        model = WeighingStationModel()
+        cls._set_model_common_fields(station_dict,model)
+        model._module = cls.__module__
+        model.save()
+        return cls(model)
     
     @property
     def status(self) -> BalanceDoorStatus:
@@ -21,14 +29,6 @@ class WeighingStation(Station):
     @status.setter
     def status(self, new_status: BalanceDoorStatus):
         self._model.update(machine_status=new_status)
-
-    @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
-        model = WeighingStationModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
-        model.save()
-        return cls(model)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -83,7 +83,7 @@ class SampleWeighingOpDescriptor(StationOpDescriptor):
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
         if 'mass' in kwargs:
-            self._model.mass = kwargs['mass']
+            self._model.mass_reading = kwargs['mass']
         else:
             pass
     
