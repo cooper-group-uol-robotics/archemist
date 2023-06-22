@@ -71,8 +71,6 @@ class SynthesisStationSm(StationProcessFSM):
             {'trigger': self._trigger_function, 'source': 'LCMS_process',
                 'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
             {'trigger': self._trigger_function, 'source': 'optimax_cooling_process',
-                'dest': 'Drain_process', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'Drain_process',
                 'dest': 'final_state', 'conditions': 'is_station_job_ready', 'before':'process_sample'},
         ]
 
@@ -148,9 +146,6 @@ class SynthesisStationSm(StationProcessFSM):
 
     def is_LCMS_result_positive(self):
         return True
-    
-    def request_Drain_process(self):
-        self._station.assign_station_op(BaseValveOpDescriptor.from_args())
 
 
     # def request_batch_index_update(self):
@@ -165,7 +160,8 @@ class SynthesisStationSm(StationProcessFSM):
         self.to_init_state()
 
     def process_sample(self):
-        last_operation_op = self._station.station_op_history[-1]
-        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
-        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+        # last_operation_op = self._station.station_op_history[-1]
+        # self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        # self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+        pass
 

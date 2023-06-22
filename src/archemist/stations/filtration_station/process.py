@@ -69,6 +69,7 @@ class FiltrationStationSm(StationProcessFSM):
 
     def request_open_vacuum(self):
         self._station.assign_station_op(VacuumOpenOpDescriptor.from_args())
+        
 
     def request_close_vacuum(self):
         self._station.assign_station_op(VacuumCloseOpDescriptor.from_args())
@@ -100,20 +101,24 @@ class FiltrationStationSm(StationProcessFSM):
         return self._status['draining_complete']
     
     def request_pickup_funnel(self):
-        robot_job = KukaLBRTask.from_args(name='UnloadFiltrationStation',params=[False,self._status['batch_index']+1],
-                                type=RobotTaskType.MANIPULATION, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
+        # robot_job = KukaLBRTask.from_args(name='UnloadFiltrationStation',params=[False,self._status['batch_index']+1],
+        #                         type=RobotTaskType.MANIPULATION, location=self._station.location)
+        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
+        # self._station.request_robot_op(robot_job,current_batch_id)
+        print("pickup funnel")
         self._status['operation_complete'] = True
 
     def request_navigate_to_filtration(self):
-        self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
+        # self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
+        print("kuka nav to filtration station")
 
     def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        print("kuka disable auto")
 
     def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+        print("kuka enable auto")
 
     def request_process_operation(self):
         current_op = self._station.assigned_batches[-1].recipe.get_current_task_op()

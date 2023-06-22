@@ -45,11 +45,11 @@ general:
 #
 # for every robot used in the workflow, add a new entry and fill its fields as defined
 
-robots:
-  - type: KukaLBRIIWA
-    id: 1
-    batch_capacity: 1
-    handler: KmriiwaROSHandler
+#robots:
+#  - type: KukaLBRIIWA
+#    id: 1
+#    batch_capacity: 1
+#    handler: KmriiwaROSHandler
 
 # stations: this section describes the stations used in the workflow
 #   type: the station's class name as defined in archemist.stations.X.state
