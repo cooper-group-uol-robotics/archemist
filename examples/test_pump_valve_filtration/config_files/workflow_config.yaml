@@ -89,3 +89,14 @@ stations:
       type: SynthesisStationSm
       args: 
     parameters:
+  - type: FiltrationStation
+    id: 13
+    location: 
+      node_id: 25
+      graph_id: 1
+    batch_capacity: 1
+    handler: FiltrationStationROSHandler
+    process_state_machine: 
+      type: FiltrationStationSm
+      args: 
+    parameters:

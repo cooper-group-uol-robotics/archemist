@@ -66,5 +66,16 @@ process:
           stir_speed: 250
           stir_duration: 20            
     transitions:
+      on_success: filtration
+      on_fail: end_state
+  - state_name: filtration
+    station:
+      type: FiltrationStation
+      id: 13
+      operation:
+        type: BaseValveOpenOpDescriptor
+        properties: # No properties required for LCMS      
+    transitions:
       on_success: end_state
       on_fail: end_state
+

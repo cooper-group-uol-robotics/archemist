@@ -15,7 +15,6 @@ class SynthesisStationROSHandler(StationHandler):
             "mettler_optimax", MettlerOptimaxCmd, queue_size=2)
         self.pubLCMS = rospy.Publisher(
             "Lcms", LcmsCmd, queue_size=2)
-        self.pubBaseValve = rospy.Publisher("Optimax_BaseValve_Commands", BaseValveCmd, queue_size=2)
         rospy.Subscriber("mettler_optimax_info",
                          MettlerOptimaxReading, self.optimax_callback)
         rospy.Subscriber("lcms_info",
@@ -62,9 +61,6 @@ class SynthesisStationROSHandler(StationHandler):
         elif (isinstance(current_op, LcmsOpDescriptor)):
             for i in range(10):
                 self.pubLCMS.publish(lcms_command=LcmsCmd.START)
-        elif (isinstance(current_op, BaseValveOpDescriptor)):
-            for i in range(10):
-                self.pubBaseValve.publish(valve_command = BaseValveCmd.OPEN)
         else:
             rospy.logwarn(
                 f'[{self.__class__.__name__}] Unkown operation was received')
