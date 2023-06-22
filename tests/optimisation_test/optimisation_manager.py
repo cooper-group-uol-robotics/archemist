@@ -39,6 +39,9 @@ class OptimisationManager():
         self.target_name = None
         self.model = None
         
+    def run():
+        pass
+
     def construct_optimiser_from_config_file(self, config_dict: dict):
         self._optimization_model = OptimizationState.from_dict(config_dict['optimizer'])
         self._max_recipe_count = self.recipe_count()
