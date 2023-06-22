@@ -66,7 +66,7 @@ class KernPcbROSHandler(StationHandler):
     def weight_callback(self, msg):
         if not msg.mass == 0:
             self._op_results['mass'] = msg.mass
-            rospy.loginfo(f'The weight of the funnel is [{self._op_results}]')
+            rospy.loginfo(f'The weight of the funnel is {msg.mass} g')
             self._received_mass = True
         else:
             rospy.loginfo('Invalid message from the driver !!!')
