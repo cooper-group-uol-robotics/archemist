@@ -29,8 +29,7 @@ class OptimisationManager():
             self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._template_dir, self._optimizer)
             self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue)
             self._watch_optimization_thread = Thread(target=self._handler.watch_batch_complete)
-            self._watch_recipe_thread.start()
-            self._watch_optimization_thread.start()
+   
         else:
             raise Exception('template file is missing')
 
@@ -39,8 +38,10 @@ class OptimisationManager():
         self.target_name = None
         self.model = None
         
-    def run():
-        pass
+    def run(self):
+        self._watch_recipe_thread.start()
+        self._watch_optimization_thread.start()
+        
 
     def construct_optimiser_from_config_file(self, config_dict: dict):
         self._optimization_model = OptimizationState.from_dict(config_dict['optimizer'])
@@ -48,10 +49,10 @@ class OptimisationManager():
         # todo: the parameters doesn't match optimization base parameter name
 
 
-        self._optimizer = BayesOptOptimizer(self._config_dict, self._recipes_dir, self._template_dir)
+        #self._optimizer = BayesOptOptimizer(self._config_dict, self._recipes_dir, self._template_dir)
 
-        # self._optimizer = OptimizerBase(opt_module=self._optimization_model.optimizer_module,
-        #                                 opt_class=self._optimization_model.optimizer_class, opt_hyperparameters=self._optimization_model.optimizer_hyperparameters)
+        self._optimizer = OptimizerBase(opt_module=self._optimization_model.optimizer_module,
+                                         opt_class=self._optimization_model.optimizer_class, opt_hyperparameters=self._optimization_model.optimizer_hyperparameters)
 
     def recipe_count(self):
         return self._optimization_model.max_recipe_count
