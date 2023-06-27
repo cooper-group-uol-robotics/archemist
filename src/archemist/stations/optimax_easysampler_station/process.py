@@ -1,7 +1,8 @@
 from typing import Dict
+import time
 from transitions import State
 from archemist.core.state.station import Station
-from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxStirringOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor, BaseValveOpDescriptor
+from .state import SynthesisStation, OptimaxTempStirringOpDescriptor, OptimaxTempOpDescriptor, OptimaxStirringOpDescriptor, OptimaxSamplingOpDescriptor, LcmsOpDescriptor, ParacetamolSynthesisOpDescriptor
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
 from archemist.core.persistence.object_factory import StationFactory
@@ -40,6 +41,7 @@ class SynthesisStationSm(StationProcessFSM):
                         'request_LCMS_process']),
                   State(name='Drain_process', on_enter=[
                         'request_Drain_process']),
+                  State(name='paracetamol_synthesis', on_enter=['request_paracetamol_synthesis']),
                 #   State(name='added_batch_update',
                 #         on_enter=['update_loaded_batch']),
                 #   State(name='removed_batch_update',
@@ -47,36 +49,75 @@ class SynthesisStationSm(StationProcessFSM):
                   State(name='final_state', on_enter='finalize_batch_processing')]
 
         ''' Transitions '''
+        # transitions = [
+        #     {'trigger': self._trigger_function, 'source': 'init_state',
+        #         'dest': 'optimax_heating_process', 'conditions': 'all_batches_assigned'},
+        #     {'trigger': self._trigger_function, 'source': 'optimax_heating_process',
+        #         'dest': 'optimax_sampling_process', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'optimax_sampling_process',
+        #         'dest': 'disable_auto_functions', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'disable_auto_functions',
+        #         'dest': 'navigate_to_optimax', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'navigate_to_optimax',
+        #         'dest': 'unload_batch', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'unload_batch',
+        #         'dest': 'navigate_to_LCMS', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'navigate_to_LCMS',
+        #         'dest': 'load_batch', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'load_batch',
+        #         'dest': 'enable_auto_functions', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'enable_auto_functions',
+        #         'dest': 'LCMS_process', 'conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'LCMS_process',
+        #         'dest': 'optimax_heating_process', 'unless': 'is_LCMS_result_positive','conditions': 'is_station_job_ready'},
+        #     {'trigger': self._trigger_function, 'source': 'LCMS_process',
+        #         'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
+        #     {'trigger': self._trigger_function, 'source': 'optimax_cooling_process',
+        #         'dest': 'final_state', 'conditions': 'is_station_job_ready', 'before':'process_sample'},
+        # ]
+
         transitions = [
             {'trigger': self._trigger_function, 'source': 'init_state',
-                'dest': 'optimax_heating_process', 'conditions': 'all_batches_assigned'},
-            {'trigger': self._trigger_function, 'source': 'optimax_heating_process',
-                'dest': 'optimax_sampling_process', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'optimax_sampling_process',
-                'dest': 'disable_auto_functions', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'disable_auto_functions',
-                'dest': 'navigate_to_optimax', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'navigate_to_optimax',
-                'dest': 'unload_batch', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'unload_batch',
-                'dest': 'navigate_to_LCMS', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'navigate_to_LCMS',
-                'dest': 'load_batch', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'load_batch',
-                'dest': 'enable_auto_functions', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'enable_auto_functions',
-                'dest': 'LCMS_process', 'conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'LCMS_process',
-                'dest': 'optimax_heating_process', 'unless': 'is_LCMS_result_positive','conditions': 'is_station_job_ready'},
-            {'trigger': self._trigger_function, 'source': 'LCMS_process',
-                'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
-            {'trigger': self._trigger_function, 'source': 'optimax_cooling_process',
+                'dest': 'paracetamol_synthesis', 'conditions': 'all_batches_assigned'},
+            # {'trigger': self._trigger_function, 'source': 'optimax_heating_process',
+            #     'dest': 'optimax_sampling_process', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'optimax_sampling_process',
+            #     'dest': 'disable_auto_functions', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'disable_auto_functions',
+            #     'dest': 'navigate_to_optimax', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'navigate_to_optimax',
+            #     'dest': 'unload_batch', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'unload_batch',
+            #     'dest': 'navigate_to_LCMS', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'navigate_to_LCMS',
+            #     'dest': 'load_batch', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'load_batch',
+            #     'dest': 'enable_auto_functions', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'enable_auto_functions',
+            #     'dest': 'LCMS_process', 'conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'LCMS_process',
+            #     'dest': 'optimax_heating_process', 'unless': 'is_LCMS_result_positive','conditions': 'is_station_job_ready'},
+            # {'trigger': self._trigger_function, 'source': 'LCMS_process',
+            #     'dest': 'optimax_cooling_process', 'conditions': ['is_station_job_ready','is_LCMS_result_positive']},
+            {'trigger': self._trigger_function, 'source': 'paracetamol_synthesis',
                 'dest': 'final_state', 'conditions': 'is_station_job_ready', 'before':'process_sample'},
         ]
 
+        
+
         self.init_state_machine(states=states, transitions=transitions)
 
-    # station process
+
+#################################################
+
+# temporary station process to be modified 
+    def request_paracetamol_synthesis(self):
+        self._station.assign_station_op(ParacetamolSynthesisOpDescriptor.from_args())
+        #self.timer(21600)
+        self.timer(23)
+
+
+##################################################
 
     def request_heating_process(self):
         current_op = self._station.assigned_batches[0].recipe.get_current_task_op(
@@ -160,3 +201,13 @@ class SynthesisStationSm(StationProcessFSM):
         self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
         self._station.assigned_batches[self._status['batch_index']].process_current_sample()
 
+
+    def timer(self, seconds):
+        start_time = time.time()
+        end_time = start_time + seconds
+        
+        while time.time() < end_time:
+            remaining_time = int(end_time - time.time())
+            print(f"Time remaining: {remaining_time} seconds", end="\r", flush=True)
+            time.sleep(1)
+        

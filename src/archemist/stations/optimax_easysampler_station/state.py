@@ -175,7 +175,7 @@ class LcmsOpDescriptor(StationOpDescriptor):
         else:
             pass
 
-class BaseValveOpDescriptor(StationOpDescriptor):
+class ParacetamolSynthesisOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: StationOpDescriptorModel):
         self._model = op_model
 
