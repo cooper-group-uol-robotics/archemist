@@ -27,14 +27,17 @@ class SyringePumpStationSm(StationProcessFSM):
         ''' States '''
         states = [ State(name='init_state'), 
             State(name='prep_state', on_enter=['preperation']), 
-            State(name='dispense', on_enter=['request_dispense_operation']),
+            State(name='dispense_liquid_1', on_enter=['request_dispense_liquid_1']),
+            State(name='dispense_liquid_2', on_enter=['request_dispense_liquid_2']),
             State(name='final_state', on_enter=['finalize_batch_processing'])]
         
         ''' Transitions '''
         transitions = [
             {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'prep_state', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
-            {'trigger':self._trigger_function, 'source':'prep_state', 'dest': 'dispense', 'conditions':['is_station_job_ready', 'is_prep_done']},
-            {'trigger':self._trigger_function, 'source':'dispense','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete'], 'before':'process_sample'}
+            {'trigger':self._trigger_function, 'source':'prep_state', 'dest': 'dispense_liquid_1', 'conditions':['is_station_job_ready', 'is_prep_done']},
+            {'trigger':self._trigger_function, 'source':'dispense_liquid_1','dest':'dispense_liquid_2', 'conditions':'is_station_job_ready'},
+            {'trigger':self._trigger_function, 'source':'dispense_liquid_2','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete'], 'before':'process_sample'}
+
         ]   
 
         self.init_state_machine(states=states, transitions=transitions)
@@ -42,9 +45,22 @@ class SyringePumpStationSm(StationProcessFSM):
     def is_station_operation_complete(self):
         return self._status['operation_complete']
 
-    def request_dispense_operation(self):
+    def request_dispense_liquid_1(self):
         #self._current_batch_pump_info['volume'] = self._status['split_volume'][self._status['iterations']]
         op = SyringePumpDispenseOpDescriptor.from_args(pump_info = self._current_batch_pump_info)
+        self._station.assign_station_op(op)
+        #self._status['iterations'] += 1
+        #if self._status['iterations'] == len(self._status['split_volume']):
+        #self._status['operation_complete'] = True
+    
+    def request_dispense_liquid_2(self):
+        self._current_batch_pump_info_ = {}
+        self._current_batch_pump_info_['withdraw_port'] = int(4)
+        self._current_batch_pump_info_['dispense_port'] = int(10)
+        self._current_batch_pump_info_['speed'] = int(100) 
+        self._current_batch_pump_info_['volume'] = int(30)
+        self._status['prep_done'] = True
+        op = SyringePumpDispenseOpDescriptor.from_args(pump_info = self._current_batch_pump_info_)
         self._station.assign_station_op(op)
         #self._status['iterations'] += 1
         #if self._status['iterations'] == len(self._status['split_volume']):

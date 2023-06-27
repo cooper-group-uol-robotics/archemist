@@ -79,18 +79,15 @@ class SynthesisStationSm(StationProcessFSM):
     # station process
 
     def request_heating_process(self):
-        # current_op = self._station.assigned_batches[0].recipe.get_current_task_op(
-        # )
-        # self.temperature = current_op.temperature
-        # self.temp_duration = current_op.temp_duration
-        # self.stir_speed = current_op.stir_speed
-        # self.stir_duration = current_op.stir_duration
-        # self.dilution = 5
-        pass
+        current_op = self._station.assigned_batches[0].recipe.get_current_task_op(
+        )
+        self.temperature = current_op.temperature
+        self.temp_duration = current_op.temp_duration
+        self.stir_speed = current_op.stir_speed
+        self.stir_duration = current_op.stir_duration
+        self.dilution = 5
         
-        # self._station.assign_station_op(OptimaxStirringOpDescriptor.from_args(
-        #     stir_speed=self.stir_speed, stir_duration=self.stir_duration))
-        pass
+        self._station.assign_station_op(OptimaxTempStirringOpDescriptor.from_args(temperature=current_op.temperature, temp_duration= current_op.temp_duration, stir_speed=self.stir_speed, stir_duration=self.stir_duration))
 
     def request_sampling_process(self):       
         # self._station.assign_station_op(
@@ -102,10 +99,9 @@ class SynthesisStationSm(StationProcessFSM):
         pass
 
     def request_cooling_process(self):
-        # _temperature = 10
-        # _temp_duration = 5
-        # self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=_temperature, temp_duration= _temp_duration))
-        pass
+        _temperature = 10
+        _temp_duration = 5
+        self._station.assign_station_op(OptimaxTempOpDescriptor.from_args(temperature=_temperature, temp_duration= _temp_duration))
 
     # robot process
 
@@ -160,8 +156,7 @@ class SynthesisStationSm(StationProcessFSM):
         self.to_init_state()
 
     def process_sample(self):
-        # last_operation_op = self._station.station_op_history[-1]
-        # self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
-        # self._station.assigned_batches[self._status['batch_index']].process_current_sample()
-        pass
+        last_operation_op = self._station.station_op_history[-1]
+        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
+        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
 
