@@ -113,8 +113,7 @@ class SynthesisStationSm(StationProcessFSM):
 # temporary station process to be modified 
     def request_paracetamol_synthesis(self):
         self._station.assign_station_op(ParacetamolSynthesisOpDescriptor.from_args())
-        #self.timer(21600)
-        self.timer(23)
+
 
 
 ##################################################
