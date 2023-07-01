@@ -1,5 +1,14 @@
 {
     "python.linting.enabled": false,
     "cmake.configureOnOpen": false,
-    "cSpell.language": "en-GB"
+    "cSpell.language": "en-GB",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

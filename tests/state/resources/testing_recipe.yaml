@@ -13,6 +13,9 @@ process:
     station:
       type: IkaPlateDigital
       id: 2
+      process:
+        type: CrystalBotWorkflowProcess
+        args:
       operation:
         type: IKAStirringOpDescriptor
         properties:
@@ -25,6 +28,10 @@ process:
     station:
       type: FisherWeightingStation
       id: 5
+      process:
+        type: SomeProcess
+        args:
+          some_variable: 42
       operation:
         type: FisherWeightOpDescriptor
     transitions:

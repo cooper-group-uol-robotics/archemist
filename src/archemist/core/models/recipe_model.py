@@ -4,7 +4,8 @@ from archemist.core.models.station_op_model import StationOpDescriptorModel
 class StateDetails(EmbeddedDocument):
     station_type = fields.StringField(required=True)
     station_id = fields.IntField(required=True)
-    station_op = fields.EmbeddedDocumentField(StationOpDescriptorModel, required=True)
+    station_process = fields.DictField(required=True)
+    station_op = fields.DictField(required=True)
 
 class RecipeModel(Document):
     name = fields.StringField(required=True)
