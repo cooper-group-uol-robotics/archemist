@@ -1,7 +1,8 @@
 from .model import IKAMode, IkaPlateDigitalModel, IKAOpDescriptorModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
+from archemist.core.persistence.models_proxy import ModelProxy
+from typing import List, Any, Dict, Union
 from archemist.core.state.material import Liquid, Solid
 
 
@@ -117,8 +118,11 @@ class IkaPlateDigital(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
-        self._model = op_model
+    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
+        if isinstance(op_model, ModelProxy):
+            self._model_proxy = op_model
+        else:
+            self._model_proxy = ModelProxy(op_model)
 
     @classmethod
     def from_args(cls, **kwargs):
@@ -129,23 +133,27 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
+        model.save()
         return cls(model)
 
     @property
     def target_temperature(self) -> int:
-        return self._model.target_temperature
+        return self._model_proxy.target_temperature
 
     @property
     def target_stirring_speed(self) -> int:
-        return self._model.target_stirring_speed
+        return self._model_proxy.target_stirring_speed
 
     @property
     def target_duration(self) -> int:
-        return self._model.target_duration
+        return self._model_proxy.target_duration
 
 class IKAHeatingOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
-        self._model = op_model
+    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
+        if isinstance(op_model, ModelProxy):
+            self._model_proxy = op_model
+        else:
+            self._model_proxy = ModelProxy(op_model)
 
     @classmethod
     def from_args(cls, **kwargs):
@@ -155,20 +163,24 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
+        model.save()
         return cls(model)
 
     @property
     def target_temperature(self) -> int:
-        return self._model.target_temperature
+        return self._model_proxy.target_temperature
 
     @property
     def target_duration(self) -> int:
-        return self._model.target_duration
+        return self._model_proxy.target_duration
 
 
 class IKAStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: IKAOpDescriptorModel) -> None:
-        self._model = op_model
+    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
+        if isinstance(op_model, ModelProxy):
+            self._model_proxy = op_model
+        else:
+            self._model_proxy = ModelProxy(op_model)
 
     @classmethod
     def from_args(cls, **kwargs):
@@ -178,12 +190,13 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
         model._module = cls.__module__
+        model.save()
         return cls(model)
 
     @property
     def target_stirring_speed(self) -> int:
-        return self._model.target_stirring_speed
+        return self._model_proxy.target_stirring_speed
 
     @property
     def target_duration(self) -> int:
-        return self._model.target_duration
+        return self._model_proxy.target_duration

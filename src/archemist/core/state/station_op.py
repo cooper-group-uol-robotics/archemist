@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 from datetime import datetime
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.models.station_op_model import StationOpDescriptorModel
@@ -6,7 +7,7 @@ import uuid
 from bson.objectid import ObjectId
 
 class StationOpDescriptor:
-    def __init__(self, station_op_model: StationOpDescriptorModel) -> None:
+    def __init__(self, station_op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
         if isinstance(station_op_model, ModelProxy):
             self._model_proxy = station_op_model
         else:

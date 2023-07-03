@@ -216,7 +216,7 @@ class ListProxy:
         return self._list_wrapper.__len__()
     
     def __iter__(self):
-        yield self._callable(self._list_wrapper.__iter__())
+        yield self._callable(next(self._list_wrapper.__iter__()))
 
     def append(self, object):
         return self._list_wrapper.append(object.model)
@@ -332,5 +332,5 @@ class DictProxy:
         return self._dict_wrapper.__len__()
     
     def __iter__(self):
-        yield self._callable(self._dict_wrapper.__iter__())
+        yield self._callable(next(self._dict_wrapper.__iter__()))
         

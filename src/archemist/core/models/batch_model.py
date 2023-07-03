@@ -3,19 +3,16 @@ from archemist.core.models.recipe_model import RecipeModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 
 class SampleModel(EmbeddedDocument):
-    rack_index = fields.IntField(min_value=0, required=True)
-    materials = fields.ListField(fields.StringField(), default=[])
-    capped = fields.BooleanField(default=False)
-    operation_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel, default=[])
+    materials = fields.ListField(fields.DictField(), default=[])
+    station_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
+    details = fields.DictField(default={})
 
 class BatchModel(Document):
-    exp_id = fields.IntField(required=True)
-    num_samples = fields.IntField(min_value=1, required=True)
-    location = fields.DictField()
+    uuid = fields.UUIDField(binary=False, required=True)
+    location = fields.DictField(default={})
     recipe = fields.ReferenceField(RecipeModel, null=True)
     samples = fields.EmbeddedDocumentListField(SampleModel)
-    current_sample_index = fields.IntField(min_value=0, default=0)
-    station_history = fields.ListField(fields.StringField(), default=[])
+    station_stamps = fields.ListField(fields.StringField(), default=[])
 
     meta = {'collection': 'batches', 'db_alias': 'archemist_state'}
 
