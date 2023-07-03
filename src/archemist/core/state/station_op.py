@@ -1,66 +1,79 @@
 from __future__ import annotations
 from datetime import datetime
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 import uuid
 from bson.objectid import ObjectId
 
 class StationOpDescriptor:
-    def __init__(self, stationOpModel: StationOpDescriptorModel) -> None:
-        self._model = stationOpModel
+    def __init__(self, station_op_model: StationOpDescriptorModel) -> None:
+        if isinstance(station_op_model, ModelProxy):
+            self._model_proxy = station_op_model
+        else:
+            self._model_proxy = ModelProxy(station_op_model)
 
     @classmethod
     def _set_model_common_fields(cls, op_model: StationOpDescriptorModel, associated_station: str, **kwargs):
         op_model.uuid = uuid.uuid4()
         op_model.associated_station = associated_station
 
+    @classmethod
+    def construct_op(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station="Station", **kwargs)
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.save()
+        return cls(model)
+
     @property
     def model(self):
-        return self._model
+        return self._model_proxy.model
     
     @property
     def associated_station(self) -> str:
-        return self._model.associated_station
+        return self._model_proxy.associated_station
 
     @property
     def uuid(self) -> uuid.UUID:
-        return self._model.uuid
+        return self._model_proxy.uuid
     
     @property
     def requested_by(self) -> ObjectId:
-        return self._model.requested_by
+        return self._model_proxy.requested_by
+
+    @requested_by.setter
+    def requested_by(self, station_id: ObjectId):
+        self._model_proxy.requested_by = station_id
 
     @property
     def has_result(self) -> bool:
-        return self._model.has_result
+        return self._model_proxy.has_result
 
     @property
     def was_successful(self) -> bool:
-        return self._model.was_successful
+        return self._model_proxy.was_successful
 
     @property
     def start_timestamp(self) -> datetime:
-        return self._model.start_timestamp
+        return self._model_proxy.start_timestamp
+    
+    @start_timestamp.setter
+    def start_timestamp(self, new_start_timestamp: datetime):
+        self._model_proxy.start_timestamp = new_start_timestamp
 
     @property
     def end_timestamp(self) -> datetime:
-        return self._model.end_timestamp
+        return self._model_proxy.end_timestamp
     
-    def add_request_info(self, station_id: ObjectId):
-        self._model.requested_by = station_id
+    @end_timestamp.setter
+    def end_timestamp(self, new_end_timestamp: datetime):
+        self._model_proxy.end_timestamp = new_end_timestamp
 
     def add_start_timestamp(self):
-        self._model.start_timestamp = datetime.now()
+        self._model_proxy.start_timestamp = datetime.now()
 
     def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-
-    def copy_stamps(self, other_op: StationOpDescriptor):
-        self._model.uuid = other_op.uuid
-        self._model.requested_by = other_op.requested_by
-        self._model.start_timestamp = other_op._model.start_timestamp
-        if other_op.has_result:
-            self._model.has_result = True
-            self._model.was_successful = other_op.was_successful
-            self._model.end_timestamp = other_op._model.end_timestamp
+        self._model_proxy.has_result = True
+        self._model_proxy.was_successful = success
+        self._model_proxy.end_timestamp = datetime.now()

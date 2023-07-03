@@ -282,7 +282,7 @@ class Station:
 
     def assign_station_op(self, station_op: StationOpDescriptor):
         if station_op.requested_by is None:
-            station_op.add_request_info(self.object_id)
+            station_op.requested_by = self.object_id
         self._model.update(push__queued_ops=station_op.model)
         self._log_station(f'Requesting station op ({station_op})')  
 

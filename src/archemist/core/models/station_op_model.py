@@ -1,6 +1,6 @@
-from mongoengine import EmbeddedDocument, fields
+from mongoengine import Document, fields
 
-class StationOpDescriptorModel(EmbeddedDocument):
+class StationOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
     uuid = fields.UUIDField(binary=False, required=True)
@@ -9,7 +9,7 @@ class StationOpDescriptorModel(EmbeddedDocument):
 
     has_result = fields.BooleanField(default=False)
     was_successful = fields.BooleanField(default=False)
-    start_timestamp = fields.ComplexDateTimeField()
-    end_timestamp = fields.ComplexDateTimeField()
+    start_timestamp = fields.ComplexDateTimeField(null=True)
+    end_timestamp = fields.ComplexDateTimeField(null=True)
 
-    meta = {'allow_inheritance': True}
+    meta = {'collection': 'station_ops', 'db_alias': 'archemist_state', 'allow_inheritance': True}
