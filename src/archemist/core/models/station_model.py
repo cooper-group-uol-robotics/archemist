@@ -14,11 +14,11 @@ class StationProcessDataModel(EmbeddedDocument):
     batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
 
     ''' robot ops '''
-    req_robot_ops = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
+    # req_robot_ops = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
     robot_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
     
     '''station ops'''
-    req_station_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
+    # req_station_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
     station_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
 
 class StationModel(Document):
@@ -44,13 +44,13 @@ class StationModel(Document):
     batches_need_removal = fields.BooleanField(default=False)
     
     ''' robot ops '''
-    requested_robot_op = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
-    completed_robot_ops = fields.MapField(fields.EmbeddedDocumentField(RobotOpDescriptorModel, default={}))
+    # requested_robot_op = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
+    # completed_robot_ops = fields.MapField(fields.EmbeddedDocumentField(RobotOpDescriptorModel, default={}))
     
     ''' station ops '''
-    queued_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-    assigned_op = fields.EmbeddedDocumentField(StationOpDescriptorModel, null=True)
+    # queued_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
+    # assigned_op = fields.EmbeddedDocumentField(StationOpDescriptorModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    completed_station_ops = fields.MapField(fields.EmbeddedDocumentField(StationOpDescriptorModel, default={}))
+    # completed_station_ops = fields.MapField(fields.EmbeddedDocumentField(StationOpDescriptorModel, default={}))
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}
