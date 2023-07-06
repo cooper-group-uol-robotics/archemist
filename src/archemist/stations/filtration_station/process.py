@@ -61,7 +61,7 @@ class FiltrationStationSm(StationProcessFSM):
 
     def request_open_base_valve(self):
         self._station.assign_station_op(BaseValveOpenOpDescriptor.from_args())
-        self.timer(10)
+        self.timer(20)
         self._status['funnel_filled'] = True
 
     def request_close_base_valve(self):
@@ -85,12 +85,12 @@ class FiltrationStationSm(StationProcessFSM):
         self._station.assign_station_op(IdleOpDescriptor.from_args())
 
     def is_filtration_process_complete(self) -> bool:
-        self.timer(10)
+        self.timer(180)
         self._status['filtration_complete'] = True
         return self._status['filtration_complete']
     
     def is_funnel_filled(self) -> bool:
-        self.timer(10)
+        self.timer(60)
         self._status['draining_complete'] = True
         return self._status['funnel_filled']
 

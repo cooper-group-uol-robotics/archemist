@@ -57,8 +57,8 @@ class SyringePumpStationSm(StationProcessFSM):
         self._current_batch_pump_info_ = {}
         self._current_batch_pump_info_['withdraw_port'] = int(4)
         self._current_batch_pump_info_['dispense_port'] = int(10)
-        self._current_batch_pump_info_['speed'] = int(100) 
-        self._current_batch_pump_info_['volume'] = int(30)
+        self._current_batch_pump_info_['speed'] = int(150) 
+        self._current_batch_pump_info_['volume'] = int(100)
         self._status['prep_done'] = True
         op = SyringePumpDispenseOpDescriptor.from_args(pump_info = self._current_batch_pump_info_)
         self._station.assign_station_op(op)
