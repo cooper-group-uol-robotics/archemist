@@ -50,9 +50,31 @@ process:
             withdraw_port: 4
             dispense_port: 10
             speed: 150
-            volume: 25          
+            volume: 700      
     transitions:
-      on_success: end_state
+      on_success: reaction
       on_fail: end_state
-
-
+  - state_name: reaction
+    station:
+      type: SynthesisStation
+      id: 13
+      operation:
+        type: OptimaxTempStirringOpDescriptor
+        properties: # No properties required for LCMS
+          temperature: 25
+          temp_duration: 1
+          stir_speed: 100
+          stir_duration: 20         
+    transitions:
+      on_success: filtration
+      on_fail: end_state
+  - state_name: filtration
+    station:
+      type: FiltrationStation
+      id: 14
+      operation:
+        type: BaseValveOpenOpDescriptor
+        properties: # No properties required for LCMS      
+    transitions:
+      on_success: weighing
+      on_fail: end_state

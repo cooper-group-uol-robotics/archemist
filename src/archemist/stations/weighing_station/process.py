@@ -39,9 +39,9 @@ class WeighingSM(StationProcessFSM):
             {'trigger':self._trigger_function, 'source':'load_sample','dest':'close_balance_door', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'station_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
             {'trigger':self._trigger_function, 'source':'station_process','dest':'open_balance_door', 'conditions':'is_station_job_ready','before':'process_sample'}, 
-            {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'unload_sample', 'conditions':['is_station_job_ready','is_station_operation_complete']}, 
-            {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_unloaded']},
-            {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']},
+            {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']}, 
+            # {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_unloaded']},
+            # {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']},
             {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
         ]
 
@@ -57,10 +57,14 @@ class WeighingSM(StationProcessFSM):
         return True
     
     def request_open_door(self):
-        self._station.assign_station_op(BalanceOpenDoorOpDescriptor.from_args())
+        # self._station.assign_station_op(BalanceOpenDoorOpDescriptor.from_args())
+        print('Door Operation is not enabled')
+        
 
     def request_close_door(self):
-        self._station.assign_station_op(BalanceCloseDoorOpDescriptor.from_args())
+         time.sleep(270)
+        # self._station.assign_station_op(BalanceCloseDoorOpDescriptor.from_args())
+         print('Door Operation is not enabled')
 
 
     def request_disable_auto_functions(self):
@@ -76,13 +80,14 @@ class WeighingSM(StationProcessFSM):
     def request_navigate_to_weighing(self):
         #self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
         time.sleep(3)
+        print('Robot is already in the location')
 
     def request_load_sample_job(self):
         # robot_job = KukaLBRTask.from_args(name='LoadWeighingStation',params=[True,self._status['batch_index']+1], 
         #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
         # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
         # self._station.request_robot_op(robot_job,current_batch_id)
-        time.sleep(3)
+        time.sleep(10)
 
     def request_unload_sample_job(self):
         # robot_job = KukaLBRTask.from_args(name='UnloadWeighingStation',params=[False,self._status['batch_index']+1],
