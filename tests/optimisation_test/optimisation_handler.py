@@ -22,6 +22,10 @@ class OptimizationHandler:
                                 'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44],
                                 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
         self._opt_pd = pd.DataFrame(optimised_parameters)
+    
+    def update_optimisation_data(self, _random_values_dict):
+        self._opt_pd = pd.DataFrame(_random_values_dict)
+
 
     def watch_batch_complete(self):
         # get completed batches using the function get_completed_batches from state.py

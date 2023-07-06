@@ -16,10 +16,6 @@ class OptimizerBase(abc.ABC):
                  batch_size: int = 15,
                  **kwargs) -> None:
 
-        self._config_dict = YamlHandler.loadYamlFile(config_file)
-        # self._recipes_dir = recipe_dir
-        # self._template_dir = template_dir  # todo: these two thing
-
         # save config to database
         self._database_model = OptimizationState.from_dict(self._config_dict['optimizer'])
         #self._max_recipe_count = self.recipe_count()
@@ -29,21 +25,6 @@ class OptimizerBase(abc.ABC):
         self._probed_points = pd.DataFrame([])
 
         self.kwargs = kwargs
-
-    #     if self._is_recipe_template_available:
-    #         self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count,
-    #                                             self._template_dir)  # todo: max_recipe_count
-    #         self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue)
-    #         self._watch_optimization_thread = Thread(target=self._handler.watch_batch_complete)
-    #         self._watch_recipe_thread.start()
-    #         self._watch_optimization_thread.start()
-
-    # def _is_recipe_template_available(self):
-    #     _template_path = Path(self._template_dir)
-    #     return _template_path.is_file()
-
-    # def recipe_count(self):
-    #     return self._database_model.max_recipe_count
 
     @abc.abstractmethod
     def generate_batch(self, **kwargs) -> pd.DataFrame:

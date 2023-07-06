@@ -1,15 +1,14 @@
 import pandas as pd
 import importlib
 from optimiser_base import OptimizerBase
+import random
 
 
 class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
-                 config_file: str,
-                #  recipe_dir: str,
-                #  template_dir: str,
-                 batch_size: int = 15,
+                 optimization_model,
+                 config_dict: dict,
                  ):
         """
 
@@ -18,10 +17,8 @@ class BayesOptOptimizer(OptimizerBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        super(BayesOptOptimizer, self).__init__(config_file=config_file,
-                                                # recipe_dir=recipe_dir,
-                                                # template_dir=template_dir,
-                                                batch_size=batch_size)
+        self._optimization_model = optimization_model
+        self._config_dict = config_dict
 
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
@@ -39,20 +36,17 @@ class BayesOptOptimizer(OptimizerBase):
         return constraint
 
     def generate_model(self, **kwargs):
-        if 'optimizer' in self._config_dict:
-            err_msg = 'Wrong module or class config provided, please check your config file'
-            assert self._config_dict['optimizer']['module'] == 'bayes_opt.bayesian_optimization', err_msg
-            assert self._config_dict['optimizer']['class'] == 'BayesianOptimization', err_msg
-            super(BayesOptOptimizer, self).generate_model(**kwargs)
-        else:
-            from bayes_opt.bayesian_optimization import BayesianOptimization
-            return BayesianOptimization(**kwargs)
+        """
+        Generate model for optimization.
+        """
+        module = importlib.import_module(self._optimization_model.optimizer_module)
+        optimizer_class = getattr(module, self._optimization_model.optimizer_class)
+        return optimizer_class(**self._optimization_model.optimizer_hyperparameters, **kwargs)
 
     def update_model(self, data: pd.DataFrame, **kwargs):
         """
         Record probed points and update optimization model.
         :param data:
-
         """
         self._probed_points = self._probed_points.append(data)
         params, targets = self._pandas_to_params_targets(data)
@@ -93,6 +87,15 @@ class BayesOptOptimizer(OptimizerBase):
             x_probe = self.model.suggest(acquisition_function)
             batch = batch.append(x_probe, ignore_index=True)
         return batch
+
+    def generate_random_values(self, total_elements):
+        # fenerate random pd frame from config file
+        random_values = {}
+        for key in self._config_dict['experiment']['components']:
+            for element in range(total_elements):
+                random_values[key].append(random.randrange(self._config_dict['experiment']['components'][key]['lower_bound'],
+                               self._config_dict['experiment']['components'][key]['upper_bound']))
+        return random_values
 
     @staticmethod
     def _generate_acquisition(**kwargs):
