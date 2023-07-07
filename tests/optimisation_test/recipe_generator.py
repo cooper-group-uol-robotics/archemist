@@ -18,8 +18,8 @@ class RecipeGenerator:
 
     # Methods
     def generate_recipe(self, optimised_parameters_data, file_name):
-        self._new_refipe_file_name = file_name
-        _file_path = Path.joinpath(self._new_recipe_path, self._new_refipe_file_name)
+        self._new_recipe_file_name = file_name
+        _file_path = Path.joinpath(self._new_recipe_path, self._new_recipe_file_name)
         recipe_dict = self._recipe_dict
         optimised_parameters_dict = optimised_parameters_data.to_dict()
         if self._placeholder_keys_any:

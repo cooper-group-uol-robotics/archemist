@@ -15,9 +15,8 @@ class OptimisationManager():
     def __init__(self, workflow_dir: str) -> None:
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
-        self._template_dir = Path.joinpath(self._recipes_dir, "template")
+        self._template_dir = Path.joinpath(self._recipes_dir, "template/algae_bot_recipe_template.yaml")
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
-        print(self._config_dict)
         self._batch_size = self._config_dict['optimizer']['batch_size']
 
         # optimization constructor
@@ -27,7 +26,8 @@ class OptimisationManager():
         if self.is_recipe_template_available:
             self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._template_dir, self._optimizer)
             if self.is_recipe_dir_empty: # generates recipes with random values, if the directory is empty
-                _random_values_dict = self._optimizer.generate_random_values()
+                _random_values_dict = self._optimizer.generate_random_values(1)
+                print(_random_values_dict)
                 self._handler.update_optimisation_data(_random_values_dict)
 
             self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue)
@@ -42,7 +42,7 @@ class OptimisationManager():
         
     def run(self):
         self._watch_recipe_thread.start()
-        self._watch_optimization_thread.start()
+        # self._watch_optimization_thread.start()
         
     def construct_optimiser_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
@@ -57,8 +57,12 @@ class OptimisationManager():
         return _template_path.is_file()
     
     def is_recipe_dir_empty(self):
-        if not any(Path.iterdir()):
-            return True
-        else:
-            return False
+        directory = Path(self._recipes_dir)
+        return not any(directory.iterdir())
 
+if __name__ == '__main__':
+    cwd_path = Path.cwd()
+    print(cwd_path)
+    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
+    x = OptimisationManager(workflow_dir)
+    x.run()

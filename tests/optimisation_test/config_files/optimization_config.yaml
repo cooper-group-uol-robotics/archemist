@@ -1,6 +1,6 @@
 experiment:
   components:  # list of optimization features and bounds
-    dye_A:
+    water:
       upper_bound: 50.0
       lower_bound: 25.0
     dye_A:

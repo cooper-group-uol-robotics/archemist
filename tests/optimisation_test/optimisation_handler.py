@@ -2,7 +2,6 @@ import time
 import yaml
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.state.state import State
-from optimisation_manager import OptimizationState, OptimisationManager
 from recipe_generator import RecipeGenerator
 from pathlib import Path
 from threading import Thread
@@ -57,9 +56,10 @@ class OptimizationHandler:
         recipe_queue = recipe_watcher.recipes_queue
         if len(recipe_queue) == 0:
             for recipe in range(self._max_number_of_recipes):
-                recipe_name = Path.joinpath(self._recipe_path, f"algae_bot_recipe_{recipe + 1}.yaml")
-                new_recipe = RecipeGenerator(self._templete_recipe_path, recipe_name)
-                new_recipe.generate_recipe(self._opt_pd)
+                recipe_name = f"algae_bot_recipe_{recipe + 1}.yaml"
+                # recipe_name = Path.joinpath(self._recipe_path, f"algae_bot_recipe_{recipe + 1}.yaml")
+                new_recipe = RecipeGenerator(self._templete_recipe_path, self._recipe_path)
+                new_recipe.generate_recipe(self._opt_pd, recipe_name)
         time.sleep(1)
 
 if __name__ == '__main__':

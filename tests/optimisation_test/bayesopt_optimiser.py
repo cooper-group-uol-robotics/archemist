@@ -93,7 +93,8 @@ class BayesOptOptimizer(OptimizerBase):
         random_values = {}
         for key in self._config_dict['experiment']['components']:
             for element in range(total_elements):
-                random_values[key].append(random.randrange(self._config_dict['experiment']['components'][key]['lower_bound'],
+                random_values[key] = []
+                random_values[key].append(random.uniform(self._config_dict['experiment']['components'][key]['lower_bound'],
                                self._config_dict['experiment']['components'][key]['upper_bound']))
         return random_values
 
@@ -113,7 +114,7 @@ class BayesOptOptimizer(OptimizerBase):
         )
 
 
-test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
+# test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
 
-opt = BayesOptOptimizer('/home/satheesh/ARChemeist_ws/src/archemist/tests/optimisation_test/optimization_config.yaml')
-opt.update_model(test_data)
+# opt = BayesOptOptimizer('/home/satheesh/ARChemeist_ws/src/archemist/tests/optimisation_test/optimization_config.yaml')
+# opt.update_model(test_data)
