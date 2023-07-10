@@ -1,0 +1,32 @@
+general: {id: 198, name: algae_bot_recipe}
+process:
+- state_name: pickup
+  station:
+    id: 11
+    operation: {type: InputStationPickupOp}
+    type: InputStation
+  transitions: {on_fail: end_state, on_success: dispense_liquid}
+- state_name: dispense_liquid
+  station:
+    id: 12
+    operation:
+      properties:
+        dispense_info:
+          dye_A: [0.9181345401957373]
+          dye_B: [0.33975736038370974]
+          water: [42.67673034086537]
+      type: CSCSVJobOpDescriptor
+    type: ChemSpeedFlexStation
+  transitions: {on_fail: end_state, on_success: analyse}
+- state_name: analyse
+  station:
+    id: 13
+    operation: {type: SampleColorOpDescriptor}
+    type: LightBoxStation
+  transitions: {on_fail: end_state, on_success: dispose}
+- state_name: dispose
+  station:
+    id: 14
+    operation: {type: OutputStationPlaceOp}
+    type: OutputStation
+  transitions: {on_fail: end_state, on_success: end_state}

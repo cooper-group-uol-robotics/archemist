@@ -9,10 +9,9 @@ import pandas as pd
 
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir, max_recipe_count, templete_recipe_dir, optimizer) -> None:
+    def __init__(self, recipe_dir, max_recipe_count, optimizer) -> None:
         self._recipe_path = recipe_dir
         self._result_path = Path.joinpath(self._recipe_path, "result")
-        self._templete_recipe_path = templete_recipe_dir
         self._max_number_of_recipes = max_recipe_count
         self._optimizer = optimizer
 
@@ -22,15 +21,15 @@ class OptimizationHandler:
                                 'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
         self._opt_pd = pd.DataFrame(optimised_parameters)
     
-    def update_optimisation_data(self, _random_values_dict):
-        self._opt_pd = pd.DataFrame(_random_values_dict)
+    def update_optimisation_data(self, _values_from_optimizer_dict):
+        self._opt_pd = pd.DataFrame(_values_from_optimizer_dict)
 
 
     def watch_batch_complete(self):
         # get completed batches using the function get_completed_batches from state.py
         # send it to optimisation base and
         # update optimisation data
-        completed_batches = State().get_completed_batches()
+        completed_batches = State.get_completed_batches()
         for batch in completed_batches:
             if batch.recipe_attached:
                 batch_id = batch.id
@@ -41,13 +40,13 @@ class OptimizationHandler:
                     with open(result_file) as file:
                         result_dict = yaml.load(file, Loader=yaml.SafeLoader)
                     if result_dict['batch_id'] == batch_id:
-                        result = {'output': result_dict['output']}
-                        result_data = pd.DataFrame.from_dict(result)
+                        # result = {'output': result_dict['output']}
+                        result_data = batch.extract_samples_op_data(result_dict) # pd.DataFrame.from_dict(result)
                         self._optimizer.update_model(result_data)
                     else:
                         pass
 
-    def watch_recipe_queue(self):
+    def watch_recipe_queue(self, recipe_generator):
         # add a max_recipe field in the config.yaml
         # check recipe que, if no recipe add new recipes based on number mentioned in config
         # the new recipes are created based on the recipe_generator 
@@ -57,10 +56,8 @@ class OptimizationHandler:
         if len(recipe_queue) == 0:
             for recipe in range(self._max_number_of_recipes):
                 recipe_name = f"algae_bot_recipe_{recipe + 1}.yaml"
-                # recipe_name = Path.joinpath(self._recipe_path, f"algae_bot_recipe_{recipe + 1}.yaml")
-                new_recipe = RecipeGenerator(self._templete_recipe_path, self._recipe_path)
-                new_recipe.generate_recipe(self._opt_pd, recipe_name)
-        time.sleep(1)
+                recipe_generator.generate_recipe(self._opt_pd, recipe_name)
+                time.sleep(1)
 
 if __name__ == '__main__':
     cwd_path = Path.cwd()

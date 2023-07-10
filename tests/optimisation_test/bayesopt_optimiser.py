@@ -2,12 +2,16 @@ import pandas as pd
 import importlib
 from optimiser_base import OptimizerBase
 import random
+from optimisation_state import OptimizationState
+from object_factory import OptimizationFactory
+from pathlib import Path
+from archemist.core.persistence.yaml_handler import YamlHandler
 
 
 class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
-                 optimization_model,
+                #  optimization_model,
                  config_dict: dict,
                  ):
         """
@@ -17,8 +21,11 @@ class BayesOptOptimizer(OptimizerBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        self._optimization_model = optimization_model
+        # self._optimization_model = optimization_model
+        self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
         self._config_dict = config_dict
+        self._probed_points = []
+        self.target_name = None
 
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
@@ -60,7 +67,7 @@ class BayesOptOptimizer(OptimizerBase):
         # get optimization target name
         if self.target_name is None:
             target_name = [i for i in data.columns if i not in self.component_keys]
-            assert len(target_name) == 1, 'Require only one unseen column as optimization target'
+            # assert len(target_name) == 1, 'Require only one unseen column as optimization target'
             self.target_name = target_name[0]
         else:
             assert self.target_name in data.columns, 'Optimization target not in result data, please check dataframe ' \
@@ -71,7 +78,8 @@ class BayesOptOptimizer(OptimizerBase):
         params = []
         for row_index in range(len(data)):
             params.append(data.iloc[row_index].to_dict())
-
+        print(params)
+        print(targets)
         return params, targets
 
     def generate_batch(self, **kwargs) -> pd.DataFrame:
@@ -114,7 +122,12 @@ class BayesOptOptimizer(OptimizerBase):
         )
 
 
-# test_data = pd.DataFrame([[3,4], [1, 2]], columns=['x', 'y'])
+test_data = pd.DataFrame([[0.3,0.4], [0.1, 0.2]], columns=['x', 'y'])
+cwd_path = Path.cwd()
+print(cwd_path)
+workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
+_config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
+_config_dict = YamlHandler.loadYamlFile(_config_file)
 
-# opt = BayesOptOptimizer('/home/satheesh/ARChemeist_ws/src/archemist/tests/optimisation_test/optimization_config.yaml')
-# opt.update_model(test_data)
+opt = BayesOptOptimizer(_config_dict)
+opt.update_model(test_data)
