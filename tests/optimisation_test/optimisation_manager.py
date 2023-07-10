@@ -18,7 +18,6 @@ class OptimisationManager():
         self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
         self._template_dir = Path.joinpath(self._recipes_dir, "template/algae_bot_recipe_template.yaml")
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
-        #  self._batch_size = self._config_dict['optimizer']['batch_size'] remove
         self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir)
 
         # optimization constructor
@@ -31,7 +30,7 @@ class OptimisationManager():
                 _values_from_optimizer_dict = self._optimizer.generate_random_values(1)
                 print(_values_from_optimizer_dict)
             else:
-                _values_from_optimizer_dict = self._optimizer.generate_random_values(1)
+                _values_from_optimizer_dict = self._optimizer.generate_batch()
                 print(_values_from_optimizer_dict)
             self._handler.update_optimisation_data(_values_from_optimizer_dict)
 

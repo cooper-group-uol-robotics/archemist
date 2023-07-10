@@ -8,6 +8,8 @@ from pathlib import Path
 from archemist.core.persistence.yaml_handler import YamlHandler
 
 
+
+
 class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
@@ -25,7 +27,8 @@ class BayesOptOptimizer(OptimizerBase):
         self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
         self._config_dict = config_dict
         self._probed_points = []
-        self.target_name = None
+        self._target_name = None
+        self._batch_size = self._config_dict['optimizer']['batch_size']
 
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
@@ -65,21 +68,19 @@ class BayesOptOptimizer(OptimizerBase):
         Split experiment result dataframe into dictionary format params and target array.
         """
         # get optimization target name
-        if self.target_name is None:
+        if self._target_name is None:
             target_name = [i for i in data.columns if i not in self.component_keys]
-            # assert len(target_name) == 1, 'Require only one unseen column as optimization target'
-            self.target_name = target_name[0]
+            assert len(target_name) == 1, 'Require only one unseen column as optimization target'
+            self._target_name = target_name[0]
         else:
-            assert self.target_name in data.columns, 'Optimization target not in result data, please check dataframe ' \
+            assert self._target_name in data.columns, 'Optimization target not in result data, please check dataframe ' \
                                                      'format.'
 
-        targets = data[self.target_name].to_numpy()
-        data = data.drop(columns=self.target_name)
+        targets = data[self._target_name].to_numpy()
+        data = data.drop(columns=self._target_name)
         params = []
         for row_index in range(len(data)):
             params.append(data.iloc[row_index].to_dict())
-        print(params)
-        print(targets)
         return params, targets
 
     def generate_batch(self, **kwargs) -> pd.DataFrame:
@@ -90,10 +91,11 @@ class BayesOptOptimizer(OptimizerBase):
 
         acquisition_function = self._generate_acquisition(**kwargs)
 
-        batch = pd.DataFrame([])
-        for _ in range(self.batch_size):
+        batch = []
+        for _ in range(self._batch_size):
             x_probe = self.model.suggest(acquisition_function)
-            batch = batch.append(x_probe, ignore_index=True)
+            batch.append(x_probe)
+        batch = pd.DataFrame.from_dict(batch)
         return batch
 
     def generate_random_values(self, total_elements):
@@ -122,7 +124,8 @@ class BayesOptOptimizer(OptimizerBase):
         )
 
 
-test_data = pd.DataFrame([[0.3,0.4], [0.1, 0.2]], columns=['x', 'y'])
+test_data = pd.DataFrame([[0.3,0.4,21, 10], [0.1, 0.2, 43.3, 1]], columns=['dye_A', 'dye_B', 'water', 'light_intensity'])
+print(test_data)
 cwd_path = Path.cwd()
 print(cwd_path)
 workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
@@ -131,3 +134,5 @@ _config_dict = YamlHandler.loadYamlFile(_config_file)
 
 opt = BayesOptOptimizer(_config_dict)
 opt.update_model(test_data)
+batch = opt.generate_batch()
+print(batch)
