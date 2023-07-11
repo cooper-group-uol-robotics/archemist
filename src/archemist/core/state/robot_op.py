@@ -1,81 +1,107 @@
 from __future__ import annotations
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
+from archemist.core.persistence.models_proxy import ModelProxy
+from archemist.core.state.batch import Batch
 from archemist.core.util.enums import RobotTaskType
 from archemist.core.util import Location
 from bson.objectid import ObjectId
 from datetime import datetime
-from typing import List
+from typing import List, Union
 import uuid
 
 
 class RobotOpDescriptor:
-    def __init__(self, op_model: RobotOpDescriptorModel) -> None:
-        self._model = op_model
+    def __init__(self, op_model: Union[RobotOpDescriptorModel, ModelProxy]) -> None:
+        if isinstance(op_model, ModelProxy):
+            self._model_proxy = op_model
+        else:
+            self._model_proxy = ModelProxy(op_model)
         
     @classmethod
     def _set_model_common_fields(cls, op_model: RobotOpDescriptorModel):
         op_model.uuid = uuid.uuid4()
 
+    @classmethod
+    def construct_op(cls, **kwargs):
+        model = RobotOpDescriptorModel()
+        cls._set_model_common_fields(model, **kwargs)
+        model._type = cls.__name__
+        model._module = cls.__module__
+        model.save()
+        return cls(model)
+
     @property
     def model(self) -> RobotOpDescriptorModel:
-        return self._model
+        return self._model_proxy.model
     
     @property
     def uuid(self) -> uuid.UUID:
-        return self._model.uuid
+        return self._model_proxy.uuid
 
     @property
-    def origin_station(self) -> ObjectId:
-        return self._model.origin_station
+    def requested_by(self) -> ObjectId:
+        return self._model_proxy.requested_by
 
-    @origin_station.setter
-    def origin_station(self, station_object_id: ObjectId) -> None:
-        self._model.origin_station = station_object_id
+    @requested_by.setter
+    def requested_by(self, station_id: ObjectId) -> None:
+        self._model_proxy.requested_by = station_id
 
     @property
-    def related_batch_id(self) -> int:
-        return self._model.related_batch_id
+    def executed_by(self) -> ObjectId:
+        return self._model_proxy.executed_by
 
-    @related_batch_id.setter
-    def related_batch_id(self, batch_id: int) -> None:
-        self._model.related_batch_id = batch_id
+    @property
+    def related_batch(self) -> Batch:
+        if self._model_proxy.related_batch:
+            return Batch(self._model_proxy.related_batch)
+
+    @related_batch.setter
+    def related_batch(self, batch: Batch) -> None:
+        self._model_proxy.related_batch = batch.model
 
     @property
     def has_result(self) -> bool:
-        return self._model.has_result
+        return self._model_proxy.has_result
 
     @property
     def was_successful(self) -> bool:
-        return self._model.was_successful
+        return self._model_proxy.was_successful
 
     @property
     def start_timestamp(self) -> datetime:
-        return self._model.start_timestamp
+        return self._model_proxy.start_timestamp
+    
+    @start_timestamp.setter
+    def start_timestamp(self, new_start_timestamp: datetime):
+        self._model_proxy.start_timestamp = new_start_timestamp
 
     @property
     def end_timestamp(self) -> datetime:
-        return self._model.end_timestamp
-
-    @property
-    def robot_stamp(self):
-        return self._model.robot_stamp
+        return self._model_proxy.end_timestamp
+    
+    @end_timestamp.setter
+    def end_timestamp(self, new_end_timestamp: datetime):
+        self._model_proxy.end_timestamp = new_end_timestamp
 
     def add_start_timestamp(self):
-        self._model.start_timestamp = datetime.now()
+        self._model_proxy.start_timestamp = datetime.now()
 
-    def complete_op(self, robot_stamp: str, success: bool):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.robot_stamp = robot_stamp
-        self._model.end_timestamp = datetime.now()
+    def complete_op(self, robot_id: ObjectId, success: bool):
+        self._model_proxy.has_result = True
+        self._model_proxy.was_successful = success
+        self._model_proxy.executed_by = robot_id
+        self._model_proxy.end_timestamp = datetime.now()
 
 class RobotTaskOpDescriptor(RobotOpDescriptor):
-    def __init__(self, op_model: RobotTaskOpDescriptorModel):
-        self._model = op_model
+    def __init__(self, op_model: Union[RobotTaskOpDescriptorModel, ModelProxy]) -> None:
+        if isinstance(op_model, ModelProxy):
+            self._model_proxy = op_model
+        else:
+            self._model_proxy = ModelProxy(op_model)
 
     @classmethod
     def from_args(cls, name: str, type: RobotTaskType=RobotTaskType.MANIPULATION, params: List[str]=[], 
-                    location: Location=Location(), origin_station: ObjectId=None, related_batch_id: int=None):
+                    location: Location=Location(), origin_station_id: ObjectId=None, related_batch: Batch=None):
         model = RobotTaskOpDescriptorModel()
         cls._set_model_common_fields(model)
         model._type = cls.__name__
@@ -84,26 +110,27 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         model.task_type = type
         model.params = [str(param) for param in params]
         model.location = location.to_dict() if location is not None else None
-        model.origin_station = origin_station
-        model.related_batch_id = related_batch_id
+        model.requested_by = origin_station_id
+        model.related_batch = related_batch.model if related_batch else None
+        model.save()
         return cls(model)
     
     @property
-    def name(self):
-        return self._model.name
+    def name(self) -> str:
+        return self._model_proxy.name
 
     @property
-    def task_type(self):
-        return self._model.task_type
+    def task_type(self) -> RobotTaskType:
+        return self._model_proxy.task_type
 
     @property
-    def params(self):
-        return self._model.params
+    def params(self) -> List[str]:
+        return self._model_proxy.params
 
     @property
-    def location(self):
-        loc_dict = self._model.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+    def location(self) -> Location:
+        loc_dict = self._model_proxy.location
+        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} with task: {self.name}, params: {self.params} @{self.location.get_map_coordinates()}'
