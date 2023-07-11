@@ -2,6 +2,7 @@ import time
 import yaml
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.state.state import State
+from archemist.core.state.batch import Batch
 from recipe_generator import RecipeGenerator
 from pathlib import Path
 from threading import Thread
@@ -41,7 +42,7 @@ class OptimizationHandler:
                         result_dict = yaml.load(file, Loader=yaml.SafeLoader)
                     if result_dict['batch_id'] == batch_id:
                         # result = {'output': result_dict['output']}
-                        result_data = batch.extract_samples_op_data(result_dict) # pd.DataFrame.from_dict(result)
+                        result_data = Batch.extract_samples_op_data(result_dict) # pd.DataFrame.from_dict(result)
                         self._optimizer.update_model(result_data)
                     else:
                         pass

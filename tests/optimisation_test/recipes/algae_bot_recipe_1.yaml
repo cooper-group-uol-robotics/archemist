@@ -12,9 +12,9 @@ process:
     operation:
       properties:
         dispense_info:
-          dye_A: [0.9181345401957373]
-          dye_B: [0.33975736038370974]
-          water: [42.67673034086537]
+          dye_A: 0.9181345401957373
+          dye_B: 0.33975736038370974
+          water: 42.67673034086537
       type: CSCSVJobOpDescriptor
     type: ChemSpeedFlexStation
   transitions: {on_fail: end_state, on_success: analyse}
