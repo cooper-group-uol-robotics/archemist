@@ -15,6 +15,7 @@ class LotTest(unittest.TestCase):
         lot = Lot.from_args([batch_1, batch_2])
         self.assertIsNotNone(lot.uuid)
         self.assertEqual(len(lot.batches), 2)
+        self.assertEqual(lot.num_batches, 2)
         self.assertEqual(lot.batches[0].uuid, batch_1.uuid)
         self.assertEqual(lot.batches[1].uuid, batch_2.uuid)
 

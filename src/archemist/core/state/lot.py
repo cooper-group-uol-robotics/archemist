@@ -26,3 +26,7 @@ class Lot:
     @property
     def batches(self) -> List[Batch]:
         return ListProxy(self._model_proxy.batches, Batch)
+    
+    @property
+    def num_batches(self) -> int:
+        return len(self._model_proxy.batches)
