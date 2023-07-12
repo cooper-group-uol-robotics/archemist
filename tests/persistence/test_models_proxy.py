@@ -110,6 +110,10 @@ class TestDbProxy(unittest.TestCase):
             self.assertEqual(self.foo_wrapper.num_list[i],num_list[i])
             self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
 
+        # test in operation
+        self.assertIn(2, self.foo_wrapper.num_list)
+        self.assertIn(3, self.foo_wrapper.num_list)
+
         # test set operation
         self.foo_wrapper.num_list[1] = 55
         self.foo_model.reload()
@@ -120,6 +124,7 @@ class TestDbProxy(unittest.TestCase):
         # test append operation
         self.foo_wrapper.num_list.append(9)
         self.foo_model.reload()
+        self.assertIn(9, self.foo_wrapper.num_list)
         self.assertEqual(self.foo_model.num_list[-1], 9)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
@@ -151,6 +156,17 @@ class TestDbProxy(unittest.TestCase):
         self.foo_wrapper.num_list.extend([4,5])
         self.foo_model.reload()
         self.assertEqual(len(self.foo_model.num_list), 4)
+        self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
+        for i in range(len(self.foo_model.num_list)):
+            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+
+        # test remove operation
+        self.foo_wrapper.num_list.remove(4)
+        self.foo_model.reload()
+        self.assertNotIn(4, self.foo_wrapper.num_list)
+        self.assertEqual(len(self.foo_model.num_list), 3)
+        self.assertEqual(self.foo_model.num_list[-1], 5)
+        self.assertNotIn(4, self.foo_model.num_list)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
             self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
@@ -242,6 +258,9 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(bar_wrapper.num_list), len(self.bar_model.num_list))
         self.assertEqual(bar_wrapper.num_list[2], self.bar_model.num_list[2])
 
+        # test in operation
+        self.assertIn(self.bar_model, self.foo_wrapper.docs)
+        self.assertIn(self.baz_model, self.foo_wrapper.docs)
 
         # test set operation
         self.foo_wrapper.docs[0] = self.baz_model
@@ -267,6 +286,14 @@ class TestDbProxy(unittest.TestCase):
         self.foo_wrapper.docs.extend([self.bar_model, self.baz_model])
         self.foo_model.reload()
         self.assertEqual(len(self.foo_model.docs), 4)
+        self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
+        for i in range(len(self.foo_model.docs)):
+            self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)
+
+        # test remove operation
+        self.foo_wrapper.docs.remove(self.bar_model)
+        self.foo_model.reload()
+        self.assertEqual(len(self.foo_model.docs), 3)
         self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
         for i in range(len(self.foo_model.docs)):
             self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)

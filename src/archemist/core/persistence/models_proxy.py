@@ -160,6 +160,10 @@ class ListFieldWrapper:
             else:
                 yield item
 
+    def __contains__(self, item):
+        self._reload()
+        return item in self._list_instance
+
     def append(self, value): # this should work with wrappers
         self._parent.update(**{f"push__{self._field_string}":value})
 
@@ -175,6 +179,9 @@ class ListFieldWrapper:
 
     def extend(self, obj_list):
         self._parent.update(**{f'push_all__{self._field_string}':[obj for obj in obj_list]})
+
+    def remove(self, item):
+        self._parent.update(**{f'pull__{self._field_string}':item})
     
     def _reload(self):
         if self._parent_type == ParentType.DOCUMENT:
@@ -223,11 +230,17 @@ class ListProxy:
     def __iter__(self):
         yield self._callable(next(self._list_wrapper.__iter__()))
 
+    def __contains__(self, object) -> bool:
+        return self._list_wrapper.__contains__(object.model)
+
     def append(self, object):
         return self._list_wrapper.append(object.model)
 
     def pop(self, left=True):
         return self._callable(self._list_wrapper.pop(left))
+    
+    def remove(self, object):
+        return self._list_wrapper.remove(object.model)
     
     def extend(self, obj_list):
         return self._list_wrapper.extend([obj.model for obj in obj_list])
