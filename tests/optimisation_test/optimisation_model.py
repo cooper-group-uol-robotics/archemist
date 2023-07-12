@@ -1,6 +1,6 @@
 from mongoengine import connect, Document, fields
 
-connect('my_test_db', host='127.0.0.1', port=27017)
+connect('algae_bot_workflow', host='127.0.0.1', port=27017)
 
 
 class OptimisationModel(Document):

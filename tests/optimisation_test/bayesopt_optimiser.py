@@ -58,7 +58,7 @@ class BayesOptOptimizer(OptimizerBase):
         Record probed points and update optimization model.
         :param data:
         """
-        self._probed_points = self._probed_points.append(data)
+        self._probed_points.append(data)
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
             self.model.register(param, target)
@@ -98,14 +98,16 @@ class BayesOptOptimizer(OptimizerBase):
         batch = pd.DataFrame.from_dict(batch)
         return batch
 
-    def generate_random_values(self, total_elements):
+    def generate_random_values(self):
         # fenerate random pd frame from config file
         random_values = {}
         for key in self._config_dict['experiment']['components']:
-            for element in range(total_elements):
-                random_values[key] = []
-                random_values[key].append(random.uniform(self._config_dict['experiment']['components'][key]['lower_bound'],
-                               self._config_dict['experiment']['components'][key]['upper_bound']))
+            random_values[key] = []
+            for element in range(self._batch_size):
+                _val = random.uniform(self._config_dict['experiment']['components'][key]['lower_bound'],
+                               self._config_dict['experiment']['components'][key]['upper_bound'])
+                _val = round(_val,2)
+                random_values[key].append(_val)
         return random_values
 
     @staticmethod
@@ -124,15 +126,15 @@ class BayesOptOptimizer(OptimizerBase):
         )
 
 
-test_data = pd.DataFrame([[0.3,0.4,21, 10], [0.1, 0.2, 43.3, 1]], columns=['dye_A', 'dye_B', 'water', 'light_intensity'])
-print(test_data)
-cwd_path = Path.cwd()
-print(cwd_path)
-workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
-_config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
-_config_dict = YamlHandler.loadYamlFile(_config_file)
+# test_data = pd.DataFrame([[0.3,0.4,21, 10], [0.1, 0.2, 43.3, 1]], columns=['dye_A', 'dye_B', 'water', 'light_intensity'])
+# print(test_data)
+# cwd_path = Path.cwd()
+# print(cwd_path)
+# workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
+# _config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
+# _config_dict = YamlHandler.loadYamlFile(_config_file)
 
-opt = BayesOptOptimizer(_config_dict)
-opt.update_model(test_data)
-batch = opt.generate_batch()
-print(batch)
+# opt = BayesOptOptimizer(_config_dict)
+# opt.update_model(test_data)
+# batch = opt.generate_batch()
+# print(batch)

@@ -1,6 +1,7 @@
 import time
 import yaml
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
+from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.state.state import State
 from archemist.core.state.batch import Batch
 from recipe_generator import RecipeGenerator
@@ -10,42 +11,35 @@ import pandas as pd
 
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir, max_recipe_count, optimizer) -> None:
+    def __init__(self, recipe_dir, max_recipe_count, optimizer, recipe_name) -> None:
         self._recipe_path = recipe_dir
+        self._recipe_name = recipe_name
         self._result_path = Path.joinpath(self._recipe_path, "result")
         self._max_number_of_recipes = max_recipe_count
         self._optimizer = optimizer
+        self._opt_update_dict = {'CSCSVJobOpDescriptor':{'dispense_info':{}},
+            'SampleColorOpDescriptor': {'red_intensity': ''}# ,
+                                                            #  'green_intensity': '',
+                                                            #  'blue_intensity': ''}
+                                 }
 
-        ### variables to be replaced with functions
-        optimised_parameters = {'water': [29.0, 32.0, 34.0, 37.0, 40.0, 43.0],
-                                'dye_A': [0.3, 0.33, 0.35, 0.38, 0.41, 0.44],
-                                'dye_B': [0.31, 0.34, 0.36, 0.39, 0.42, 0.45]}
-        self._opt_pd = pd.DataFrame(optimised_parameters)
-    
-    def update_optimisation_data(self, _values_from_optimizer_dict):
-        self._opt_pd = pd.DataFrame(_values_from_optimizer_dict)
+        host = 'mongodb://localhost:27017'
+        pm = PersistenceManager(host, 'algae_bot_workflow')
+        self._state = pm.construct_state_from_db()
 
+    def update_optimisation_data(self, _values_from_optimizer):
+        self._optimized_values = _values_from_optimizer
 
     def watch_batch_complete(self):
         # get completed batches using the function get_completed_batches from state.py
         # send it to optimisation base and
         # update optimisation data
-        completed_batches = State.get_completed_batches()
+        completed_batches = self._state.get_completed_batches()
         for batch in completed_batches:
-            if batch.recipe_attached:
-                batch_id = batch.id
-                result_watcher = RecipeFilesWatchdog(self._result_path)
-                result_watcher.start()
-                result_queue = result_watcher.recipes_queue
-                for result_file in result_queue == 0:
-                    with open(result_file) as file:
-                        result_dict = yaml.load(file, Loader=yaml.SafeLoader)
-                    if result_dict['batch_id'] == batch_id:
-                        # result = {'output': result_dict['output']}
-                        result_data = Batch.extract_samples_op_data(result_dict) # pd.DataFrame.from_dict(result)
-                        self._optimizer.update_model(result_data)
-                    else:
-                        pass
+            result_data_dict = batch.extract_samples_op_data(self._opt_update_dict) # pd.DataFrame.from_dict(result)
+            result_data_pd = pd.DataFrame(result_data_dict)
+            print(result_data_pd)
+            self._optimizer.update_model(result_data_pd)
 
     def watch_recipe_queue(self, recipe_generator):
         # add a max_recipe field in the config.yaml
@@ -54,14 +48,14 @@ class OptimizationHandler:
         recipe_watcher = RecipeFilesWatchdog(self._recipe_path)
         recipe_watcher.start()
         recipe_queue = recipe_watcher.recipes_queue
-        if len(recipe_queue) == 0:
-            for recipe in range(self._max_number_of_recipes):
-                recipe_name = f"algae_bot_recipe_{recipe + 1}.yaml"
-                recipe_generator.generate_recipe(self._opt_pd, recipe_name)
-                time.sleep(1)
-
-if __name__ == '__main__':
-    cwd_path = Path.cwd()
-    print(cwd_path)
-    recipes_dir = Path.joinpath(cwd_path, "tests/optimisation_test/recipes")
-    OptimizationHandler(recipes_dir)
+        # if len(recipe_queue) == 0:
+        for recipe in range(self._max_number_of_recipes):
+            recipe_name = f'{self._recipe_name}_{recipe + 1}.yaml'
+            recipe_generator.generate_recipe(self._optimized_values[recipe], recipe_name)
+            time.sleep(1)
+    
+    def start(self, recipe_generator):
+        self._watch_optimization_thread = Thread(target=self.watch_batch_complete())
+        self._watch_recipe_thread = Thread(target=self.watch_recipe_queue(recipe_generator ))
+        self._watch_optimization_thread.start()
+        self._watch_recipe_thread.start()

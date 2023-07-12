@@ -18,6 +18,7 @@ class OptimisationManager():
         self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
         self._template_dir = Path.joinpath(self._recipes_dir, "template/algae_bot_recipe_template.yaml")
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
+        self._recipe_name = "algae_bot_recipe" #TODO pass from where? config file?
         self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir)
 
         # optimization constructor
@@ -25,33 +26,22 @@ class OptimisationManager():
     
         # Handler
         if self._is_recipe_template_available():
-            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer)
-            if self._is_recipe_dir_empty: # generates recipes with random values, if the directory is empty
-                _values_from_optimizer_dict = self._optimizer.generate_random_values(1)
-                print(_values_from_optimizer_dict)
-            else:
-                _values_from_optimizer_dict = self._optimizer.generate_batch()
-                print(_values_from_optimizer_dict)
-            self._handler.update_optimisation_data(_values_from_optimizer_dict)
-
-            self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue(self._recipe_generator ))
-            self._watch_optimization_thread = Thread(target=self._handler.watch_batch_complete())
+            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._recipe_name)
+            _values_from_optimizer = []
+            for recipe in range(self._max_recipe_count):
+                if self._is_recipe_dir_empty: # remove this condition
+                    _values_from_optimizer.append(self._optimizer.generate_batch())
+                else:
+                    _values_from_optimizer.append(self._optimizer.generate_batch())
+            self._handler.update_optimisation_data(_values_from_optimizer)
         else:
             raise Exception('template file is missing')
-        
-        self._probed_points = []  # could be a wrapper class
-        self._component_keys = None  # need input for this
-        self.target_name = None
-        self.model = None
-        
-    def run(self):
-        self._watch_recipe_thread.start()
-        self._watch_optimization_thread.start()
+        self._handler.start(self._recipe_generator)
         
     def _construct_optimizer_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
             self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
-            self._optimizer = BayesOptOptimizer(self._optimization_model, config_dict)
+            self._optimizer = BayesOptOptimizer(config_dict)
             self._max_recipe_count = self._optimization_model.max_recipe_count
         else:
             raise Exception('Invalid optimization config file')
@@ -69,4 +59,3 @@ if __name__ == '__main__':
     print(cwd_path)
     workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
     opt_mgr = OptimisationManager(workflow_dir)
-    opt_mgr.run()
