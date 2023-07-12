@@ -3,6 +3,7 @@ from mongoengine.base.datastructures import BaseList, BaseDict
 from typing import Any, Callable
 from enum import Enum, auto
 from weakref import proxy
+from bson.objectid import ObjectId
 
 class ParentType(Enum):
     DOCUMENT = auto()
@@ -51,6 +52,10 @@ class ModelProxy:
     def model(self):
         self._model.reload()
         return self._model
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model.id
 
 class EmbedModelProxy:
     def __init__(self, embed_instance: EmbeddedDocument, parent_instance: Document, field_string: str, parent_type: ParentType):

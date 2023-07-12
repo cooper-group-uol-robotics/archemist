@@ -79,6 +79,8 @@ class TestDbProxy(unittest.TestCase):
 
     def test_doc_simple_fields(self):
         
+        self.assertIsNotNone(self.foo_wrapper.object_id)
+        self.assertEqual(self.foo_wrapper.object_id, self.foo_model.id)
         self.assertEqual(self.foo_wrapper.uuid, self.foo_model.uuid)
         
         self.assertEqual(self.foo_wrapper.num, self.foo_model.num)
