@@ -10,11 +10,11 @@ import unittest
 
 class NotRealArchemist():
     def __init__(self) -> None:
-        with open('/home/uol/ARChemist_ws/src/archemist/tests/optimisation_test/algae_bot_recipe.yaml') as fs:
+        with open('/home/uol/ARChemist_ws/src/archemist/tests/optimisation_test/recipes/algae_bot_recipe_1.yaml') as fs:
             self._recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
         bat = Batch.from_arguments(31,2,Location(2,7,'table_frame'))
         self.params = {}
-        keys = ['dye_A', 'dye_B']
+        keys = ['dye_A', 'dye_B', 'water']
         for key in keys:
             self.params[key] = None
         self._find_parameters(self._recipe_doc)
@@ -27,7 +27,7 @@ class NotRealArchemist():
         recipe.advance_state(True)
         bat.attach_recipe(recipe)
         print(self._recipe_doc)
-        with open('/home/uol/ARChemist_ws/src/archemist/tests/optimisation_test/result/algae_bot_recipe_result.yaml', 'w') as file:
+        with open('/home/uol/ARChemist_ws/src/archemist/tests/optimisation_test/algae_bot_recipe_result.yaml', 'w') as file:
             yaml.dump(self._recipe_doc, file, default_flow_style=None)
     
 
@@ -38,6 +38,8 @@ class NotRealArchemist():
                     self.params[key] = value
                 elif key == 'dye_B':
                     self.params[key] = value
+                elif key == 'water':
+                    self.params[key] = value
                 else:
                     self._find_parameters(value)
         elif isinstance(recipe_dict, list):
@@ -46,10 +48,13 @@ class NotRealArchemist():
 
     def _function(self) -> Dict:
         result = {}
-        x = self.params['dye_A']
-        y = self.params['dye_B']
-        z = m.sqrt(float(x)**2 + float(y)**2)
-        result['output'] = z
+        dye_A = self.params['dye_A']
+        dye_B = self.params['dye_B']
+        water = self.params['water']
+        result['output'] = []
+        for index in range(len(dye_A)):
+            out = m.sqrt(float(dye_A[index])**2 + float(dye_B[index])**2 + float(water[index])**2)
+            result['output'].append(out)
         return result
         
 if __name__ == "__main__":

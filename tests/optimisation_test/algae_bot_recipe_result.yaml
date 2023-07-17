@@ -1,12 +1,39 @@
 general: {id: 198, name: algae_bot_recipe}
 process:
+- state_name: pickup
+  station:
+    id: 11
+    operation: {type: InputStationPickupOp}
+    type: InputStation
+  transitions: {on_fail: end_state, on_success: dispense_liquid}
 - state_name: dispense_liquid
   station:
     id: 12
     operation:
       properties:
-        dispense_info: {dye_A: '5', dye_B: '25'}
+        dispense_info:
+          dye_A: [0.7645848317366105, 0.10514774422948137, 0.9372254658898972, 0.15118895908469632,
+            0.6806859385728725, 0.7439008773800084]
+          dye_B: [0.48501245339027854, 0.0647734923902672, 0.3523704230499908, 0.15436962951632682,
+            0.7243294996303716, 0.2344037092162008]
+          water: [30.728680763845443, 46.46392250370234, 49.34501638824374, 9.123781248304356,
+            2.7948233048420654, 7.644513182216076]
       type: CSCSVJobOpDescriptor
     type: ChemSpeedFlexStation
+  transitions: {on_fail: end_state, on_success: analyse}
+- state_name: analyse
+  station:
+    id: 13
+    operation: {type: SampleColorOpDescriptor}
+    type: LightBoxStation
+  transitions: {on_fail: end_state, on_success: dispose}
+- state_name: dispose
+  station:
+    id: 14
+    operation: {type: OutputStationPlaceOp}
+    type: OutputStation
   transitions: {on_fail: end_state, on_success: end_state}
-result: {batch_id: 31, output: 25.495097567963924}
+result:
+  batch_id: 31
+  output: [30.742017639237513, 46.46408662702292, 49.3551739825218, 9.126339482551385,
+    2.9663148646584943, 7.684199073900703]

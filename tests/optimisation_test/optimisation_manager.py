@@ -26,7 +26,7 @@ class OptimisationManager():
     
         # Handler
         if self._is_recipe_template_available():
-            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._recipe_name)
+            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._optimization_state,self._recipe_name)
             _values_from_optimizer = []
             for recipe in range(self._max_recipe_count):
                 if self._is_recipe_dir_empty: # remove this condition
@@ -40,9 +40,9 @@ class OptimisationManager():
         
     def _construct_optimizer_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
-            self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
-            self._optimizer = BayesOptOptimizer(config_dict)
-            self._max_recipe_count = self._optimization_model.max_recipe_count
+            self._optimization_state = OptimizationFactory.create_from_dict(config_dict['optimizer'])
+            self._optimizer = BayesOptOptimizer(self._optimization_state, config_dict)
+            self._max_recipe_count = self._optimization_state.max_recipe_count
         else:
             raise Exception('Invalid optimization config file')
 

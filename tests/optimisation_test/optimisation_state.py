@@ -1,4 +1,5 @@
 from optimisation_model import OptimisationModel
+from archemist.core.state.batch import Batch
 
 
 class OptimizationState:
@@ -30,3 +31,16 @@ class OptimizationState:
     @property
     def max_recipe_count(self) -> int:
         return self._model.max_recipe_count
+    
+    @property
+    def batch(self) -> Batch:
+        if self.batch_attached:
+            return Batch(self._model.batch)
+
+    def attach_batch(self, batch: Batch):
+        self._model.update(batch=batch.model)
+
+    @property
+    def batch_attached(self) -> bool:
+        self._model.reload('batch')
+        return self._model.batch is not None

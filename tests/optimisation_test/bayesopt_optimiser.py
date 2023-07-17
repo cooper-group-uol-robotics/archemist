@@ -7,13 +7,10 @@ from object_factory import OptimizationFactory
 from pathlib import Path
 from archemist.core.persistence.yaml_handler import YamlHandler
 
-
-
-
 class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
-                #  optimization_model,
+                 optimization_state,
                  config_dict: dict,
                  ):
         """
@@ -23,13 +20,12 @@ class BayesOptOptimizer(OptimizerBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        # self._optimization_model = optimization_model
-        self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
+        self._optimization_state = optimization_state
+        # self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
         self._config_dict = config_dict
         self._probed_points = []
         self._target_name = None
         self._batch_size = self._config_dict['optimizer']['batch_size']
-
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
         self.model = self.generate_model(f=None, pbounds=bound)
@@ -49,9 +45,9 @@ class BayesOptOptimizer(OptimizerBase):
         """
         Generate model for optimization.
         """
-        module = importlib.import_module(self._optimization_model.optimizer_module)
-        optimizer_class = getattr(module, self._optimization_model.optimizer_class)
-        return optimizer_class(**self._optimization_model.optimizer_hyperparameters, **kwargs)
+        module = importlib.import_module(self._optimization_state.optimizer_module)
+        optimizer_class = getattr(module, self._optimization_state.optimizer_class)
+        return optimizer_class(**self._optimization_state.optimizer_hyperparameters, **kwargs)
 
     def update_model(self, data: pd.DataFrame, **kwargs):
         """

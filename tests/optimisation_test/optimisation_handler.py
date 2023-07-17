@@ -11,17 +11,18 @@ import pandas as pd
 
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir, max_recipe_count, optimizer, recipe_name) -> None:
+    def __init__(self, recipe_dir, max_recipe_count, optimizer, optimization_state,recipe_name) -> None:
         self._recipe_path = recipe_dir
         self._recipe_name = recipe_name
         self._result_path = Path.joinpath(self._recipe_path, "result")
         self._max_number_of_recipes = max_recipe_count
         self._optimizer = optimizer
+        self._optimization_state = optimization_state
         self._opt_update_dict = {'CSCSVJobOpDescriptor':{'dispense_info':{}},
             'SampleColorOpDescriptor': {'red_intensity': ''}# ,
                                                             #  'green_intensity': '',
                                                             #  'blue_intensity': ''}
-                                 }
+                                 } # to get a formula that converts 3 values into one
 
         host = 'mongodb://localhost:27017'
         pm = PersistenceManager(host, 'algae_bot_workflow')
@@ -37,9 +38,10 @@ class OptimizationHandler:
         completed_batches = self._state.get_completed_batches()
         for batch in completed_batches:
             result_data_dict = batch.extract_samples_op_data(self._opt_update_dict) # pd.DataFrame.from_dict(result)
+            print(result_data_dict)
             result_data_pd = pd.DataFrame(result_data_dict)
-            print(result_data_pd)
             self._optimizer.update_model(result_data_pd)
+            self._optimization_state.attach_batch(batch)
 
     def watch_recipe_queue(self, recipe_generator):
         # add a max_recipe field in the config.yaml
