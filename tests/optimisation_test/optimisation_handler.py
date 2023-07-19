@@ -1,10 +1,6 @@
 import time
-import yaml
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.persistence.persistence_manager import PersistenceManager
-from archemist.core.state.state import State
-from archemist.core.state.batch import Batch
-from recipe_generator import RecipeGenerator
 from pathlib import Path
 from threading import Thread
 import pandas as pd
@@ -37,7 +33,7 @@ class OptimizationHandler:
         # update optimisation data
         completed_batches = self._state.get_completed_batches()
         for batch in completed_batches:
-            result_data_dict = batch.extract_samples_op_data(self._opt_update_dict) # pd.DataFrame.from_dict(result)
+            result_data_dict = batch.extract_samples_op_data(self._opt_update_dict)
             print(result_data_dict)
             result_data_pd = pd.DataFrame(result_data_dict)
             self._optimizer.update_model(result_data_pd)

@@ -1,15 +1,10 @@
 from typing import Dict
 import yaml
 import math as m
-from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from object_factory import OptimizationFactory
 from bayesopt_optimiser import BayesOptOptimizer
 from archemist.core.persistence.yaml_handler import YamlHandler
-from archemist.core.util import Location
-from archemist.core.state.recipe import Recipe
-from archemist.core.state.batch import Batch
 from mongoengine import connect
-import unittest
 from pathlib import Path
 import random
 import pandas as pd

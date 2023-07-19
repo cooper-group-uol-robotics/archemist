@@ -10,19 +10,7 @@ import importlib
 
 class OptimizerBase(abc.ABC):
     def __init__(self,
-                 config_file: str,
-                #  recipe_dir: str,
-                #  template_dir: str,
-                 batch_size: int = 15,
                  **kwargs) -> None:
-
-        # save config to database
-        self._database_model = OptimizationState.from_dict(self._config_dict['optimizer'])
-        #self._max_recipe_count = self.recipe_count()
-
-        self.batch_size = batch_size
-        self.target_name ='y'  # optimization target name, will update when receiving result dataframe
-        self._probed_points = pd.DataFrame([])
 
         self.kwargs = kwargs
 

@@ -104,6 +104,7 @@ class BayesOptOptimizer(OptimizerBase):
                                self._config_dict['experiment']['components'][key]['upper_bound'])
                 _val = round(_val,2)
                 random_values[key].append(_val)
+        random_values = pd.DataFrame.from_dict(random_values)
         return random_values
 
     @staticmethod
@@ -120,17 +121,3 @@ class BayesOptOptimizer(OptimizerBase):
             kappa_decay=kwargs.get('kappa_decay', 1),
             kappa_decay_delay=kwargs.get('kappa_decay_delay', 0)
         )
-
-
-# test_data = pd.DataFrame([[0.3,0.4,21, 10], [0.1, 0.2, 43.3, 1]], columns=['dye_A', 'dye_B', 'water', 'light_intensity'])
-# print(test_data)
-# cwd_path = Path.cwd()
-# print(cwd_path)
-# workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
-# _config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
-# _config_dict = YamlHandler.loadYamlFile(_config_file)
-
-# opt = BayesOptOptimizer(_config_dict)
-# opt.update_model(test_data)
-# batch = opt.generate_batch()
-# print(batch)

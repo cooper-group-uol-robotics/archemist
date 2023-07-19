@@ -6,10 +6,8 @@ from optimisation_handler import OptimizationHandler
 from optimisation_state import OptimizationState
 from object_factory import OptimizationFactory
 from recipe_generator import RecipeGenerator
-import pandas as pd
 from pathlib import Path
-from threading import Thread
-import importlib
+
 
 class OptimisationManager():
 
@@ -29,8 +27,8 @@ class OptimisationManager():
             self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._optimization_state,self._recipe_name)
             _values_from_optimizer = []
             for recipe in range(self._max_recipe_count):
-                if self._is_recipe_dir_empty: # remove this condition
-                    _values_from_optimizer.append(self._optimizer.generate_batch())
+                if self._is_recipe_dir_empty:
+                    _values_from_optimizer.append(self._optimizer.generate_random_values())
                 else:
                     _values_from_optimizer.append(self._optimizer.generate_batch())
             self._handler.update_optimisation_data(_values_from_optimizer)
