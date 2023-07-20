@@ -1,4 +1,4 @@
-from optimisation_model import OptimisationModel
+from archemist.core.models.optimisation_model import OptimisationModel
 from archemist.core.state.batch import Batch
 
 

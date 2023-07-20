@@ -1,6 +1,6 @@
 import pandas as pd
 import abc
-from optimisation_state import OptimizationState
+from archemist.core.state.optimisation_state import OptimizationState
 from pathlib import Path
 from threading import Thread
 from archemist.core.persistence.yaml_handler import YamlHandler

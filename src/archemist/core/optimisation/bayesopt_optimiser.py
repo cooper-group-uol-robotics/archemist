@@ -1,9 +1,9 @@
 import pandas as pd
 import importlib
-from optimiser_base import OptimizerBase
+from archemist.core.optimisation.optimiser_base import OptimizerBase
 import random
-from optimisation_state import OptimizationState
-from object_factory import OptimizationFactory
+from archemist.core.state.optimisation_state import OptimizationState
+from archemist.core.persistence.object_factory import OptimizationFactory
 from pathlib import Path
 from archemist.core.persistence.yaml_handler import YamlHandler
 

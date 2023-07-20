@@ -1,8 +1,8 @@
 from typing import Dict
 import yaml
 import math as m
-from object_factory import OptimizationFactory
-from bayesopt_optimiser import BayesOptOptimizer
+from archemist.core.persistence.object_factory import OptimizationFactory
+from archemist.core.optimisation.bayesopt_optimiser import BayesOptOptimizer
 from archemist.core.persistence.yaml_handler import YamlHandler
 from mongoengine import connect
 from pathlib import Path
@@ -12,7 +12,7 @@ import pandas as pd
 class Optimization_test:
     def __init__(self) -> None:
         cwd_path = Path.cwd()
-        workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
+        workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
         self._batch_size = self._config_dict['optimizer']['batch_size']

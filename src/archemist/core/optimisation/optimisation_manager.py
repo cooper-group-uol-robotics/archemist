@@ -1,10 +1,10 @@
 from archemist.core.persistence.yaml_handler import YamlHandler
-from optimisation_model import OptimisationModel
+from archemist.core.models.optimisation_model import OptimisationModel
 from optimiser_base import OptimizerBase
 from bayesopt_optimiser import BayesOptOptimizer
 from optimisation_handler import OptimizationHandler
-from optimisation_state import OptimizationState
-from object_factory import OptimizationFactory
+from archemist.core.state.optimisation_state import OptimizationState
+from archemist.core.persistence.object_factory import OptimizationFactory
 from recipe_generator import RecipeGenerator
 from pathlib import Path
 
@@ -55,5 +55,5 @@ class OptimisationManager():
 if __name__ == '__main__':
     cwd_path = Path.cwd()
     print(cwd_path)
-    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test")
+    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
     opt_mgr = OptimisationManager(workflow_dir)
