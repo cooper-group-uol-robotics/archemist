@@ -20,6 +20,10 @@ class Lot:
         return cls(model)
     
     @property
+    def model(self) -> LotModel:
+        return self._model_proxy.model
+    
+    @property
     def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
     

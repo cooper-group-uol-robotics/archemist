@@ -68,7 +68,7 @@ class Batch:
         return self._model_proxy.model
 
     @property
-    def uuid(self) -> int:
+    def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
     
     @property
