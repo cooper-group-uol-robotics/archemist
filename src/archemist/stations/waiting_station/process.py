@@ -45,7 +45,7 @@ class WaitingStationProcess(StationProcess):
     def request_load_batch(self):
         batch_offset = self._process_data.processing_slot*self._station.process_batch_capacity
         batch_index = self._process_data.status['batch_index']
-        robot_op = KukaLBRTask.from_args(name='LoadWaitingStation',params=[True,batch_offset + batch_index+1], 
+        robot_op = KukaLBRTask.from_args(name='LoadWaitingStation',params=[True,batch_offset + batch_index+1, batch_index+1], 
                                             type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
         current_batch_id = self._process_data.batches[batch_index].id
         self.request_robot_op(robot_op,current_batch_id)
@@ -58,7 +58,7 @@ class WaitingStationProcess(StationProcess):
     def request_unload_batch(self):
         batch_offset = self._process_data.processing_slot*self._station.process_batch_capacity
         batch_index = self._process_data.status['batch_index']
-        robot_op = KukaLBRTask.from_args(name='UnloadWaitingStation',params=[False,batch_offset + batch_index],
+        robot_op = KukaLBRTask.from_args(name='UnloadWaitingStation',params=[False,batch_offset + batch_index, batch_index],
                                 type=RobotTaskType.LOAD_TO_ROBOT, location=self._station.location)
         current_batch_id = self._process_data.batches[batch_index - 1].id
         self.request_robot_op(robot_op,current_batch_id)
