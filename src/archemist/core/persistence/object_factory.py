@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List, Type, TYPE_CHECKING
 if TYPE_CHECKING:
     from archemist.core.state.material import Material,Liquid, Solid
     from archemist.core.state.batch import Batch
     from archemist.core.state.robot import Robot, RobotOpDescriptor, RobotModel
     from archemist.core.state.station import Station, StationOpDescriptor, StationModel, StationProcessData
+    from archemist.core.state.station_process import StationProcessModel, StationProcess
 
 import importlib
 import pkgutil
@@ -158,3 +159,11 @@ class StationFactory:
             handler_module = importlib.import_module(station_module)
             cls = getattr(handler_module, handler_type)
         return cls(station)
+    
+class ProcessFactory:
+
+    @staticmethod
+    def create_process_from_model(process_model: StationProcessModel) -> Type[StationProcess]:
+        module = importlib.import_module(process_model._module)
+        cls = getattr(module,process_model._type)
+        return cls(process_model)

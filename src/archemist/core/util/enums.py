@@ -26,6 +26,14 @@ class OpState(Enum):
     TO_BE_REPEATED = auto()
     TO_BE_SKIPPED = auto()
 
+class ProcessStatus(Enum):
+    INACTIVE = auto()
+    RUNNING = auto()
+    WAITING_ON_ROBOT_OPS = auto()
+    WAITING_ON_STATION_OPS = auto()
+    WAITING_ON_STATION_PROCS = auto()
+    FINISHED = auto()
+
 class TimeUnit(Enum):
     SECONDS = auto()
     MINUTES = auto()
