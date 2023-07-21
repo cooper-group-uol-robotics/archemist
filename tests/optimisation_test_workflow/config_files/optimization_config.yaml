@@ -9,11 +9,13 @@ experiment:
     dye_B:
       upper_bound: 1.00
       lower_bound: 0.00
+  recipe_name: algae_bot_recipe
 optimizer:
   module: bayes_opt.bayesian_optimization  # optimizer module
   class: BayesianOptimization  # optimizer class
   hyperparameters: {} # necessary parameters to build the optimizer
   additional_args:
-  parameters_to_optimize: ['dye_A', 'dye_B', 'water'] # parameters to optimize
   max_recipe_count: 3
   batch_size: 6
+  optimizer_update_dict: {'CSCSVJobOpDescriptor':{'dispense_info':{}},
+            'SampleColorOpDescriptor': {'red_intensity': ''}}

@@ -1,4 +1,4 @@
-general: {id: 198, name: algae_bot_recipe}
+general: {id: 200, name: algae_bot_recipe}
 process:
 - state_name: pickup
   station:
@@ -12,9 +12,12 @@ process:
     operation:
       properties:
         dispense_info:
-          dye_A: [0.59, 0.24, 0.71, 0.01, 0.13, 0.5]
-          dye_B: [0.53, 0.02, 0.19, 0.81, 0.52, 0.23]
-          water: [11.16, 23.09, 27.79, 28.93, 17.35, 3.64]
+          dye_A: [0.7246001842576565, 0.5519863232754103, 0.34279857072752273, 0.35875482637567657,
+            0.5953158082241845, 0.39804124586546463]
+          dye_B: [0.9120868464498604, 0.1373756793510298, 0.10761569123700843, 0.9558322780876441,
+            0.6173591099131508, 0.8038642778121438]
+          water: [6.597387391566299, 43.83880550977491, 5.74260650384904, 44.47912964158423,
+            48.494676339901154, 37.873003714260605]
       type: CSCSVJobOpDescriptor
     type: ChemSpeedFlexStation
   transitions: {on_fail: end_state, on_success: analyse}

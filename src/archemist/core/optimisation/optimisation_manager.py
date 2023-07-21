@@ -5,42 +5,52 @@ from bayesopt_optimiser import BayesOptOptimizer
 from optimisation_handler import OptimizationHandler
 from archemist.core.state.optimisation_state import OptimizationState
 from archemist.core.persistence.object_factory import OptimizationFactory
+from archemist.core.persistence.persistence_manager import PersistenceManager
 from recipe_generator import RecipeGenerator
 from pathlib import Path
+from threading import Thread
 
 
 class OptimisationManager():
 
-    def __init__(self, workflow_dir: str) -> None:
+    def __init__(self, workflow_dir: str, state) -> None:
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
-        self._template_dir = Path.joinpath(self._recipes_dir, "template/algae_bot_recipe_template.yaml")
+        
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
-        self._recipe_name = "algae_bot_recipe" #TODO pass from where? config file?
+        self._opt_update_dict = self._config_dict['optimizer']['optimizer_update_dict']
+        self._recipe_name = self._config_dict['experiment']['recipe_name']
+        self._template_dir = Path.joinpath(self._recipes_dir, f"template/{self._recipe_name}_template.yaml")
         self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir)
+        self._state = state
 
         # optimization constructor
         self._construct_optimizer_from_config_file(self._config_dict)
     
         # Handler
+        self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._optimization_state, self._state, self._recipe_name, self._opt_update_dict, self._recipe_generator)
+
         if self._is_recipe_template_available():
-            self._handler = OptimizationHandler(self._recipes_dir, self._max_recipe_count, self._optimizer, self._optimization_state,self._recipe_name)
             _values_from_optimizer = []
             for recipe in range(self._max_recipe_count):
                 if self._is_recipe_dir_empty:
-                    _values_from_optimizer.append(self._optimizer.generate_random_values())
+                    _values_from_optimizer.append(self._optimizer.generate_batch())
                 else:
                     _values_from_optimizer.append(self._optimizer.generate_batch())
+            print("values", _values_from_optimizer)
             self._handler.update_optimisation_data(_values_from_optimizer)
+
         else:
             raise Exception('template file is missing')
-        self._handler.start(self._recipe_generator)
+        self._watch_optimization_thread = Thread(target=self._handler.watch_batch_complete())
+        self._watch_recipe_thread = Thread(target=self._handler.watch_recipe_queue(self._recipe_generator))
+        self._handler.start(self._watch_optimization_thread, self._watch_recipe_thread)
         
     def _construct_optimizer_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
             self._optimization_state = OptimizationFactory.create_from_dict(config_dict['optimizer'])
             self._optimizer = BayesOptOptimizer(self._optimization_state, config_dict)
-            self._max_recipe_count = self._optimization_state.max_recipe_count
+            self._max_recipe_count = self._optimization_state.max_recipe_count  
         else:
             raise Exception('Invalid optimization config file')
 
@@ -56,4 +66,7 @@ if __name__ == '__main__':
     cwd_path = Path.cwd()
     print(cwd_path)
     workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
-    opt_mgr = OptimisationManager(workflow_dir)
+    host = 'mongodb://localhost:27017'
+    pm = PersistenceManager(host, 'algae_bot_workflow')
+    _state = pm.construct_state_from_db()
+    opt_mgr = OptimisationManager(workflow_dir, _state)

@@ -10,24 +10,35 @@ from typing import Dict
 class RecipeGenerator:
     def __init__(self, template_path, recipe_path) -> None:
         self._recipe_dict  = YamlHandler.load_recipe_file(template_path)
+        self._template_recipe_batch_id = self._recipe_dict["general"]["id"]
         self._new_recipe_path = recipe_path
-        
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
         self._find_placeholders(self._recipe_dict)
 
     # Methods
-    def generate_recipe(self, optimised_parameters_data, file_name):
+    def generate_recipe(self, optimised_parameters_data, file_name, batches_processed):
         self._new_recipe_file_name = file_name
+        self._batches_processed = batches_processed
+        recipe_id = self.set_recipe_id(self._template_recipe_batch_id)
         _file_path = Path.joinpath(self._new_recipe_path, self._new_recipe_file_name)
-        recipe_dict = self._recipe_dict
         optimised_parameters_dict = optimised_parameters_data.to_dict()
+        recipe_dict = self._recipe_dict
         if self._placeholder_keys_any:
             recipe_dict = self._update_recipe(recipe_dict,'any', optimised_parameters_dict)
         if self._placeholder_keys_all:
             recipe_dict = self._update_recipe(recipe_dict, 'all', optimised_parameters_dict)
+
+        
         self._write_recipe(recipe_dict, _file_path)
-    
+        return recipe_id
+
+    def set_recipe_id(self, recipe_id):
+        while recipe_id in self._batches_processed:
+            recipe_id += 1
+        self._recipe_dict["general"]["id"] = recipe_id
+        return recipe_id
+
     # internal functions
     def _find_placeholders(self, recipe_dict: Dict):
         if isinstance(recipe_dict, dict):
