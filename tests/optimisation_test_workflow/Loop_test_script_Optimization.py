@@ -35,9 +35,9 @@ class Optimization_test:
             result_data_pd = pd.DataFrame(self._random_values_dict)
             self._optimizer.update_model(result_data_pd)
         
-        for i in range(10):
-            values_from_optimizer = self._optimizer.generate_batch()
-            print(f'batch_{i+1}: \n', values_from_optimizer)
+        # for i in range(10):
+        values_from_optimizer = self._optimizer.generate_batch()
+        print(f'batch_{i+1}: \n', values_from_optimizer)
 
 
 

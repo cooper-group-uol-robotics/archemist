@@ -149,13 +149,7 @@ class StationFactory:
 
 class OptimizationFactory:
     @staticmethod
-    def create_from_dict(config_dict: Dict) -> OptimizationState:
-        from archemist.core.state.optimisation_state import OptimizationState
-        return OptimizationState.from_dict(config_dict)
+    def create_from_dict(optimizer_type: str, optimization_state, config_dict: Dict ) -> OptimizationState:
+        return optimizer_type(optimization_state, config_dict)
 
-    @staticmethod
-    def create_from_model(optimization_model: OptimisationModel) -> OptimizationState:
-        module = importlib.import_module(optimization_model._module)
-        cls = getattr(module, optimization_model._type)
-        return cls(optimization_model)
 

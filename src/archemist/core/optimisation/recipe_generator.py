@@ -8,19 +8,19 @@ import re
 from typing import Dict
 
 class RecipeGenerator:
-    def __init__(self, template_path, recipe_path) -> None:
+    def __init__(self, template_path, recipe_path, recipes_watchdog) -> None:
         self._recipe_dict  = YamlHandler.load_recipe_file(template_path)
         self._template_recipe_batch_id = self._recipe_dict["general"]["id"]
         self._new_recipe_path = recipe_path
+        self._recipes_watchdog = recipes_watchdog
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
         self._find_placeholders(self._recipe_dict)
 
     # Methods
-    def generate_recipe(self, optimised_parameters_data, file_name, batches_processed):
+    def generate_recipe(self, optimised_parameters_data, file_name):
         self._new_recipe_file_name = file_name
-        self._batches_processed = batches_processed
-        recipe_id = self.set_recipe_id(self._template_recipe_batch_id)
+        self._set_recipe_id()
         _file_path = Path.joinpath(self._new_recipe_path, self._new_recipe_file_name)
         optimised_parameters_dict = optimised_parameters_data.to_dict()
         recipe_dict = self._recipe_dict
@@ -28,16 +28,18 @@ class RecipeGenerator:
             recipe_dict = self._update_recipe(recipe_dict,'any', optimised_parameters_dict)
         if self._placeholder_keys_all:
             recipe_dict = self._update_recipe(recipe_dict, 'all', optimised_parameters_dict)
-
-        
         self._write_recipe(recipe_dict, _file_path)
-        return recipe_id
 
-    def set_recipe_id(self, recipe_id):
-        while recipe_id in self._batches_processed:
-            recipe_id += 1
-        self._recipe_dict["general"]["id"] = recipe_id
-        return recipe_id
+    def _set_recipe_id(self):
+        queued_recipes_id = []
+        self._queued_recipes = self._recipes_watchdog.recipes_queue
+        if self._queued_recipes:
+            for recipe in self._queued_recipes:
+                queued_recipe_dict = YamlHandler.load_recipe_file(recipe)
+                queued_recipes_id.append(queued_recipe_dict["general"]["id"])
+            self._recipe_dict["general"]["id"] = max(queued_recipes_id)+1
+        else:
+            pass
 
     # internal functions
     def _find_placeholders(self, recipe_dict: Dict):

@@ -9,6 +9,7 @@ class OptimisationModel(Document):
     optimizer_class = fields.StringField(required=True)
     optimizer_hyperparameters = fields.DictField()
     max_recipe_count = fields.IntField()
+    batches_seen = fields.ListField()
 
     
 

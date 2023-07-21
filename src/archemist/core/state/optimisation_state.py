@@ -32,3 +32,12 @@ class OptimizationState:
     def max_recipe_count(self) -> int:
         return self._model.max_recipe_count
     
+    @property
+    def batches_seen(self) -> list:
+        self._model.reload('batches_seen')
+        return self._model.batches_seen
+
+    @batches_seen.setter
+    def batches_seen(self, new_batch_id: list):
+        self._model.update(batches_seen = new_batch_id)
+    
