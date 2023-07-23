@@ -31,7 +31,6 @@ class OptimizationHandler:
         batch_id = []
         for batch in completed_batches:
             result_data_dict = batch.extract_samples_op_data(self._opt_update_dict)
-            print(result_data_dict)
             result_data_pd = pd.DataFrame(result_data_dict)
             self._optimizer.update_model(result_data_pd)
             batch_id.append(batch.id)
@@ -42,7 +41,6 @@ class OptimizationHandler:
         # add a max_recipe field in the config.yaml
         # check recipe que, if no recipe add new recipes based on number mentioned in config
         # the new recipes are created based on the recipe_generator 
-        # if len(recipe_queue) == 0:
         for recipe in range(self._max_number_of_recipes):
             recipe_name = f'{self._recipe_name}_{datetime.now()}.yaml'
             recipe_generator.generate_recipe(self._optimized_values[recipe], recipe_name)

@@ -6,16 +6,19 @@ from pathlib import Path
 import logging
 import re
 from typing import Dict
+import time
 
 class RecipeGenerator:
-    def __init__(self, template_path, recipe_path, recipes_watchdog) -> None:
+    def __init__(self, template_path, recipe_path, recipes_watchdog, state) -> None:
         self._recipe_dict  = YamlHandler.load_recipe_file(template_path)
         self._template_recipe_batch_id = self._recipe_dict["general"]["id"]
         self._new_recipe_path = recipe_path
         self._recipes_watchdog = recipes_watchdog
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
+        self._state = state
         self._find_placeholders(self._recipe_dict)
+        self._queued_recipes_id = []
 
     # Methods
     def generate_recipe(self, optimised_parameters_data, file_name):
@@ -31,15 +34,22 @@ class RecipeGenerator:
         self._write_recipe(recipe_dict, _file_path)
 
     def _set_recipe_id(self):
-        queued_recipes_id = []
         self._queued_recipes = self._recipes_watchdog.recipes_queue
         if self._queued_recipes:
             for recipe in self._queued_recipes:
                 queued_recipe_dict = YamlHandler.load_recipe_file(recipe)
-                queued_recipes_id.append(queued_recipe_dict["general"]["id"])
-            self._recipe_dict["general"]["id"] = max(queued_recipes_id)+1
+                if queued_recipe_dict["general"]["id"] not in self._queued_recipes_id:
+                    self._queued_recipes_id.append(queued_recipe_dict["general"]["id"])
+            self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
+            print("queue", self._queued_recipes_id)
         else:
-            pass
+            if not self._queued_recipes_id:
+                self._queued_recipes_id.append(self._template_recipe_batch_id)
+                self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)
+            else:
+                self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
+            print("not_queue", self._queued_recipes_id)
+
 
     # internal functions
     def _find_placeholders(self, recipe_dict: Dict):
@@ -104,4 +114,5 @@ class RecipeGenerator:
     def _write_recipe(self, recipe_dict: Dict, path):
         with open(path, 'w') as file:
             yaml.dump(recipe_dict, file, default_flow_style=None)
+            time.sleep(1)
 

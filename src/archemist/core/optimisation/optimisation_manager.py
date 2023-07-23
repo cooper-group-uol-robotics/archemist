@@ -9,7 +9,7 @@ from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from recipe_generator import RecipeGenerator
 from pathlib import Path
-
+import importlib
 
 class OptimisationManager():
 
@@ -23,10 +23,8 @@ class OptimisationManager():
         self._recipe_name = self._config_dict['experiment']['recipe_name']
         self._template_dir = Path.joinpath(self._recipes_dir, f"template/{self._recipe_name}_template.yaml")
         self._state = state
-        queue = self._state.recipes_queue
-        # print(queue)
         
-        self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir, self._recipes_watchdog)
+        self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir, self._recipes_watchdog, self._state)
         
         self._optimizer_type = BayesOptOptimizer
 
@@ -40,10 +38,9 @@ class OptimisationManager():
             _values_from_optimizer = []
             for recipe in range(self._max_recipe_count):
                 if self._is_recipe_dir_empty:
-                    _values_from_optimizer.append(self._optimizer.generate_batch())
+                    _values_from_optimizer.append(self._optimizer.generate_random_values())
                 else:
                     _values_from_optimizer.append(self._optimizer.generate_batch())
-                print("values", _values_from_optimizer)
             self._handler.update_optimisation_data(_values_from_optimizer)
 
         else:
@@ -53,7 +50,10 @@ class OptimisationManager():
     def _construct_optimizer_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
             self._optimization_state = OptimizationState.from_dict(config_dict['optimizer'])
-            self._optimizer = OptimizationFactory.create_from_dict( self._optimizer_type, self._optimization_state, config_dict)
+            # _class = self._optimization_state.optimizer_file_class_name
+            # self._optimizer_type = importlib.import_module("bayesopt_optimiser."+_class)
+            self._optimizer_type = BayesOptOptimizer
+            self._optimizer = OptimizationFactory.create_from_dict(self._optimizer_type, self._optimization_state, config_dict)
             self._max_recipe_count = self._optimization_state.max_recipe_count  
         else:
             raise Exception('Invalid optimization config file')
