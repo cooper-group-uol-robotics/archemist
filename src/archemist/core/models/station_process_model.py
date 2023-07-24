@@ -10,6 +10,7 @@ class StationProcessModel(Document):
     _module = fields.StringField(required=True)
     ''' general '''
     uuid = fields.UUIDField(binary=False)
+    requested_by = fields.ObjectIdField(null=True) # station that requested the process
     status = fields.EnumField(enum=ProcessStatus, default=ProcessStatus.INACTIVE)
     state = fields.StringField(default="init_state")
     data = fields.DictField(default={})
@@ -23,6 +24,7 @@ class StationProcessModel(Document):
     robot_ops_history = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
     
     '''station ops'''
+    key_process_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
     req_station_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
     station_ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
 

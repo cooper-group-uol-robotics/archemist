@@ -1,5 +1,6 @@
 from __future__ import annotations
 import uuid
+from bson.objectid import ObjectId
 from transitions import Machine, State
 from typing import Dict, List, Any, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
@@ -25,10 +26,11 @@ class StationProcess:
         self._state_machine = None
 
     @classmethod
-    def from_args(cls, lot: Lot, processing_slot: int = None):
+    def from_args(cls, lot: Lot, key_process_ops: List[Type[StationOpDescriptor]], processing_slot: int = None):
         model = StationProcessModel()
         model.uuid = uuid.uuid4()
         model.lot = lot.model
+        model.key_process_ops = [key_process_op.model for key_process_op in key_process_ops]
         if processing_slot:
             model.processing_slot = processing_slot
         model._type = cls.__name__
@@ -43,6 +45,14 @@ class StationProcess:
     @property
     def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
+    
+    @property
+    def requested_by(self) -> ObjectId:
+        return self._model_proxy.requested_by
+    
+    @requested_by.setter
+    def requested_by(self, station_id: ObjectId):
+        self._model_proxy.requested_by = station_id
     
     @ property
     def status(self) -> ProcessStatus:
@@ -75,6 +85,10 @@ class StationProcess:
     @property
     def robot_ops_history(self) -> List[Type[RobotOpDescriptor]]:
         return ListProxy(self._model_proxy.robot_ops_history, RobotFactory.create_op_from_model)
+    
+    @property
+    def key_process_ops(self) -> List[Type[StationOpDescriptor]]:
+        return ListProxy(self._model_proxy.key_process_ops, StationFactory.create_op_from_model)
     
     @property
     def req_station_ops(self) -> List[Type[StationOpDescriptor]]:
