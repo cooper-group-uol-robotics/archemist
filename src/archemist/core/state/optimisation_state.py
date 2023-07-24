@@ -11,7 +11,8 @@ class OptimizationState:
         model = OptimisationModel()
         model.optimizer_module = state_dict['module']
         model.optimizer_class = state_dict['class']
-        model.optimizer_file_class_name = state_dict['Optimizer_file_class_name']
+        model.optimizer_wrapper_module = state_dict['Optimizer_wrapper_module']
+        model.optimizer_wrapper_class = state_dict['Optimizer_wrapper_class']
         model.optimizer_hyperparameters = state_dict['hyperparameters']
         model.max_recipe_count = state_dict['max_recipe_count']  # todo: what is this?
         model.save()
@@ -26,8 +27,12 @@ class OptimizationState:
         return self._model.optimizer_class
     
     @property
-    def optimizer_file_class_name(self) -> str:
-        return self._model.optimizer_file_class_name
+    def optimizer_wrapper_module(self) -> str:
+        return self._model.optimizer_wrapper_module
+    
+    @property
+    def optimizer_wrapper_class(self) -> str:
+        return self._model.optimizer_wrapper_class
 
     @property
     def optimizer_hyperparameters(self):

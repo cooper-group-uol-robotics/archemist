@@ -13,7 +13,8 @@ experiment:
 optimizer:
   module: bayes_opt.bayesian_optimization  # optimizer module
   class: BayesianOptimization  # optimizer class
-  Optimizer_file_class_name: BayesOptOptimizer
+  Optimizer_wrapper_module: bayesopt_optimiser
+  Optimizer_wrapper_class: BayesOptOptimizer
   hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
   additional_args:
   max_recipe_count: 3

@@ -50,10 +50,7 @@ class OptimisationManager():
     def _construct_optimizer_from_config_file(self, config_dict: dict):
         if 'optimizer' in config_dict:
             self._optimization_state = OptimizationState.from_dict(config_dict['optimizer'])
-            # _class = self._optimization_state.optimizer_file_class_name
-            # self._optimizer_type = importlib.import_module("bayesopt_optimiser."+_class)
-            self._optimizer_type = BayesOptOptimizer
-            self._optimizer = OptimizationFactory.create_from_dict(self._optimizer_type, self._optimization_state, config_dict)
+            self._optimizer = OptimizationFactory.create_from_dict(self._optimization_state,config_dict)
             self._max_recipe_count = self._optimization_state.max_recipe_count  
         else:
             raise Exception('Invalid optimization config file')
@@ -65,15 +62,3 @@ class OptimisationManager():
     def _is_recipe_dir_empty(self):
         directory = Path(self._recipes_dir)
         return not any(directory.iterdir())
-
-if __name__ == '__main__':
-    cwd_path = Path.cwd()
-    print(cwd_path)
-    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
-    recipes_dir_path = Path.joinpath(workflow_dir, "recipes")
-    recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
-    recipes_watchdog.start()
-    host = 'mongodb://localhost:27017'
-    pm = PersistenceManager(host, 'algae_bot_workflow')
-    _state = pm.construct_state_from_db()
-    opt_mgr = OptimisationManager(workflow_dir, recipes_dir_path, recipes_watchdog, _state)
