@@ -25,8 +25,6 @@ class OptimisationManager():
         self._state = state
         
         self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir, self._recipes_watchdog, self._state)
-        
-        self._optimizer_type = BayesOptOptimizer
 
         # optimization constructor
         self._construct_optimizer_from_config_file(self._config_dict)
