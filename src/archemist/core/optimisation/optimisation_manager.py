@@ -13,9 +13,9 @@ import importlib
 
 class OptimisationManager():
 
-    def __init__(self, workflow_dir: str, recipes_dir_path: str, recipes_watchdog, state) -> None:
+    def __init__(self, workflow_dir: str, recipes_watchdog, state) -> None:
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
-        self._recipes_dir = recipes_dir_path
+        self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
         self._recipes_watchdog = recipes_watchdog
         
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
@@ -60,3 +60,17 @@ class OptimisationManager():
     def _is_recipe_dir_empty(self):
         directory = Path(self._recipes_dir)
         return not any(directory.iterdir())
+    
+
+
+if __name__ == '__main__':
+    cwd_path = Path.cwd()
+    print(cwd_path)
+    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
+    recipes_dir_path = Path.joinpath(workflow_dir, "recipes")
+    recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
+    recipes_watchdog.start()
+    host = 'mongodb://localhost:27017'
+    pm = PersistenceManager(host, 'algae_bot_workflow')
+    _state = pm.construct_state_from_db()
+    opt_mgr = OptimisationManager(workflow_dir, recipes_watchdog, _state)

@@ -41,14 +41,12 @@ class RecipeGenerator:
                 if queued_recipe_dict["general"]["id"] not in self._queued_recipes_id:
                     self._queued_recipes_id.append(queued_recipe_dict["general"]["id"])
             self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
-            print("queue", self._queued_recipes_id)
         else:
             if not self._queued_recipes_id:
                 self._queued_recipes_id.append(self._template_recipe_batch_id)
                 self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)
             else:
                 self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
-            print("not_queue", self._queued_recipes_id)
 
 
     # internal functions

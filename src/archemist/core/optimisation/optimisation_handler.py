@@ -17,7 +17,6 @@ class OptimizationHandler:
         self._state = state
         self._optimized_values = []
         self._recipe_generator = recipe_generator
-        self._batches_processed = []
         
 
     def update_optimisation_data(self, _values_from_optimizer):
@@ -28,22 +27,27 @@ class OptimizationHandler:
         # send it to optimisation base and
         # update optimisation data
         completed_batches = self._state.get_completed_batches()
-        batch_id = []
+        batch_ids = []
         for batch in completed_batches:
-            result_data_dict = batch.extract_samples_op_data(self._opt_update_dict)
-            result_data_pd = pd.DataFrame(result_data_dict)
-            self._optimizer.update_model(result_data_pd)
-            batch_id.append(batch.id)
-        self._optimization_state.batches_seen = batch_id
+            if batch not in self._optimization_state.batches_seen:
+                result_data_dict = batch.extract_samples_op_data(self._opt_update_dict)
+                result_data_pd = pd.DataFrame(result_data_dict)
+                self._optimizer.update_model(result_data_pd)
+                batch_ids.append(batch.id)
+        self._optimization_state.batches_seen.extend(batch_ids)
 
 
     def watch_recipe_queue(self, recipe_generator):
         # add a max_recipe field in the config.yaml
         # check recipe que, if no recipe add new recipes based on number mentioned in config
         # the new recipes are created based on the recipe_generator 
-        for recipe in range(self._max_number_of_recipes):
+        recipes_queue = list(self._state.recipes_queue.__iter__())
+        recipe_iteration = 0
+        while self._max_number_of_recipes > len(recipes_queue):
             recipe_name = f'{self._recipe_name}_{datetime.now()}.yaml'
-            recipe_generator.generate_recipe(self._optimized_values[recipe], recipe_name)
+            recipe_generator.generate_recipe(self._optimized_values[recipe_iteration], recipe_name)
+            recipe_iteration += 1
+            time.sleep(1)
  
     
     def start(self):
