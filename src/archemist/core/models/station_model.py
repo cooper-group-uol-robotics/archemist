@@ -1,25 +1,10 @@
-from mongoengine import Document, EmbeddedDocument, fields
+from mongoengine import Document, fields
 from archemist.core.util.enums import StationState, OpState
-from archemist.core.models.batch_model import BatchModel
+from archemist.core.models.lot_model import LotModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
-
-class StationProcessDataModel(EmbeddedDocument):
-    ''' general '''
-    uuid = fields.UUIDField(binary=False)
-    status = fields.DictField(default={})
-    processing_slot = fields.IntField(min_value=0)
-
-    ''' batches '''
-    batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-
-    ''' robot ops '''
-    # req_robot_ops = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
-    robot_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
-    
-    '''station ops'''
-    # req_station_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-    station_ops_history = fields.ListField(fields.UUIDField(binary=False),default=[])
+from archemist.core.models.station_process_model import StationProcessModel
+from archemist.core.models.material_model import LiquidMaterialModel, SolidMaterialModel
 
 class StationModel(Document):
     ''' internal '''
@@ -28,29 +13,40 @@ class StationModel(Document):
 
     ''' general '''
     exp_id = fields.IntField(required=True)
+    state = fields.EnumField(StationState, default=StationState.INACTIVE)
     location = fields.DictField()
-    batch_capacity = fields.IntField(min_value=1, default=1)
     selected_handler = fields.StringField(required=True)
-    state = fields.EnumField(StationState, default=StationState.INACTIVE) # this needs to be streamlined
+
+    ''' materials '''
+    liquids = fields.ListField(fields.ReferenceField(LiquidMaterialModel), default=[])
+    solids = fields.ListField(fields.ReferenceField(SolidMaterialModel), default=[])
     
-    ''' process '''
+    ''' batch capacity '''
+    total_batch_capacity = fields.IntField(min_value=1, default=1)
     process_batch_capacity = fields.IntField(min_value=1, default=1)
-    process_state_machine = fields.DictField(required=True)
-    process_data_map = fields.MapField(fields.EmbeddedDocumentField(StationProcessDataModel), default={})
+
+    ''' external processes '''
+    requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    completed_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    
+    ''' internal processes '''
+    queued_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    running_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    completed_procs_dict = fields.DictField(default={})
+
     
     ''' batches '''
-    assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    batches_need_removal = fields.BooleanField(default=False)
+    assigned_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
+    processed_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
     
     ''' robot ops '''
-    # requested_robot_op = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
-    # completed_robot_ops = fields.MapField(fields.EmbeddedDocumentField(RobotOpDescriptorModel, default={}))
+    requested_robot_op = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    completed_robot_ops_dict = fields.DictField(default={})
     
     ''' station ops '''
-    # queued_ops = fields.EmbeddedDocumentListField(StationOpDescriptorModel,default=[])
-    # assigned_op = fields.EmbeddedDocumentField(StationOpDescriptorModel, null=True)
+    queued_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
+    assigned_op = fields.ReferenceField(StationOpDescriptorModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    # completed_station_ops = fields.MapField(fields.EmbeddedDocumentField(StationOpDescriptorModel, default={}))
+    completed_station_ops_dict = fields.DictField(default={})
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}

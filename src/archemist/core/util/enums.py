@@ -18,6 +18,7 @@ class StationState(Enum):
     INACTIVE = auto()
     ACTIVE = auto()
     ERROR = auto()
+    NEED_BATCH_REMOVAL = auto()
 
 class OpState(Enum):
     INVALID = auto()

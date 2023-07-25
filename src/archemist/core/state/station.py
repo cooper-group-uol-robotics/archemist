@@ -1,154 +1,95 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Union, Type
+from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.util.enums import StationState, OpState
-from archemist.core.models.station_model import StationModel, StationProcessDataModel
+from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
 from archemist.core.state.batch import Batch
-from archemist.core.persistence.object_factory import StationFactory, RobotFactory
-from archemist.core.util.list_field_adapter import EmbedOpListAdapter, EmbedListFieldAdapter
+from archemist.core.state.station_process import StationProcess
+from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from bson.objectid import ObjectId
 import uuid
 
-class StationProcessData:
-    def __init__(self, process_data_model: StationProcessDataModel) -> None:
-        self._model = process_data_model
-
-    @classmethod
-    def from_args(cls, batches: List[Batch], processing_slot: int=0):
-        model = StationProcessDataModel()
-        model.uuid = uuid.uuid4()
-        model.batches = [batch.model for batch in batches]
-        model.status['state'] = 'init_state'
-        model.processing_slot = processing_slot
-        return cls(model)
-
-    @property
-    def model(self) -> StationProcessDataModel:
-        return self._model
-
-    @property
-    def uuid(self) -> uuid.UUID:
-        return self._model.uuid
-    
-    @property
-    def processing_slot(self) -> int:
-        return self._model.processing_slot
-
-    @property
-    def batches(self) -> List[Batch]:
-        return [Batch(batch_model) for batch_model in self._model.batches]
-    
-    @property
-    def status(self) -> dict:
-        return self._model.status
-    
-    @property
-    def req_robot_ops(self) -> List[Any]:
-        return EmbedOpListAdapter(self._model, 'req_robot_ops', RobotFactory)
-    
-    @property
-    def req_station_ops(self) -> List[Any]:
-        return EmbedOpListAdapter(self._model, 'req_station_ops', StationFactory)
-    
-    @property
-    def robot_ops_history(self) -> List[str]:
-        return EmbedListFieldAdapter(self._model, 'robot_ops_history')
-    
-    @property
-    def station_ops_history(self) -> List[str]:
-        return EmbedListFieldAdapter(self._model, 'station_ops_history')
-
-
 class Station:
-    def __init__(self, station_model: StationModel) -> None:
-        self._model = station_model
+    def __init__(self, station_model: Union[Type[StationModel], ModelProxy]) -> None:
+        if isinstance(station_model, ModelProxy):
+            self._model_proxy = station_model
+        else:
+            self._model_proxy = ModelProxy(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: dict, liquids: List[Liquid] = None, solids: List[Solid] = None):
         model = StationModel()
-        cls._set_model_common_fields(station_dict,model)
+        cls._set_model_common_fields(station_dict, liquids, solids, model)
         model._module = cls.__module__
         model.save()
         return cls(model)
 
     @staticmethod
-    def _set_model_common_fields(station_dict: dict, station_model: StationModel):
+    def _set_model_common_fields(station_dict: dict, liquids: List[Liquid], solids: List[Solid], station_model: StationModel):
         station_model._type = station_dict['type']
         station_model.exp_id = station_dict['id']
         station_model.location = station_dict['location']
-        station_model.batch_capacity = station_dict['batch_capacity']
+        station_model.total_batch_capacity = station_dict['total_batch_capacity']
         station_model.process_batch_capacity = station_dict['process_batch_capacity']
-        station_model.process_state_machine = station_dict['process_state_machine']
         station_model.selected_handler = station_dict['handler']
+        if liquids is not None:
+            station_model.liquids = [liquid.model for liquid in liquids]
+        if solids is not None:
+            station_model.solids = [solid.model for solid in solids]
 
     ''' General properties and methods'''
 
     @property
-    def model(self) -> StationModel:
-        self._model.reload()
-        return self._model
+    def model(self) -> Type[StationModel]:
+        return self._model_proxy.model
     
     @property
     def object_id(self) -> ObjectId:
-        return self._model.id
+        return self._model_proxy.object_id
 
 
     @property
     def state(self) -> StationState:
-        self._model.reload('state')
-        return self._model.state
+        return self._model_proxy.state
 
     @property
     def id(self) -> int:
-        return self._model.exp_id
+        return self._model_proxy.exp_id
 
     @property
     def location(self) -> Location:
-        loc_dict = self._model.location
+        loc_dict = self._model_proxy.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
     
-    @property
-    def selected_handler_dict(self) -> dict:
-        station_module = self._model._module.rsplit('.',1)[0]
-        return {'type':self._model.selected_handler, 'module':station_module}
+    def get_handler_details(self) -> Dict[str, str]:
+        station_module = self._model_proxy._module.rsplit('.',1)[0]
+        return {'type':self._model_proxy.selected_handler, 'module':station_module}
+
+    ''' batch capacity '''
 
     @property
-    def batch_capacity(self) -> int:
-        return self._model.batch_capacity
-    
-    ''' Process properties and methods '''
-
-    @property
-    def process_sm_dict(self) -> dict:
-        return self._model.process_state_machine
+    def total_batch_capacity(self) -> int:
+        return self._model_proxy.total_batch_capacity
     
     @property
     def process_batch_capacity(self) -> int:
-        return self._model.process_batch_capacity
-
+        return self._model_proxy.process_batch_capacity
     
-    def get_all_processes_data(self) -> List[StationProcessData]:
-        self._model.reload('process_data_map')
-        return [StationProcessData(process_data) for process_data in self._model.process_data_map.values()]
+    ''' Process properties and methods '''
     
-    def get_process_data(self, process_uuid: uuid.UUID) -> StationProcessData:
-        self._model.reload('process_data_map')
-        process_data_model = self._model.process_data_map.get(str(process_uuid))
-        if process_data_model is not None:
-            return StationProcessData(process_data_model)
+    @property
+    def requested_ext_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.requested_ext_procs, ProcessFactory.create_process_from_model)
     
-    def set_process_data(self, process_data: StationProcessData):
-        return self._model.update(**{f"set__process_data_map__{process_data.uuid}":process_data.model})
+    @property
+    def completed_ext_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.completed_ext_procs, ProcessFactory.create_process_from_model)
     
-    def delete_process_data(self, process_uuid: uuid.UUID):
-        self._model.update(**{f"unset__process_data_map__{process_uuid}":True})
-
-    def get_batch_process_uuid(self, batch: Batch) -> uuid.UUID:
-        for process in self.get_all_processes_data():
-            if batch in process.batches:
-                return process.uuid
+    def request_external_process(self, ext_proc: Type[StationProcess]):
+        self.requested_ext_procs.append(ext_proc)
 
     ''' Batches properties and methods '''
 
