@@ -22,11 +22,14 @@ class Optimization_test:
         self._batch_size = self._config_dict['optimizer']['batch_size']
         self._optimization_state = OptimizationState.from_dict(self._config_dict['optimizer'])
         self._optimizer = BayesOptOptimizer(self._optimization_state,  self._config_dict)
-        self._fun_plot()
+        self._find_max()
         self._values_dict = {}
         self._values_dict = self.generate_random_values()
         cummilative_out = []
         iter = 0
+        self._dye_A = []
+        self._dye_B = []
+        self._result = []
 
         while True:
             self.params = {}
@@ -35,7 +38,6 @@ class Optimization_test:
                 self.params[key] = None
             self._find_parameters(self._values_dict)
             self.update_function()
-            cummilative_out.append(self._values_dict['red_intensity'])
             if not iter == 0:
                 within_threshold = self.fitness_function(self._values_dict)
                 if within_threshold:
@@ -46,21 +48,36 @@ class Optimization_test:
             values_from_optimizer = self._optimizer.generate_batch()
             self._values_dict = values_from_optimizer.to_dict(orient='list')
             iter += 1
-        merged_list = []
+        self.plot_list_elements()
+    
 
-        for sublist in cummilative_out:
-            merged_list += sublist
-        self.plot_list_elements(merged_list)
-           
-    def plot_list_elements(self, data_list):
-        x = range(1, len(data_list) + 1)  
-        y = data_list   
-        plt.figure()
-        plt.plot(x, y, marker='o', linestyle='-')
-        plt.xlabel('Index')
-        plt.ylabel('out')
-        plt.title(f'result plot - with max_value:{self._max_value}')
-        plt.grid(False)
+
+    def plot_list_elements(self):
+        dye_A = []
+        dye_B = []
+        result = []
+        for sublist in range(len(self._dye_A)):
+            dye_A.append(sum(self._dye_A[sublist])/len(self._dye_A[sublist]))
+            dye_B.append(sum(self._dye_B[sublist])/len(self._dye_B[sublist]))
+            result.append(sum(self._result[sublist])/len(self._result[sublist]))
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot the surface
+        ax.plot_surface(self._A, self._B, self._Z, cmap='viridis', alpha=0.5)
+        ax.plot(dye_A, dye_B, result, marker='o', linestyle='-', color='b', label='optimizer_data')
+
+        for i in range(len(dye_A) - 1):
+            dx = dye_A[i + 1] - dye_A[i]
+            dy = dye_B[i + 1] - dye_B[i]
+            dz = result[i + 1] - result[i] # z-coordinate where the line plot is located
+            ax.quiver(dye_A[i], dye_B[i], result[i], dx, dy, dz, color='b', arrow_length_ratio=0.03)
+
+        ax.set_xlabel('dye_A')
+        ax.set_ylabel('dye_B')
+        ax.set_zlabel('Z Label')
+        ax.set_title(f'3D Function Plot - with max_value:{self._max_value}')
+        plt.legend()
         plt.show()
 
     
@@ -103,29 +120,23 @@ class Optimization_test:
         dye_B = self.params['dye_B']
         self._values_dict['red_intensity'] = []
         for index in range(len(dye_A)):
-            out = -(2*float((dye_A[index])**2))+ float((dye_B[index])**2)
-            # out = round(m.sqrt(2*float((dye_A[index])**2) + float((dye_B[index])**2) + float((water[index])**2)),2)
-
+            # out = -1*((2*float((dye_A[index])**2))+ float((dye_B[index])**2))
+            out = np.sin(np.sqrt(dye_A[index]**2 + dye_B[index]**2)) * np.cos(dye_A[index] + dye_B[index])
             self._values_dict['red_intensity'].append(out)
 
-    def _fun_plot(self):
-        dye_A = np.linspace(0, 1, 100)
-        dye_B = np.linspace(0, 1, 100)
-        dye_A, dye_B = np.meshgrid(dye_A, dye_B)
-        Z = (2*((dye_A)**2))+ (dye_B)**2
-        self._max_value = np.max(Z)
-        print("max_value", self._max_value)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        self._dye_A.append(dye_A)
+        self._dye_B.append(dye_B)
+        self._result.append(self._values_dict['red_intensity'])
 
-        # Plot the surface
-        ax.plot_surface(dye_A, dye_B, Z, cmap='viridis')
+    def _find_max(self):
+        self._A = np.linspace(-1, 1, 100)
+        self._B = np.linspace(-1, 1, 100)
+        self._A, self._B = np.meshgrid(self._A, self._B)
+        # self._Z = -1*((2*((self._A)**2))+ (self._B)**2)
+        self._Z =np.sin(np.sqrt(self._A**2 + self._B**2)) * np.cos(self._A + self._B)
+        
+        self._max_value = np.max(self._Z)
 
-        # Add labels and title
-        ax.set_xlabel('dye_A')
-        ax.set_ylabel('dye_B')
-        ax.set_zlabel('Z Label')
-        ax.set_title(f'3D Function Plot - with max_value:{self._max_value}')
 
 if __name__ == "__main__":
     connect(db='archemist_opt_test', host='mongodb://localhost:27017', alias='archemist_state')
