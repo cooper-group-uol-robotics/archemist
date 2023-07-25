@@ -10,7 +10,7 @@ from archemist.core.persistence.yaml_handler import YamlHandler
 class BayesOptOptimizer(OptimizerBase):
 
     def __init__(self,
-                 optimization_state,
+                 optimization_state: OptimizationState,
                  config_dict: dict,
                  ):
         """
@@ -21,6 +21,8 @@ class BayesOptOptimizer(OptimizerBase):
             Number of probe points for each iteration during optimization.
         """
         self._optimization_state = optimization_state
+        self._optimizer_module = "bayes_opt.bayesian_optimization"
+        self._optimizer_class = "BayesianOptimization"
         # self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
         self._config_dict = config_dict
         self._probed_points = []
@@ -45,8 +47,8 @@ class BayesOptOptimizer(OptimizerBase):
         """
         Generate model for optimization.
         """
-        module = importlib.import_module(self._optimization_state.optimizer_module)
-        optimizer_class = getattr(module, self._optimization_state.optimizer_class)
+        module = importlib.import_module(self._optimizer_module)
+        optimizer_class = getattr(module, self._optimizer_class)
         return optimizer_class(**self._optimization_state.optimizer_hyperparameters, **kwargs)
 
     def update_model(self, data: pd.DataFrame, **kwargs):

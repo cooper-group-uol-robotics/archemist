@@ -1,6 +1,7 @@
 import pandas as pd
 import yaml
 from archemist.core.persistence.yaml_handler import YamlHandler
+from archemist.core.state.state import State
 from nested_lookup import nested_update
 from pathlib import Path
 import logging
@@ -9,11 +10,10 @@ from typing import Dict
 import time
 
 class RecipeGenerator:
-    def __init__(self, template_path, recipe_path, recipes_watchdog, state) -> None:
+    def __init__(self, template_path: Path, recipe_path: Path, state: State) -> None:
         self._recipe_dict  = YamlHandler.load_recipe_file(template_path)
         self._template_recipe_batch_id = self._recipe_dict["general"]["id"]
         self._new_recipe_path = recipe_path
-        self._recipes_watchdog = recipes_watchdog
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
         self._state = state
@@ -21,7 +21,7 @@ class RecipeGenerator:
         self._queued_recipes_id = []
 
     # Methods
-    def generate_recipe(self, optimised_parameters_data, file_name):
+    def generate_recipe(self, optimised_parameters_data: pd.DataFrame, file_name: str):
         self._new_recipe_file_name = file_name
         self._set_recipe_id()
         _file_path = Path.joinpath(self._new_recipe_path, self._new_recipe_file_name)
@@ -34,7 +34,7 @@ class RecipeGenerator:
         self._write_recipe(recipe_dict, _file_path)
 
     def _set_recipe_id(self):
-        self._queued_recipes = self._recipes_watchdog.recipes_queue
+        self._queued_recipes = self._state.recipes_queue
         if self._queued_recipes:
             for recipe in self._queued_recipes:
                 queued_recipe_dict = YamlHandler.load_recipe_file(recipe)
@@ -50,7 +50,7 @@ class RecipeGenerator:
 
 
     # internal functions
-    def _find_placeholders(self, recipe_dict: Dict):
+    def _find_placeholders(self, recipe_dict: dict):
         if isinstance(recipe_dict, dict):
             for key, value in recipe_dict.items():
                 if isinstance(value, str) and re.search(r"^{{*.*}}$", value):
@@ -74,7 +74,7 @@ class RecipeGenerator:
                 self._placeholder_keys_any[data_type] = []
             self._placeholder_keys_any[data_type].append(_key)
              
-    def _update_recipe(self, recipe_dict: Dict, type, param_dict: Dict):
+    def _update_recipe(self, recipe_dict: dict, type, param_dict: dict):
         if type == 'all':
             placeholder_dict = self._placeholder_keys_all
         elif type == 'any':
@@ -109,7 +109,7 @@ class RecipeGenerator:
                         pass
         return recipe_dict    
 
-    def _write_recipe(self, recipe_dict: Dict, path):
+    def _write_recipe(self, recipe_dict: dict, path):
         with open(path, 'w') as file:
             yaml.dump(recipe_dict, file, default_flow_style=None)
             time.sleep(1)

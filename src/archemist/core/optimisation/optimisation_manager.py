@@ -4,6 +4,7 @@ from optimiser_base import OptimizerBase
 from bayesopt_optimiser import BayesOptOptimizer
 from optimisation_handler import OptimizationHandler
 from archemist.core.state.optimisation_state import OptimizationState
+from archemist.core.state.state import State
 from archemist.core.persistence.object_factory import OptimizationFactory
 from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
@@ -13,18 +14,16 @@ import importlib
 
 class OptimisationManager():
 
-    def __init__(self, workflow_dir: str, recipes_watchdog, state) -> None:
+    def __init__(self, workflow_dir: str, state: State) -> None:
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         self._recipes_dir = Path.joinpath(workflow_dir, "recipes")
-        self._recipes_watchdog = recipes_watchdog
-        
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
         self._opt_update_dict = self._config_dict['optimizer']['optimizer_update_dict']
         self._recipe_name = self._config_dict['experiment']['recipe_name']
         self._template_dir = Path.joinpath(self._recipes_dir, f"template/{self._recipe_name}_template.yaml")
         self._state = state
         
-        self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir, self._recipes_watchdog, self._state)
+        self._recipe_generator = RecipeGenerator(self._template_dir, self._recipes_dir, self._state)
 
         # optimization constructor
         self._construct_optimizer_from_config_file(self._config_dict)
@@ -60,17 +59,4 @@ class OptimisationManager():
     def _is_recipe_dir_empty(self):
         directory = Path(self._recipes_dir)
         return not any(directory.iterdir())
-    
 
-
-if __name__ == '__main__':
-    cwd_path = Path.cwd()
-    print(cwd_path)
-    workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
-    recipes_dir_path = Path.joinpath(workflow_dir, "recipes")
-    recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
-    recipes_watchdog.start()
-    host = 'mongodb://localhost:27017'
-    pm = PersistenceManager(host, 'algae_bot_workflow')
-    _state = pm.construct_state_from_db()
-    opt_mgr = OptimisationManager(workflow_dir, recipes_watchdog, _state)

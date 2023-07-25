@@ -1,8 +1,8 @@
 experiment:
   components:  # list of optimization features and bounds
-    water:
-      upper_bound: 50.0
-      lower_bound: 1.0
+    # water:
+    #   upper_bound: 50.0
+    #   lower_bound: 1.0
     dye_A:
       upper_bound: 1.00
       lower_bound: 0.00
@@ -11,10 +11,8 @@ experiment:
       lower_bound: 0.00
   recipe_name: algae_bot_recipe
 optimizer:
-  module: bayes_opt.bayesian_optimization  # optimizer module
-  class: BayesianOptimization  # optimizer class
-  Optimizer_wrapper_module: bayesopt_optimiser
-  Optimizer_wrapper_class: BayesOptOptimizer
+  module: bayesopt_optimiser  # optimizer module
+  class: BayesOptOptimizer  # optimizer class
   hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
   additional_args:
   max_recipe_count: 3

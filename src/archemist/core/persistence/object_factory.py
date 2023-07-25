@@ -149,9 +149,9 @@ class StationFactory:
 
 class OptimizationFactory:
     @staticmethod
-    def create_from_dict(optimization_state: OptimizationState, config_dict: Dict ) -> OptimizationState:
-        wrapper_module = importlib.import_module(optimization_state.optimizer_wrapper_module)
-        wrapper_class = getattr(wrapper_module, optimization_state.optimizer_wrapper_class)
-        return wrapper_class(optimization_state, config_dict)
+    def create_from_dict(optimization_state: OptimizationState, config_dict: dict ) -> OptimizationState:
+        module = importlib.import_module(optimization_state.optimizer_module)
+        cls = getattr(module, optimization_state.optimizer_class)
+        return cls(optimization_state, config_dict)
 
 

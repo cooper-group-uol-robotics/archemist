@@ -10,6 +10,8 @@ from pathlib import Path
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 class Optimization_test:
     def __init__(self) -> None:
@@ -20,6 +22,7 @@ class Optimization_test:
         self._batch_size = self._config_dict['optimizer']['batch_size']
         self._optimization_state = OptimizationState.from_dict(self._config_dict['optimizer'])
         self._optimizer = BayesOptOptimizer(self._optimization_state,  self._config_dict)
+        self._fun_plot()
         self._values_dict = {}
         self._values_dict = self.generate_random_values()
         cummilative_out = []
@@ -32,17 +35,15 @@ class Optimization_test:
                 self.params[key] = None
             self._find_parameters(self._values_dict)
             self.update_function()
+            cummilative_out.append(self._values_dict['red_intensity'])
             if not iter == 0:
-                within_threshold = self.fitness_function(self._values_dict, self._prev_values_dict)
+                within_threshold = self.fitness_function(self._values_dict)
                 if within_threshold:
                     break
-            cummilative_out.append(self._values_dict['red_intensity'])
+
             result_data_pd = pd.DataFrame(self._values_dict)
             self._optimizer.update_model(result_data_pd)
             values_from_optimizer = self._optimizer.generate_batch()
-            print(f'batch_{iter+1}: \n', values_from_optimizer)
-            print("values_dict", self._values_dict)
-            self._prev_values_dict = self._values_dict
             self._values_dict = values_from_optimizer.to_dict(orient='list')
             iter += 1
         merged_list = []
@@ -50,23 +51,23 @@ class Optimization_test:
         for sublist in cummilative_out:
             merged_list += sublist
         self.plot_list_elements(merged_list)
-
-                
+           
     def plot_list_elements(self, data_list):
         x = range(1, len(data_list) + 1)  
-        y = data_list  
+        y = data_list   
+        plt.figure()
         plt.plot(x, y, marker='o', linestyle='-')
         plt.xlabel('Index')
         plt.ylabel('out')
-        plt.title('Plot of result Elements')
+        plt.title(f'result plot - with max_value:{self._max_value}')
         plt.grid(False)
         plt.show()
 
     
-    def fitness_function(self, current_values_dict, prev_values_dict):
+    def fitness_function(self, current_values_dict):
         current_mean = sum(current_values_dict['red_intensity'])/len(current_values_dict['red_intensity'])
-        prev_mean = sum(prev_values_dict['red_intensity'])/len(prev_values_dict['red_intensity'])
-        if abs(prev_mean - current_mean) < 0.01:
+        print("current_mean", current_mean)
+        if abs(self._max_value - current_mean) < 0.0001:
             return True
         else:
             return False
@@ -81,11 +82,10 @@ class Optimization_test:
                 _val = round(_val,2)
                 random_values[key].append(_val)
         return random_values
-
     
-    def _find_parameters(self, recipe_dict: Dict):
-        if isinstance(recipe_dict, dict):
-            for key, value in recipe_dict.items():
+    def _find_parameters(self, value_dict: dict):
+        if isinstance(value_dict, dict):
+            for key, value in value_dict.items():
                 if key == 'dye_A':
                     self.params[key] = value
                 elif key == 'dye_B':
@@ -94,21 +94,39 @@ class Optimization_test:
                     self.params[key] = value
                 else:
                     self._find_parameters(value)
-        elif isinstance(recipe_dict, list):
-            for item in recipe_dict:
+        elif isinstance(value_dict, list):
+            for item in value_dict:
                 self._find_parameters(item)
 
     def update_function(self) -> Dict:
         dye_A = self.params['dye_A']
         dye_B = self.params['dye_B']
-        water = self.params['water']
         self._values_dict['red_intensity'] = []
         for index in range(len(dye_A)):
-            out = round(m.sqrt(2*float((dye_A[index])**2) + float((dye_B[index])**2) + float(49/(water[index])**2)),2)
+            out = -(2*float((dye_A[index])**2))+ float((dye_B[index])**2)
             # out = round(m.sqrt(2*float((dye_A[index])**2) + float((dye_B[index])**2) + float((water[index])**2)),2)
 
             self._values_dict['red_intensity'].append(out)
-        
+
+    def _fun_plot(self):
+        dye_A = np.linspace(0, 1, 100)
+        dye_B = np.linspace(0, 1, 100)
+        dye_A, dye_B = np.meshgrid(dye_A, dye_B)
+        Z = (2*((dye_A)**2))+ (dye_B)**2
+        self._max_value = np.max(Z)
+        print("max_value", self._max_value)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot the surface
+        ax.plot_surface(dye_A, dye_B, Z, cmap='viridis')
+
+        # Add labels and title
+        ax.set_xlabel('dye_A')
+        ax.set_ylabel('dye_B')
+        ax.set_zlabel('Z Label')
+        ax.set_title(f'3D Function Plot - with max_value:{self._max_value}')
+
 if __name__ == "__main__":
     connect(db='archemist_opt_test', host='mongodb://localhost:27017', alias='archemist_state')
     Optimization_test()
