@@ -121,9 +121,9 @@ class Optimization_test:
         dye_B = self.params['dye_B']
         self._values_dict['red_intensity'] = []
         for index in range(len(dye_A)):
-            # out = -1*((2*float((dye_A[index])**2))+ float((dye_B[index])**2))
+            out = -1*((float((dye_A[index])**2))+ float((dye_B[index])**2))
             # out = np.sin(np.sqrt(dye_A[index]**2 + dye_B[index]**2)) * np.cos(dye_A[index] + dye_B[index])
-            out = 100*(np.sqrt(abs(dye_B[index] - 0.01*(dye_A[index]**2)))+(0.01*abs(dye_A[index]+10))) # Bukin Function N. 6
+            # out = 100*(np.sqrt(abs(dye_B[index] - 0.01*(dye_A[index]**2)))+(0.01*abs(dye_A[index]+10))) # Bukin Function N. 6
             # out = ((np.cos(np.sin(np.abs((dye_A[index])**2 - (dye_B[index])**2)))**2 - 0.5) / ((1 + 0.001 * ((dye_A[index])**2 + (dye_B[index])**2))**2) + 0.5 ) # schaffer function 
         
 
@@ -137,9 +137,9 @@ class Optimization_test:
         self._A = np.linspace(0, 1, 100)
         self._B = np.linspace(0, 1, 100)
         self._A, self._B = np.meshgrid(self._A, self._B)
-        # self._Z = -1*((2*((self._A)**2))+ (self._B)**2)
+        self._Z = -1*((((self._A)**2))+ (self._B)**2)
         # self._Z =np.sin(np.sqrt(self._A**2 + self._B**2)) * np.cos(self._A + self._B)
-        self._Z = 100*(np.sqrt(abs((self._B) - 0.01*(self._A**2)))+(0.01*abs(self._A+10))) # Bukin Function N. 6
+        # self._Z = 100*(np.sqrt(abs((self._B) - 0.01*(self._A**2)))+(0.01*abs(self._A+10))) # Bukin Function N. 6
         # self._Z = ((np.cos(np.sin(np.abs((self._A)**2 - (self._B)**2)))**2 - 0.5) / ((1 + 0.001 * ((self._A)**2 + (self._B)**2))**2) + 0.5 )# schaffer function 
         
         self._max_value = np.max(self._Z)
