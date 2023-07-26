@@ -1,6 +1,6 @@
 import unittest
 from archemist.core.persistence.object_factory import OptimizationFactory
-from archemist.core.state.optimisation_state import OptimizationState
+from archemist.core.optimisation.optimisation_records import OptimizationRecords
 from mongoengine import connect
 from pathlib import Path
 import yaml
@@ -21,9 +21,9 @@ class OptimiserTest(unittest.TestCase):
         plotting_required = True
         with open(config_file, 'r') as fs:
             config_dict = yaml.load(fs, Loader=yaml.SafeLoader)
-        opt_state = OptimizationState.from_dict(config_dict['optimizer'])
+        opt_state = OptimizationRecords.from_dict(config_dict)
 
-        optimizer = OptimizationFactory.create_from_dict(opt_state,config_dict)
+        optimizer = OptimizationFactory.create_from_records(opt_state)
         def calc_intensity(dye_A: float, dye_B: float):
             return round(-1*math.sqrt(dye_A**2 + dye_B**2))
 
@@ -52,6 +52,7 @@ class OptimiserTest(unittest.TestCase):
             
             # fitness check
             mean_red_intensity = sum(input_vals['red_intensity'])/len(input_vals['red_intensity'])
+            print(i)
             if abs(max_red_intensity - mean_red_intensity) < 0.01:
                 break
             self.assertEqual(input_vals.shape, (6,3))
@@ -68,7 +69,7 @@ class OptimiserTest(unittest.TestCase):
             red_intensity = -1*np.sqrt(dye_A**2 + dye_B**2)
             max_red_intensity = np.max(red_intensity)
 
-            
+
 
 if __name__ == "__main__":
     unittest.main()

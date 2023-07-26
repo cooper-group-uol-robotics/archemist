@@ -1,0 +1,7 @@
+# ============ Server Settings ============
+#
+# db_name: the name of the database inside mongodb that will be used to store
+#          workflow state and data
+# mongodb_host: mongodb host connection URI
+db_name: 'algae_bot_workflow'
+mongodb_host: 'mongodb://localhost:27017'

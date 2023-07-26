@@ -14,7 +14,7 @@ class OptimizationHandler:
         self._objective_variable = optimization_records.objective_variable
         self._state = state
         self._recipe_generator = recipe_generator
-        self._is_initial_run = self._is_recipe_dir_empty()
+        self._is_initial_run = recipe_generator.is_recipe_dir_empty()
 
         self._optimized_values = []
         self._watch_optimization_thread = Thread(target=self.watch_batch_complete())
@@ -51,9 +51,5 @@ class OptimizationHandler:
     def start(self):
         self._watch_optimization_thread.start()
         self._watch_recipe_thread.start()
-
-    def _is_recipe_dir_empty(self):
-        directory = Path(self._recipes_dir)
-        return not any(directory.iterdir())
 
         

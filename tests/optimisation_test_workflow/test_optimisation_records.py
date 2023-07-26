@@ -12,7 +12,7 @@ class OptimisationRecordsTest(unittest.TestCase):
 
     def test_optimisation_state(self):
         # construct optimisation_state
-        workflow_dir = Path(".")
+        workflow_dir = Path.cwd()
         config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         config_dict = {}
         with open(config_file, 'r') as fs:

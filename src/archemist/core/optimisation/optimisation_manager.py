@@ -8,9 +8,9 @@ from pathlib import Path
 
 class OptimisationManager():
 
-    def __init__(self, workflow_dir: str, state: State) -> None:
+    def __init__(self, workflow_dir: Path, state: State) -> None:
         # construct optimisation state
-        config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
+        config_file = workflow_dir.joinpath("config_files/optimization_config.yaml")
         config_dict = YamlHandler.loadYamlFile(config_file)
         self._optimization_records = OptimizationRecords.from_dict(config_dict)
 
@@ -19,10 +19,10 @@ class OptimisationManager():
 
         # construct recipe generator
         self._state = state
-        recipes_dir = Path.joinpath(workflow_dir, "recipes")
+        recipes_dir = workflow_dir.joinpath("recipes")
         template_name = self._optimization_records.recipe_template_name
-        template_dir = Path.joinpath(recipes_dir, f"template/{template_name}.yaml")
-        self._recipe_generator = RecipeGenerator(template_dir, recipes_dir, self._state)
+        template_dir = recipes_dir.joinpath(f"template/{template_name}.yaml")
+        self._recipe_generator = RecipeGenerator(template_dir, recipes_dir, self._optimization_records.generated_recipes_prefix, self._state)
             
         # construct handler
         self._handler = OptimizationHandler(self._optimizer, self._optimization_records, self._state, self._recipe_generator)

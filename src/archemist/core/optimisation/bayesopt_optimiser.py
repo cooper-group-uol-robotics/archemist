@@ -5,7 +5,7 @@ from bayes_opt.bayesian_optimization import BayesianOptimization
 
 class BayesOptOptimizer(OptimizerBase):
 
-    def __init__(self, **kwargs):
+    def __init__(self, args_dict: dict):
         """
 
         :param config_file:
@@ -13,9 +13,9 @@ class BayesOptOptimizer(OptimizerBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        self._hyperparameters = kwargs["hyperparameters"]
-        self._batch_size = kwargs['batch_size']
-        self._components = kwargs['components']
+        self._hyperparameters = args_dict["hyperparameters"]
+        self._batch_size = args_dict['batch_size']
+        self._components = args_dict['components']
         
         self._probed_points = []
         self._target_name = None
