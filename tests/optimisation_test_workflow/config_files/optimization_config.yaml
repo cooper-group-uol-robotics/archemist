@@ -20,7 +20,7 @@ optimizer:
       fields: [dispense_info]
   hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
   recipe_template_name: algae_bot_recipe_template
-  generated_recipes_suffix: algae_bot_recipe
+  generated_recipes_prefix: algae_bot_recipe
   additional_args:
   max_recipe_count: 3
   batch_size: 6

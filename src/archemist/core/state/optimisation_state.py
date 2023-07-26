@@ -17,6 +17,8 @@ class OptimizationState:
         model.objective_variable = {obj_var_dict["station_op"]: obj_var_dict["field"]}
         decision_var_list = state_dict["decision_variables"]
         model.decision_variables = [{decision_var["station_op"]: decision_var["fields"]} for decision_var in decision_var_list]
+        model.recipe_template_name = state_dict['recipe_template_name']
+        model.generated_recipes_prefix = state_dict['generated_recipes_prefix']
         model.save()
         return cls(model)
 
@@ -45,8 +47,8 @@ class OptimizationState:
         return self._model.recipe_template_name
     
     @property
-    def generated_recipes_suffix(self) -> str:
-        return self._model.generated_recipes_suffix
+    def generated_recipes_prefix(self) -> str:
+        return self._model.generated_recipes_prefix
 
     @property
     def max_recipe_count(self) -> int:
