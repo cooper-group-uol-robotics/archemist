@@ -2,17 +2,16 @@ import time
 from pathlib import Path
 from threading import Thread
 import pandas as pd
-from datetime import datetime
-from archemist.core.state.optimisation_state import OptimizationState
+from archemist.core.optimisation.optimisation_records import OptimizationRecords
 from archemist.core.optimisation.bayesopt_optimiser import BayesOptOptimizer
 from archemist.core.state.state import State
 from archemist.core.optimisation.recipe_generator import RecipeGenerator
 
 class OptimizationHandler:
-    def __init__(self, optimizer: BayesOptOptimizer, optimization_state:OptimizationState, state: State, recipe_generator:RecipeGenerator) -> None:
+    def __init__(self, optimizer: BayesOptOptimizer, optimization_records: OptimizationRecords, state: State, recipe_generator:RecipeGenerator) -> None:
         self._optimizer = optimizer
-        self._optimization_state = optimization_state
-        self._objective_variable = optimization_state.objective_variable
+        self._optimization_records = optimization_records
+        self._objective_variable = optimization_records.objective_variable
         self._state = state
         self._recipe_generator = recipe_generator
         self._is_initial_run = self._is_recipe_dir_empty()
@@ -27,11 +26,11 @@ class OptimizationHandler:
         # update optimisation data
         completed_batches = self._state.get_completed_batches()
         for batch in completed_batches:
-            if batch not in self._optimization_state.batches_seen:
+            if batch not in self._optimization_records.batches_seen:
                 result_data_dict = batch.extract_samples_op_data(self._objective_variable)
                 result_data_pd = pd.DataFrame(result_data_dict)
                 self._optimizer.update_model(result_data_pd)
-                self._optimization_state.batches_seen.append(batch.id)
+                self._optimization_records.batches_seen.append(batch.id)
 
 
     def watch_recipe_queue(self):
@@ -40,7 +39,7 @@ class OptimizationHandler:
         # the new recipes are created based on the recipe_generator 
         recipes_buffer = self._state.recipes_queue
         if len(recipes_buffer) == 0:
-            for _ in range(self._optimization_state.max_recipe_count):
+            for _ in range(self._optimization_records.max_recipe_count):
                 if self._is_initial_run:
                     _optimized_values = self._optimizer.generate_random_values()
                     self._is_initial_run = False

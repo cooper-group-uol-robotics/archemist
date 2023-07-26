@@ -1,18 +1,11 @@
 import pandas as pd
-import importlib
 from archemist.core.optimisation.optimiser_base import OptimizerBase
 import random
-from archemist.core.state.optimisation_state import OptimizationState
-from archemist.core.persistence.object_factory import OptimizationFactory
-from pathlib import Path
-from archemist.core.persistence.yaml_handler import YamlHandler
+from bayes_opt.bayesian_optimization import BayesianOptimization
 
 class BayesOptOptimizer(OptimizerBase):
 
-    def __init__(self,
-                 optimization_state: OptimizationState,
-                 config_dict: dict,
-                 ):
+    def __init__(self, **kwargs):
         """
 
         :param config_file:
@@ -20,17 +13,15 @@ class BayesOptOptimizer(OptimizerBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        self._optimization_state = optimization_state
-        self._optimizer_module = "bayes_opt.bayesian_optimization"
-        self._optimizer_class = "BayesianOptimization"
-        # self._optimization_model = OptimizationFactory.create_from_dict(config_dict['optimizer'])
-        self._config_dict = config_dict
+        self._hyperparameters = kwargs["hyperparameters"]
+        self._batch_size = kwargs['batch_size']
+        self._components = kwargs['components']
+        
         self._probed_points = []
         self._target_name = None
-        self._batch_size = self._config_dict['optimizer']['batch_size']
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
-        self.model = self.generate_model(f=None, pbounds=bound)
+        self.model = self._generate_model(f=None, pbounds=bound)
 
     def _generate_bound_from_config(self):
         """
@@ -38,18 +29,15 @@ class BayesOptOptimizer(OptimizerBase):
         This constraint format is for bayes_opt package.
         """
         constraint = {}
-        for key in self._config_dict['experiment']['components']:
-            constraint[key] = (self._config_dict['experiment']['components'][key]['lower_bound'],
-                               self._config_dict['experiment']['components'][key]['upper_bound'])
+        for component, bounds in self._components.items():
+            constraint[component] = (bounds['lower_bound'], bounds['upper_bound'])
         return constraint
 
-    def generate_model(self, **kwargs):
+    def _generate_model(self, **kwargs):
         """
         Generate model for optimization.
         """
-        module = importlib.import_module(self._optimizer_module)
-        optimizer_class = getattr(module, self._optimizer_class)
-        return optimizer_class(**self._optimization_state.optimizer_hyperparameters, **kwargs)
+        return BayesianOptimization(**self._hyperparameters, **kwargs)
 
     def update_model(self, data: pd.DataFrame, **kwargs):
         """
@@ -99,13 +87,12 @@ class BayesOptOptimizer(OptimizerBase):
     def generate_random_values(self):
         # fenerate random pd frame from config file
         random_values = {}
-        for key in self._config_dict['experiment']['components']:
-            random_values[key] = []
+        for component, bounds in self._components.items():
+            random_values[component] = []
             for element in range(self._batch_size):
-                _val = random.uniform(self._config_dict['experiment']['components'][key]['lower_bound'],
-                               self._config_dict['experiment']['components'][key]['upper_bound'])
+                _val = random.uniform(bounds['lower_bound'], bounds['upper_bound'])
                 _val = round(_val,2)
-                random_values[key].append(_val)
+                random_values[component].append(_val)
         random_values = pd.DataFrame.from_dict(random_values)
         return random_values
 
