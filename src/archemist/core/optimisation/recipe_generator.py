@@ -10,24 +10,23 @@ from typing import Dict
 import time
 
 class RecipeGenerator:
-    def __init__(self, template_path: Path, recipe_path: Path, gen_recipes_suffix: str, state: State) -> None:
+    def __init__(self, template_path: Path, recipe_path: Path, gen_recipes_prefix: str, state: State) -> None:
         if not template_path.is_file():
             raise Exception('template file is missing')
         
         self._template_recipe_dict  = YamlHandler.load_recipe_file(template_path)
         self._new_recipe_path = recipe_path
-        self._gen_recipe_name_suffix = gen_recipes_suffix
+        self._gen_recipe_name_prefix = gen_recipes_prefix
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
         self._state = state
         self._find_placeholders(self._template_recipe_dict)
         self._current_recipe_id = self._find_max_recipe_id()
-        self._queued_recipes_id = []
 
     # Methods
     def generate_recipe(self, optimised_parameters_data: pd.DataFrame):
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        file_name = f"{self._gen_recipe_name_suffix}_{timestamp}.yaml"
+        file_name = f"{self._gen_recipe_name_prefix}_{timestamp}.yaml"
         _file_path = Path.joinpath(self._new_recipe_path, file_name)
         optimised_parameters_dict = optimised_parameters_data.to_dict()
         recipe_dict = self._template_recipe_dict
@@ -38,6 +37,7 @@ class RecipeGenerator:
         if self._placeholder_keys_all:
             recipe_dict = self._update_recipe(recipe_dict, 'all', optimised_parameters_dict)
         self._write_recipe(recipe_dict, _file_path)
+        return recipe_dict
 
     # internal functions
     def _find_placeholders(self, recipe_dict: dict):
@@ -58,11 +58,13 @@ class RecipeGenerator:
         if out_type == "all":
             if not data_type in self._placeholder_keys_all:
                 self._placeholder_keys_all[data_type] = []
-            self._placeholder_keys_all[data_type].append(_key)
+            if _key not in self._placeholder_keys_all[data_type]:
+                self._placeholder_keys_all[data_type].append(_key)
         elif out_type == "any":
             if not data_type in self._placeholder_keys_any:
                 self._placeholder_keys_any[data_type] = []
-            self._placeholder_keys_any[data_type].append(_key)
+            if _key not in self._placeholder_keys_any[data_type]:
+                self._placeholder_keys_any[data_type].append(_key)
              
     def _update_recipe(self, recipe_dict: dict, type: str, param_dict: dict):
         if type == 'all':
