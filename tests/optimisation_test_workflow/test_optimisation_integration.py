@@ -6,6 +6,7 @@ from archemist.stations.input_station.state import InputStationPickupOp
 from archemist.stations.chemspeed_flex_station.state import CSCSVJobOpDescriptor
 from archemist.stations.lightbox_station.state import SampleColorOpDescriptor
 from archemist.stations.output_station.state import OutputStationPlaceOp
+from archemist.core.optimisation.optimisation_manager import OptimisationManager
 
 from pathlib import Path
 import time
@@ -40,6 +41,9 @@ else:
 workflow_mgr = WorkflowManager(state)
 recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
 recipes_watchdog.start()
+
+opt_manager = OptimisationManager(str(workflow_dir.absolute()), state)
+opt_manager.start_optimisation()
 
 while True:
     # queue newly added recipes

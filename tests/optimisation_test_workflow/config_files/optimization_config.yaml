@@ -21,8 +21,5 @@ optimizer:
   hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
   recipe_template_name: algae_bot_recipe_template
   generated_recipes_prefix: algae_bot_recipe
-  additional_args:
   max_recipe_count: 3
   batch_size: 6
-  optimizer_update_dict: {'CSCSVJobOpDescriptor':{'dispense_info':{}},
-            'SampleColorOpDescriptor': {'red_intensity': ''}}
