@@ -9,11 +9,18 @@ experiment:
     dye_B:
       upper_bound: 1.00
       lower_bound: 0.00
-  recipe_name: algae_bot_recipe
 optimizer:
   module: bayesopt_optimiser  # optimizer module
   class: BayesOptOptimizer  # optimizer class
+  objective_variable: 
+    station_op: SampleColorOpDescriptor
+    field: red_intensity
+  decision_variables: 
+    - station_op: CSCSVJobOpDescriptor
+      fields: [dispense_info]
   hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
+  recipe_template_name: algae_bot_recipe_template
+  generated_recipes_suffix: algae_bot_recipe
   additional_args:
   max_recipe_count: 3
   batch_size: 6

@@ -4,40 +4,34 @@ from threading import Thread
 import pandas as pd
 from datetime import datetime
 from archemist.core.state.optimisation_state import OptimizationState
-from bayesopt_optimiser import BayesOptOptimizer
+from archemist.core.optimisation.bayesopt_optimiser import BayesOptOptimizer
 from archemist.core.state.state import State
-from recipe_generator import RecipeGenerator
+from archemist.core.optimisation.recipe_generator import RecipeGenerator
 
 class OptimizationHandler:
-    def __init__(self, recipe_dir, max_recipe_count, optimizer: BayesOptOptimizer, optimization_state:OptimizationState, state: State, recipe_name, opt_update_dict: dict, recipe_generator:RecipeGenerator) -> None:
-        self._recipe_path = recipe_dir
-        self._recipe_name = recipe_name
-        self._result_path = Path.joinpath(self._recipe_path, "result")
-        self._max_number_of_recipes = max_recipe_count
+    def __init__(self, optimizer: BayesOptOptimizer, optimization_state:OptimizationState, state: State, recipe_generator:RecipeGenerator) -> None:
         self._optimizer = optimizer
         self._optimization_state = optimization_state
-        self._opt_update_dict = opt_update_dict
+        self._objective_variable = optimization_state.objective_variable
         self._state = state
-        self._optimized_values = []
         self._recipe_generator = recipe_generator
-        
+        self._is_initial_run = self._is_recipe_dir_empty()
 
-    def update_optimisation_data(self, _values_from_optimizer: pd.DataFrame):
-        self._optimized_values = _values_from_optimizer
+        self._optimized_values = []
+        self._watch_optimization_thread = Thread(target=self.watch_batch_complete())
+        self._watch_recipe_thread = Thread(target=self.watch_recipe_queue())
 
     def watch_batch_complete(self):
         # get completed batches using the function get_completed_batches from state.py
         # send it to optimisation base and
         # update optimisation data
         completed_batches = self._state.get_completed_batches()
-        batch_ids = []
         for batch in completed_batches:
             if batch not in self._optimization_state.batches_seen:
-                result_data_dict = batch.extract_samples_op_data(self._opt_update_dict)
+                result_data_dict = batch.extract_samples_op_data(self._objective_variable)
                 result_data_pd = pd.DataFrame(result_data_dict)
                 self._optimizer.update_model(result_data_pd)
-                batch_ids.append(batch.id)
-        self._optimization_state.batches_seen.extend(batch_ids)
+                self._optimization_state.batches_seen.append(batch.id)
 
 
     def watch_recipe_queue(self):
@@ -46,15 +40,21 @@ class OptimizationHandler:
         # the new recipes are created based on the recipe_generator 
         recipes_buffer = self._state.recipes_queue
         if len(recipes_buffer) == 0:
-            for recipe in range(self._max_number_of_recipes):
-                recipe_name = f'{self._recipe_name}_{datetime.now()}.yaml'
-                self._recipe_generator.generate_recipe(self._optimized_values[recipe], recipe_name)
+            for _ in range(self._optimization_state.max_recipe_count):
+                if self._is_initial_run:
+                    _optimized_values = self._optimizer.generate_random_values()
+                    self._is_initial_run = False
+                else:
+                    _optimized_values = self._optimizer.generate_batch()
+                self._recipe_generator.generate_recipe(_optimized_values)
                 time.sleep(1)
 
     def start(self):
-        self._watch_optimization_thread = Thread(target=self.watch_batch_complete())
-        self._watch_recipe_thread = Thread(target=self.watch_recipe_queue())
         self._watch_optimization_thread.start()
         self._watch_recipe_thread.start()
+
+    def _is_recipe_dir_empty(self):
+        directory = Path(self._recipes_dir)
+        return not any(directory.iterdir())
 
         

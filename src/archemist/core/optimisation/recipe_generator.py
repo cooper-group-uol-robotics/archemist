@@ -10,44 +10,34 @@ from typing import Dict
 import time
 
 class RecipeGenerator:
-    def __init__(self, template_path: Path, recipe_path: Path, state: State) -> None:
-        self._recipe_dict  = YamlHandler.load_recipe_file(template_path)
-        self._template_recipe_batch_id = self._recipe_dict["general"]["id"]
+    def __init__(self, template_path: Path, recipe_path: Path, gen_recipes_suffix: str, state: State) -> None:
+        if not template_path.is_file():
+            raise Exception('template file is missing')
+        
+        self._template_recipe_dict  = YamlHandler.load_recipe_file(template_path)
         self._new_recipe_path = recipe_path
+        self._gen_recipe_name_suffix = gen_recipes_suffix
         self._placeholder_keys_all = {}
         self._placeholder_keys_any = {}
         self._state = state
-        self._find_placeholders(self._recipe_dict)
+        self._find_placeholders(self._template_recipe_dict)
+        self._current_recipe_id = self._find_max_recipe_id()
         self._queued_recipes_id = []
 
     # Methods
-    def generate_recipe(self, optimised_parameters_data: pd.DataFrame, file_name: str):
-        self._new_recipe_file_name = file_name
-        self._set_recipe_id()
-        _file_path = Path.joinpath(self._new_recipe_path, self._new_recipe_file_name)
+    def generate_recipe(self, optimised_parameters_data: pd.DataFrame):
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        file_name = f"{self._gen_recipe_name_suffix}_{timestamp}.yaml"
+        _file_path = Path.joinpath(self._new_recipe_path, file_name)
         optimised_parameters_dict = optimised_parameters_data.to_dict()
-        recipe_dict = self._recipe_dict
+        recipe_dict = self._template_recipe_dict
+        self._current_recipe_id += 1
+        recipe_dict["general"]["id"] = self._current_recipe_id
         if self._placeholder_keys_any:
             recipe_dict = self._update_recipe(recipe_dict,'any', optimised_parameters_dict)
         if self._placeholder_keys_all:
             recipe_dict = self._update_recipe(recipe_dict, 'all', optimised_parameters_dict)
         self._write_recipe(recipe_dict, _file_path)
-
-    def _set_recipe_id(self):
-        self._queued_recipes = self._state.recipes_queue
-        if self._queued_recipes:
-            for recipe in self._queued_recipes:
-                queued_recipe_dict = YamlHandler.load_recipe_file(recipe)
-                if queued_recipe_dict["general"]["id"] not in self._queued_recipes_id:
-                    self._queued_recipes_id.append(queued_recipe_dict["general"]["id"])
-            self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
-        else:
-            if not self._queued_recipes_id:
-                self._queued_recipes_id.append(self._template_recipe_batch_id)
-                self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)
-            else:
-                self._recipe_dict["general"]["id"] = max(self._queued_recipes_id)+1
-
 
     # internal functions
     def _find_placeholders(self, recipe_dict: dict):
@@ -74,7 +64,7 @@ class RecipeGenerator:
                 self._placeholder_keys_any[data_type] = []
             self._placeholder_keys_any[data_type].append(_key)
              
-    def _update_recipe(self, recipe_dict: dict, type, param_dict: dict):
+    def _update_recipe(self, recipe_dict: dict, type: str, param_dict: dict):
         if type == 'all':
             placeholder_dict = self._placeholder_keys_all
         elif type == 'any':
@@ -113,4 +103,10 @@ class RecipeGenerator:
         with open(path, 'w') as file:
             yaml.dump(recipe_dict, file, default_flow_style=None)
             time.sleep(1)
+
+    def _find_max_recipe_id(self) -> int:
+        if len(self._state.recipes) > 0:
+            return max(recipe.id for recipe in self._state.recipes)
+        else:
+            return 1
 

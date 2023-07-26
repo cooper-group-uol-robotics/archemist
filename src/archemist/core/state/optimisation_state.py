@@ -1,5 +1,5 @@
+from typing import Dict, List
 from archemist.core.models.optimisation_model import OptimisationModel
-from archemist.core.state.batch import Batch
 
 
 class OptimizationState:
@@ -7,12 +7,16 @@ class OptimizationState:
         self._model = optimization_model
 
     @classmethod
-    def from_dict(cls, state_dict: dict = {}):
+    def from_dict(cls, state_dict: dict):
         model = OptimisationModel()
         model.optimizer_module = state_dict['module']
         model.optimizer_class = state_dict['class']
         model.optimizer_hyperparameters = state_dict['hyperparameters']
-        model.max_recipe_count = state_dict['max_recipe_count']  # todo: what is this?
+        model.max_recipe_count = state_dict['max_recipe_count']
+        obj_var_dict = state_dict["objective_variable"]
+        model.objective_variable = {obj_var_dict["station_op"]: obj_var_dict["field"]}
+        decision_var_list = state_dict["decision_variables"]
+        model.decision_variables = [{decision_var["station_op"]: decision_var["fields"]} for decision_var in decision_var_list]
         model.save()
         return cls(model)
 
@@ -25,15 +29,31 @@ class OptimizationState:
         return self._model.optimizer_class
     
     @property
-    def optimizer_hyperparameters(self):
+    def objective_variable(self) -> Dict[str, str]:
+        return self._model.objective_variable
+    
+    @property
+    def decision_variables(self) -> List[Dict[str, str]]:
+        return self._model.decision_variables
+    
+    @property
+    def optimizer_hyperparameters(self) -> Dict:
         return self._model.optimizer_hyperparameters
+    
+    @property
+    def recipe_template_name(self) -> str:
+        return self._model.recipe_template_name
+    
+    @property
+    def generated_recipes_suffix(self) -> str:
+        return self._model.generated_recipes_suffix
 
     @property
     def max_recipe_count(self) -> int:
         return self._model.max_recipe_count
     
     @property
-    def batches_seen(self) -> list:
+    def batches_seen(self) -> List[int]:
         self._model.reload('batches_seen')
         return self._model.batches_seen
     

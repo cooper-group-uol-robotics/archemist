@@ -1,17 +1,14 @@
 from mongoengine import connect, Document, fields
-from archemist.core.models.batch_model import BatchModel
-
-connect('algae_bot_workflow', host='127.0.0.1', port=27017)
-
 
 class OptimisationModel(Document):
     optimizer_module = fields.StringField(required=True)
     optimizer_class = fields.StringField(required=True)
-    optimizer_hyperparameters = fields.DictField()
+    objective_variable = fields.DictField(required=True)
+    decision_variables = fields.ListField(required=True)
+    optimizer_hyperparameters = fields.DictTField()
+    recipe_template_name = fields.StringField(required=True)
+    generated_recipes_suffix = fields.StringField(default="recipe")
     max_recipe_count = fields.IntField()
     batches_seen = fields.ListField()
 
-    
-
-
-    # meta = {'collection': 'optimisation', 'db_alias': 'optimization_state'}
+    meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}
