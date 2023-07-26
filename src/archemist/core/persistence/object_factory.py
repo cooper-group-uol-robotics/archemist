@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List, Type, TYPE_CHECKING
 if TYPE_CHECKING:
     from archemist.core.state.material import Material,Liquid, Solid
     from archemist.core.state.batch import Batch
     from archemist.core.state.robot import Robot, RobotOpDescriptor, RobotModel
     from archemist.core.state.station import Station, StationOpDescriptor, StationModel
-    from archemist.core.state.optimisation_state import OptimizationState
-    from archemist.core.models.optimisation_model import OptimisationModel
+    from archemist.core.optimisation.optimisation_records import OptimizationRecords
+    from archemist.core.optimisation.optimiser_base import OptimizerBase
 
 import importlib
 import pkgutil
@@ -149,9 +149,9 @@ class StationFactory:
 
 class OptimizationFactory:
     @staticmethod
-    def create_from_dict(optimization_state: OptimizationState, config_dict: dict ) -> OptimizationState:
-        module = importlib.import_module(optimization_state.optimizer_module)
-        cls = getattr(module, optimization_state.optimizer_class)
-        return cls(optimization_state, config_dict)
+    def create_from_records(optimization_records: OptimizationRecords) -> Type[OptimizerBase]:
+        module = importlib.import_module(optimization_records.optimiser_module)
+        cls = getattr(module, optimization_records.optimiser_class)
+        return cls(optimization_records.optimiser_args)
 
 
