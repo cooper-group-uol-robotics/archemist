@@ -19,7 +19,7 @@ class Optimization_test:
         workflow_dir = Path.joinpath(cwd_path, "tests/optimisation_test_workflow")
         self._config_file = Path.joinpath(workflow_dir, "config_files/optimization_config.yaml")
         self._config_dict = YamlHandler.loadYamlFile(self._config_file)
-        self._batch_size = self._config_dict['optimizer']['batch_size']
+        self._batch_size = self._config_dict['optimiser']['args']['batch_size']
         self._optimization_state = OptimizationState.from_dict(self._config_dict['optimizer'])
         self._optimizer = BayesOptOptimizer(self._optimization_state,  self._config_dict)
         self._find_max()
