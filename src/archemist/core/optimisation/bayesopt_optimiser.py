@@ -1,6 +1,7 @@
 import pandas as pd
 from archemist.core.optimisation.optimiser_base import OptimizerBase
 import random
+import pickle
 from bayes_opt.bayesian_optimization import BayesianOptimization
 
 class BayesOptOptimizer(OptimizerBase):
@@ -48,6 +49,9 @@ class BayesOptOptimizer(OptimizerBase):
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
             self.model.register(param, target)
+        if "save_model_to" in kwargs:
+            with open(kwargs["save_model_to"], 'wb') as f:
+                pickle.dump(self.model, f)
 
     def _pandas_to_params_targets(self, data: pd.DataFrame):
         """

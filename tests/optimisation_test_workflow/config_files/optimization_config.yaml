@@ -16,10 +16,11 @@ optimiser:
     hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
 objective_variable: 
   station_op: SampleColorOpDescriptor
-  field: red_intensity
+  fields: [red_intensity]
 decision_variables: 
   - station_op: CSCSVJobOpDescriptor
     fields: [dispense_info]
 recipe_template_name: algae_bot_recipe_template
 generated_recipes_prefix: algae_bot_recipe
 max_recipe_count: 3
+save_opt_model_path: "."

@@ -7,10 +7,11 @@ class OptimisationRecordsModel(Document):
     optimiser_class = fields.StringField(required=True)
     optimiser_args = fields.DictField(default={})
     objective_variable = fields.DictField(required=True)
-    decision_variables = fields.ListField(required=True)
+    decision_variables = fields.DictField(required=True)
     recipe_template_name = fields.StringField(required=True)
     generated_recipes_prefix = fields.StringField(default="recipe")
     max_recipe_count = fields.IntField(min=1)
+    save_opt_model_path = fields.StringField(null=True)
     batches_seen = fields.ListField()
 
     meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}
@@ -27,11 +28,13 @@ class OptimizationRecords:
         model.optimiser_args = state_dict['optimiser']['args']
         model.max_recipe_count = state_dict['max_recipe_count']
         obj_var_dict = state_dict["objective_variable"]
-        model.objective_variable = {obj_var_dict["station_op"]: obj_var_dict["field"]}
+        model.objective_variable = {obj_var_dict["station_op"]: obj_var_dict["fields"]}
         decision_var_list = state_dict["decision_variables"]
-        model.decision_variables = [{decision_var["station_op"]: decision_var["fields"]} for decision_var in decision_var_list]
+        model.decision_variables = {decision_var["station_op"]: decision_var["fields"] for decision_var in decision_var_list}
         model.recipe_template_name = state_dict['recipe_template_name']
         model.generated_recipes_prefix = state_dict['generated_recipes_prefix']
+        if "save_opt_model_path" in state_dict:
+            model.save_opt_model_path = state_dict['save_opt_model_path']
         model.save()
         return cls(model)
 
@@ -66,6 +69,10 @@ class OptimizationRecords:
     @property
     def max_recipe_count(self) -> int:
         return self._model.max_recipe_count
+    
+    @property
+    def save_opt_model_path(self) -> str:
+        return self._model.save_opt_model_path
     
     @property
     def batches_seen(self) -> List[int]:

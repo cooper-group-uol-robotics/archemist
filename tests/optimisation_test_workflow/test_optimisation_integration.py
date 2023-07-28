@@ -25,6 +25,11 @@ server_config = YamlHandler.load_server_settings_file(server_config_file_path)
 workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
 recipes_dir_path = workflow_dir.joinpath(f'recipes')
 
+# delete model file
+model_file = workflow_dir.joinpath("opt_model.pickle")
+if model_file.exists():
+    model_file.unlink()
+    
 # empty recipes files
 for file in recipes_dir_path.glob("*.yaml"):
     file.unlink()

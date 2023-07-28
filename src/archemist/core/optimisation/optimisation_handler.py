@@ -8,7 +8,8 @@ from archemist.core.state.state import State
 from archemist.core.optimisation.recipe_generator import RecipeGenerator
 
 class OptimizationHandler:
-    def __init__(self, optimizer: BayesOptOptimizer, optimization_records: OptimizationRecords, state: State, recipe_generator:RecipeGenerator) -> None:
+    def __init__(self, optimizer: BayesOptOptimizer, optimization_records: OptimizationRecords, state: State,
+                 recipe_generator:RecipeGenerator) -> None:
         self._optimizer = optimizer
         self._optimization_records = optimization_records
         self._objective_variable = optimization_records.objective_variable
@@ -20,6 +21,11 @@ class OptimizationHandler:
         self._optimized_values = []
         self._watch_optimization_thread = Thread(target=self.watch_batch_complete, daemon=True)
         self._watch_recipe_thread = Thread(target=self.watch_recipe_queue, daemon=True)
+        if optimization_records.save_opt_model_path:
+            save_path = Path(optimization_records.save_opt_model_path)
+            self._opt_model_save_path = Path.joinpath(save_path, "opt_model.pickle")
+        else:
+            self._opt_model_save_path = None
 
     def watch_batch_complete(self):
         # get completed batches using the function get_completed_batches from state.py
@@ -29,13 +35,19 @@ class OptimizationHandler:
             completed_batches = self._state.get_completed_batches()
             for batch in completed_batches:
                 if batch.id not in self._optimization_records.batches_seen:
-                    result_data_dict = batch.extract_samples_op_data({'CSCSVJobOpDescriptor':{'dispense_info':[]},
-            'SampleColorOpDescriptor': {'red_intensity': []}}) # to be updated to recards -> objective variable
-                    result_data_pd = pd.DataFrame(result_data_dict)
-                    print(result_data_pd)
-                    self._optimizer.update_model(result_data_pd)
+                    decision_vars_dict = batch.extract_samples_op_data(self._optimization_records.decision_variables)
+                    result_data_dict = batch.extract_samples_op_data(self._optimization_records.objective_variable)
+                    combine_dict = {**decision_vars_dict, **result_data_dict}
+                    result_data_pd = pd.DataFrame(combine_dict)
+                    if self._opt_model_save_path:
+                        self._optimizer.update_model(result_data_pd, save_model_to = self._opt_model_save_path)
+                    else:
+                        self._optimizer.update_model(result_data_pd)
                     self._optimization_records.add_to_seen_batches(batch.id)
-                    print(f"batch {batch.id} with recipe id {batch.recipe.id} is updated to optimizer")
+                    self._logOptHandler(f"model updated with batch {batch.id} with recipe id {batch.recipe.id}")
+                    self._logOptHandler("------ start of update data ------")
+                    print(str(result_data_pd))
+                    self._logOptHandler("------ end of update data ------")
             time.sleep(1)
 
 
@@ -45,7 +57,7 @@ class OptimizationHandler:
         # the new recipes are created based on the recipe_generator
         while True:
             if len(self._state.recipes_queue) == 0:
-                print(f"recipes queue is empty. Creating new recipes ----> {len(self._state.recipes_queue)}")
+                self._logOptHandler(f"recipes queue is empty. Creating new {self._optimization_records.max_recipe_count} recipes")
                 for _ in range(self._optimization_records.max_recipe_count):
                     if self._is_initial_run:
                         _optimized_values = self._optimizer.generate_random_values()
@@ -58,5 +70,8 @@ class OptimizationHandler:
     def start(self):
         self._watch_recipe_thread.start()
         self._watch_optimization_thread.start()
+
+    def _logOptHandler(self, message: str):
+        print(f'OptimizationHandler: ' + message)
 
         
