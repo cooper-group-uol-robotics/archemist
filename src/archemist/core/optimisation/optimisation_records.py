@@ -71,3 +71,6 @@ class OptimizationRecords:
     def batches_seen(self) -> List[int]:
         self._model.reload('batches_seen')
         return self._model.batches_seen
+    
+    def add_to_seen_batches(self, batch_id: int):
+        self._model.update(push__batches_seen=batch_id)

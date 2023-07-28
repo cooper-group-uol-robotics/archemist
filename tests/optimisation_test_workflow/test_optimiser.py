@@ -28,16 +28,18 @@ class OptimiserTest(unittest.TestCase):
         dye_A = np.linspace(0, 1, 100)
         dye_B = np.linspace(0, 1, 100)
         dye_A, dye_B = np.meshgrid(dye_A, dye_B)
-        red_intensity = 1 - ((np.cos(np.sin(np.abs((dye_A)**2 - (dye_B)**2)))**2 - 0.5) / ((1 + 0.001 * ((dye_A)**2 + (dye_B)**2))**2) + 0.5) 
+        # red_intensity = -1*np.sqrt(dye_A**2 + dye_B**2)
+        red_intensity = 1 - ((np.cos(np.sin(np.abs((dye_A)**2 - (dye_B)**2)))**2 - 0.5) / ((1 + 0.001 * ((dye_A)**2 + (dye_B)**2))**2) + 0.5) # schaffer function 
         max_red_intensity = np.max(red_intensity)
+        print("max", max_red_intensity)
         line_plot_data = {}
         line_plot_data["dye_A"] = []
         line_plot_data["dye_B"] = []
         line_plot_data["red_intensity"] =  []
         
-        def calc_intensity(dye_A: float, dye_B: float):
-            # return -1*np.sqrt(dye_A**2 + dye_B**2)
-            return 1 - ((np.cos(np.sin(np.abs((dye_A)**2 - (dye_B)**2)))**2 - 0.5) / ((1 + 0.001 * ((dye_A)**2 + (dye_B)**2))**2) + 0.5 )
+        def calc_intensity(_dye_A: float, _dye_B: float):
+            # return -1*np.sqrt(_dye_A**2 + _dye_B**2)
+            return 1 - ((np.cos(np.sin(np.abs((_dye_A)**2 - (_dye_B)**2)))**2 - 0.5) / ((1 + 0.001 * ((_dye_A)**2 + (_dye_B)**2))**2) + 0.5 ) # schaffer function 
 
         def mean(list: list):
             return (sum(list)/len(list))
@@ -54,19 +56,20 @@ class OptimiserTest(unittest.TestCase):
                 self.assertEqual(input_vals.shape, (6,2))
             input_vals["red_intensity"] = input_vals.apply(lambda row: calc_intensity(row["dye_A"], row["dye_B"]), axis=1)
             mean_red_intensity = mean(input_vals["red_intensity"].values.flatten().tolist())
+            print(input_vals)
 
             # for plotting
             line_plot_data["dye_A"].append(mean(input_vals["dye_A"].values.flatten().tolist()))
             line_plot_data["dye_B"].append(mean(input_vals["dye_B"].values.flatten().tolist()))
             line_plot_data["red_intensity"].append(mean_red_intensity)
-            print(input_vals["red_intensity"])
 
             # fitness check
-            print(mean_red_intensity)
+            print("mean", mean_red_intensity)
             if abs(max_red_intensity - mean_red_intensity) < 0.01:
                 break
             self.assertEqual(input_vals.shape, (6,3))
             optimizer.update_model(input_vals)
+            print(input_vals)
             i+=1
         self.assertLessEqual(abs(mean(input_vals["red_intensity"])- max_red_intensity), 0.01)
         
