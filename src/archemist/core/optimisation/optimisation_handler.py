@@ -32,6 +32,7 @@ class OptimizationHandler:
                     result_data_dict = batch.extract_samples_op_data({'CSCSVJobOpDescriptor':{'dispense_info':[]},
             'SampleColorOpDescriptor': {'red_intensity': []}}) # to be updated to recards -> objective variable
                     result_data_pd = pd.DataFrame(result_data_dict)
+                    print(result_data_pd)
                     self._optimizer.update_model(result_data_pd)
                     self._optimization_records.add_to_seen_batches(batch.id)
                     print(f"batch {batch.id} with recipe id {batch.recipe.id} is updated to optimizer")

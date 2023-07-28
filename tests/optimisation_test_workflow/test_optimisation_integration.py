@@ -25,6 +25,10 @@ server_config = YamlHandler.load_server_settings_file(server_config_file_path)
 workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
 recipes_dir_path = workflow_dir.joinpath(f'recipes')
 
+# empty recipes files
+for file in recipes_dir_path.glob("*.yaml"):
+    file.unlink()
+
 db_name = server_config['db_name']
 
 # Construct state from config file
@@ -44,33 +48,42 @@ recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
 recipes_watchdog.start()
 
 opt_manager = OptimisationManager(workflow_dir, state)
+time.sleep(2)
 opt_manager.start_optimisation()
+current_stage = "queue_recipes"
 
 while True:
-    print(f"+++++++++++++++new recipes in the folder, {len(recipes_watchdog.recipes_queue)}")
-    if len(recipes_watchdog.recipes_queue) == 3:
-    # queue newly added recipes
-        while recipes_watchdog.recipes_queue:
+    if current_stage == "queue_recipes" and len(recipes_watchdog.recipes_queue) >= 3:
+        print(f"===> {current_stage} <===")
+        print("queue newly added recipe files")
+        print(f"current recipe files queue count {len(recipes_watchdog.recipes_queue)}")
+        for _ in range(3):
             recipe_file_path = recipes_watchdog.recipes_queue.popleft()
             recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
             workflow_mgr.queue_recipe(recipe_dict)
             print(f'new recipe with id {recipe_dict["general"]["id"]} queued')
-            print("recipes are queued")
-            time.sleep(3)
+            time.sleep(1)
+        current_stage = "create_batches"
     
-    if len(state.recipes_queue) == 3: 
-    # construct batches to attach to new recipes
+    if current_stage == "create_batches": 
+        print(f"===> {current_stage} <===")
+        print(f"current recipes queue count {len(state.recipes_queue)}")
+        print("constructing new batches to attach to new recipes")
         for recipe in state.recipes_queue:
             new_batch = state.add_clean_batch()
             new_batch.attach_recipe(recipe)
             state.batches_buffer.append(new_batch)
-            print("I am adding new clean batch")
-            time.sleep(3)
+            print(f"new clean batch ({new_batch.id}) is added")
+            time.sleep(1)
+        current_stage = "process_batches"
 
     # complete all the batches recipes
-    if len(state.recipes_queue) != 0:
+    if current_stage == "process_batches":
+        print(f"===> {current_stage} <===")
+        print(f"current batches buffer count {len(state.batches_buffer)}")
+        print("processing batches")
         op_counter = 0
-        while op_counter<=13:
+        while op_counter<12:
             for batch in state.batches_buffer:
                 needed_op = batch.recipe.get_current_task_op()
                 if isinstance(needed_op, InputStationPickupOp) or isinstance(needed_op, OutputStationPlaceOp):
@@ -95,17 +108,26 @@ while True:
                         dict_vals = current_sample.extract_op_data({"CSCSVJobOpDescriptor": ["dispense_info"]})
                         sample_op = SampleColorOpDescriptor.from_args()
                         sample_op.add_start_timestamp()
-                        sample_op.complete_op(success=True, red_intensity=objective_function(dict_vals))
+                        sample_op.complete_op(success=True, red_intensity=objective_function(dict_vals), green_intensity=128, blue_intensity=128, result_filename="dummy")
                         batch.add_station_op_to_current_sample(sample_op)
                         batch.process_current_sample()
                     batch.recipe.advance_state(True)
                     op_counter += 1
+                print(f"current op count: {op_counter}")
                 time.sleep(1)
-            if op_counter>=12:
-                break
+        current_stage = "empty_recipes_and_batches_queue"
+
+    if current_stage == "empty_recipes_and_batches_queue":
+        print(f"===> {current_stage} <===")
+        print("emptying recipes queue and batches")
         for _ in range(len(state.recipes_queue)):
             state.recipes_queue.popleft()
-    time.sleep(1)
+            state.batches_buffer.popleft()
+        print(f"current recipes queue count {len(state.recipes_queue)}")
+        current_stage = "queue_recipes"
+    
+    print("====== starting a new iteration in 3 seconds ======")
+    time.sleep(3)
     
     # print("batches processing is complete.")
 

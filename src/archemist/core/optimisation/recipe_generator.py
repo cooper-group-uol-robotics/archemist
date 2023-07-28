@@ -110,7 +110,7 @@ class RecipeGenerator:
         if len(self._state.recipes) > 0:
             return max(recipe.id for recipe in self._state.recipes)
         else:
-            return 1
+            return -1
         
     def is_recipe_dir_empty(self):
         directory = Path(self._new_recipe_path)
