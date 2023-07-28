@@ -67,7 +67,7 @@ process:
       type: LightBoxStation
       id: 13
       operation:
-        type: SampleColorOpDescriptor
+        type: SampleColorRGBOpDescriptor
     transitions:
       on_success: wait
       on_fail: end_state
@@ -88,7 +88,7 @@ process:
       type: LightBoxStation
       id: 13
       operation:
-        type: SampleColorOpDescriptor
+        type: SampleColorRGBOpDescriptor
     transitions:
       on_success: dispose
       on_fail: end_state

@@ -129,6 +129,7 @@ stations:
       args: 
         batch_mode: true
     parameters:
+      rgb_target: 2162120
   - type: WaitingStation
     id: 15
     location: 

@@ -1,7 +1,6 @@
 from typing import Dict
 from transitions import State
 from archemist.core.state.station import Station
-from .state import SampleColorOpDescriptor
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask
 from archemist.core.state.station_process import StationProcess, StationProcessData
@@ -62,7 +61,8 @@ class LightBoxProcess(StationProcess):
         self.request_robot_op(robot_job,current_batch_id)
 
     def request_process_data_job(self):
-        station_op = SampleColorOpDescriptor.from_args()
+        batch_index = self._process_data.status['batch_index']
+        station_op = self._process_data.batches[batch_index].recipe.get_current_task_op()
         self.request_station_op(station_op)
 
     def request_sample_index_update(self):
