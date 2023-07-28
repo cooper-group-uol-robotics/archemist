@@ -63,6 +63,10 @@ class State:
     @property
     def batches(self) -> List[Batch]:
         return [Batch(model) for model in BatchModel.objects]
+    
+    @property
+    def recipes(self) -> List[Recipe]:
+        return [Recipe(model) for model in RecipeModel.objects]
 
     ''' Batch operations'''
     

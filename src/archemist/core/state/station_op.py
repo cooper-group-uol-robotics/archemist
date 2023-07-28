@@ -8,6 +8,10 @@ class StationOpDescriptor:
     @property
     def model(self):
         return self._model
+    
+    @property
+    def type(self):
+        return self._model._type
 
     @property
     def has_result(self):

@@ -61,7 +61,10 @@ class SampleColorOpDescriptor(StationOpDescriptor):
             self._model.green_intensity = kwargs['green_intensity']
             self._model.blue_intensity = kwargs['blue_intensity']
         else:
-            print('missing one or all color intensity values')
+            print('missing one or all color intensity values, using default values')
+            self._model.red_intensity = 0
+            self._model.green_intensity = 0
+            self._model.blue_intensity = 0
     
     
 
