@@ -1,6 +1,6 @@
 optimiser:
   module: archemist.core.optimisation.bayesopt_optimiser
-  class: BayesOptOptimizer
+  class: BayesOptOptimiser
   args:
     components:  # list of optimization features and bounds
       dye_A:
@@ -9,9 +9,9 @@ optimiser:
       dye_B:
         upper_bound: 1.00
         lower_bound: 0.00
-      water:
-        upper_bound: 50.00
-        lower_bound: 0.00
+      # water:
+      #   upper_bound: 50.00
+      #   lower_bound: 0.00
     batch_size: 6
     hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
 objective_variable: 
