@@ -7,3 +7,4 @@ PyInquirer==1.0.3
 watchdog==2.1.9
 strictyaml==1.6.2
 pandas==1.4.4
+nested_lookup==0.2.25

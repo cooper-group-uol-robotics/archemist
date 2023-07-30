@@ -7,7 +7,7 @@
 #                                 where node_id stands for the node number in the navigation
 # 
 general:
-  name: algae_bot_workflow
+  name: test_optimisation_workflow
   samples_per_batch: 6
   default_batch_input_location:
     node_id: 25
@@ -92,7 +92,8 @@ stations:
     location:
       node_id: 25
       graph_id: 1
-    batch_capacity: 2
+    batch_capacity: 3
+    process_batch_capacity: 3
     handler: InputStationHandler
     process_state_machine:
       type: InputStationSm
@@ -103,7 +104,8 @@ stations:
     location:
       node_id: 27
       graph_id: 1
-    batch_capacity: 2
+    batch_capacity: 3
+    process_batch_capacity: 3
     handler: ChemSpeedFlexROSHandler
     process_state_machine:
       type: ChemSpeedRackSm
@@ -119,19 +121,22 @@ stations:
     location: 
       node_id: 25
       graph_id: 1
-    batch_capacity: 2
+    batch_capacity: 3
+    process_batch_capacity: 3
     handler: LightBoxROSHandler
     process_state_machine: 
       type: LightBoxSM
       args: 
         batch_mode: true
     parameters:
+      rgb_target: 1234567
   - type: OutputStation
     id: 14
     location:
       node_id: 25
       graph_id: 1
-    batch_capacity: 2
+    batch_capacity: 3
+    process_batch_capacity: 3
     handler: OutputStationHandler
     process_state_machine:
       type: OutputStationSm
