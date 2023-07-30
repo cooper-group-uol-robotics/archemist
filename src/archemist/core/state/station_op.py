@@ -18,6 +18,10 @@ class StationOpDescriptor:
         return self._model
     
     @property
+    def type(self):
+        return self._model._type
+    
+    @property
     def associated_station(self) -> str:
         return self._model.associated_station
 
