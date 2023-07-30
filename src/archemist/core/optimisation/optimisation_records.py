@@ -16,7 +16,7 @@ class OptimisationRecordsModel(Document):
 
     meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}
 
-class OptimisationRecrods:
+class OptimisationRecords:
     def __init__(self, optimization_model: OptimisationRecordsModel) -> None:
         self._model = optimization_model
 
