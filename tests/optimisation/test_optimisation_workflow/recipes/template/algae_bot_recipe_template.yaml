@@ -56,7 +56,6 @@ process:
         type: CSCSVJobOpDescriptor
         properties:
           dispense_info:
-            water: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
             dye_A: "{{float.all}}"
             dye_B: "{{float.all}}"
     transitions:
@@ -67,7 +66,7 @@ process:
       type: LightBoxStation
       id: 13
       operation:
-        type: SampleColorOpDescriptor
+        type: SampleColorRGBOpDescriptor
     transitions:
       on_success: dispose
       on_fail: end_state

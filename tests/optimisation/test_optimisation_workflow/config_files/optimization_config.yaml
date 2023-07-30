@@ -9,14 +9,11 @@ optimiser:
       dye_B:
         upper_bound: 1.00
         lower_bound: 0.00
-      # water:
-      #   upper_bound: 50.00
-      #   lower_bound: 0.00
     batch_size: 6
     hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
 objective_variable: 
-  station_op: SampleColorOpDescriptor
-  fields: [red_intensity]
+  station_op: SampleColorRGBOpDescriptor
+  fields: [color_index]
 decision_variables: 
   - station_op: CSCSVJobOpDescriptor
     fields: [dispense_info]

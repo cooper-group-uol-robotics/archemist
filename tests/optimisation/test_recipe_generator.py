@@ -76,7 +76,6 @@ class RecipeGeneratorOpTest(unittest.TestCase):
                             "type": "CSCSVJobOpDescriptor",
                             "properties": {
                                 "dispense_info": {
-                                    "water": ["1.0", "1.0", "1.0", "1.0", "1.0", "1.0"],
                                     "dye_A": [0.12, 0.15, 0.18, 0.21, 0.24, 0.27],
                                     "dye_B": [0.13, 0.16, 0.19, 0.22, 0.25, 0.28],
                                 }
@@ -90,7 +89,7 @@ class RecipeGeneratorOpTest(unittest.TestCase):
                     "station": {
                         "type": "LightBoxStation",
                         "id": 13,
-                        "operation": {"type": "SampleColorOpDescriptor"},
+                        "operation": {"type": "SampleColorRGBOpDescriptor"},
                     },
                     "transitions": {"on_success": "dispose", "on_fail": "end_state"},
                 },

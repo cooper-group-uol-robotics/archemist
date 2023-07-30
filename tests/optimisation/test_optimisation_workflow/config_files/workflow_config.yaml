@@ -113,7 +113,6 @@ stations:
         batch_mode: true
     parameters:
       used_liquids:
-        - water
         - dye_A
         - dye_B
   - type: LightBoxStation

@@ -21,11 +21,11 @@ class OptimisationRecordsTest(unittest.TestCase):
 
         # test fields
         self.assertEqual(opt_records.optimiser_module, "archemist.core.optimisation.bayesopt_optimiser")
-        self.assertEqual(opt_records.optimiser_class, "BayesOptOptimizer")
+        self.assertEqual(opt_records.optimiser_class, "BayesOptOptimiser")
         self.assertDictEqual(opt_records.optimiser_args["components"], config_dict["optimiser"]["args"]["components"])
         self.assertDictEqual(opt_records.optimiser_args["hyperparameters"], {"allow_duplicate_points": True})
         self.assertEqual(opt_records.optimiser_args["batch_size"], 6)
-        self.assertDictEqual(opt_records.objective_variable, {"SampleColorOpDescriptor":["red_intensity"]})
+        self.assertDictEqual(opt_records.objective_variable, {"SampleColorRGBOpDescriptor":["color_index"]})
         self.assertDictEqual(opt_records.decision_variables, {"CSCSVJobOpDescriptor": ["dispense_info"]})
         self.assertEqual(opt_records.recipe_template_name, "algae_bot_recipe_template")
         self.assertEqual(opt_records.generated_recipes_prefix, "algae_bot_recipe")
