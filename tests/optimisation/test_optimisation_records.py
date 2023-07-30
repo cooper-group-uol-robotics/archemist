@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from archemist.core.optimisation.optimisation_records import OptimizationRecords
+from archemist.core.optimisation.optimisation_records import OptimisationRecrods
 
 class OptimisationRecordsTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -17,7 +17,7 @@ class OptimisationRecordsTest(unittest.TestCase):
         config_dict = {}
         with open(config_file, 'r') as fs:
             config_dict = yaml.load(fs, Loader=yaml.SafeLoader)
-        opt_records = OptimizationRecords.from_dict(config_dict)
+        opt_records = OptimisationRecrods.from_dict(config_dict)
 
         # test fields
         self.assertEqual(opt_records.optimiser_module, "archemist.core.optimisation.bayesopt_optimiser")
