@@ -3,49 +3,66 @@ from transitions import State
 from archemist.core.state.station import Station
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask
-from archemist.core.processing.station_process_fsm import StationProcessFSM
+from archemist.core.state.station_process import StationProcess, StationProcessData
 
-class OutputStationSm(StationProcessFSM):
+class OutputStationProcess(StationProcess):
     
-    def __init__(self, station: Station, params_dict: Dict):
-        super().__init__(station, params_dict)
-
+    def __init__(self, station: Station, process_data: StationProcessData, **kwargs):
         ''' States '''
         states = [ State(name='init_state'), 
-            State(name='place_batch', on_enter=['request_place_batch']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
-            State(name='added_batch_update', on_enter=['update_loaded_batch']),
-            State(name='final_state', on_enter=['finalize_batch_processing'])]
+            State(name='prep_state', on_enter='initialise_process_data'),
+            State(name='place_batch', on_enter='request_place_batch'),
+            State(name='added_batch_update', on_enter='update_loaded_batch'),
+            State(name='need_manual_batches_removal', on_enter='request_manual_removal'),
+            State(name='final_state', on_enter='finalize_batch_processing')]
 
         ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function,'source':'disable_auto_functions','dest':'place_batch', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'place_batch','dest':'added_batch_update', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function,'source':'added_batch_update','dest':'place_batch', 'unless':'are_all_batches_loaded', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'added_batch_update','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','are_all_batches_loaded']},
-            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':'is_station_job_ready'}
+            {'source':'init_state','dest':'prep_state'},
+            {'source':'prep_state','dest':'place_batch'},
+            {'source':'place_batch','dest':'added_batch_update', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'added_batch_update','dest':'place_batch', 'unless':'are_all_batches_loaded'},
+            { 'source':'added_batch_update','dest':'need_manual_batches_removal', 'conditions':'are_all_batches_loaded'},
+            { 'source':'need_manual_batches_removal','dest':'final_state', 'conditions':'are_batches_manually_removed'},
         ]
+        super().__init__(station, process_data, states, transitions)
 
-        self.init_state_machine(states=states, transitions=transitions)
+    ''' states callbacks '''
+    
+    def initialise_process_data(self):
+        self._process_data.status['batch_index'] = 0
 
     def request_place_batch(self):
-        robot_job = KukaLBRTask.from_args(name='PlaceRack',params=[False,self._status['batch_index']+1],
-                                            type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
-        current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        self._station.request_robot_op(robot_job,current_batch_id)
-    
-    def request_disable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
+        batch_offset = self._process_data.processing_slot*self._station.process_batch_capacity
+        batch_index = self._process_data.status['batch_index']
+        perform_6p = False # this will be later evaluated by the KMRiiwa handler
+        robot_job = KukaLBRTask.from_args(name='PlaceRack',
+                                          params=[perform_6p,batch_offset+batch_index+1, batch_index+1],
+                                        type=RobotTaskType.UNLOAD_FROM_ROBOT, location=self._station.location)
+        current_batch_id = self._process_data.batches[batch_index].id
+        self.request_robot_op(robot_job,current_batch_id)
 
-    def request_enable_auto_functions(self):
-        self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
+    def update_loaded_batch(self):
+        batch_index = self._process_data.status['batch_index']
+        self._update_batch_loc_to_station(batch_index)
+        self._process_data.status['batch_index'] += 1
+
+    def request_manual_removal(self):
+        self._station.batches_need_removal = True
 
     def finalize_batch_processing(self):
-        self._station.process_assigned_batches()
-        self._status['batch_index'] = 0
-        self.to_init_state()
+        for batch in self._process_data.batches:
+            self._station.process_assinged_batch(batch)
+
+    ''' transitions callbacks'''
+
+    def are_all_batches_loaded(self):
+        return self._process_data.status['batch_index'] == len(self._process_data.batches)
+    
+    def are_batches_manually_removed(self):
+        return not self._station.batches_need_removal
+
+    
 
 
 

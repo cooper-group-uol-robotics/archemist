@@ -8,4 +8,5 @@ class SolubilityState(Enum):
     UNDISSOLVED = 1
 
 class SolubilityOpDescriptorModel(StationOpDescriptorModel):
-    solubility_state = fields.EnumField(SolubilityState)
+    result_filename = fields.StringField()
+    solubility_state = fields.EnumField(SolubilityState, null=True)

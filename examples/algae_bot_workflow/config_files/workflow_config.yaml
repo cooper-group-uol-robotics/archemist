@@ -8,7 +8,7 @@
 # 
 general:
   name: algae_bot_workflow
-  samples_per_batch: 6
+  samples_per_batch: 2
   default_batch_input_location:
     node_id: 25
     graph_id: 1
@@ -36,21 +36,21 @@ materials:
   liquids:
     - name: water
       id: 1
-      amount_stored: 500
+      amount_stored: 5000
       unit: ml
       density: 1000 
       pump_id: chemspeed
       expiry_date: 31/03/2023
     - name: dye_A
       id: 1
-      amount_stored: 50
+      amount_stored: 500
       unit: ml
       density: 1000 
       pump_id: chemspeed
       expiry_date: 31/03/2023
     - name: dye_B
       id: 1
-      amount_stored: 60
+      amount_stored: 600
       unit: ml
       density: 1000 
       pump_id: chemspeed
@@ -93,9 +93,10 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: InputStationHandler
     process_state_machine:
-      type: InputStationSm
+      type: InputStationProcess
       args:
     parameters:
   - type: ChemSpeedFlexStation
@@ -104,9 +105,10 @@ stations:
       node_id: 27
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: ChemSpeedFlexROSHandler
     process_state_machine:
-      type: ChemSpeedRackSm
+      type: ChemSpeedCSVProcess
       args:
         batch_mode: true
     parameters:
@@ -120,11 +122,25 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: LightBoxROSHandler
     process_state_machine: 
-      type: LightBoxSM
+      type: LightBoxProcess
       args: 
         batch_mode: true
+    parameters:
+      rgb_target: 2162120
+  - type: WaitingStation
+    id: 15
+    location: 
+      node_id: 25
+      graph_id: 1
+    batch_capacity: 6
+    process_batch_capacity: 2
+    handler: WaitingStationHandler
+    process_state_machine: 
+      type: WaitingStationProcess
+      args: 
     parameters:
   - type: OutputStation
     id: 14
@@ -132,8 +148,9 @@ stations:
       node_id: 25
       graph_id: 1
     batch_capacity: 2
+    process_batch_capacity: 2
     handler: OutputStationHandler
     process_state_machine:
-      type: OutputStationSm
+      type: OutputStationProcess
       args:
     parameters:

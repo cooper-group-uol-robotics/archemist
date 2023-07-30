@@ -27,14 +27,15 @@ class PXRDStation(Station):
     def status(self, new_status: PXRDStatus):
         self._model.update(machine_status=new_status)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, PXRDAnalysisOpDescriptor):
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, PXRDAnalysisOpDescriptor):
             self.status = PXRDStatus.RUNNING_JOB
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
-        if isinstance(current_op, PXRDAnalysisOpDescriptor) and current_op.was_successful:
+        if isinstance(current_op, PXRDAnalysisOpDescriptor) and success:
             self.status = PXRDStatus.JOB_COMPLETE
         super().complete_assigned_station_op(success, **kwargs)
 
@@ -46,6 +47,7 @@ class PXRDAnalysisOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = PXRDAnalysisOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)

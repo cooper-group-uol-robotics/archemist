@@ -90,21 +90,22 @@ class IkaPlateDigital(Station):
     def mode(self, new_mode: IKAMode):
         self._model.update(mode=new_mode)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, IKAHeatingStirringOpDescriptor):
-            self.target_temperature = stationOp.target_temperature
-            self.target_stirring_speed = stationOp.target_stirring_speed
-            self.target_duration = stationOp.target_duration
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, IKAHeatingStirringOpDescriptor):
+            self.target_temperature = current_op.target_temperature
+            self.target_stirring_speed = current_op.target_stirring_speed
+            self.target_duration = current_op.target_duration
             self.mode = IKAMode.HEATINGSTIRRING
-        elif isinstance(stationOp, IKAHeatingOpDescriptor):
-            self.target_temperature = stationOp.target_temperature
-            self.target_duration = stationOp.target_duration
+        elif isinstance(current_op, IKAHeatingOpDescriptor):
+            self.target_temperature = current_op.target_temperature
+            self.target_duration = current_op.target_duration
             self.mode = IKAMode.HEATING
-        elif isinstance(stationOp, IKAStirringOpDescriptor):
-            self.target_stirring_speed = stationOp.target_stirring_speed
-            self.target_duration = stationOp.target_duration
+        elif isinstance(current_op, IKAStirringOpDescriptor):
+            self.target_stirring_speed = current_op.target_stirring_speed
+            self.target_duration = current_op.target_duration
             self.mode = IKAMode.STIRRING
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         self._model.update(unset__target_temperature=True)
@@ -122,6 +123,7 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_temperature = int(kwargs['temperature'])
         model.target_stirring_speed = int(kwargs['stirring_speed'])
         model.target_duration = float(kwargs['duration'])
@@ -148,6 +150,7 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_temperature = int(kwargs['temperature'])
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__
@@ -170,6 +173,7 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = IKAOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
         model.target_stirring_speed = int(kwargs['stirring_speed'])
         model.target_duration = float(kwargs['duration'])
         model._type = cls.__name__

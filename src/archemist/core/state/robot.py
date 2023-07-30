@@ -1,4 +1,4 @@
-from archemist.core.models.robot_model import RobotModel, MobileRobotModel
+from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor
 from archemist.core.util.enums import RobotState,RobotTaskType
 from archemist.core.util.location import Location
@@ -155,6 +155,15 @@ class MobileRobot(Robot):
     def onboard_batches(self):
         self._model.reload('onboard_batches')
         return self._model.onboard_batches
+    
+    @property
+    def operational_mode(self) -> MobileRobotMode:
+        self._model.reload('operational_mode')
+        return self._model.operational_mode
+    
+    @operational_mode.setter
+    def operational_mode(self, new_mode: MobileRobotMode):
+        self._model.update(operational_mode=new_mode)
 
     def add_to_onboard_batches(self, batch_id: int):
         if len(self.onboard_batches) < self.batch_capacity:

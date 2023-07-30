@@ -40,6 +40,7 @@ class KukaNAVTask(RobotOpDescriptor):
     @classmethod
     def from_args(cls, target_location: Location, fine_localisation: bool):
         model = KukaNAVTaskModel()
+        cls._set_model_common_fields(model)
         model._type = cls.__name__
         model._module = cls.__module__
         model.target_location = target_location.to_dict()

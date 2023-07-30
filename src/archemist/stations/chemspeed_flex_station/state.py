@@ -44,10 +44,11 @@ class ChemSpeedFlexStation(Station):
         liquid_obj_id = self._model.liquids_dict[liquid_name]
         return MaterialFactory.create_material_from_object_id(liquid_obj_id)
 
-    def assign_station_op(self, stationOp: Any):
-        if isinstance(stationOp, CSCSVJobOpDescriptor) or isinstance(stationOp, CSCSVJobOpDescriptor):
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        current_op = self.get_assigned_station_op()
+        if isinstance(current_op, CSCSVJobOpDescriptor) or isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.RUNNING_JOB
-        super().assign_station_op(stationOp)
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         current_op = self.get_assigned_station_op()
@@ -58,7 +59,7 @@ class ChemSpeedFlexStation(Station):
         elif isinstance(current_op, CSCSVJobOpDescriptor):
             for liquid_name,dispense_vals in current_op.dispense_info.items():
                 liquid_obj = self.get_liquid(liquid_name)
-                liquid_obj.volume -= sum(dispense_vals)/1000
+                liquid_obj.volume -= sum(dispense_vals)/1000 #TODO add unit
             self.status = ChemSpeedStatus.JOB_COMPLETE
         elif isinstance(current_op, CSProcessingOpDescriptor):
             self.status = ChemSpeedStatus.JOB_COMPLETE
@@ -74,6 +75,7 @@ class CSOpenDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -86,6 +88,7 @@ class CSCloseDoorOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -97,6 +100,7 @@ class CSProcessingOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         return cls(model)
@@ -110,17 +114,12 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
     @classmethod
     def from_args(cls, **kwargs):
         model = CSCSVJobOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.dispense_info = kwargs['dispense_info']
         for k, v in model.dispense_info.items():
             model.dispense_info[k] = list(map(float, v))
-        return cls(model)
-    
-    @classmethod
-    def clone_object(cls, obj):
-        model = CSCSVJobOpDescriptorModel()
-        model = obj._model
         return cls(model)
     
     @property
