@@ -124,7 +124,7 @@ class CSCSVJobOpDescriptor(StationOpDescriptor):
     
     @property
     def dispense_info(self):
-        return self._model.dispense_info
+        return dict(self._model.dispense_info)
     
     @dispense_info.setter
     def dispense_info(self, new_dispense_info):
