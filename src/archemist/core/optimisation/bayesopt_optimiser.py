@@ -1,7 +1,6 @@
 import pandas as pd
 from archemist.core.optimisation.optimiser_base import OptimiserBase
 import random
-import pickle
 from bayes_opt.bayesian_optimization import BayesianOptimization
 
 class BayesOptOptimiser(OptimiserBase):
@@ -17,9 +16,9 @@ class BayesOptOptimiser(OptimiserBase):
         self._hyperparameters = args_dict["hyperparameters"]
         self._batch_size = args_dict['batch_size']
         self._components = args_dict['components']
-        
+        self._target_name = args_dict['target'] if 'target' in args_dict else None
+
         self._probed_points = []
-        self._target_name = None
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
         self.model = self._generate_model(f=None, pbounds=bound)
@@ -40,18 +39,17 @@ class BayesOptOptimiser(OptimiserBase):
         """
         return BayesianOptimization(**self._hyperparameters, **kwargs)
 
-    def update_model(self, data: pd.DataFrame, **kwargs):
+    def update_model(self, data: pd.DataFrame, **kwargs) -> object:
         """
         Record probed points and update optimization model.
+        Returns the updated model
         :param data:
         """
         self._probed_points.append(data)
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
             self.model.register(param, target)
-        if "save_model_to" in kwargs:
-            with open(kwargs["save_model_to"], 'wb') as f:
-                pickle.dump(self.model, f)
+        return self.model
 
     def _pandas_to_params_targets(self, data: pd.DataFrame):
         """

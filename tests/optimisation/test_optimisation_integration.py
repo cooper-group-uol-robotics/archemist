@@ -131,6 +131,7 @@ while True:
             state.batches_buffer.popleft()
         print(f"current recipes queue count {len(state.recipes_queue)}")
         current_stage = "queue_recipes"
+        print(opt_manager._optimisation_records.stored_optimisation_obj.space.params)
     
     print("====== starting a new iteration in 3 seconds ======")
     time.sleep(3)

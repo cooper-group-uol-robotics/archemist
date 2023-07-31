@@ -13,7 +13,7 @@ class OptimiserBase(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_model(self, data: pd.DataFrame, **kwargs):
+    def update_model(self, data: pd.DataFrame, **kwargs) -> object:
         raise NotImplementedError
 
     @abc.abstractmethod

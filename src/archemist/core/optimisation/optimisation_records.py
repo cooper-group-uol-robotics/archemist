@@ -1,6 +1,6 @@
 from typing import Dict, List
 from mongoengine import Document, fields
-import pandas as pd
+import pickle
 
 class OptimisationRecordsModel(Document):
     optimiser_module = fields.StringField(required=True)
@@ -11,7 +11,7 @@ class OptimisationRecordsModel(Document):
     recipe_template_name = fields.StringField(required=True)
     generated_recipes_prefix = fields.StringField(default="recipe")
     max_recipe_count = fields.IntField(min=1)
-    save_opt_model_path = fields.StringField(null=True)
+    stored_optimisation_obj = fields.BinaryField(null=True)
     batches_seen = fields.ListField()
 
     meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}
@@ -33,8 +33,6 @@ class OptimisationRecords:
         model.decision_variables = {decision_var["station_op"]: decision_var["fields"] for decision_var in decision_var_list}
         model.recipe_template_name = state_dict['recipe_template_name']
         model.generated_recipes_prefix = state_dict['generated_recipes_prefix']
-        if "save_opt_model_path" in state_dict:
-            model.save_opt_model_path = state_dict['save_opt_model_path']
         model.save()
         return cls(model)
 
@@ -71,8 +69,13 @@ class OptimisationRecords:
         return self._model.max_recipe_count
     
     @property
-    def save_opt_model_path(self) -> str:
-        return self._model.save_opt_model_path
+    def stored_optimisation_obj(self) -> object:
+        self._model.reload("stored_optimisation_obj")
+        if self._model.stored_optimisation_obj is not None:
+            return pickle.loads(self._model.stored_optimisation_obj)
+        else:
+            return None
+    
     
     @property
     def batches_seen(self) -> List[int]:
@@ -81,3 +84,7 @@ class OptimisationRecords:
     
     def add_to_seen_batches(self, batch_id: int):
         self._model.update(push__batches_seen=batch_id)
+
+    def update_stored_optimisation_model(self, optimisation_obj: object):
+        binary_obj = pickle.dumps(optimisation_obj)
+        self._model.update(set__stored_optimisation_obj=binary_obj)

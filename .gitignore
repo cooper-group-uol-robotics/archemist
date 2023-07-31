@@ -3,4 +3,3 @@ build/
 dist/
 **/*.egg-info
 tests/optimisation/test_optimisation_workflow/recipes/*.yaml
-tests/optimisation/*.pickle
