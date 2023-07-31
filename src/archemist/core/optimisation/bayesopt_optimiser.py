@@ -5,7 +5,7 @@ from bayes_opt.bayesian_optimization import BayesianOptimization
 
 class BayesOptOptimiser(OptimiserBase):
 
-    def __init__(self, args_dict: dict):
+    def __init__(self, **kwargs):
         """
 
         :param config_file:
@@ -13,15 +13,22 @@ class BayesOptOptimiser(OptimiserBase):
         :param batch_size:
             Number of probe points for each iteration during optimization.
         """
-        self._hyperparameters = args_dict["hyperparameters"]
-        self._batch_size = args_dict['batch_size']
-        self._components = args_dict['components']
-        self._target_name = args_dict['target'] if 'target' in args_dict else None
+        optim_records = kwargs["optimization_records"]
+        
+        self._hyperparameters = optim_records.optimiser_args["hyperparameters"]
+        self._batch_size = optim_records.optimiser_args['batch_size']
+        self._components = optim_records.optimiser_args['components']
+        self._target_name = optim_records.optimiser_args['target'] if 'target' in optim_records.optimiser_args else None
 
         self._probed_points = []
         bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
-        self.model = self._generate_model(f=None, pbounds=bound)
+        
+        stored_model = optim_records.stored_optimisation_obj
+        if stored_model is not None:
+            self.model = stored_model
+        else:
+            self.model = self._generate_model(f=None, pbounds=bound)
 
     def _generate_bound_from_config(self):
         """

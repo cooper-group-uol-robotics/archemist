@@ -52,7 +52,7 @@ workflow_mgr = WorkflowManager(state)
 recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
 recipes_watchdog.start()
 
-opt_manager = OptimisationManager(workflow_dir, state)
+opt_manager = OptimisationManager(workflow_dir, state, existing_db)
 time.sleep(2)
 opt_manager.start_optimisation()
 current_stage = "queue_recipes"

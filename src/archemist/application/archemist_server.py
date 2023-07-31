@@ -43,7 +43,7 @@ class ArchemistServer:
         print(f'[{datetime.now().strftime("%H:%M:%S")}] Archemist server started')
 
         if use_optimiser:
-            self._optimiser_manager = OptimisationManager(workflow_dir, self._state)
+            self._optimiser_manager = OptimisationManager(workflow_dir, self._state, existing_db)
             self._optimiser_manager.start_optimisation()
 
 

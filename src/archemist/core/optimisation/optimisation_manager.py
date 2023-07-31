@@ -8,11 +8,14 @@ from pathlib import Path
 
 class OptimisationManager():
 
-    def __init__(self, workflow_dir: Path, state: State) -> None:
+    def __init__(self, workflow_dir: Path, state: State, existing_db: bool = False) -> None:
         # construct optimisation state
         config_file = workflow_dir.joinpath("config_files/optimization_config.yaml")
         config_dict = YamlHandler.loadYamlFile(config_file)
-        self._optimisation_records = OptimisationRecords.from_dict(config_dict)
+        if existing_db:
+            self._optimisation_records = OptimisationRecords.from_existing_model()
+        else:
+            self._optimisation_records = OptimisationRecords.from_dict(config_dict)
 
         # construct optimiser
         self._optimiser = OptimisationFactory.create_from_records(self._optimisation_records)

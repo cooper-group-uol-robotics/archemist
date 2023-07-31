@@ -166,4 +166,4 @@ class OptimisationFactory:
     def create_from_records(optimization_records: OptimisationRecords) -> Type[OptimiserBase]:
         module = importlib.import_module(optimization_records.optimiser_module)
         cls = getattr(module, optimization_records.optimiser_class)
-        return cls(optimization_records.optimiser_args)
+        return cls(optimization_records=optimization_records)

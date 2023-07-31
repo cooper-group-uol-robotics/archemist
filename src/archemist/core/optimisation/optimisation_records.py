@@ -35,6 +35,11 @@ class OptimisationRecords:
         model.generated_recipes_prefix = state_dict['generated_recipes_prefix']
         model.save()
         return cls(model)
+    
+    @classmethod
+    def from_existing_model(cls):
+        opt_records_model = OptimisationRecordsModel.objects.first()
+        return cls(opt_records_model)
 
     @property
     def optimiser_module(self) -> str:
