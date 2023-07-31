@@ -96,6 +96,11 @@ class SampleColorRGBOpDescriptor(StationOpDescriptor):
             self._model.target_diff = kwargs['target_diff']
         else:
             print('missing one or all color intensity values. adding defaults')
+            self._model.red_intensity = 0
+            self._model.green_intensity = 0
+            self._model.blue_intensity = 0
+            self._model.color_index = 0
+            self._model.target_diff = 0
 
 class SampleColorLABOpDescriptor(StationOpDescriptor):
     def __init__(self, op_model: SampleColorLABOpDescriptorModel):

@@ -2,6 +2,7 @@ from time import sleep
 from archemist.core.processing.prcessor import WorkflowManager
 from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
+from archemist.core.optimisation.optimisation_manager import OptimisationManager
 from archemist.core.persistence.yaml_handler import YamlHandler
 from archemist.core.util.location import Location
 from pathlib import Path
@@ -12,7 +13,7 @@ import zmq
 import json
 
 class ArchemistServer:
-    def __init__(self, workflow_dir: Path, existing_db: bool=False) -> None:
+    def __init__(self, workflow_dir: Path, existing_db: bool=False, use_optimiser: bool=False) -> None:
         server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
         self._server_config = YamlHandler.load_server_settings_file(server_config_file_path)
         
@@ -40,6 +41,10 @@ class ArchemistServer:
         self._recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
         self._recipes_watchdog.start()
         print(f'[{datetime.now().strftime("%H:%M:%S")}] Archemist server started')
+
+        if use_optimiser:
+            self._optimiser_manager = OptimisationManager(workflow_dir, self._state)
+            self._optimiser_manager.start_optimisation()
 
 
     def run(self):

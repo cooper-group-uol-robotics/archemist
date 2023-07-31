@@ -22,7 +22,8 @@ def run_local_server(args):
         print( 'Please check your path or create a new directory using create_workflow_dir script')
         exit()
     existing_db = args.existing_db
-    server = ArchemistServer(workflow_dir,existing_db)
+    use_optimiser = args.use_optimiser
+    server = ArchemistServer(workflow_dir,existing_db, use_optimiser)
     server.run()
 
 def run_station_handler(db_host, db_name, station, use_sim_handler):
@@ -97,10 +98,12 @@ def main():
 
     # start_server parser
     local_server_parser = subparsers.add_parser('start_server', help='command to run ARCHemist server locally')
-    local_server_parser.add_argument('-path', dest='workflow_path', action='store', type=str,
+    local_server_parser.add_argument('-p','--path', dest='workflow_path', action='store', type=str,
                     help='path to the workflow directory', required=True)
     local_server_parser.add_argument('--exists', dest='existing_db', action='store_true',
                     help='run server with already existing database')
+    local_server_parser.add_argument('--use-opt', dest='use_optimiser', action='store_true',
+                    help='start archemist with optimiser on')
     local_server_parser.set_defaults(func=run_local_server)
     
     # run_cli client parser
@@ -111,7 +114,7 @@ def main():
     launch_handlers_parser = subparsers.add_parser('launch_handlers', help='command to Launch ARCHemist workflow handlers')
     launch_handlers_parser.add_argument('--sim', dest='sim_mode', action='store_true',
                     help='run the given recipe continuously in test mode')
-    launch_handlers_parser.add_argument('-path', dest='workflow_dir', action='store', type=str,
+    launch_handlers_parser.add_argument('-p','--path', dest='workflow_dir', action='store', type=str,
                     help='path to the workflow directory', required=True)
     launch_handlers_parser.add_argument('-timeout', dest='timeout', action='store', type=int,
                     default=5, help='timeout for db state to be available')
