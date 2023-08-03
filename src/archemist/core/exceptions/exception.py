@@ -30,15 +30,19 @@ class UsingConsumedCatridgeError(Error):
     def __init__(self, cartridge_id):
         self.message = f'{cartridge_id} is being used while it is consumed catridge'
 
-class QuantosCatridgeLoadedError(Error):
+class QuantosCartridgeLoadedError(Error):
     def __init__(self):
-        self.message = f'Quantos station already has a loaded catridge!!!'
+        self.message = f'Quantos station already has a loaded cartridge!!!'
+
+class QuantosCartridgeUnloadedError(Error):
+    def __init__(self):
+        self.message = f'Unloading cartridge when no cartridge is loaded!!!'
 
 class QuantosRackLoadedError(Error):
     def __init__(self):
         self.message = f'Quantos station already has a loaded rack!!!'
 
-class QuantosCatridgeUnLoadError(Error):
+class QuantosCartridgeUnLoadError(Error):
     def __init__(self):
         self.message = f'Quantos station does not have a loaded catridge!!!'
 
