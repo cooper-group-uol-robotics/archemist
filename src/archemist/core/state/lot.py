@@ -38,3 +38,6 @@ class Lot:
     def add_station_stamp(self, station_stamp: str):
         for batch in self.batches:
             batch.add_station_stamp(station_stamp)
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}-{self.uuid}'
