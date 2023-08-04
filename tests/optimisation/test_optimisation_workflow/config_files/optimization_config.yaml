@@ -11,6 +11,9 @@ optimiser:
         lower_bound: 0.00
     batch_size: 6
     hyperparameters: {allow_duplicate_points: True} # necessary parameters to build the optimizer
+    constraint:
+      type: eq  # types: eq, ineq, None
+      expression: 'lambda x: x[0] + x[1] - 0.9'
 objective_variable: 
   station_op: SampleColorRGBOpDescriptor
   fields: [color_index]
