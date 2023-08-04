@@ -82,9 +82,9 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_robot_ops), 1)
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
 
-        proc.complete_robot_op(robot_op)
-        self.assertEqual(len(proc.req_robot_ops), 0)
+        robot_op.complete_op(None, True)
         self.assertTrue(proc.are_req_robot_ops_completed())
+        self.assertEqual(len(proc.req_robot_ops), 0)
         self.assertEqual(len(proc.robot_ops_history), 1)
         self.assertEqual(proc.status, ProcessStatus.RUNNING)
 
@@ -100,9 +100,9 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_ops), 1)
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
 
-        proc.complete_station_op(station_op)
-        self.assertEqual(len(proc.req_station_ops), 0)
+        station_op.complete_op(True)
         self.assertTrue(proc.are_req_station_ops_completed())
+        self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 1)
         self.assertEqual(proc.status, ProcessStatus.RUNNING)
 
@@ -116,9 +116,9 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_procs), 1)
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_PROCS)
 
-        proc.complete_station_proc(station_proc)
-        self.assertEqual(len(proc.req_station_procs), 0)
+        station_proc._model_proxy.status = ProcessStatus.FINISHED
         self.assertTrue(proc.are_req_station_procs_completed())
+        self.assertEqual(len(proc.req_station_procs), 0)
         self.assertEqual(len(proc.station_procs_history), 1)
         self.assertEqual(proc.status, ProcessStatus.RUNNING)
 
@@ -157,7 +157,7 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to run_op
         robot_op = proc.req_robot_ops[0]
-        proc.complete_robot_op(robot_op)
+        robot_op.complete_op(None, True)
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
         self.assertEqual(proc.m_state, "run_op")
@@ -165,7 +165,7 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to final_state
         station_op = proc.req_station_ops[0]
-        proc.complete_station_op(station_op)
+        station_op.complete_op(True)
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.FINISHED)
         self.assertEqual(len(proc.robot_ops_history), 1)

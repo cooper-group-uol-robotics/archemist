@@ -118,40 +118,46 @@ class StationProcess:
         self.req_robot_ops.append(robot_op)
         self._model_proxy.status = ProcessStatus.WAITING_ON_ROBOT_OPS
 
-    def complete_robot_op(self, robot_op: Type[RobotOpDescriptor]):
-        self.req_robot_ops.remove(robot_op)
+    def are_req_robot_ops_completed(self) -> bool:
+        req_robot_ops = [robot_op for robot_op in self.req_robot_ops]
+        for robot_op in req_robot_ops:
+            if robot_op.has_result and robot_op.was_successful:
+                self.req_robot_ops.remove(robot_op)
+                self.robot_ops_history.append(robot_op)
         if len(self.req_robot_ops) == 0:
             self._model_proxy.status = ProcessStatus.RUNNING
-        self.robot_ops_history.append(robot_op)
-
-    def are_req_robot_ops_completed(self) -> bool:
-        return len(self.req_robot_ops) == 0
+            return True
+        return False
     
     def request_station_op(self, station_op: Type[StationOpDescriptor]):
         self.req_station_ops.append(station_op)
         self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
-
-    def complete_station_op(self, station_op: Type[StationOpDescriptor]):
-        self.req_station_ops.remove(station_op)
-        if len(self.req_station_ops) == 0:
-            self._model_proxy.status = ProcessStatus.RUNNING
-        self.station_ops_history.append(station_op)
     
     def are_req_station_ops_completed(self) -> bool:
-        return len(self.req_station_ops) == 0
+        req_station_ops = [station_op for station_op in self.req_station_ops]
+        for station_op in req_station_ops:
+            if station_op.has_result and station_op.was_successful:
+                self.req_station_ops.remove(station_op)
+                self.station_ops_history.append(station_op)
+        if len(self.req_station_ops) == 0:
+            self._model_proxy.status = ProcessStatus.RUNNING
+            return True
+        return False
     
     def request_station_process(self, station_process: Type[StationProcess]):
         self.req_station_procs.append(station_process)
         self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
-
-    def complete_station_proc(self, station_process: Type[StationProcess]):
-        self.req_station_procs.remove(station_process)
-        if len(self.req_station_procs) == 0:
-            self._model_proxy.status = ProcessStatus.RUNNING
-        self.station_procs_history.append(station_process)
     
     def are_req_station_procs_completed(self) -> bool:
-        return len(self.req_station_procs) == 0
+        req_station_procs = [station_proc for station_proc in self.req_station_procs]
+        for station_proc in req_station_procs:
+            if station_proc.status == ProcessStatus.FINISHED:
+                self.req_station_procs.remove(station_proc)
+                self.station_procs_history.append(station_proc)
+        if len(self.req_station_procs) == 0:
+            self._model_proxy.status = ProcessStatus.RUNNING
+            return True
+        return False
     
     def _construct_state_machine(self) -> Machine:
         states = self.STATES
