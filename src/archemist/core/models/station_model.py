@@ -24,29 +24,24 @@ class StationModel(Document):
     ''' batch capacity '''
     total_batch_capacity = fields.IntField(min_value=1, default=1)
     process_batch_capacity = fields.IntField(min_value=1, default=1)
-
-    ''' external processes '''
-    requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
-    completed_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     
-    ''' internal processes '''
+    ''' processes '''
+    requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     queued_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     running_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
-    completed_procs_dict = fields.DictField(default={})
-
+    completed_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     
-    ''' batches '''
+    ''' lots '''
     assigned_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
     processed_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
     
     ''' robot ops '''
-    requested_robot_op = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
-    completed_robot_ops_dict = fields.DictField(default={})
+    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
     
     ''' station ops '''
     queued_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
     assigned_op = fields.ReferenceField(StationOpDescriptorModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    completed_station_ops_dict = fields.DictField(default={})
+    completed_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}

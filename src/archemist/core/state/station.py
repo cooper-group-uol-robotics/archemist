@@ -6,7 +6,7 @@ from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
-from archemist.core.state.batch import Batch
+from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from bson.objectid import ObjectId
@@ -35,9 +35,9 @@ class Station:
         station_model.total_batch_capacity = station_dict['total_batch_capacity']
         station_model.process_batch_capacity = station_dict['process_batch_capacity']
         station_model.selected_handler = station_dict['handler']
-        if liquids is not None:
+        if liquids:
             station_model.liquids = [liquid.model for liquid in liquids]
-        if solids is not None:
+        if solids:
             station_model.solids = [solid.model for solid in solids]
 
     ''' General properties and methods'''
@@ -49,7 +49,6 @@ class Station:
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
-
 
     @property
     def state(self) -> StationState:
@@ -75,6 +74,11 @@ class Station:
         return self._model_proxy.total_batch_capacity
     
     @property
+    def free_batch_capacity(self) -> int:
+        num_current_batches = sum([lot.num_batches for lot in self._assigned_lots])
+        return self.total_batch_capacity - num_current_batches
+    
+    @property
     def process_batch_capacity(self) -> int:
         return self._model_proxy.process_batch_capacity
     
@@ -85,170 +89,102 @@ class Station:
         return ListProxy(self._model_proxy.requested_ext_procs, ProcessFactory.create_process_from_model)
     
     @property
-    def completed_ext_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.completed_ext_procs, ProcessFactory.create_process_from_model)
+    def queued_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.queued_procs, ProcessFactory.create_process_from_model)
+    
+    @property
+    def running_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_process_from_model)
+    
+    @property
+    def completed_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.completed_procs, ProcessFactory.create_process_from_model)
     
     def request_external_process(self, ext_proc: Type[StationProcess]):
         self.requested_ext_procs.append(ext_proc)
 
-    ''' Batches properties and methods '''
+    ''' Lots properties and methods '''
 
     @property
-    def assigned_batches(self) -> List[Batch]:
-        self._model.reload('assigned_batches')
-        assigned_batches_list = []
-        if self._model.assigned_batches:
-            assigned_batches_list = [Batch(batch_model) for batch_model in self._model.assigned_batches]
-        return assigned_batches_list
+    def _assigned_lots(self) -> List[Lot]:
+        return ListProxy(self._model_proxy.assigned_lots, Lot)
 
     @property
-    def processed_batches(self) -> List[Batch]:
-        self._model.reload('processed_batches')
-        processed_batches_list = []
-        if self._model.processed_batches:
-            processed_batches_list = [Batch(batch_model) for batch_model in self._model.processed_batches]
-        return processed_batches_list 
+    def processed_lots(self) -> List[Lot]:
+        return ListProxy(self._model_proxy.processed_lots, Lot)
 
-    @ property
-    def batches_need_removal(self) -> bool:
-        self._model.reload('batches_need_removal')
-        return self._model.batches_need_removal
-    
-    @batches_need_removal.setter
-    def batches_need_removal(self, new_value: bool):
-        self._model.update(batches_need_removal=new_value)
-
-    def has_free_batch_capacity(self) -> bool:
-        return len(self.assigned_batches) < self.batch_capacity
-
-
-    def add_batch(self, batch: Batch):
-        if self.has_free_batch_capacity():
-            self._model.update(push__assigned_batches=batch.model)
-            self._log_station(f'{batch} is added for processing.')
-            station_stamp = str(self)
-            batch.add_station_stamp(station_stamp)
+    def assign_lot(self, lot: Lot):
+        if self.free_batch_capacity >= lot.num_batches:
+            lot.add_station_stamp(str(self))
+            self._assigned_lots.append(lot)
+            self._log_station(f'{lot} is added for processing')
         else:
-            self._log_station(f'Cannot add {batch}, no batch capacity is available')
-
-    def has_processed_batch(self) -> bool:
-        self._model.reload('processed_batches')
-        return True if self._model.processed_batches else False
+            self._log_station(f'Cannot add {lot}, no batch capacity is available')
     
-    def process_assinged_batch(self, batch: Batch):
-        self._model.update(push__processed_batches=batch.model)
-        self._model.reload('assigned_batches')
-        self._model.update(pull__assigned_batches=batch.model)
-        self._log_station(f'batch {batch.id} processed.')
-
-    def process_assigned_batches(self):
-        self._model.reload('assigned_batches')
-        self._model.update(processed_batches=self._model.assigned_batches)
-        self._model.update(unset__assigned_batches=True)
-        self._log_station(f'all assigned batches processing complete.')
-
-    def get_processed_batch(self) -> Batch:
-        processed_batches = self.processed_batches
-        if processed_batches:
-            batch = processed_batches.pop(0)
-            self._model.update(pop__processed_batches=-1)
-            self._log_station(f'Processed id:{batch} is unassigned.')
-            return batch
+    def finish_processing_lot(self, lot: Lot):
+        lot.add_station_stamp(str(self))
+        self._assigned_lots.remove(lot)
+        self.processed_lots.append(lot)
+        self._log_station(f'processing {lot} is complete')
         
-    ''' Robot ops properties and methods '''
+    ''' Robot ops properties '''
 
     @property
-    def completed_robot_ops(self) -> Dict[Any,Any]:
-        self._model.reload('completed_robot_ops')
-        return {op_uuid:  RobotFactory.create_op_from_model(op_model) for op_uuid, op_model in self._model.completed_robot_ops.items()}
-
-    def has_requested_robot_ops(self) -> bool:
-        self._model.reload('requested_robot_op')
-        return bool(self._model.requested_robot_op)
-    
-    def get_requested_robot_ops(self) -> List[RobotOpDescriptor]:
-        robot_ops = []
-        if self.has_requested_robot_ops():
-            robot_ops = [RobotFactory.create_from_model(op_model) for op_model in self._model.requested_robot_op]
-            self._model.update(set__requested_robot_op=[])
-            self._log_station(f'Robot job request for ({robot_ops}) is retrieved.')
-        return robot_ops
-
-    def request_robot_op(self, robot_job: RobotOpDescriptor, current_batch_id = -1):
-        if current_batch_id != -1:
-            robot_job.related_batch_id = current_batch_id
-        robot_job.origin_station = self._model.id
-        self._model.update(push__requested_robot_op= robot_job.model)
-        self._log_station(f'Requesting robot job ({robot_job})')
-
-    def complete_robot_op_request(self, complete_robot_op: RobotOpDescriptor):
-        self._model.update(**{f"set__completed_robot_ops__{complete_robot_op.uuid}":complete_robot_op.model})
-        self._log_station(f'Robot job request is fulfilled.')
+    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+        return ListProxy(self._model_proxy.requested_robot_ops, RobotFactory.create_op_from_model)
 
     ''' Station ops properties and methods '''
 
     @property
-    def completed_station_ops(self) -> Dict[Any,Any]:
-        self._model.reload('completed_station_ops')
-        return {op_uuid:  StationFactory.create_op_from_model(op_model) for op_uuid, op_model 
-                in self._model.completed_station_ops.items()}
+    def _queued_ops(self) -> List[Type[StationOpDescriptor]]:
+        return ListProxy(self._model_proxy.queued_ops, StationFactory.create_op_from_model)
+
+    @property
+    def assigned_op(self) -> Type[StationOpDescriptor]:
+        return StationFactory.create_op_from_model(self._model_proxy.assigned_op) \
+               if self._model_proxy.assigned_op else None
     
     @property
     def assigned_op_state(self) -> OpState:
-        self._model.reload("assigned_op_state")
-        return self._model.assigned_op_state
+        return self._model_proxy.assigned_op_state
     
     @assigned_op_state.setter
     def assigned_op_state(self, new_state: OpState):
-        self._model.update(assigned_op_state=new_state)
-    
-    def has_queued_ops(self):
-        self._model.reload('queued_ops')
-        return bool(self._model.queued_ops)
-    
-    def has_assigned_station_op(self):
-        self._model.reload('assigned_op')
-        return self._model.assigned_op is not None
+        self._model_proxy.assigned_op_state = new_state
+
+    @property
+    def completed_ops(self) -> List[Type[StationOpDescriptor]]:
+        return ListProxy(self._model_proxy.completed_ops, StationFactory.create_op_from_model)
     
     def update_assigned_op(self):
-        if self.has_queued_ops() and not self.has_assigned_station_op():
-            op_model = self._model.queued_ops[0]
-            self._model.update(set__assigned_op=op_model)
+        if self._queued_ops and self.assigned_op is None:
+            op = self._queued_ops.pop()
+            self._model_proxy.assigned_op = op.model
             self.assigned_op_state = OpState.ASSIGNED
-            self._model.update(pop__queued_ops=-1)
 
-    def get_assigned_station_op(self):
-        if self.has_assigned_station_op():
-            return StationFactory.create_op_from_model(self._model.assigned_op)
-
-    def assign_station_op(self, station_op: StationOpDescriptor):
+    def add_station_op(self, station_op: Type[StationOpDescriptor]):
         if station_op.requested_by is None:
             station_op.requested_by = self.object_id
-        self._model.update(push__queued_ops=station_op.model)
-        self._log_station(f'Requesting station op ({station_op})')  
+        self._queued_ops.append(station_op)
+        self._log_station(f'{station_op} is added to queued_op list')  
 
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        self._model.reload('assigned_op')
-        station_op = StationFactory.create_op_from_model(self._model.assigned_op)
-        station_op.complete_op(success, **kwargs)
-        self._model.update(unset__assigned_op=True)
-        self.assigned_op_state = OpState.INVALID
-        self._model.update(**{f"set__completed_station_ops__{station_op.uuid}":station_op.model})
-        self._log_station(f'Station op is complete.')
-
-    def add_timestamp_to_assigned_op(self):
-        op = self.get_assigned_station_op()
-        op.add_start_timestamp()
-        self._model.update(assigned_op=op.model)
+    def complete_assigned_op(self, success: bool, **kwargs):
+        op = self.assigned_op
+        if op:
+            op.complete_op(success, **kwargs)
+            self._model_proxy.assigned_op = None
+            self.assigned_op_state = OpState.INVALID
+            self.completed_ops.append(op)
+            self._log_station(f'{op} is complete')
 
     def repeat_assigned_op(self):
-        if self.has_assigned_station_op():
+        if self.assigned_op:
             self.assigned_op_state = OpState.TO_BE_REPEATED
         else:
             self._log_station('Unable to repeat. No op assigned')
 
     def skip_assigned_op(self):
-        if self.has_assigned_station_op():
+        if self.assigned_op:
             self.assigned_op_state = OpState.TO_BE_SKIPPED
         else:
             self._log_station('Unable to skip. No op assigned')
