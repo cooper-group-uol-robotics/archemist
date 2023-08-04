@@ -18,6 +18,10 @@ class LotTest(unittest.TestCase):
         self.assertEqual(lot.num_batches, 2)
         self.assertEqual(lot.batches[0].uuid, batch_1.uuid)
         self.assertEqual(lot.batches[1].uuid, batch_2.uuid)
+        lot.add_station_stamp("test_station_stamp")
+        for batch in lot.batches:
+            self.assertEqual(len(batch.station_stamps), 1)
+            self.assertTrue("test_station_stamp" in batch.station_stamps[0])
 
 if __name__ == "__main__":
     unittest.main()

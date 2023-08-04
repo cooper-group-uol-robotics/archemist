@@ -34,3 +34,7 @@ class Lot:
     @property
     def num_batches(self) -> int:
         return len(self._model_proxy.batches)
+    
+    def add_station_stamp(self, station_stamp: str):
+        for batch in self.batches:
+            batch.add_station_stamp(station_stamp)
