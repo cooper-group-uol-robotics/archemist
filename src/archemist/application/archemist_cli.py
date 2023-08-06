@@ -18,7 +18,7 @@ class ArchemistCLI:
                 'type': 'list',
                 'name': 'main_menu',
                 'message': 'Please select from one of the options below:',
-                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Remove waiting batches','Stations', 'Robots', 'Terminate']
+                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Remove waiting batches', 'Optimisation','Stations', 'Robots', 'Terminate']
             }
         ]
         while True:
@@ -40,6 +40,8 @@ class ArchemistCLI:
                     print('Removing waiting batches from the workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='manual_batch_removal')
                     self._client.send_json(msg.to_json())
+                elif selection['main_menu'] == 'Optimisation':
+                    self._process_optimisation_menu()
                 elif selection['main_menu'] == 'Stations':
                     msg = CMDMessage(category=CMDCategory.STATION, cmd='get_list')
                     self._client.send_json(msg.to_json())
@@ -129,6 +131,25 @@ class ArchemistCLI:
         elif selection['robot_menu'] == 'Send LBR resume signal':
             print(f'Sending a resume app message to {robot_name} with id: {robot_id}')
             msg = CMDMessage(category=CMDCategory.ROBOT, cmd='resume_app', params=[robot_name,robot_id])
+            self._client.send_json(msg.to_json())
+        elif selection['robot_menu'] == 'Return':
+            pass
+    
+    def _process_optimisation_menu(self):
+        optim_menu = {
+            'type': 'list',
+            'name': 'optimisation_menu',
+            'message': 'Please select from one of the options below:',
+            'choices': ['Start', 'Generate new recipe', 'Return']
+            }
+        selection = prompt(optim_menu)
+        if selection['optimisation_menu'] == 'Start':
+            print(f'Starting optimistion manager')
+            msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='start_optim')
+            self._client.send_json(msg.to_json())
+        elif selection['optimisation_menu'] == 'Generate new recipe':
+            print('Generating new recipe')
+            msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='generate_recipe')
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Return':
             pass

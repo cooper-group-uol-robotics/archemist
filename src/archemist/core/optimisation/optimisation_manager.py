@@ -32,3 +32,13 @@ class OptimisationManager():
         
     def start_optimisation(self):
         self._handler.start()
+        self._log_opt_manager("Optimisation started")
+
+    def generate_new_recipe(self):
+        self._log_opt_manager("generating new recipe based on user request")
+        _optimized_values = self._optimiser.generate_batch()
+        self._recipe_generator.generate_recipe(_optimized_values)
+
+
+    def _log_opt_manager(self, message: str):
+        print(f'[OptimisationManager]: ' + message)

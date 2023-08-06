@@ -44,7 +44,8 @@ class ArchemistServer:
 
         if use_optimiser:
             self._optimiser_manager = OptimisationManager(workflow_dir, self._state, existing_db)
-            self._optimiser_manager.start_optimisation()
+        else:
+            self._optimiser_manager = None
 
 
     def run(self):
@@ -64,6 +65,16 @@ class ArchemistServer:
                         self._workflow_mgr.pause_processor()
                     elif msg.cmd == 'add_batch':
                         self._state.add_clean_batch()
+                    elif msg.cmd == 'start_optim':
+                        if self._optimiser_manager:
+                            self._optimiser_manager.start_optimisation()
+                        else:
+                            print("Optimisation manager not available. Cannot start optimisation")
+                    elif msg.cmd == 'generate_recipe':
+                        if self._optimiser_manager:
+                            self._optimiser_manager.generate_new_recipe()
+                        else:
+                            print("Optimisation manager not available. Cannot generate new recipe")
                     elif msg.cmd == 'manual_batch_removal':
                         for station in self._state.stations:
                             if station.batches_need_removal:

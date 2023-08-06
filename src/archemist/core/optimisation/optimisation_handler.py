@@ -39,10 +39,10 @@ class OptimisationHandler:
                     if self._is_first_run:
                         self._is_first_run = False
                     self._optimisation_records.add_to_seen_batches(batch.id)
-                    self._logOptHandler(f"model updated with batch {batch.id} with recipe id {batch.recipe.id}")
-                    self._logOptHandler("------ start of update data ------")
+                    self._log_opt_handler(f"model updated with batch {batch.id} with recipe id {batch.recipe.id}")
+                    self._log_opt_handler("------ start of update data ------")
                     print(str(result_data_pd))
-                    self._logOptHandler("------ end of update data ------")
+                    self._log_opt_handler("------ end of update data ------")
             time.sleep(1)
 
 
@@ -51,13 +51,16 @@ class OptimisationHandler:
         # check recipe que, if no recipe add new recipes based on number mentioned in config
         # the new recipes are created based on the recipe_generator
         if self._is_first_run:
-            self._logOptHandler(f"First optimisation run. Creating new {self._optimisation_records.max_recipe_count} recipes")
-            for _ in range(self._optimisation_records.max_recipe_count):
-                _optimized_values = self._optimiser.generate_random_values()
-                self._recipe_generator.generate_recipe(_optimized_values)
+            self._log_opt_handler(f"First optimisation run. Creating new {self._optimisation_records.max_recipe_count} recipes")
+            recipe_queue_len = len(self._state.recipes_queue)
+            if recipe_queue_len < self._optimisation_records.max_recipe_count:
+                remaining_recipes_len = self._optimisation_records.max_recipe_count - recipe_queue_len
+                for _ in range(remaining_recipes_len):
+                    _optimized_values = self._optimiser.generate_random_values()
+                    self._recipe_generator.generate_recipe(_optimized_values)
         while True:
             if len(self._state.recipes_queue) == 0 and not self._is_first_run:
-                self._logOptHandler(f"recipes queue is empty. Creating new {self._optimisation_records.max_recipe_count} recipes")
+                self._log_opt_handler(f"recipes queue is empty. Creating new {self._optimisation_records.max_recipe_count} recipes")
                 for _ in range(self._optimisation_records.max_recipe_count):
                     _optimized_values = self._optimiser.generate_batch()
                     self._recipe_generator.generate_recipe(_optimized_values)
@@ -67,7 +70,7 @@ class OptimisationHandler:
         self._watch_recipe_thread.start()
         self._watch_optimization_thread.start()
 
-    def _logOptHandler(self, message: str):
-        print(f'OptimisationHandler: ' + message)
+    def _log_opt_handler(self, message: str):
+        print(f'[OptimisationHandler]: ' + message)
 
         
