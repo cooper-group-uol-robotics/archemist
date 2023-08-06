@@ -228,7 +228,8 @@ class ListProxy:
         return self._list_wrapper.__len__()
     
     def __iter__(self):
-        yield self._callable(next(self._list_wrapper.__iter__()))
+        for model in self._list_wrapper:
+            yield self._callable(model)
 
     def __contains__(self, object) -> bool:
         return self._list_wrapper.__contains__(object.model)
