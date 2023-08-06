@@ -26,13 +26,20 @@ class StationProcess:
         self._state_machine = None
 
     @classmethod
+    def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
+                                 lot: Lot, key_process_ops: List[Type[StationOpDescriptor]],
+                                 processing_slot: int = None, **kwargs):
+        proc_model.uuid = uuid.uuid4()
+        proc_model.lot = lot.model
+        proc_model.key_process_ops = [key_process_op.model for key_process_op in key_process_ops]
+        if processing_slot:
+            proc_model.processing_slot = processing_slot
+        proc_model.associated_station = associated_station
+
+    @classmethod
     def from_args(cls, lot: Lot, key_process_ops: List[Type[StationOpDescriptor]], processing_slot: int = None):
         model = StationProcessModel()
-        model.uuid = uuid.uuid4()
-        model.lot = lot.model
-        model.key_process_ops = [key_process_op.model for key_process_op in key_process_ops]
-        if processing_slot:
-            model.processing_slot = processing_slot
+        cls._set_model_common_fields(model, "Station", lot, key_process_ops, processing_slot)
         model._type = cls.__name__
         model._module = cls.__module__
         model.save()
@@ -53,6 +60,10 @@ class StationProcess:
     @requested_by.setter
     def requested_by(self, station_id: ObjectId):
         self._model_proxy.requested_by = station_id
+
+    @property
+    def associated_station(self) -> str:
+        return self._model_proxy.associated_station
     
     @ property
     def status(self) -> ProcessStatus:

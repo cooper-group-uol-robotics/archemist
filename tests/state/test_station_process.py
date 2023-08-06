@@ -39,7 +39,13 @@ class TestProcess(StationProcess):
 class StationProcessTest(unittest.TestCase):
     
     def setUp(self):
-        connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
 
     def test_station_process_fields(self):
         # construct lot
@@ -54,6 +60,7 @@ class StationProcessTest(unittest.TestCase):
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         proc.requested_by = dummy_object_id
         self.assertEqual(proc.requested_by, dummy_object_id)
+        self.assertEqual(proc.associated_station, "Station")
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)
         self.assertEqual(proc.m_state, "init_state")
         self.assertEqual(proc.processing_slot, 1)
