@@ -53,6 +53,10 @@ class Station:
     @property
     def state(self) -> StationState:
         return self._model_proxy.state
+    
+    @state.setter
+    def state(self, new_state: StationState):
+        self._model_proxy.state = new_state
 
     @property
     def id(self) -> int:
@@ -67,6 +71,17 @@ class Station:
         station_module = self._model_proxy._module.rsplit('.',1)[0]
         return {'type':self._model_proxy.selected_handler, 'module':station_module}
 
+    ''' materials '''
+    @property
+    def liquids(self) -> List[Liquid]:
+        if self._model_proxy.liquids:
+            return ListProxy(self._model_proxy.liquids, Liquid)
+    
+    @property
+    def solids(self) -> List[Solid]:
+        if self._model_proxy.solids:
+            return ListProxy(self._model_proxy.solids, Solid)
+    
     ''' batch capacity '''
 
     @property
@@ -75,7 +90,10 @@ class Station:
     
     @property
     def free_batch_capacity(self) -> int:
-        num_current_batches = sum([lot.num_batches for lot in self._assigned_lots])
+        if self.assigned_lots:
+            num_current_batches = sum([lot.num_batches for lot in self.assigned_lots])
+        else:
+            num_current_batches = 0
         return self.total_batch_capacity - num_current_batches
     
     @property
@@ -103,27 +121,30 @@ class Station:
     def request_external_process(self, ext_proc: Type[StationProcess]):
         self.requested_ext_procs.append(ext_proc)
 
+    def add_process(self, proc: Type[StationProcess]):
+        self.queued_procs.append(proc)
+
     ''' Lots properties and methods '''
 
     @property
-    def _assigned_lots(self) -> List[Lot]:
+    def assigned_lots(self) -> List[Lot]:
         return ListProxy(self._model_proxy.assigned_lots, Lot)
 
     @property
     def processed_lots(self) -> List[Lot]:
         return ListProxy(self._model_proxy.processed_lots, Lot)
 
-    def assign_lot(self, lot: Lot):
+    def add_lot(self, lot: Lot):
         if self.free_batch_capacity >= lot.num_batches:
             lot.add_station_stamp(str(self))
-            self._assigned_lots.append(lot)
+            self.assigned_lots.append(lot)
             self._log_station(f'{lot} is added for processing')
         else:
             self._log_station(f'Cannot add {lot}, no batch capacity is available')
     
     def finish_processing_lot(self, lot: Lot):
         lot.add_station_stamp(str(self))
-        self._assigned_lots.remove(lot)
+        self.assigned_lots.remove(lot)
         self.processed_lots.append(lot)
         self._log_station(f'processing {lot} is complete')
         
