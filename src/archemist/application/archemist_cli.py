@@ -151,5 +151,5 @@ class ArchemistCLI:
             print('Generating new recipe')
             msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='generate_recipe')
             self._client.send_json(msg.to_json())
-        elif selection['robot_menu'] == 'Return':
+        elif selection['optimisation_menu'] == 'Return':
             pass
