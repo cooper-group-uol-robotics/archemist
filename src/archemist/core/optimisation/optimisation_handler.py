@@ -6,6 +6,7 @@ from archemist.core.optimisation.optimisation_records import OptimisationRecords
 from archemist.core.optimisation.optimiser_base import OptimiserBase
 from archemist.core.state.state import State
 from archemist.core.optimisation.recipe_generator import RecipeGenerator
+import math
 
 class OptimisationHandler:
     def __init__(self, optimiser: Type[OptimiserBase], optimisation_records: OptimisationRecords, state: State,
@@ -31,10 +32,20 @@ class OptimisationHandler:
             for batch in completed_batches:
                 if batch.id not in self._optimisation_records.batches_seen:
                     decision_vars_dict = batch.extract_samples_op_data(self._optimisation_records.decision_variables)
+                    # create x data
+                    x_df = pd.DataFrame(decision_vars_dict)
+                    # remove single element lists
+                    for col in x_df.columns:
+                        x_df[col] = x_df[col].explode()
+                    # create y data
                     result_data_dict = batch.extract_samples_op_data(self._optimisation_records.objective_variable)
-                    combine_dict = {**decision_vars_dict, **result_data_dict}
-                    result_data_pd = pd.DataFrame(combine_dict)
-                    updated_model = self._optimiser.update_model(result_data_pd)
+                    result_data_df = pd.DataFrame(result_data_dict)
+                    y_df = pd.DataFrame(columns=['result'])
+                    y_df['result'] = result_data_df.apply(lambda row: math.sqrt(row[0]**2 - row[1]**2), axis=1)
+                    #combine_dict = {**decision_vars_dict, **result_data_dict}
+                    #result_data_pd = pd.DataFrame(combine_dict)
+                    data_df = pd.concat([x_df, y_df], axis=1)
+                    updated_model = self._optimiser.update_model(data_df)
                     self._optimisation_records.update_stored_optimisation_model(updated_model)
                     if self._is_first_run:
                         self._is_first_run = False
@@ -43,7 +54,7 @@ class OptimisationHandler:
                         self._optimisation_records.need_new_recipes = True
                     self._log_opt_handler(f"model updated with batch {batch.id} with recipe id {batch.recipe.id}")
                     self._log_opt_handler("------ start of update data ------")
-                    print(str(result_data_pd))
+                    print(str(data_df))
                     self._log_opt_handler("------ end of update data ------")
             time.sleep(1)
 
