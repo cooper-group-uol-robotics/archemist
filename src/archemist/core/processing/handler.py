@@ -39,8 +39,15 @@ class StationHandler:
                         process.process_state_transitions()
                         self._in_process_batches.extend(process.data.batches)
                     else:
-                        self._station.delete_process_data(process.data.uuid)
-                        self._processing_slots[slot] = None
+                        if self._station.__class__.__name__ == "InputStation" or self._station.__class__.__name__ == "OutputStation":
+                            if self._station.batches_manaully_removed:
+                                self._station.delete_process_data(process.data.uuid)
+                                self._processing_slots[slot] = None
+                        else:
+                            self._station.delete_process_data(process.data.uuid)
+                            self._processing_slots[slot] = None
+            if self._station.batches_manaully_removed:
+                self._station.batches_manaully_removed = False
 
         def run_processes(self):
             self._handle_processes()

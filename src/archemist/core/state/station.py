@@ -169,13 +169,13 @@ class Station:
         return processed_batches_list 
 
     @ property
-    def batches_need_removal(self) -> bool:
-        self._model.reload('batches_need_removal')
-        return self._model.batches_need_removal
+    def batches_manaully_removed(self) -> bool:
+        self._model.reload('batches_manaully_removed')
+        return self._model.batches_manaully_removed
     
-    @batches_need_removal.setter
-    def batches_need_removal(self, new_value: bool):
-        self._model.update(batches_need_removal=new_value)
+    @batches_manaully_removed.setter
+    def batches_manaully_removed(self, new_value: bool):
+        self._model.update(batches_manaully_removed=new_value)
 
     def has_free_batch_capacity(self) -> bool:
         return len(self.assigned_batches) < self.batch_capacity

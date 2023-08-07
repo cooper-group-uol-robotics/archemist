@@ -77,8 +77,8 @@ class ArchemistServer:
                             print("Optimisation manager not available. Cannot generate new recipe")
                     elif msg.cmd == 'manual_batch_removal':
                         for station in self._state.stations:
-                            if station.batches_need_removal:
-                                station.batches_need_removal = False
+                            if not station.batches_manaully_removed:
+                                station.batches_manaully_removed = True
                     elif msg.cmd == 'terminate':
                         self.shut_down()
                         break

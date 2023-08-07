@@ -41,7 +41,7 @@ class StationModel(Document):
     ''' batches '''
     assigned_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     processed_batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
-    batches_need_removal = fields.BooleanField(default=False)
+    batches_manaully_removed = fields.BooleanField(default=False)
     
     ''' robot ops '''
     requested_robot_op = fields.EmbeddedDocumentListField(RobotOpDescriptorModel,default=[])
