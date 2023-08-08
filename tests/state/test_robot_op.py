@@ -9,8 +9,14 @@ from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescript
 from archemist.core.util.location import Location
 
 class RobotOpTest(unittest.TestCase):
-    def setUp(self):
-        connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
+    def setUp(self) -> None:
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
 
     def test_robot_op(self):
         # construct op

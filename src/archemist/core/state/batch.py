@@ -15,7 +15,7 @@ class Sample:
         self._model_proxy = sample_model
 
     @property
-    def materials(self):
+    def materials(self) -> List[Dict]:
         return self._model_proxy.materials
 
     @property

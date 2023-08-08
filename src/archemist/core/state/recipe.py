@@ -63,7 +63,7 @@ class Recipe:
         return self._model_proxy.liquids
 
     @property
-    def model(self) -> Document:
+    def model(self) -> RecipeModel:
         return self._model_proxy.model
 
     @property
@@ -78,6 +78,9 @@ class Recipe:
 
     def is_complete(self) -> bool:
         return self.current_state == 'end_state'
+    
+    def is_faulty(self) -> bool:
+        return self.current_state == 'faulty_state'
 
     def get_current_process(self) -> StationOpDescriptor:
         if not self.is_complete():
