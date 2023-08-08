@@ -3,6 +3,7 @@ from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.persistence.object_factory import RobotFactory, StationFactory
 from mongoengine import Document, EmbeddedDocument
 from typing import Union,List, Iterator, Any, TypeVar
+from weakref import proxy
 
 class ListFieldAdapter:
     def __init__(self, model: Document, field_name: str):
@@ -142,47 +143,57 @@ class EmbedListFieldAdapter:
         self._field_name = field_name
 
     def append(self, object: Union[Document, EmbeddedDocument]):
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         objects_list.append(object)
 
     def pop(self, index: int = -1) -> Union[Document, EmbeddedDocument]:
-        objects_list = getattr(self._model,self._field_name)
+        objects_list = self._get_list_instance()
         try:
             return objects_list.pop(index)
         except IndexError:
             raise
 
     def extend(self, objects_list: List[Union[Document, EmbeddedDocument]]):
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         objects_list.extend(objects_list)
 
     def remove(self, object: Union[Document, EmbeddedDocument]):
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         objects_list.remove(object)
 
     def __getitem__(self, index: int) -> Union[Document, EmbeddedDocument]:
-        objects_list = getattr(self._model,self._field_name)
+        objects_list = self._get_list_instance()
         return objects_list[index]
 
     def __setitem__(self, index: int, value: Any):
-        objects_list = getattr(self._model,self._field_name)
+        objects_list = self._get_list_instance()
         objects_list[index] = value
 
     def __iter__(self) -> Iterator:
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return iter([object for object in objects_list])
 
     def __next__(self) -> Union[Document, EmbeddedDocument]: 
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return next([object for object in objects_list])
 
     def __bool__(self):
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return True if objects_list else False
 
     def __len__(self):
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return len(objects_list)
+    
+    def _get_list_instance(self):
+        objects_list = getattr(self._model, self._field_name)
+        try:
+            hasattr(objects_list._instance, "__weakref__")
+        except:
+            objects_list._instance = proxy(self._model)
+        return objects_list
+    
+
     
 class EmbedOpListAdapter(EmbedListFieldAdapter):
     def __init__(self, model: EmbeddedDocument, field_name: str, factory_cls: Union[RobotFactory,StationFactory]):
@@ -203,11 +214,11 @@ class EmbedOpListAdapter(EmbedListFieldAdapter):
         return super().remove(object.model)
 
     def __iter__(self) -> Iterator:
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return iter([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
     def __next__(self) -> List[Union[RobotOpDescriptor,StationOpDescriptor]]: 
-        objects_list = getattr(self._model, self._field_name)
+        objects_list = self._get_list_instance()
         return next([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
     def __getitem__(self, index: int) -> Union[RobotOpDescriptor,StationOpDescriptor]:
