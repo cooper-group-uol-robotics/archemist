@@ -131,7 +131,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.assigned_op.uuid, station_op_1.uuid)
         self.assertIsNone(self.station.assigned_op.start_timestamp)
         
-        self.station.assigned_op_state = OpState.EXECUTING
+        self.station.set_assigned_op_to_execute()
         self.assertEqual(self.station.assigned_op_state, OpState.EXECUTING)
         
         # complete station op1

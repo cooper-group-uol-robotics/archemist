@@ -169,10 +169,6 @@ class Station:
     def assigned_op_state(self) -> OpState:
         return self._model_proxy.assigned_op_state
     
-    @assigned_op_state.setter
-    def assigned_op_state(self, new_state: OpState):
-        self._model_proxy.assigned_op_state = new_state
-
     @property
     def ops_history(self) -> List[Type[StationOpDescriptor]]:
         return ListProxy(self._model_proxy.ops_history, StationFactory.create_op_from_model)
@@ -181,32 +177,35 @@ class Station:
         if self._queued_ops and self.assigned_op is None:
             op = self._queued_ops.pop()
             self._model_proxy.assigned_op = op.model
-            self.assigned_op_state = OpState.ASSIGNED
+            self._model_proxy.assigned_op_state = OpState.ASSIGNED
 
     def add_station_op(self, station_op: Type[StationOpDescriptor]):
         if station_op.requested_by is None:
             station_op.requested_by = self.object_id
         self._queued_ops.append(station_op)
-        self._log_station(f'{station_op} is added to queued_op list')  
+        self._log_station(f'{station_op} is added to queued_op list')
+
+    def set_assigned_op_to_execute(self):
+        self._model_proxy.assigned_op_state = OpState.EXECUTING
 
     def complete_assigned_op(self, success: bool, **kwargs):
         op = self.assigned_op
         if op:
             op.complete_op(success, **kwargs)
             self._model_proxy.assigned_op = None
-            self.assigned_op_state = OpState.INVALID
+            self._model_proxy.assigned_op_state = OpState.INVALID
             self.ops_history.append(op)
             self._log_station(f'{op} is complete')
 
     def repeat_assigned_op(self):
         if self.assigned_op:
-            self.assigned_op_state = OpState.TO_BE_REPEATED
+            self._model_proxy.assigned_op_state = OpState.TO_BE_REPEATED
         else:
             self._log_station('Unable to repeat. No op assigned')
 
     def skip_assigned_op(self):
         if self.assigned_op:
-            self.assigned_op_state = OpState.TO_BE_SKIPPED
+            self._model_proxy.assigned_op_state = OpState.TO_BE_SKIPPED
         else:
             self._log_station('Unable to skip. No op assigned')
 
