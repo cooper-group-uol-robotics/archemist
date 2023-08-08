@@ -34,7 +34,7 @@ class Material:
 
     @property
     def expiry_date(self) -> date:
-        return date.fromisoformat(self._model_proxy.expiry_date)
+        return self._model_proxy.expiry_date.date()
 
     @property
     def mass(self) -> float:
@@ -135,7 +135,7 @@ class Liquid(Material):
         self._update_volume(new_volume)
     
     def _update_volume(self, vol_quantity: unyt_quantity):
-        new_vol = vol_quantity.to(self.mass_unit)
+        new_vol = vol_quantity.to(self.volume_unit)
         self._model_proxy.volume = new_vol.to_value()
 
     def __str__(self):
@@ -143,8 +143,8 @@ class Liquid(Material):
                  Mass: {self.mass} {self.mass_unit}, Volume: {self.volume} {self.volume_unit}'
 
 class Solid(Material):
-    def __init__(self, material_model: SolidMaterialModel) -> None:
-        self._model = material_model
+    def __init__(self, material_model: Union[SolidMaterialModel, ModelProxy]) -> None:
+        super().__init__(material_model)
 
     @classmethod
     def from_dict(cls, solid_dict: dict):
