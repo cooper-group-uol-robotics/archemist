@@ -13,6 +13,7 @@ class OptimisationRecordsModel(Document):
     max_recipe_count = fields.IntField(min=1)
     stored_optimisation_obj = fields.BinaryField(null=True)
     batches_seen = fields.ListField()
+    need_new_recipes = fields.BooleanField(default=False)
 
     meta = {'collection': 'optimisation', 'db_alias': 'archemist_state'}
 
@@ -72,6 +73,15 @@ class OptimisationRecords:
     @property
     def max_recipe_count(self) -> int:
         return self._model.max_recipe_count
+    
+    @property
+    def need_new_recipes(self) -> bool:
+        self._model.reload("need_new_recipes")
+        return self._model.need_new_recipes
+    
+    @need_new_recipes.setter
+    def need_new_recipes(self, new_val: bool):
+        self._model.update(set__need_new_recipes=new_val)
     
     @property
     def stored_optimisation_obj(self) -> object:

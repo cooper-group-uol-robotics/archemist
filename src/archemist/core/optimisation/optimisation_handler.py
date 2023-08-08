@@ -39,6 +39,8 @@ class OptimisationHandler:
                     if self._is_first_run:
                         self._is_first_run = False
                     self._optimisation_records.add_to_seen_batches(batch.id)
+                    if len(self._optimisation_records.batches_seen) % self._optimisation_records.max_recipe_count == 0:
+                        self._optimisation_records.need_new_recipes = True
                     self._log_opt_handler(f"model updated with batch {batch.id} with recipe id {batch.recipe.id}")
                     self._log_opt_handler("------ start of update data ------")
                     print(str(result_data_pd))
@@ -59,11 +61,12 @@ class OptimisationHandler:
                     _optimized_values = self._optimiser.generate_random_values()
                     self._recipe_generator.generate_recipe(_optimized_values)
         while True:
-            if len(self._state.recipes_queue) == 0 and not self._is_first_run:
+            if len(self._state.recipes_queue) == 0 and not self._optimisation_records.need_new_recipes:
                 self._log_opt_handler(f"recipes queue is empty. Creating new {self._optimisation_records.max_recipe_count} recipes")
                 for _ in range(self._optimisation_records.max_recipe_count):
                     _optimized_values = self._optimiser.generate_batch()
                     self._recipe_generator.generate_recipe(_optimized_values)
+                self._optimisation_records.need_new_recipes = False
             time.sleep(1)
 
     def start(self):
