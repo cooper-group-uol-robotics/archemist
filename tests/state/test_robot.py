@@ -1,7 +1,7 @@
 from datetime import datetime
 from bson.objectid import ObjectId
 import unittest
-from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode
+from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot_op import RobotTaskOpDescriptor
 from archemist.core.util.location import Location
@@ -11,7 +11,13 @@ from mongoengine import connect
 
 class RobotTest(unittest.TestCase):
     def setUp(self) -> None:
-        connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()  
 
     def test_robot(self):
         robot_dict = {
@@ -25,16 +31,15 @@ class RobotTest(unittest.TestCase):
         # test general fields
         robot = Robot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.selected_handler_dict, {"module": "archemist.core.state", "type": "GenericRobotHandler"})
-        self.assertTrue(robot.operational)
-        robot.operational = False
-        self.assertFalse(robot.operational)
+        self.assertEqual(robot.get_handler_details(), {"module": "archemist.core.state", "type": "GenericRobotHandler"})
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         t_loc = Location(node_id=3, graph_id=2, frame_name="b_frame")
         robot.location = t_loc
         self.assertEqual(robot.location, t_loc)
-        self.assertEqual(robot.state, RobotState.IDLE)
-        self.assertEqual(len(robot.op_history), 0)
+        self.assertEqual(robot.state, RobotState.INACTIVE)
+        robot.state = RobotState.ACTIVE
+        self.assertEqual(robot.state, RobotState.ACTIVE)
+        self.assertEqual(len(robot.ops_history), 0)
 
         # test op operation
         # construct op
@@ -45,13 +50,13 @@ class RobotTest(unittest.TestCase):
                                                    params_list, task_loc,
                                                    station_object_id)
         # assign op
-        self.assertFalse(robot.has_assigned_op())
-        robot.assign_op(robot_op)
-        self.assertEqual(robot.state, RobotState.OP_ASSIGNED)
-        self.assertTrue(robot.has_assigned_op())
+        self.assertEqual(robot.assigned_op_state, OpState.INVALID)
+        self.assertFalse(robot.assigned_op)
+        robot.add_op(robot_op)
+        self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
 
         # get assigned op
-        assigned_op = robot.get_assigned_op()
+        assigned_op = robot.assigned_op
         self.assertIsNotNone(assigned_op)
         self.assertEqual(assigned_op.name, robot_op.name)
         self.assertEqual(assigned_op.location, robot_op.location)
@@ -59,44 +64,27 @@ class RobotTest(unittest.TestCase):
         for idx, param in enumerate(assigned_op.params):
             self.assertEqual(robot_op.params[idx], param)
         with self.assertRaises(RobotAssignedRackError):
-            robot.assign_op(robot_op)
+            robot.add_op(robot_op)
         
         # start executing
-        self.assertIsNone(assigned_op.start_timestamp)
-        robot.start_executing_op()
-        self.assertEqual(robot.state, RobotState.EXECUTING_OP)
-        self.assertIsNotNone(assigned_op.start_timestamp)
+        robot.set_assigned_op_to_execute()
+        self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
 
         # repeat and skip op
         robot.skip_assigned_op()
-        self.assertEqual(robot.state, RobotState.SKIP_OP)
+        self.assertEqual(robot.assigned_op_state, OpState.TO_BE_SKIPPED)
         robot.repeat_assigned_op()
-        self.assertEqual(robot.state, RobotState.REPEAT_OP)
+        self.assertEqual(robot.assigned_op_state, OpState.TO_BE_REPEATED)
 
         # return to start executing
-        robot.start_executing_op()
+        robot.set_assigned_op_to_execute()
        
         # complete robot job
-        self.assertFalse(robot.is_assigned_op_complete())
         robot.complete_assigned_op(True)
-        self.assertFalse(robot.has_assigned_op())
-        self.assertEqual(robot.state, RobotState.EXECUTION_COMPLETE)
-        self.assertTrue(robot.is_assigned_op_complete())
+        self.assertIsNone(robot.assigned_op)
+        self.assertEqual(robot.assigned_op_state, OpState.INVALID)        
 
-        # retrieve robot job
-        ret_op = robot.get_complete_op()
-        self.assertEqual(robot.state, RobotState.IDLE)
-        self.assertFalse(robot.is_assigned_op_complete())
-        # self.assertEqual(len(robot.onboard_batches),1)
-        # self.assertEqual(robot.onboard_batches[0],32)
-        self.assertEqual(ret_op.name, robot_op.name)
-        self.assertEqual(len(ret_op.params), len(robot_op.params))
-        self.assertEqual(ret_op.requested_by, robot_op.requested_by)
-        self.assertEqual(ret_op.executed_by, robot.model.id)
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-
-        history = robot.op_history
+        history = robot.ops_history
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].name, robot_op.name)
         self.assertEqual(history[0].location, robot_op.location)
@@ -116,10 +104,9 @@ class RobotTest(unittest.TestCase):
         # test general fields
         robot = MobileRobot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.selected_handler_dict, {"module": "archemist.core.state", "type": "GenericRobotHandler"})
-        self.assertTrue(robot.operational)
+        self.assertEqual(robot.get_handler_details(), {"module": "archemist.core.state", "type": "GenericRobotHandler"})
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
-        self.assertEqual(robot.operational_mode, MobileRobotMode.OPERTIAONAL)
+        self.assertEqual(robot.operational_mode, MobileRobotMode.OPERATIONAL)
         robot.operational_mode = MobileRobotMode.COOLDOWN
         self.assertEqual(robot.operational_mode, MobileRobotMode.COOLDOWN)
         self.assertEqual(robot.batch_capacity, 2)
@@ -140,15 +127,13 @@ class RobotTest(unittest.TestCase):
 
         # test loading batches
         self.assertFalse(robot.is_onboard_capacity_full())
-        robot.assign_op(loading_robot_op_1)
+        robot.add_op(loading_robot_op_1)
         robot.complete_assigned_op(True)
-        robot.get_complete_op()
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertTrue(robot.is_batch_onboard(loading_robot_op_1.related_batch))
 
-        robot.assign_op(loading_robot_op_2)
+        robot.add_op(loading_robot_op_2)
         robot.complete_assigned_op(True)
-        robot.get_complete_op()
         self.assertEqual(len(robot.onboard_batches), 2)
         self.assertTrue(robot.is_batch_onboard(loading_robot_op_2.related_batch))
 
@@ -162,19 +147,16 @@ class RobotTest(unittest.TestCase):
 
         # test unloading batches
         self.assertTrue(robot.is_onboard_capacity_full())
-        robot.assign_op(unloading_robot_op_1)
+        robot.add_op(unloading_robot_op_1)
         robot.complete_assigned_op(True)
-        robot.get_complete_op()
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertFalse(robot.is_batch_onboard(loading_robot_op_1.related_batch))
 
-        robot.assign_op(unloading_robot_op_2)
+        robot.add_op(unloading_robot_op_2)
         robot.complete_assigned_op(True)
-        robot.get_complete_op()
         self.assertEqual(len(robot.onboard_batches), 0)
         self.assertFalse(robot.is_batch_onboard(loading_robot_op_2.related_batch))
         self.assertFalse(robot.is_onboard_capacity_full())
-
 
 
 if __name__ == '__main__':
