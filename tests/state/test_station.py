@@ -108,7 +108,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station._queued_ops)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
-        self.assertFalse(self.station.completed_ops)
+        self.assertFalse(self.station.ops_history)
 
         # op creation
         station_op_1 = StationOpDescriptor.construct_op()
@@ -139,9 +139,9 @@ class StationTest(unittest.TestCase):
         self.station.complete_assigned_op(True)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
-        self.assertEqual(len(self.station.completed_ops), 1)
+        self.assertEqual(len(self.station.ops_history), 1)
         
-        complete_op = self.station.completed_ops[0]
+        complete_op = self.station.ops_history[0]
         self.assertEqual(complete_op.uuid, station_op_1.uuid)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
@@ -167,8 +167,8 @@ class StationTest(unittest.TestCase):
         self.station.complete_assigned_op(True)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
-        self.assertEqual(len(self.station.completed_ops), 2)
-        complete_op = self.station.completed_ops[1]
+        self.assertEqual(len(self.station.ops_history), 2)
+        complete_op = self.station.ops_history[1]
         self.assertEqual(complete_op.uuid, station_op_2.uuid)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
@@ -179,7 +179,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.requested_ext_procs)
         self.assertFalse(self.station.queued_procs)
         self.assertFalse(self.station.running_procs)
-        self.assertFalse(self.station.completed_procs)
+        self.assertFalse(self.station.procs_history)
 
         # construct process
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))

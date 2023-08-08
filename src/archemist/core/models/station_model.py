@@ -29,7 +29,7 @@ class StationModel(Document):
     requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     queued_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     running_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
-    completed_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    procs_history = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     
     ''' lots '''
     assigned_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
@@ -42,6 +42,6 @@ class StationModel(Document):
     queued_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
     assigned_op = fields.ReferenceField(StationOpDescriptorModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    completed_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
+    ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}

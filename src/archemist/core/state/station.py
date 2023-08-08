@@ -115,8 +115,8 @@ class Station:
         return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_process_from_model)
     
     @property
-    def completed_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.completed_procs, ProcessFactory.create_process_from_model)
+    def procs_history(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.procs_history, ProcessFactory.create_process_from_model)
     
     def request_external_process(self, ext_proc: Type[StationProcess]):
         self.requested_ext_procs.append(ext_proc)
@@ -174,8 +174,8 @@ class Station:
         self._model_proxy.assigned_op_state = new_state
 
     @property
-    def completed_ops(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.completed_ops, StationFactory.create_op_from_model)
+    def ops_history(self) -> List[Type[StationOpDescriptor]]:
+        return ListProxy(self._model_proxy.ops_history, StationFactory.create_op_from_model)
     
     def update_assigned_op(self):
         if self._queued_ops and self.assigned_op is None:
@@ -195,7 +195,7 @@ class Station:
             op.complete_op(success, **kwargs)
             self._model_proxy.assigned_op = None
             self.assigned_op_state = OpState.INVALID
-            self.completed_ops.append(op)
+            self.ops_history.append(op)
             self._log_station(f'{op} is complete')
 
     def repeat_assigned_op(self):
