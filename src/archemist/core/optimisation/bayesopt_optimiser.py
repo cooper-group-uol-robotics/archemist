@@ -5,7 +5,7 @@ from bayes_opt.bayesian_optimization import BayesianOptimization
 import warnings
 import numpy as np
 from scipy.optimize import minimize
-
+import re
 
 
 class BayesOptOptimiser(OptimiserBase):
@@ -19,26 +19,67 @@ class BayesOptOptimiser(OptimiserBase):
             Number of probe points for each iteration during optimization.
         """
         optim_records = kwargs["optimization_records"]
-        
+
         self._hyperparameters = optim_records.optimiser_args["hyperparameters"]
         self._batch_size = optim_records.optimiser_args['batch_size']
         self._components = optim_records.optimiser_args['components']
         self._target_name = optim_records.optimiser_args['target'] if 'target' in optim_records.optimiser_args else None
+
+        # rounding - new config hyperparameter
+        self._round_digit = optim_records.optimiser_args['round_digit'] \
+            if 'round_digit' in optim_records.optimiser_args else 2
+
+        bound = self._generate_bound_from_config()
+        self._bound = bound
+        self._dropped_key = None
+        self._reformat_equality = None
+
         if 'constraint' in optim_records.optimiser_args:
             self._constraint = {'type': optim_records.optimiser_args['constraint']['type'],
-                            'fun': optim_records.optimiser_args['constraint']['expression']}
+                                'fun': optim_records.optimiser_args['constraint']['expression']}
+            reformat, self._reformat_equality = self._constraint_reformat()
         else:
             self._constraint = None
+            reformat = False
+
+        if reformat:  # delete the last component if reformat equality constraint
+            self._dropped_key = list(bound.keys())[-1]
+            del bound[self._dropped_key]
 
         self._probed_points = []
-        bound = self._generate_bound_from_config()
         self.component_keys = bound.keys()  # optimization component names
-        
+
         stored_model = optim_records.stored_optimisation_obj
         if stored_model is not None:
             self.model = stored_model
         else:
             self.model = self._generate_model(f=None, pbounds=bound)
+
+    def _constraint_reformat(self):
+        """
+        Reformat the equality constraint into 2 inequality constraints.
+        Make sure that the coefficient of the last component in the constraint is 1.
+        :return: reformatting flag, True if reformatted
+        """
+        if self._constraint['type'] == 'ineq':
+            self._constraint['fun'] = eval(self._constraint['fun'])
+            return False, None
+
+        pattern = r'(?=[+|^-])'
+        constraint_strs = re.split(pattern, self._constraint['fun'])
+        del (constraint_strs[-2])
+        lb, ub = list(self._bound.values())[-1]
+        constraint = "".join(constraint_strs)
+        c1 = constraint + "+{}".format(ub)
+        c2 = constraint + "+{}".format(lb)
+        c2 = c2.split(':')
+        c2 = c2[0] + ': -(' + c2[1] + ')'
+
+        self._constraint = [{'type': 'ineq', 'fun': eval(c1)},
+                            {'type': 'ineq', 'fun': eval(c2)}]
+
+        constraint = eval(constraint)
+        return True, constraint
 
     def _generate_bound_from_config(self):
         """
@@ -65,6 +106,8 @@ class BayesOptOptimiser(OptimiserBase):
         Returns the updated model
         :param data:
         """
+        if self._dropped_key is not None:
+            data = data.drop(columns=self._dropped_key, axis=1)
         self._probed_points.append(data)
         params, targets = self._pandas_to_params_targets(data)
         for param, target in zip(params, targets):
@@ -82,7 +125,7 @@ class BayesOptOptimiser(OptimiserBase):
             self._target_name = target_name[0]
         else:
             assert self._target_name in data.columns, 'Optimization target not in result data, please check dataframe ' \
-                                                     'format.'
+                                                      'format.'
 
         targets = data[self._target_name].to_numpy()
         data = data.drop(columns=self._target_name)
@@ -90,6 +133,11 @@ class BayesOptOptimiser(OptimiserBase):
         for row_index in range(len(data)):
             params.append(data.iloc[row_index].to_dict())
         return params, targets
+
+    def _restore_dropping(self, x_probe: dict):
+        x_probe_values = list(x_probe.values())
+        x_new = -self._reformat_equality(x_probe_values)
+        x_probe[self._dropped_key] = x_new
 
     def generate_batch(self, **kwargs) -> pd.DataFrame:
         """
@@ -102,19 +150,45 @@ class BayesOptOptimiser(OptimiserBase):
         batch = []
         for _ in range(self._batch_size):
             x_probe = self.model.suggest(acquisition_function)
+            for key in x_probe.keys():
+                x_probe[key] = np.round(x_probe[key], self._round_digit)
+            if self._dropped_key is not None:
+                self._restore_dropping(x_probe)
             batch.append(x_probe)
         batch = pd.DataFrame.from_dict(batch)
         return batch
 
     def generate_random_values(self):
-        # fenerate random pd frame from config file
-        random_values = {}
-        for component, bounds in self._components.items():
-            random_values[component] = []
-            for element in range(self._batch_size):
-                _val = random.uniform(bounds['lower_bound'], bounds['upper_bound'])
-                _val = round(_val,2)
-                random_values[component].append(_val)
+        # generate random pd frame from config file
+
+
+        random_values = []
+        while len(random_values) < self._batch_size:
+
+            while True:
+                random_value = {}
+                for component, bounds in self._components.items():
+                    _val = random.uniform(bounds['lower_bound'], bounds['upper_bound'])
+                    _val = round(_val, 2)
+                    random_value[component] = _val
+
+                # resample when violating the constraints
+                random_value_np = np.array(list(random_value.values()))
+
+                if self._constraint is None:
+                    break
+                elif isinstance(self._constraint, dict):  # inequality constraint
+
+                    if self._constraint['fun'](random_value_np) >= 0:
+                        break
+                elif isinstance(self._constraint, list):  # equality constraint
+                    if self._constraint[0]['fun'](random_value_np[:-1]) >= 0 and \
+                            self._constraint[1]['fun'](random_value_np[:-1]) >= 0:
+                        random_value[self._dropped_key] = -self._reformat_equality(random_value_np[:-1])
+                        break
+                else:
+                    raise TypeError("Constraint must be a dictionary (inequality) or a list (reformatted equality)")
+            random_values.append(random_value)
         random_values = pd.DataFrame.from_dict(random_values)
         return random_values
 
@@ -132,7 +206,8 @@ class BayesOptOptimiser(OptimiserBase):
             kappa_decay=kwargs.get('kappa_decay', 1),
             kappa_decay_delay=kwargs.get('kappa_decay_delay', 0)
         )
-    
+
+
 class ConstrainedBayesianOptimization(BayesianOptimization):
 
     def __init__(self, constraints, **kwargs):
@@ -150,8 +225,8 @@ class ConstrainedBayesianOptimization(BayesianOptimization):
             self._gp.fit(self._space.params, self._space.target)
 
         # Finding argmax of the acquisition function.
-        constraints=self.constraints
-        constraints["fun"] = eval(constraints["fun"]) if isinstance(constraints["fun"], str) else constraints["fun"]
+        # constraints = self.constraints
+        # constraints["fun"] = eval(constraints["fun"]) if isinstance(constraints["fun"], str) else constraints["fun"]
         suggestion = acq_max(
             ac=utility_function.utility,
             gp=self._gp,
@@ -205,33 +280,33 @@ def acq_max(ac, gp, y_max, bounds, random_state, n_warmup=10000, n_iter=10, cons
 
     # Warm up with random points
     x_tries = random_state.uniform(bounds[:, 0], bounds[:, 1],
-                                size=(n_warmup, bounds.shape[0]))
+                                   size=(n_warmup, bounds.shape[0]))
     ys = ac(x_tries, gp=gp, y_max=y_max)
     x_max = x_tries[ys.argmax()]
     max_acq = ys.max()
 
     # Explore the parameter space more throughly
     x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
-                                size=(n_iter, bounds.shape[0]))
-    
+                                   size=(n_iter, bounds.shape[0]))
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
         for x_try in x_seeds:
             # Find the minimum of minus the acquisition function
-            
+
             if constraints is not None:
                 res = minimize(lambda x: -ac(x.reshape(1, -1), gp=gp, y_max=y_max),
-                            x_try,  # x_try.reshape(1, -1),
-                            bounds=bounds,
-                            method="trust-constr",
-                            constraints=constraints)
+                               x_try,  # x_try.reshape(1, -1),
+                               bounds=bounds,
+                               method="trust-constr",
+                               constraints=constraints)
 
             else:
                 res = minimize(lambda x: -ac(x.reshape(1, -1), gp=gp, y_max=y_max),
-                            x_try.reshape(1, -1),
-                            bounds=bounds,
-                            method="L-BFGS-B")
+                               x_try.reshape(1, -1),
+                               bounds=bounds,
+                               method="L-BFGS-B")
 
             # See if success
             if not res.success:
