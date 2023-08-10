@@ -3,24 +3,20 @@ from mongoengine import connect
 class DatabaseHandler:
     def __init__(self, host: str, db_name: str):
         self._client = connect(db=db_name, host=host, alias='archemist_state')
+        self._db_name = db_name
 
-    def clear_database(self, db_name:str):
-        if self.is_database_populated(db_name):
-            coll_list = self._client[db_name].list_collection_names()
-            for coll in coll_list:
-                self._client[db_name][coll].drop()
+    def clear_collection(self, collection: str):
+        if self.is_database_existing():
+                if collection in self._client[self._db_name].list_collection_names():
+                    self._client[self._db_name][collection].drop()
 
-    def is_database_existing(self, db_name: str):
-        db_list = self._client.list_database_names()
-        return db_name in db_list
+    def is_collection_populated(self, collection: str):
+        if self.is_database_existing():
+            return collection in self._client[self._db_name].list_collection_names()
 
-    def is_database_populated(self, db_name: str):
-        if self.is_database_existing(db_name):
-            coll_list = self._client[db_name].list_collection_names()
-            if len(coll_list) > 0:
-                return True
-        return False
+    def delete_database(self):
+        if self.is_database_existing():
+            self._client.drop_database(self._db_name)
 
-    def delete_database(self, db_name:str):
-        if self.is_database_existing(db_name):
-            self._client.drop_database(db_name)
+    def is_database_existing(self):
+        return self._db_name in self._client.list_database_names()
