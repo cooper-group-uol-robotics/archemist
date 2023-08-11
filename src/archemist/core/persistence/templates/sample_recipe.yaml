@@ -14,45 +14,44 @@
 #
 # process: this section describes the experiment process. The process
 #             is represented using a finite state machine that is composed of
-#             state and their transitions. Currently only sequential process are 
-#             possible. Note that a workflow can have any number of states
-#             and their transitions.
+#             state and their transitions. Note that a workflow can have any 
+#             number of states and their transitions.
 #   state_name: name of the state
 #   station: this section describes the station involved in this state
 #     type: the station's class name as defined in archemist.stations.X.state
 #           note that X stands for the stations's given module found in archemist's 
 #           stations module
 #     id: station unique workflow id
-#     operation: this section describes the operation involved in the state
-#       type: station operation class name as defined in archemist.stations.X.state
+#     process: this section describes the station process involved in the state
+#       type: station process class name as defined in archemist.stations.X.process
 #             note that X stands for the stations's given module found in archemist's 
 #             stations module
-#       properties: operation properties
+#       key_operations: a dict the describe key station ops used in the process, where
+#                       the key gives a name for the op that is used inside the process
+#                       while the associated value is a dict describing the involved station_op
+#                       as defined in archemist.stations.X.state note that X stands for the 
+#                       stations's given module found in archemist's stations module
+#       args: any extra arguments needed to construct the process 
 #   transitions: this section describes current state transitions
 #     on_success: the new state the workflow will transition to in case the current state
 #                 is executed successfully
 #     on_success: the new state the workflow will transition to in case the current state
-#                 execution fails
+#                 execution fails. Use default the failed_state to indicate the recipe has
+#                 completely failed
 # note that the process is considered complete when it reaches the end_state so
-# make sure your process teminates with the end_state
+# make sure your process terminates with the end_state
 general:
   name: 
   id:
-materials:
-  liquids:
-   -  name:
-      id: 
-  solids:
-    - name:
-      id:
 process:
   - state_name:
     station:
       type:
       id:
-      operation:
+      process:
         type:
-        properties:
+        key_operations:
+        args:
     transitions:
       on_success: 
-      on_fail: end_state
+      on_fail: failed_state

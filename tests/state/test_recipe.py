@@ -1,8 +1,4 @@
 import unittest
-from archemist.stations.ika_digital_plate_station.state import (
-    IKAStirringOpDescriptor,
-)
-from archemist.stations.fisher_balance_station.state import FisherWeightOpDescriptor
 from archemist.core.state.recipe import Recipe
 from mongoengine import connect
 
@@ -14,14 +10,7 @@ class RecipeTest(unittest.TestCase):
             db=self._db_name, host="mongodb://localhost:27017", alias="archemist_state"
         )
 
-    def tearDown(self) -> None:
-        coll_list = self._client[self._db_name].list_collection_names()
-        for coll in coll_list:
-            self._client[self._db_name][coll].drop()
-
-    def test_recipe(self):
-        
-        recipe_doc = {
+        self._recipe_doc = {
             "general": {"name": "test_archemist_recipe", "id": 198},
             "process": [
                 {
@@ -68,8 +57,15 @@ class RecipeTest(unittest.TestCase):
             ],
         }
 
-        """create recipe"""
-        recipe = Recipe.from_dict(recipe_doc)
+    def tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
+
+    def test_recipe(self):
+
+        # construct a recipe
+        recipe = Recipe.from_dict(self._recipe_doc)
 
         self.assertEqual(recipe.id, 198)
         self.assertEqual(recipe.name, "test_archemist_recipe")
@@ -119,6 +115,19 @@ class RecipeTest(unittest.TestCase):
         recipe.advance_state(True)
         self.assertTrue(recipe.is_complete())
         self.assertFalse(recipe.is_failed())
+
+    def test_recipe_failed(self):
+
+        # construct a recipe
+        recipe = Recipe.from_dict(self._recipe_doc)
+        self.assertFalse(recipe.is_complete())
+        self.assertFalse(recipe.is_failed())
+
+        # advance to failed state
+        recipe.advance_state(False)
+
+        self.assertFalse(recipe.is_complete())
+        self.assertTrue(recipe.is_failed())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,2 @@
+db_name: 'algae_bot_workflow'
+mongodb_host: 'mongodb://localhost:27017'

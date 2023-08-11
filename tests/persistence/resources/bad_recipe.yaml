@@ -1,0 +1,20 @@
+general:
+  name: test_archemist_recipe
+  id: 198
+process:
+  - state_name: 1234
+    station:
+      type: IkaPlateDigital
+      id: 2
+      process:
+        type: CrystalBotWorkflowProcess
+        key_operations:
+          stir:
+            type: IKAStirringOpDescriptor
+            properties:
+              stirring_speed: 200
+              duration: 10
+        args:
+    transitions:
+      on_success: end_state
+      on_fail: failed_state

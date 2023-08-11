@@ -1,0 +1,34 @@
+general:
+  name: test_archemist_recipe
+  id: 198
+process:
+  - state_name: stirring_operation
+    station:
+      type: IkaPlateDigital
+      id: 2
+      process:
+        type: CrystalBotWorkflowProcess
+        key_operations:
+          stir:
+            type: IKAStirringOpDescriptor
+            properties:
+              stirring_speed: 200
+              duration: 10
+        args:
+    transitions:
+      on_success: weighing_operation
+      on_fail: failed_state
+  - state_name: weighing_operation
+    station:
+      type: FisherWeightingStation
+      id: 5
+      process:
+        type: SomeProcess
+        key_operations:
+          weigh:
+            type: FisherWeightOpDescriptor
+        args:
+          some_variable: 42
+    transitions:
+      on_success: end_state
+      on_fail: failed_state

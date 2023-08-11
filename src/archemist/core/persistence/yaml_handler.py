@@ -1,6 +1,7 @@
 import yaml
-from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, load, dirty_load
+from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, dirty_load
 from pkg_resources import resource_string
+from typing import Dict
 from pathlib import Path
 
 class WorkflowSchemas:
@@ -20,10 +21,11 @@ class WorkflowSchemas:
                     {
                         'name': Str(),
                         'id': Int(),
-                        'amount_stored': Float(),
+                        'amount': Float(),
                         'unit': Str(),
                         'density': Float(),
-                        'pump_id': Str(),
+                        'density_unit': Str(),
+                        'details': MapPattern(Str(), Any()),
                         'expiry_date': Datetime()
                     }
                 )),
@@ -31,11 +33,10 @@ class WorkflowSchemas:
                     {
                         'name': Str(),
                         'id': Int(),
-                        'amount_stored': Float(),
+                        'amount': Float(),
                         'unit': Str(),
-                        'dispense_src': Str(),
-                        'cartridge_id': Str(),
-                        'expiry_date': Datetime()
+                        'expiry_date': Datetime(),
+                        'details': MapPattern(Str(), Any())
                     }
                 ))
             }
@@ -54,14 +55,9 @@ class WorkflowSchemas:
                 'type': Str(),
                 'id': Int(),
                 'location': Map({'node_id': Int(), 'graph_id': Int()}),
-                'batch_capacity': Int(),
+                'total_batch_capacity': Int(),
                 'process_batch_capacity': Int(),
                 'handler': Str(),
-                'process_state_machine': Map(
-                    {
-                        'type': Str(),
-                        Optional('args'): EmptyNone() | MapPattern(Str(), Any())
-                    }),
                 Optional('parameters'): EmptyNone() | MapPattern(Str(), Any())
             }
         ))
@@ -82,22 +78,6 @@ class WorkflowSchemas:
                     'id': Int(),
                 }
             ),
-            Optional('materials'): Map(
-                {
-                    Optional('liquids'): Seq(Map(
-                        {
-                            'name': Str(),
-                            'id': Int()
-                        }
-                    )),
-                    Optional('solids'): Seq(Map(
-                        {
-                            'name': Str(),
-                            'id': Int()
-                        }
-                    ))
-                }
-            ),
             'process': Seq(Map(
                 {
                     'state_name': Str(),
@@ -105,10 +85,11 @@ class WorkflowSchemas:
                         {
                             'type': Str(),
                             'id': Int(),
-                            'operation': Map(
+                            'process': Map(
                                 {
                                     'type': Str(),
-                                    Optional('properties'): EmptyNone() | MapPattern(Str(), Any())
+                                    'key_operations': MapPattern(Str(), MapPattern(Str(), Any())),
+                                    Optional('args'): EmptyNone() | MapPattern(Str(), Any())
                                 }
                             )
                         }
@@ -126,29 +107,24 @@ class WorkflowSchemas:
 
 
 class YamlHandler:
-
-    @staticmethod
-    def loadYamlFile(filePath):
-        with open(filePath, 'r') as fs:
-            return yaml.load(fs, Loader=yaml.SafeLoader)
     
-    def _load_and_validate_schema(file_path, schema):
+    def _load_and_validate_schema(file_path: Path, schema: Map):
         with open(file_path, 'r') as config_file:
             yaml_str = config_file.read()
             return dirty_load(yaml_str, schema=schema, allow_flow_style=True)
 
     @staticmethod
-    def load_config_file(file_path: Path) -> dict:
+    def load_config_file(file_path: Path) -> Dict:
         yaml_config = YamlHandler._load_and_validate_schema(file_path=file_path, schema=WorkflowSchemas.config_schema)
         return yaml_config.data
 
     @staticmethod
-    def load_server_settings_file(file_path: Path) -> dict:
+    def load_server_settings_file(file_path: Path) -> Dict:
         yaml_server_settings = YamlHandler._load_and_validate_schema(file_path=file_path,schema=WorkflowSchemas.server_settings_schema)
         return yaml_server_settings.data
 
     @staticmethod
-    def load_recipe_file(file_path: Path) -> dict:
+    def load_recipe_file(file_path: Path) -> Dict:
         yaml_recipe = YamlHandler._load_and_validate_schema(file_path=file_path, schema=WorkflowSchemas.recipe_schema)
         return yaml_recipe.data
 

@@ -1,0 +1,58 @@
+general:
+  name: algae_bot_workflow
+  samples_per_batch: 2
+  default_batch_input_location:
+    node_id: 25
+    graph_id: 1
+materials:
+  liquids:
+    - name: water
+      id: 1
+      amount_stored: 5000
+      unit: mL
+      density: 1000
+      density_unit: kg/m3
+      details: 
+        source: pump_1
+      expiry_date: 31/03/2023
+    - name: salt
+      id: 1
+      amount_stored: 500
+      unit: mg
+      details:
+        catridge_id: 123
+      expiry_date: 31/03/2023
+robots:
+  - type: Robot
+    id: 1
+    batch_capacity: 1
+    handler: GenericRobotHandler
+  - type: Robot
+    id: 2
+    batch_capacity: 1
+    handler: GenericRobotHandler
+    location:
+      node_id: 25
+      graph_id: 1
+stations:
+  - type: Station
+    id: 11
+    location:
+      node_id: 25
+      graph_id: 1
+    batch_capacity: 2
+    process_batch_capacity: 2
+    handler: GenericStationHandler
+  - type: Station
+    id: 12
+    location:
+      node_id: 27
+      graph_id: 1
+    total_batch_capacity: 2
+    process_batch_capacity: 2
+    handler: GenericStationHandler
+    parameters:
+      used_liquids:
+        - water
+        - dye_A
+        - dye_B
