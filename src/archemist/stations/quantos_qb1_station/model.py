@@ -20,6 +20,7 @@ class QuantosCartridgeModel(EmbeddedDocument):
     associated_solid= fields.ReferenceField(SolidMaterialModel,required=True)
     remaining_dosages = fields.IntField(min_value=0, default=100)
     remaining_quantity = fields.FloatField(default= 0.0)
+    mass_unit = fields.StringField(required= True)
     hotel_index = fields.IntField(required=True)
 
 
@@ -34,8 +35,10 @@ class DispenseOpDescriptorModel(StationOpDescriptorModel):
     """Database model for a dispensing action"""
     solid_name = fields.StringField(required=True)
     target_mass = fields.FloatField(min_value=0., required=True)
+    mass_unit = fields.StringField(required = True)
     tolerance = fields.FloatField(min_value=0.1, max_value=40)
     actual_dispensed_mass = fields.FloatField(min_value=0, default= 0)
+    dispense_metadata = fields.ListField()
     
 
 class MoveCarouselOpDescriptorModel(StationOpDescriptorModel):

@@ -8,7 +8,7 @@ from archemist.core.state.material import Solid, Liquid
 from typing import Dict, List
 from archemist.core.exceptions.exception import QuantosCartridgeLoadedError, QuantosCartridgeUnloadedError
 from datetime import datetime
-
+import re
 
 ''' ==== Station Description ==== '''
 class QuantosCartridge:
@@ -18,12 +18,13 @@ class QuantosCartridge:
         self._model = cartridge_model
 
     @classmethod
-    def from_args(cls, id: int, solid: Solid, hotel_index: int, remaining_dosages: int, remaining_quantity: float) :
+    def from_args(cls, id: int, solid: Solid, mass_unit: str, hotel_index: int, remaining_dosages: int, remaining_quantity: float) :
         #Construct a quantos cartridge model from arguments
         model = QuantosCartridgeModel()
         model.exp_id = id
         model.associated_solid = solid.model
         model.hotel_index = hotel_index
+        model.mass_unit = mass_unit
         model.remaining_dosages = remaining_dosages
         model.remaining_quantity = remaining_quantity
         return cls(model)
@@ -33,6 +34,11 @@ class QuantosCartridge:
     def model(self) -> QuantosCartridgeModel:
         """Returns the model as a QuantosCartridgeModel object"""
         return self._model
+
+    @property
+    def mass_unit(self) -> str:
+        """Returns the mass unit of the remaining quantity in the cartridge"""
+        return self._model.mass_unit
 
     @property
     def id(self) -> int:
@@ -73,11 +79,24 @@ class QuantosCartridge:
     def remaining_quantity(self, quantity:float):
         self._model.remaining_quantity = self._model.remaining_quantity - quantity
 
+
     def dispense(self, dispense_amount: float):
-        """Adjusts cartridge object fields in relation to a dispense 
+        """Checks the unit of the dispense step ( which must be mg) against the unit of the 
+        cartridge remaining quantity (g / mg) and adjusts the values of remaining quantity,
+        associated solid mass (g) and remainint amount.
         """
-        self.associated_solid.mass -= dispense_amount 
-        self.remaining_quantity -= dispense_amount
+        
+        print("DispenseOP mass unit must be mg")
+
+        self.associated_solid.mass -= dispense_amount/1000
+        if self.mass_unit == 'mg':
+            self.remaining_quantity -= dispense_amount
+        elif self.mass_unit == 'g':
+            self.remaining_quantity -= dispense_amount/1000
+        else: 
+            print("Cartridge remaining quantities must be in g or mg")
+        
+        
         self._model.remaining_dosages -= 1
 
 
@@ -105,14 +124,19 @@ class QuantosSolidDispenserQB1(Station):
         
         #Checks if station_dict['parameters'['cartridges']['id']] == solid.cartridge_id - if it is, creates a Quantos Cartridge object 
         for cat in parameters['cartridges']:
-            
+ #
             for solid in solids:
+                
                 if solid.cartridge_id is not None and solid.cartridge_id == cat['id']:
+                   
                     cartridge = QuantosCartridge.from_args(id=cat['id'], solid=solid, 
                                    hotel_index=int(cat['hotel_index']),
                                    remaining_dosages=int(cat['remaining_dosages']),
-                                   remaining_quantity=float(cat['remaining_quantity']))
+                                   remaining_quantity=float(cat['remaining_quantity']),
+                                   mass_unit=str(cat["mass_unit"]))
+                    
                     model.cartridges.append(cartridge.model)
+        
         
         model.save()
         return cls(model)
@@ -157,7 +181,9 @@ class QuantosSolidDispenserQB1(Station):
 
     def get_cartridge_id(self, solid_name: str):
         "Gets cartridge_id associated with a paticular solid name"
+
         for cartridge_model in self._model.cartridges:
+            
             if cartridge_model.associated_solid.name == solid_name:
                 return cartridge_model.exp_id
 
@@ -167,6 +193,10 @@ class QuantosSolidDispenserQB1(Station):
         self._model.reload('loaded_ctridge_id')
         if self._model.loaded_ctridge_id is None:
             self._model.update(loaded_ctridge_id=cartridge_id)
+
+        elif self._model.loaded_ctridge_id == cartridge_id:
+            print(f"Cartridge with {cartridge_id} already loaded")
+
         else:
             raise QuantosCartridgeLoadedError()
 
@@ -182,12 +212,15 @@ class QuantosSolidDispenserQB1(Station):
     def update_cartridge_dispense(self, dispense_amount: float):
         """ Updates the dispense amounts in the loaded cartridge, logs if cartridges are consumed."""
         current_cartridge = self.current_cartridge
+
+    
         if not current_cartridge.consumed:
-            
             current_cartridge.dispense(dispense_amount)
             self._model.update(**{f'cartridges__{self._loaded_cartridge_index}':current_cartridge.model})
-            if current_cartridge.consumed:
-                self._log_station(f'the cartridge {current_cartridge.id} does not have any dosages left anymore. Please replace it.')
+        
+        if current_cartridge.consumed:
+                    self._log_station(f'the cartridge {current_cartridge.id} does not have any dosages left anymore. Please replace it.')
+
 
 
     def update_assigned_op(self):
@@ -197,16 +230,17 @@ class QuantosSolidDispenserQB1(Station):
 
     def complete_assigned_station_op(self, success: bool, **kwargs):
         """checks the StationOpDescriptor object and updates the database model accordingly"""
-        
+     
         current_op = self.get_assigned_station_op() #gets the operation type as a StationOPDescriptor object
         
         if isinstance(current_op, DispenseOpDescriptor):
-        
+            
+            #TODO fix
             if success and current_op.solid_name == self.current_cartridge.associated_solid.name:                  
                 if 'actual_dispensed_mass' in kwargs:
                     self.update_cartridge_dispense(kwargs['actual_dispensed_mass'])
                 else:
-                    print('missing actual dispensed mass!!')
+                    print('missing actual dispensed mass or g/mg unit!!')
         
         elif isinstance(current_op, OpenDoorOpDescriptor):
             self.status = QuantosStatus.DOORS_OPEN
@@ -243,6 +277,21 @@ class CloseDoorOpDescriptor(StationOpDescriptor):
         model._module = cls.__module__
         return cls(model)
 
+class UnlockCartridgeOpDescriptor(StationOpDescriptor):
+    """Operation descriptor for unlocking the cartridge after dispense"""
+    def __init__(self, op_model: StationOpDescriptorModel) -> None:
+        self._model = op_model
+
+
+    @classmethod
+    def from_args(cls, **kwargs):
+        model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQB1.__name__,**kwargs)
+        model._type = cls.__name__
+        model._module = cls.__module__
+        return cls(model)
+
+
 class MoveCarouselOpDescriptor(StationOpDescriptor):
     "Operation descriptor for moving the carousel"
     def __init__(self, op_model: MoveCarouselOpDescriptorModel):
@@ -274,10 +323,15 @@ class DispenseOpDescriptor(StationOpDescriptor):
         model._module = cls.__module__
         model.solid_name = kwargs['solid_name']
         model.target_mass = float(kwargs['target_mass'])
+        model.mass_unit = str(kwargs['mass_unit'])
         model.tolerance = float(kwargs['tolerance'])
        
         
         return cls(model)
+
+    @property
+    def mass_unit(self) -> str:
+        return self._model.mass_unit
 
 
     @property
@@ -297,13 +351,43 @@ class DispenseOpDescriptor(StationOpDescriptor):
         if self._model.has_result and self._model.was_successful:
             return self._model.actual_dispensed_mass
 
+    @actual_dispensed_mass.setter
+    def actual_dispensed_mass(self, value:float):
+        self._model.actual_dispensed_mass = value
 
+    @property
+    def dispense_metadata(self)-> list:
+        if self._model.has_result and self._model.was_successful:
+            return self._model.dispense_metadata
+
+
+    @dispense_metadata.setter
+    def dispense_metadata(self, data:List):
+        self._model.dispense_metadata = data
+
+    
     def complete_op(self, success: bool, **kwargs):
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
-        if 'actual_dispensed_mass' in kwargs:
-            self._model.actual_dispensed_mass = kwargs['actual_dispensed_mass']
+        
+        output_values = kwargs["output"]
+
+        
+        self.dispense_metadata = output_values
+
+        
+
+        dispensed_mass = re.findall("\d*\.\d*", output_values[1])
+        
+
+        if dispensed_mass:
+            mass_as_float = float(dispensed_mass[0])
+           
+            self.actual_dispensed_mass = mass_as_float
+
         else:
             print('missing actual dispensed mass!!')
+
+        
 
