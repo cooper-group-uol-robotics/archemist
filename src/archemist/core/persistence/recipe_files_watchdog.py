@@ -44,16 +44,3 @@ class RecipeFilesWatchdog(Observer):
         print('Recipe files watchdog started')
         print(f'watching folder: {Path(self._recipes_dir).resolve()}')
         return super().start()
-        
-
-if __name__ == '__main__':
-    recipes_dir = 'data'
-    recipes_watcher = RecipeFilesWatchdog(recipes_dir)
-    recipes_watcher.start()
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        recipes_watcher.stop()
-    recipes_watcher.join()
