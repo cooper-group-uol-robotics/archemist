@@ -1,2 +1,2 @@
-db_name: 'algae_bot_workflow'
+db: 'algae_bot_workflow'
 mongodb_host: 123

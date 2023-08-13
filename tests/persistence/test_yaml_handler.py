@@ -31,14 +31,14 @@ class YamlHandlerTest(unittest.TestCase):
             YamlHandler.load_config_file(bad_recipe_path)
 
         # test good server config file
-        good_server_config_path = self._resource_path.joinpath("good_server.yaml")
-        good_server_config = YamlHandler.load_recipe_file(good_server_config_path)
+        good_server_config_path = self._resource_path.joinpath("good_server_config.yaml")
+        good_server_config = YamlHandler.load_server_settings_file(good_server_config_path)
         self.assertIsNotNone(good_server_config)
 
         # test bad recipe file
-        bad_server_config_path = self._resource_path.joinpath("bad_server.yaml")
+        bad_server_config_path = self._resource_path.joinpath("bad_server_config.yaml")
         with self.assertRaises(YAMLValidationError):
-            YamlHandler.load_config_file(bad_server_config_path)
+            YamlHandler.load_server_settings_file(bad_server_config_path)
 
 if __name__ == '__main__':
     unittest.main()
