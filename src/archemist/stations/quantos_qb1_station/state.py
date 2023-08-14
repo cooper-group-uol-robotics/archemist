@@ -83,10 +83,9 @@ class QuantosCartridge:
     def dispense(self, dispense_amount: float):
         """Checks the unit of the dispense step ( which must be mg) against the unit of the 
         cartridge remaining quantity (g / mg) and adjusts the values of remaining quantity,
-        associated solid mass (g) and remainint amount.
+        associated solid mass (g) and remaining amount.
         """
-        
-        print("DispenseOP mass unit must be mg")
+      
 
         self.associated_solid.mass -= dispense_amount/1000
         if self.mass_unit == 'mg':
@@ -232,15 +231,20 @@ class QuantosSolidDispenserQB1(Station):
         """checks the StationOpDescriptor object and updates the database model accordingly"""
      
         current_op = self.get_assigned_station_op() #gets the operation type as a StationOPDescriptor object
+
+        
         
         if isinstance(current_op, DispenseOpDescriptor):
+           
             
-            #TODO fix
+            actual_dispensed_mass = current_op._read_dispensed_mass(**kwargs)
+           
+            
             if success and current_op.solid_name == self.current_cartridge.associated_solid.name:                  
-                if 'actual_dispensed_mass' in kwargs:
-                    self.update_cartridge_dispense(kwargs['actual_dispensed_mass'])
+                if current_op.actual_dispensed_mass != 0:
+                    self.update_cartridge_dispense(actual_dispensed_mass)
                 else:
-                    print('missing actual dispensed mass or g/mg unit!!')
+                    print('missing actual dispensed mass or dispensed nothing')
         
         elif isinstance(current_op, OpenDoorOpDescriptor):
             self.status = QuantosStatus.DOORS_OPEN
@@ -367,27 +371,31 @@ class DispenseOpDescriptor(StationOpDescriptor):
 
     
     def complete_op(self, success: bool, **kwargs):
+       
+        
         self._model.has_result = True
         self._model.was_successful = success
         self._model.end_timestamp = datetime.now()
         
         output_values = kwargs["output"]
-
-        
         self.dispense_metadata = output_values
-
+    
+    def _read_dispensed_mass(self, **kwargs):
         
-
+        output_values = kwargs["output"]
+       
         dispensed_mass = re.findall("\d*\.\d*", output_values[1])
         
-
         if dispensed_mass:
             mass_as_float = float(dispensed_mass[0])
-           
             self.actual_dispensed_mass = mass_as_float
 
+            return mass_as_float
+
         else:
-            print('missing actual dispensed mass!!')
+            print("missing actual dispensed mass")
+
+            return 0
 
         
 

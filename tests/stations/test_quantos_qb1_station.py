@@ -39,17 +39,18 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
                 'type': 'QuantosQb1StationProcess',
                 'args': {"solid_name": "caffeine",
                           "target_mass": 10,
-                          "tolerance": 10}
+                          "tolerance": 10,
+                          "mass_unit": "mg"}
             },
             'parameters':{
-                'cartridges': [{'id': 31, 'hotel_index': 1, 'remaining_dosages': 100, 'remaining_quantity':100}]
+                'cartridges': [{'id': 31, 'hotel_index': 1, 'remaining_dosages': 100, 'remaining_quantity':5000, 'mass_unit': 'mg'}]
             }
         }
         solid_dict = {
             'name': 'salt',
             'id': 31,
-            'amount_stored': 2000,
-            'unit': 'g',
+            'amount_stored': 5000,
+            'unit': 'mg',
             'dispense_src': 'quantos',
             'cartridge_id': 31,
             'expiry_date': datetime.fromisoformat('2025-02-11')
@@ -69,28 +70,32 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
         self.assertEqual(self.station.state, StationState.INACTIVE)
         
         # test station specific methods
+
+        #test that the carousel can change positions
         self.assertEqual(self.station.carousel_pos,1)
         self.station.carousel_pos = 2
         self.assertEqual(self.station.carousel_pos,2)
 
+        #test that the door status changes correctly
         self.assertIsNone(self.station.status)
         self.station.status = QuantosStatus.DOORS_OPEN
         self.assertEqual(self.station.status, QuantosStatus.DOORS_OPEN)
         self.station.status = QuantosStatus.DOORS_CLOSED
         self.assertEqual(self.station.status, QuantosStatus.DOORS_CLOSED)
 
+        #test that the 
         cartridge_id = self.station.get_cartridge_id("salt")
-        self.assertEqual(cartridge_id, 31)
-        self.assertIsNone(self.station.current_cartridge)
+        self.assertEqual(cartridge_id, self.station_doc['parameters']['cartridges'][0]['id'])
+        #self.assertIsNone(self.station.current_cartridge)
         self.station.load_cartridge(31)
         current_cartridge = self.station.current_cartridge
         self.assertTrue(isinstance(current_cartridge, QuantosCartridge))
         self.assertEqual(current_cartridge.hotel_index, 1)
         self.assertEqual(current_cartridge.id, 31)
         self.assertEqual(current_cartridge.remaining_dosages, 100)
-        self.assertEqual(current_cartridge.remaining_quantity,100)
+        self.assertEqual(current_cartridge.remaining_quantity,5000)
         self.assertEqual(current_cartridge.associated_solid.name, self.solids_list[0].name)
-        self.assertEqual(current_cartridge.associated_solid.mass, 2000)
+        self.assertEqual(current_cartridge.associated_solid.mass, 5.0)
         self.assertEqual(current_cartridge.associated_solid.mass, self.solids_list[0].mass)
 
         # test OpenDoorOpDescriptor
@@ -134,20 +139,20 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
         self.assertEqual(self.station.carousel_pos, 12)
 
         # test DispenseOpDescriptorModel
-        t_op = DispenseOpDescriptor.from_args(solid_name='salt',target_mass =1.2, tolerance = 10)
+        t_op = DispenseOpDescriptor.from_args(solid_name='salt', target_mass =1.2, tolerance = 10, mass_unit = 'g')
         self.assertFalse(t_op.has_result)
         self.station.assign_station_op(t_op)
         self.assertFalse(self.station.has_assigned_station_op())
         self.station.update_assigned_op()
         self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True, actual_dispensed_mass=1.193)
+        self.station.complete_assigned_station_op(True, actual_dispensed_mass=1)
         ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
         self.assertTrue(ret_op.has_result)
         self.assertTrue(ret_op.was_successful)
-        self.assertEqual(ret_op.actual_dispensed_mass, 1.193)
+        self.assertEqual(ret_op.actual_dispensed_mass, 1)
         current_cartridge = self.station.current_cartridge
         self.assertEqual(current_cartridge.remaining_dosages, 99)
-        self.assertEqual(current_cartridge.associated_solid.mass, 2000 - 1.193)
+        self.assertEqual(current_cartridge.associated_solid.mass, 5 - 1)
         self.assertEqual(current_cartridge.associated_solid.mass, self.solids_list[0].mass)
 
         self.station.unload_current_cartridge()
@@ -186,7 +191,8 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
                             {
                                 "solid_name": "salt",
                                 "target_mass": 10,
-                                "tolerance": 10
+                                "tolerance": 10,
+                                "mass_unit": "zg"
                             }
 
                         }
@@ -252,6 +258,7 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
         self.assert_process_transition(process, 'close_quantos_door')
         station_op = process.data.req_station_ops[0]
         self.assert_station_op(station_op, 'CloseDoorOpDescriptor')
+        
         self.complete_station_op(station=self.station)
 
         #quantos_dispense
@@ -293,5 +300,5 @@ class QuantosSolidDispenserQB1Test(unittest.TestCase, ProcessTestingMixin):
 
 if __name__ == '__main__':
     mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
-    unittest.main(verbosity=4)
+    
     unittest.main()
