@@ -6,7 +6,8 @@ from archemist.core.util.location import Location
 from archemist.core.state.batch import Batch
 from archemist.core.exceptions.exception import RobotAssignedRackError
 from typing import Dict, List, Any, Union
-from archemist.core.persistence.object_factory import RobotFactory
+from archemist.core.persistence.object_factory import RobotOpFactory
+from bson.objectid import ObjectId
 
 class Robot:
     def __init__(self, robot_model: Union[RobotModel, ModelProxy]) -> None:
@@ -37,14 +38,23 @@ class Robot:
     @property
     def model(self) -> RobotModel:
         return self._model_proxy.model
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
+
 
     @property
     def id(self) -> int:
         return self._model_proxy.exp_id
+    
+    @property
+    def module_path(self) -> str:
+        return self._model_proxy._module
 
-    def get_handler_details(self) -> Dict[str, str]:
-        robot_module = self._model_proxy._module.rsplit('.',1)[0]
-        return {'type':self._model_proxy.selected_handler, 'module':robot_module}
+    @property
+    def selected_handler(self) -> str:
+       return self._model_proxy.selected_handler
 
     @property
     def location(self) -> Location:
@@ -70,7 +80,7 @@ class Robot:
 
     @property
     def ops_history(self) -> List[Any]:
-        return ListProxy(self._model_proxy.ops_history, RobotFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.ops_history, RobotOpFactory.create_from_model)
 
     @property
     def assigned_op_state(self) -> OpState:
@@ -78,7 +88,7 @@ class Robot:
 
     @property
     def assigned_op(self) -> RobotOpDescriptor:
-        return RobotFactory.create_op_from_model(self._model_proxy.assigned_op) \
+        return RobotOpFactory.create_from_model(self._model_proxy.assigned_op) \
                if self._model_proxy.assigned_op else None
 
     def add_op(self, robot_op: RobotOpDescriptor):

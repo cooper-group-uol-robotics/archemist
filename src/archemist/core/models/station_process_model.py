@@ -16,6 +16,9 @@ class StationProcessModel(Document):
     state = fields.StringField(default="init_state")
     data = fields.DictField(default={})
     processing_slot = fields.IntField(min_value=0, default=None, null=True)
+    skip_robot_ops = fields.BooleanField(default=False)
+    skip_station_ops = fields.BooleanField(default=False)
+    skip_ext_procs = fields.BooleanField(default=False)
 
     ''' lot '''
     lot = fields.ReferenceField(LotModel)
@@ -25,7 +28,7 @@ class StationProcessModel(Document):
     robot_ops_history = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
     
     '''station ops'''
-    key_process_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
+    key_process_ops = fields.MapField(fields.ObjectIdField(),default={})
     req_station_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
     station_ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
 

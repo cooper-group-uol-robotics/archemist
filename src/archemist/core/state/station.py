@@ -8,7 +8,7 @@ from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess
-from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
+from archemist.core.persistence.object_factory import StationOpFactory, RobotOpFactory, ProcessFactory
 from bson.objectid import ObjectId
 import uuid
 
@@ -49,6 +49,10 @@ class Station:
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
+    
+    @property
+    def module_path(self) -> str:
+        return self._model_proxy._module
 
     @property
     def state(self) -> StationState:
@@ -67,9 +71,9 @@ class Station:
         loc_dict = self._model_proxy.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
     
-    def get_handler_details(self) -> Dict[str, str]:
-        station_module = self._model_proxy._module.rsplit('.',1)[0]
-        return {'type':self._model_proxy.selected_handler, 'module':station_module}
+    @property
+    def selected_handler(self) -> str:
+        return self._model_proxy.selected_handler
 
     ''' materials '''
     @property
@@ -104,19 +108,19 @@ class Station:
     
     @property
     def requested_ext_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.requested_ext_procs, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.requested_ext_procs, ProcessFactory.create_from_model)
     
     @property
     def queued_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.queued_procs, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.queued_procs, ProcessFactory.create_from_model)
     
     @property
     def running_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_from_model)
     
     @property
     def procs_history(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.procs_history, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.procs_history, ProcessFactory.create_from_model)
     
     def request_external_process(self, ext_proc: Type[StationProcess]):
         self.requested_ext_procs.append(ext_proc)
@@ -152,17 +156,17 @@ class Station:
 
     @property
     def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
-        return ListProxy(self._model_proxy.requested_robot_ops, RobotFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.requested_robot_ops, RobotOpFactory.create_from_model)
 
     ''' Station ops properties and methods '''
 
     @property
     def _queued_ops(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.queued_ops, StationFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.queued_ops, StationOpFactory.create_from_model)
 
     @property
     def assigned_op(self) -> Type[StationOpDescriptor]:
-        return StationFactory.create_op_from_model(self._model_proxy.assigned_op) \
+        return StationOpFactory.create_from_model(self._model_proxy.assigned_op) \
                if self._model_proxy.assigned_op else None
     
     @property
@@ -171,7 +175,7 @@ class Station:
     
     @property
     def ops_history(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.ops_history, StationFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.ops_history, StationOpFactory.create_from_model)
     
     def update_assigned_op(self):
         if self._queued_ops and self.assigned_op is None:

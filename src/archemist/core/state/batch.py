@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
-from typing import Any, List, Union, Dict
+from typing import Any, List, Union, Dict, Type
 from bson.objectid import ObjectId
 from pickle import loads,dumps
-from archemist.core.persistence.object_factory import StationFactory
+from archemist.core.persistence.object_factory import StationOpFactory
 from archemist.core.state.recipe import Recipe
 from archemist.core.models.batch_model import SampleModel,BatchModel
 from archemist.core.state.station_op import StationOpDescriptor
@@ -27,8 +27,8 @@ class Sample:
         self._model_proxy.details = new_details
 
     @property
-    def station_ops(self):
-        return ListProxy(self._model_proxy.station_ops, StationFactory.create_op_from_model)
+    def station_ops(self) -> List[Type[StationOpDescriptor]]:
+        return ListProxy(self._model_proxy.station_ops, StationOpFactory.create_from_model)
 
     def add_station_op(self, station_op: Any):
         self._model_proxy.station_ops.append(station_op.model)

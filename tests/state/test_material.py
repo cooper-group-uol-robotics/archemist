@@ -35,7 +35,7 @@ class MaterialTest(unittest.TestCase):
         self.assertEqual(t_liquid.density, 997)
         self.assertEqual(t_liquid.density_unit, "kg/m3")
         self.assertEqual(t_liquid.volume, 400)
-        self.assertEqual(t_liquid.mass, 997*0.4)
+        self.assertAlmostEqual(t_liquid.mass, 997*0.4, 3)
         self.assertEqual(t_liquid.details["pump_id"], 'pUmP1')
         self.assertEqual(t_liquid.expiry_date, date.fromisoformat('2025-02-11'))
         

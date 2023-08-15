@@ -7,6 +7,8 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
 from archemist.core.state.station_process import StationProcess
+from archemist.core.state.material import Liquid, Solid
+from datetime import date
 
 class StationTest(unittest.TestCase):
 
@@ -14,7 +16,7 @@ class StationTest(unittest.TestCase):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
         station_dict = {
-            'type': 'TestStation',
+            'type': 'Station',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
@@ -22,7 +24,32 @@ class StationTest(unittest.TestCase):
             'total_batch_capacity': 2,
             'process_batch_capacity': 1,
         }
-        self.station: Station = Station.from_dict(station_dict=station_dict, liquids=[], solids=[])
+
+        liquid_dict = {
+            'name': 'water',
+            'id': 1254,
+            'amount': 400,
+            'unit': 'mL',
+            'density': 997,
+            'density_unit': 'kg/m3',
+            'expiry_date': date.fromisoformat('2025-02-11'),
+            'details': {
+                'pump_id': 'pUmP1'
+                }
+        }
+        water = Liquid.from_dict(liquid_dict)
+
+        solid_dict = {
+            'name': 'sodium_chloride',
+            'id': 133,
+            'amount': 10000,
+            'unit': 'ug',
+            'expiry_date': date.fromisoformat('2025-02-11'),
+            'details': {'dispense_src': 'quantos', 'cartridge_id': 123}
+        }
+        salt = Solid.from_dict(solid_dict)
+
+        self.station: Station = Station.from_dict(station_dict=station_dict, liquids=[water], solids=[salt])
 
     def  tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
@@ -38,13 +65,18 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.state, StationState.ACTIVE)
         self.assertEqual(self.station.total_batch_capacity, 2)
         self.assertEqual(self.station.process_batch_capacity, 1)
-        self.assertDictEqual(self.station.get_handler_details(),
-                         {
-                            'type': 'GenericStationHandler',
-                            'module': 'archemist.core.state'
-                         })
+        self.assertEqual(self.station.module_path, "archemist.core.state.station")
+        self.assertEqual(self.station.selected_handler, "GenericStationHandler")
         self.assertEqual(self.station.location, Location(1,7,''))
-        #TODO need to add material tests
+    
+    def test_material_members(self):
+        liquids = self.station.liquids
+        self.assertEqual(len(liquids), 1)
+        self.assertEqual(liquids[0].id, 1254)
+
+        solids = self.station.solids
+        self.assertEqual(len(solids), 1)
+        self.assertEqual(solids[0].id, 133)
 
     def test_lot_members(self):
         # assert empty members
@@ -185,7 +217,7 @@ class StationTest(unittest.TestCase):
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
         key_process_op = StationOpDescriptor.construct_op()
-        proc = StationProcess.from_args(lot, [key_process_op], 1)
+        proc = StationProcess.from_args(lot, {"key_op":key_process_op}, 1)
 
         # exteranl procs
         self.station.request_external_process(proc)

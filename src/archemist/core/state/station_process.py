@@ -3,13 +3,12 @@ import uuid
 from bson.objectid import ObjectId
 from transitions import Machine, State
 from typing import Dict, List, Any, Union, Type
-from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
-from archemist.core.persistence.object_factory import RobotFactory, StationFactory, ProcessFactory
+from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
+from archemist.core.persistence.object_factory import RobotOpFactory, StationOpFactory, ProcessFactory
 from archemist.core.models.station_process_model import StationProcessModel
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.lot import Lot
-from archemist.core.util.location import Location
 from archemist.core.util.enums import ProcessStatus
 
 class StationProcess:
@@ -27,19 +26,25 @@ class StationProcess:
 
     @classmethod
     def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
-                                 lot: Lot, key_process_ops: List[Type[StationOpDescriptor]],
-                                 processing_slot: int = None, **kwargs):
+                                 lot: Lot, key_process_ops: Dict[str, Type[StationOpDescriptor]],
+                                 processing_slot: int, args_dict: dict):
         proc_model.uuid = uuid.uuid4()
         proc_model.lot = lot.model
-        proc_model.key_process_ops = [key_process_op.model for key_process_op in key_process_ops]
+        proc_model.key_process_ops = {key_op_name: key_process_op.object_id for key_op_name, key_process_op in key_process_ops.items()}
         if processing_slot:
             proc_model.processing_slot = processing_slot
         proc_model.associated_station = associated_station
+        if "skip_robot_ops" in args_dict and args_dict["skip_robot_ops"]:
+            proc_model.skip_robot_ops = True
+        if "skip_station_ops" in args_dict and args_dict["skip_station_ops"]:
+            proc_model.skip_station_ops = True
+        if "skip_ext_procs" in args_dict and args_dict["skip_ext_procs"]:
+            proc_model.skip_ext_procs = True
 
     @classmethod
-    def from_args(cls, lot: Lot, key_process_ops: List[Type[StationOpDescriptor]], processing_slot: int = None):
+    def from_args(cls, lot: Lot, key_process_ops: Dict[str, Type[StationOpDescriptor]], processing_slot: int = None, args_dict: Dict = {}):
         model = StationProcessModel()
-        cls._set_model_common_fields(model, "Station", lot, key_process_ops, processing_slot)
+        cls._set_model_common_fields(model, "Station", lot, key_process_ops, processing_slot, args_dict)
         model._type = cls.__name__
         model._module = cls.__module__
         model.save()
@@ -65,6 +70,18 @@ class StationProcess:
     def associated_station(self) -> str:
         return self._model_proxy.associated_station
     
+    @property
+    def skip_robot_ops(self) -> bool:
+        return self._model_proxy.skip_robot_ops
+    
+    @property
+    def skip_station_ops(self) -> bool:
+        return self._model_proxy.skip_station_ops
+    
+    @property
+    def skip_ext_procs(self) -> bool:
+        return self._model_proxy.skip_ext_procs
+
     @ property
     def status(self) -> ProcessStatus:
         return self._model_proxy.status
@@ -91,31 +108,31 @@ class StationProcess:
     
     @property
     def req_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
-        return ListProxy(self._model_proxy.req_robot_ops, RobotFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.req_robot_ops, RobotOpFactory.create_from_model)
     
     @property
     def robot_ops_history(self) -> List[Type[RobotOpDescriptor]]:
-        return ListProxy(self._model_proxy.robot_ops_history, RobotFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.robot_ops_history, RobotOpFactory.create_from_model)
     
     @property
-    def key_process_ops(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.key_process_ops, StationFactory.create_op_from_model)
+    def key_process_ops(self) -> Dict[str, Type[StationOpDescriptor]]:
+        return DictProxy(self._model_proxy.key_process_ops, StationOpFactory.create_from_object_id)
     
     @property
     def req_station_ops(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.req_station_ops, StationFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.req_station_ops, StationOpFactory.create_from_model)
     
     @property
     def station_ops_history(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.station_ops_history, StationFactory.create_op_from_model)
+        return ListProxy(self._model_proxy.station_ops_history, StationOpFactory.create_from_model)
     
     @property
     def req_station_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.req_station_procs, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.req_station_procs, ProcessFactory.create_from_model)
     
     @property
     def station_procs_history(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.station_procs_history, ProcessFactory.create_process_from_model)
+        return ListProxy(self._model_proxy.station_procs_history, ProcessFactory.create_from_model)
 
     def tick(self):
         if not self._state_machine:
@@ -126,8 +143,9 @@ class StationProcess:
             self._model_proxy.status = ProcessStatus.FINISHED
     
     def request_robot_op(self, robot_op: Type[RobotOpDescriptor]):
-        self.req_robot_ops.append(robot_op)
-        self._model_proxy.status = ProcessStatus.WAITING_ON_ROBOT_OPS
+        if not self.skip_robot_ops:
+            self.req_robot_ops.append(robot_op)
+            self._model_proxy.status = ProcessStatus.WAITING_ON_ROBOT_OPS
 
     def are_req_robot_ops_completed(self) -> bool:
         req_robot_ops = [robot_op for robot_op in self.req_robot_ops]
@@ -141,8 +159,9 @@ class StationProcess:
         return False
     
     def request_station_op(self, station_op: Type[StationOpDescriptor]):
-        self.req_station_ops.append(station_op)
-        self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
+        if not self.skip_station_ops:
+            self.req_station_ops.append(station_op)
+            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
     
     def are_req_station_ops_completed(self) -> bool:
         req_station_ops = [station_op for station_op in self.req_station_ops]
@@ -156,8 +175,9 @@ class StationProcess:
         return False
     
     def request_station_process(self, station_process: Type[StationProcess]):
-        self.req_station_procs.append(station_process)
-        self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
+        if not self.skip_ext_procs:
+            self.req_station_procs.append(station_process)
+            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
     
     def are_req_station_procs_completed(self) -> bool:
         req_station_procs = [station_proc for station_proc in self.req_station_procs]

@@ -21,7 +21,7 @@ class RobotTest(unittest.TestCase):
 
     def test_robot(self):
         robot_dict = {
-            "type": "SomeRobot",
+            "type": "Robot",
             "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 187,
             "batch_capacity":2,
@@ -31,7 +31,8 @@ class RobotTest(unittest.TestCase):
         # test general fields
         robot = Robot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.get_handler_details(), {"module": "archemist.core.state", "type": "GenericRobotHandler"})
+        self.assertEqual(robot.selected_handler, "GenericRobotHandler")
+        self.assertEqual(robot.module_path, "archemist.core.state.robot")
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         t_loc = Location(node_id=3, graph_id=2, frame_name="b_frame")
         robot.location = t_loc
@@ -94,7 +95,7 @@ class RobotTest(unittest.TestCase):
 
     def test_mobile_robot(self):
         robot_dict = {
-            "type": "SomeRobot",
+            "type": "MobileRobot",
             "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 187,
             "batch_capacity":2,
@@ -104,7 +105,8 @@ class RobotTest(unittest.TestCase):
         # test general fields
         robot = MobileRobot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.get_handler_details(), {"module": "archemist.core.state", "type": "GenericRobotHandler"})
+        self.assertEqual(robot.selected_handler, "GenericRobotHandler")
+        self.assertEqual(robot.module_path, "archemist.core.state.robot")
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         self.assertEqual(robot.operational_mode, MobileRobotMode.OPERATIONAL)
         robot.operational_mode = MobileRobotMode.COOLDOWN

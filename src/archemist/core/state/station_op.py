@@ -32,6 +32,10 @@ class StationOpDescriptor:
         return self._model_proxy.model
     
     @property
+    def object_id(self):
+        return self._model_proxy.object_id
+    
+    @property
     def associated_station(self) -> str:
         return self._model_proxy.associated_station
 
