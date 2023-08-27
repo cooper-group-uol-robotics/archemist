@@ -65,6 +65,7 @@ class StationProcessTest(unittest.TestCase):
         # construct process
         proc = StationProcess.from_args(lot, {"some_op": key_process_op}, 1)
         self.assertIsNotNone(proc.uuid)
+        self.assertIsNotNone(proc.object_id)
         self.assertIsNone(proc.requested_by)
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         proc.requested_by = dummy_object_id

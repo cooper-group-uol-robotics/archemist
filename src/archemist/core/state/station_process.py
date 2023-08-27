@@ -55,6 +55,10 @@ class StationProcess:
         return self._model_proxy.model
 
     @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
+
+    @property
     def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
     

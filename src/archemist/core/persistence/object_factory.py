@@ -138,3 +138,10 @@ class ProcessFactory:
             return cls.from_args(lot, key_process_ops, processing_slot, args_dict)
         else:
             raise NameError(f"StationProcess type {proc_type} is not defined")
+        
+    @staticmethod
+    def create_from_object_id(object_id: ObjectId) -> Type[StationProcess]:
+        from archemist.core.models.station_process_model import StationProcessModel
+        model = StationProcessModel.objects.get(id=object_id)
+        cls = _import_class_from_module(model._type, model._module)
+        return cls(model)
