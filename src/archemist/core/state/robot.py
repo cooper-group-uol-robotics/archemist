@@ -1,7 +1,7 @@
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor
-from archemist.core.util.enums import RobotState,RobotTaskType, OpState
+from archemist.core.util.enums import RobotState,RobotTaskType, OpState, OpResult
 from archemist.core.util.location import Location
 from archemist.core.state.batch import Batch
 from archemist.core.exceptions.exception import RobotAssignedRackError
@@ -103,10 +103,10 @@ class Robot:
     def set_assigned_op_to_execute(self):
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, success: bool):
+    def complete_assigned_op(self, result: OpResult):
         op = self.assigned_op
         if op:
-            op.complete_op(self._model_proxy.object_id, success)
+            op.complete_op(self._model_proxy.object_id, result)
             self._model_proxy.assigned_op = None
             self._model_proxy.assigned_op_state = OpState.INVALID
             self.ops_history.append(op)

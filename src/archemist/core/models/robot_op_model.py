@@ -1,6 +1,7 @@
 from mongoengine import Document, fields
 from archemist.core.util.enums import RobotTaskType
 from archemist.core.models.batch_model import BatchModel
+from archemist.core.util.enums import OpResult
 
 class RobotOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
@@ -11,7 +12,7 @@ class RobotOpDescriptorModel(Document):
     related_batch = fields.ReferenceField(BatchModel, null=True)
 
     has_result = fields.BooleanField(default=False)
-    was_successful = fields.BooleanField(default=False)
+    result = fields.EnumField(OpResult, null=True)
     start_timestamp = fields.ComplexDateTimeField()
     end_timestamp = fields.ComplexDateTimeField()
 

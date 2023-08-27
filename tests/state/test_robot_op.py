@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from mongoengine import connect
 
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor, RobotTaskType
+from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor, RobotTaskType, OpResult
 from archemist.core.util.location import Location
 
 class RobotOpTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class RobotOpTest(unittest.TestCase):
         robot_op.requested_by = dummy_object_id
         self.assertEqual(robot_op.requested_by, dummy_object_id)
         self.assertFalse(robot_op.has_result)
-        self.assertFalse(robot_op.was_successful)
+        self.assertIsNone(robot_op.result)
         self.assertIsNone(robot_op.start_timestamp)
         self.assertIsNone(robot_op.end_timestamp)
 
@@ -50,9 +50,9 @@ class RobotOpTest(unittest.TestCase):
 
         # test end timestamp
         dummy_robot_object_id = ObjectId.from_datetime(datetime.now())
-        robot_op.complete_op(dummy_robot_object_id, True)
+        robot_op.complete_op(dummy_robot_object_id, OpResult.SUCCEEDED)
         self.assertTrue(robot_op.has_result)
-        self.assertTrue(robot_op.was_successful)
+        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
         self.assertIsNotNone(robot_op.end_timestamp)
         self.assertLessEqual(robot_op.end_timestamp, datetime.now())
         self.assertGreater(robot_op.end_timestamp, robot_op.start_timestamp)

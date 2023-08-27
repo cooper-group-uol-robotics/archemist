@@ -1,7 +1,7 @@
 from datetime import datetime
 from bson.objectid import ObjectId
 import unittest
-from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState
+from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState, OpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot_op import RobotTaskOpDescriptor
 from archemist.core.util.location import Location
@@ -81,7 +81,7 @@ class RobotTest(unittest.TestCase):
         robot.set_assigned_op_to_execute()
        
         # complete robot job
-        robot.complete_assigned_op(True)
+        robot.complete_assigned_op(OpResult.SUCCEEDED)
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)        
 
@@ -91,7 +91,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(history[0].location, robot_op.location)
         self.assertEqual(history[0].executed_by,  robot.model.id)
         self.assertTrue(history[0].has_result)
-        self.assertTrue(history[0].was_successful)
+        self.assertEqual(history[0].result, OpResult.SUCCEEDED)
 
     def test_mobile_robot(self):
         robot_dict = {
@@ -130,12 +130,12 @@ class RobotTest(unittest.TestCase):
         # test loading batches
         self.assertFalse(robot.is_onboard_capacity_full())
         robot.add_op(loading_robot_op_1)
-        robot.complete_assigned_op(True)
+        robot.complete_assigned_op(OpResult.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertTrue(robot.is_batch_onboard(loading_robot_op_1.related_batch))
 
         robot.add_op(loading_robot_op_2)
-        robot.complete_assigned_op(True)
+        robot.complete_assigned_op(OpResult.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 2)
         self.assertTrue(robot.is_batch_onboard(loading_robot_op_2.related_batch))
 
@@ -150,12 +150,12 @@ class RobotTest(unittest.TestCase):
         # test unloading batches
         self.assertTrue(robot.is_onboard_capacity_full())
         robot.add_op(unloading_robot_op_1)
-        robot.complete_assigned_op(True)
+        robot.complete_assigned_op(OpResult.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertFalse(robot.is_batch_onboard(loading_robot_op_1.related_batch))
 
         robot.add_op(unloading_robot_op_2)
-        robot.complete_assigned_op(True)
+        robot.complete_assigned_op(OpResult.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 0)
         self.assertFalse(robot.is_batch_onboard(loading_robot_op_2.related_batch))
         self.assertFalse(robot.is_onboard_capacity_full())

@@ -11,6 +11,7 @@ from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.station_process import StationProcess, ProcessStatus
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.location import Location
+from archemist.core.util.enums import OpResult
 
 class TestProcess(StationProcess):
     STATES = [State(name='init_state'),
@@ -102,7 +103,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_robot_ops), 1)
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
 
-        robot_op.complete_op(None, True)
+        robot_op.complete_op(None, OpResult.SUCCEEDED)
         self.assertTrue(proc.are_req_robot_ops_completed())
         self.assertEqual(len(proc.req_robot_ops), 0)
         self.assertEqual(len(proc.robot_ops_history), 1)
@@ -120,7 +121,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_ops), 1)
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
 
-        station_op.complete_op(True)
+        station_op.complete_op(OpResult.SUCCEEDED)
         self.assertTrue(proc.are_req_station_ops_completed())
         self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 1)
@@ -177,7 +178,7 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to run_op
         robot_op = proc.req_robot_ops[0]
-        robot_op.complete_op(None, True)
+        robot_op.complete_op(None, OpResult.SUCCEEDED)
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
         self.assertEqual(len(proc.robot_ops_history), 1)
@@ -186,7 +187,7 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to run_analysis_proc
         station_op = proc.req_station_ops[0]
-        station_op.complete_op(True)
+        station_op.complete_op(OpResult.SUCCEEDED)
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_PROCS)
         self.assertEqual(len(proc.station_ops_history), 1)

@@ -2,7 +2,7 @@ from __future__ import annotations
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.batch import Batch
-from archemist.core.util.enums import RobotTaskType
+from archemist.core.util.enums import RobotTaskType, OpResult
 from archemist.core.util import Location
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -64,8 +64,8 @@ class RobotOpDescriptor:
         return self._model_proxy.has_result
 
     @property
-    def was_successful(self) -> bool:
-        return self._model_proxy.was_successful
+    def result(self) -> OpResult:
+        return self._model_proxy.result
 
     @property
     def start_timestamp(self) -> datetime:
@@ -86,9 +86,9 @@ class RobotOpDescriptor:
     def add_start_timestamp(self):
         self._model_proxy.start_timestamp = datetime.now()
 
-    def complete_op(self, robot_id: ObjectId, success: bool):
+    def complete_op(self, robot_id: ObjectId, result: OpResult):
         self._model_proxy.has_result = True
-        self._model_proxy.was_successful = success
+        self._model_proxy.result = result
         self._model_proxy.executed_by = robot_id
         self._model_proxy.end_timestamp = datetime.now()
 

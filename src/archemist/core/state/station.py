@@ -1,6 +1,6 @@
 from typing import List, Any, Dict, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
-from archemist.core.util.enums import StationState, OpState
+from archemist.core.util.enums import StationState, OpState, OpResult
 from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.material import Liquid,Solid
@@ -192,10 +192,10 @@ class Station:
     def set_assigned_op_to_execute(self):
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, success: bool, **kwargs):
+    def complete_assigned_op(self, result: OpResult, **kwargs):
         op = self.assigned_op
         if op:
-            op.complete_op(success, **kwargs)
+            op.complete_op(result, **kwargs)
             self._model_proxy.assigned_op = None
             self._model_proxy.assigned_op_state = OpState.INVALID
             self.ops_history.append(op)
