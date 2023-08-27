@@ -1,5 +1,5 @@
 from typing import List, Any, Dict, Union, Type
-from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
+from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import StationState, OpState, OpResult
 from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op import StationOpDescriptor
@@ -34,6 +34,8 @@ class Station:
         station_model.location = station_dict['location']
         station_model.total_batch_capacity = station_dict['total_batch_capacity']
         station_model.process_batch_capacity = station_dict['process_batch_capacity']
+        proc_slots_num = int(station_model.total_batch_capacity/station_model.process_batch_capacity)
+        station_model.running_procs_slots = {str(slot_num): None for slot_num in range(proc_slots_num)}
         station_model.selected_handler = station_dict['handler']
         if liquids:
             station_model.liquids = [liquid.model for liquid in liquids]
@@ -115,8 +117,10 @@ class Station:
         return ListProxy(self._model_proxy.queued_procs, ProcessFactory.create_from_model)
     
     @property
-    def running_procs(self) -> List[Type[StationProcess]]:
-        return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_from_model)
+    def running_procs_slots(self) -> Dict[int, Type[StationProcess]]:
+        # to handle empty slots with None value
+        modified_constructor = lambda obj_id: ProcessFactory.create_from_object_id(obj_id) if obj_id else None
+        return DictProxy(self._model_proxy.running_procs_slots, modified_constructor)
     
     @property
     def procs_history(self) -> List[Type[StationProcess]]:
@@ -190,6 +194,7 @@ class Station:
         self._log_station(f'{station_op} is added to queued_op list')
 
     def set_assigned_op_to_execute(self):
+        self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
     def complete_assigned_op(self, result: OpResult, **kwargs):

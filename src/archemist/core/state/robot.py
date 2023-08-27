@@ -101,6 +101,7 @@ class Robot:
             raise RobotAssignedRackError(self.__class__.__name__)
         
     def set_assigned_op_to_execute(self):
+        self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
     def complete_assigned_op(self, result: OpResult):

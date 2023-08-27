@@ -28,7 +28,7 @@ class StationModel(Document):
     ''' processes '''
     requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     queued_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
-    running_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+    running_procs_slots = fields.DictField(default={})
     procs_history = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     
     ''' lots '''

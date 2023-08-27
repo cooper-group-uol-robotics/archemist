@@ -210,7 +210,9 @@ class StationTest(unittest.TestCase):
         # assert empty members
         self.assertFalse(self.station.requested_ext_procs)
         self.assertFalse(self.station.queued_procs)
-        self.assertFalse(self.station.running_procs)
+        self.assertEqual(len(self.station.running_procs_slots), 2)
+        self.assertIsNone(self.station.running_procs_slots["0"])
+        self.assertIsNone(self.station.running_procs_slots["1"])
         self.assertFalse(self.station.procs_history)
 
         # construct process
