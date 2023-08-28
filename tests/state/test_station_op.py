@@ -18,7 +18,7 @@ class StationOpTest(unittest.TestCase):
 
     def test_station_op(self):
         # construct op
-        station_op = StationOpDescriptor.construct_op()
+        station_op = StationOpDescriptor.from_args()
         self.assertEqual(station_op.associated_station, "Station")
         self.assertIsNotNone(station_op.uuid)
         self.assertIsNone(station_op.requested_by)

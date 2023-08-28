@@ -20,7 +20,7 @@ class RobotOpTest(unittest.TestCase):
 
     def test_robot_op(self):
         # construct op
-        robot_op = RobotOpDescriptor.construct_op()
+        robot_op = RobotOpDescriptor.from_args()
         self.assertIsNotNone(robot_op.uuid)
         self.assertIsNone(robot_op.requested_by)
         self.assertIsNone(robot_op.executed_by)

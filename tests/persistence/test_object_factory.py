@@ -3,10 +3,10 @@ from mongoengine import connect
 
 from archemist.core.persistence.object_factory import RobotFactory, RobotOpFactory, StationFactory,\
                                                         StationOpFactory, ProcessFactory
-from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.location import Location
+from bson.objectid import ObjectId
+
 
 class ObjectFactoryTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -51,16 +51,17 @@ class ObjectFactoryTest(unittest.TestCase):
         # TODO test station from archemist.stations
 
     def test_station_op_factory(self):
-        # general station op
-        station_op = StationOpDescriptor.construct_op()
+        # test construction from args
+        station_op_from_args = StationOpFactory.create_from_args(op_type="StationOpDescriptor")
+        self.assertIsNotNone(station_op_from_args.uuid)
 
         # test construction from model
-        station_op_from_model = StationOpFactory.create_from_model(station_op.model)
-        self.assertEqual(station_op.uuid, station_op_from_model.uuid)
+        station_op_from_model = StationOpFactory.create_from_model(station_op_from_args.model)
+        self.assertEqual(station_op_from_args.uuid, station_op_from_model.uuid)
 
         # test construction from object id
-        station_op_from_object_id = StationOpFactory.create_from_object_id(station_op.object_id)
-        self.assertEqual(station_op.uuid, station_op_from_object_id.uuid)
+        station_op_from_object_id = StationOpFactory.create_from_object_id(station_op_from_args.object_id)
+        self.assertEqual(station_op_from_args.uuid, station_op_from_object_id.uuid)
 
         # TODO test station_op from archemist.stations
 
@@ -95,12 +96,32 @@ class ObjectFactoryTest(unittest.TestCase):
         # TODO test robot from archemist.robots
 
     def test_robot_op_factory(self):
-        # general robot op
-        robot_op = RobotOpDescriptor.construct_op()
+        # test construction from args
+        robot_op_from_args = RobotOpFactory.create_from_args("RobotOpDescriptor")
+        self.assertIsNotNone(robot_op_from_args.uuid)
 
         # test construction from model
-        robot_op_from_model = RobotOpFactory.create_from_model(robot_op.model)
-        self.assertEqual(robot_op.uuid, robot_op_from_model.uuid)
+        robot_op_from_model = RobotOpFactory.create_from_model(robot_op_from_args.model)
+        self.assertEqual(robot_op_from_args.uuid, robot_op_from_model.uuid)
+
+        # test construction from args
+        random_station_id = ObjectId()
+        op_params = {
+            "name": "some_random_task",
+            "origin_station_id": random_station_id,
+            "params": ["1", "True"]
+            }
+        robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOpDescriptor", op_params)
+        
+        self.assertIsNotNone(robot_op_from_args.uuid)
+        self.assertEqual(len(robot_op_from_args.params), 2)
+        self.assertEqual(robot_op_from_args.params[0], "1")
+        self.assertEqual(robot_op_from_args.params[1], "True")
+        self.assertEqual(robot_op_from_args.requested_by, random_station_id)
+
+        # test construction from model
+        robot_op_from_model = RobotOpFactory.create_from_model(robot_op_from_args.model)
+        self.assertEqual(robot_op_from_args.uuid, robot_op_from_model.uuid)
 
         # TODO test robot_op from archemist.robots
 

@@ -143,8 +143,8 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.ops_history)
 
         # op creation
-        station_op_1 = StationOpDescriptor.construct_op()
-        station_op_2 = StationOpDescriptor.construct_op()
+        station_op_1 = StationOpDescriptor.from_args()
+        station_op_2 = StationOpDescriptor.from_args()
 
         # op assignment
         self.station.add_station_op(station_op_1)
@@ -218,7 +218,7 @@ class StationTest(unittest.TestCase):
         # construct process
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
-        key_process_op = StationOpDescriptor.construct_op()
+        key_process_op = StationOpDescriptor.from_args()
         proc = StationProcess.from_args(lot, {"key_op":key_process_op}, 1)
 
         # exteranl procs

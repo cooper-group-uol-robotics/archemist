@@ -22,18 +22,18 @@ def _import_class_from_module(cls_name: str, module_path: str) -> Any:
 class RobotFactory:
     @staticmethod
     def create_from_dict(robot_dict: Dict) -> Type[Robot]:
-        cls = None
         if robot_dict['type'] == "Robot" or robot_dict['type'] == "MobileRobot":
             cls = _import_class_from_module(robot_dict['type'], 'archemist.core.state.robot')
+            return cls.from_dict(robot_dict)
         else:
             pkg = importlib.import_module('archemist.robots')
             for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
                 state_module = f'{module_itr.name}.state'
                 cls = _import_class_from_module(robot_dict['type'], state_module)
-        if cls:
-            return cls.from_dict(robot_dict)
-        else:
-            raise NameError(f"Robot type {robot_dict['type']} is not defined")
+                if cls:
+                    return cls.from_dict(robot_dict)
+        
+        raise NameError(f"Robot type {robot_dict['type']} is not defined")
 
     @staticmethod
     def create_from_model(robot_model: RobotModel) -> Type[Robot]:
@@ -60,6 +60,27 @@ class RobotFactory:
     
 class RobotOpFactory:
     @staticmethod
+    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[RobotOpDescriptor]:
+        if op_type == "RobotOpDescriptor":
+            cls = _import_class_from_module('RobotOpDescriptor', 'archemist.core.state.robot_op')
+            return cls.from_args()
+        elif op_type == "RobotTaskOpDescriptor":
+            cls = _import_class_from_module('RobotTaskOpDescriptor', 'archemist.core.state.robot_op')
+            params = op_params if op_params is not None else {}
+            return cls.from_args(**params)
+        else:
+            pkg = importlib.import_module('archemist.robots')
+            for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+                state_module = f'{module_itr.name}.state'
+                cls = _import_class_from_module(op_type, state_module)
+                if cls:
+                    params = op_params if op_params is not None else {}
+                    return cls.from_args(**params)
+        
+        
+        raise NameError(f"Robot op type {op_type} is not defined")
+
+    @staticmethod
     def create_from_model(op_model: Type[RobotOpDescriptorModel]) -> Type[RobotOpDescriptor]:
         cls = _import_class_from_module(op_model._type, op_model._module)
         return cls(op_model)
@@ -67,18 +88,18 @@ class RobotOpFactory:
 class StationFactory:
     @staticmethod
     def create_from_dict(station_dict: Dict, liquids: List[Liquid] = None, solids: List[Solid] = None) -> Type[Station]:
-        cls = None
         if station_dict['type'] == "Station":
             cls = _import_class_from_module('Station', 'archemist.core.state.station')
+            return cls.from_dict(station_dict, liquids, solids)
         else:
             pkg = importlib.import_module('archemist.stations')
             for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
                 state_module = f'{module_itr.name}.state'
                 cls = _import_class_from_module(station_dict['type'], state_module)
-        if cls:
-            return cls.from_dict(station_dict, liquids, solids)
-        else:
-            raise NameError(f"Station type {station_dict['type']} is not defined")
+                if cls:
+                    return cls.from_dict(station_dict, liquids, solids)
+       
+        raise NameError(f"Station type {station_dict['type']} is not defined")
 
     @staticmethod
     def create_from_model(station_model: StationModel) -> Type[Station]:
@@ -107,6 +128,24 @@ class StationFactory:
     
 class StationOpFactory:
     @staticmethod
+    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[StationOpDescriptor]:
+        if op_type == "StationOpDescriptor":
+            cls = _import_class_from_module('StationOpDescriptor', 'archemist.core.state.station_op')
+            return cls.from_args()
+        else:
+            pkg = importlib.import_module('archemist.stations')
+            for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+                state_module = f'{module_itr.name}.state'
+                cls = _import_class_from_module(op_type, state_module)
+                if cls:
+                    params = op_params if op_params is not None else {}
+                    return cls.from_args(**params)
+        
+        
+        raise NameError(f"Station op type {op_type} is not defined")
+
+
+    @staticmethod
     def create_from_model(op_model: Type[StationOpDescriptorModel]) -> Type[StationOpDescriptor]:
         cls = _import_class_from_module(op_model._type, op_model._module)
         return cls(op_model)
@@ -133,6 +172,13 @@ class ProcessFactory:
         else:
             if station_module:
                 cls = _import_class_from_module(proc_type, station_module)
+            else:
+                pkg = importlib.import_module('archemist.stations')
+                for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+                    process_module = f'{module_itr.name}.process'
+                    cls = _import_class_from_module(proc_type, process_module)
+                    if cls: 
+                        break
 
         if cls:
             return cls.from_args(lot, key_process_ops, processing_slot, args_dict)
