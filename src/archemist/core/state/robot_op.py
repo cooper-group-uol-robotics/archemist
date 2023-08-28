@@ -22,7 +22,7 @@ class RobotOpDescriptor:
         op_model.uuid = uuid.uuid4()
 
     @classmethod
-    def construct_op(cls, **kwargs):
+    def from_args(cls, **kwargs):
         model = RobotOpDescriptorModel()
         cls._set_model_common_fields(model, **kwargs)
         model._type = cls.__name__

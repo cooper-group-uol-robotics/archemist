@@ -20,7 +20,7 @@ class StationOpDescriptor:
         op_model.associated_station = associated_station
 
     @classmethod
-    def construct_op(cls, **kwargs):
+    def from_args(cls, **kwargs):
         model = StationOpDescriptorModel()
         cls._set_model_common_fields(model, associated_station="Station", **kwargs)
         model._type = cls.__name__
