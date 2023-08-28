@@ -218,8 +218,7 @@ class StationTest(unittest.TestCase):
         # construct process
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
-        key_process_op = StationOpDescriptor.from_args()
-        proc = StationProcess.from_args(lot, {"key_op":key_process_op}, 1)
+        proc = StationProcess.from_args(lot)
 
         # exteranl procs
         self.station.request_external_process(proc)
@@ -232,6 +231,10 @@ class StationTest(unittest.TestCase):
         self.station.add_process(ext_proc)
         self.assertEqual(len(self.station.queued_procs),1)
         self.assertEqual(self.station.queued_procs[0].uuid, proc.uuid)
+
+        # add process to running_procs_slots
+        self.station.running_procs_slots["0"] = ext_proc
+        self.assertEqual(self.station.running_procs_slots["0"].uuid, ext_proc.uuid)
 
 if __name__ == '__main__':
     unittest.main()

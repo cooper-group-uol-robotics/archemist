@@ -3,13 +3,45 @@ import uuid
 from bson.objectid import ObjectId
 from transitions import Machine, State
 from typing import Dict, List, Any, Union, Type
-from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
+from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy,ListProxy, DictProxy
 from archemist.core.persistence.object_factory import RobotOpFactory, StationOpFactory, ProcessFactory
-from archemist.core.models.station_process_model import StationProcessModel
+from archemist.core.models.station_process_model import StationProcessModel, keyOpDetailsModel
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import ProcessStatus, OpResult
+
+
+class keyOpDetails:
+    def __init__(self, op_details_model: Union[keyOpDetailsModel, EmbedModelProxy]):
+        self._model_proxy = op_details_model
+
+    @classmethod
+    def from_dict(cls, key_op_dict: Dict[str, Any]):
+        model = keyOpDetailsModel()
+        model.op_type = key_op_dict["type"]
+        model.repeat_for_all_batches = key_op_dict["repeat_for_all_batches"]
+        model.parameters = key_op_dict["parameters"]
+        return cls(model)
+
+    @property
+    def model(self) -> keyOpDetailsModel:
+        if isinstance(self._model_proxy, EmbedModelProxy):
+            return self._model_proxy.model
+        else:
+            return self._model_proxy
+
+    @property
+    def op_type(self) -> str:
+        return self._model_proxy.op_type
+
+    @property
+    def repeat_for_all_batches(self) -> bool:
+        return self._model_proxy.repeat_for_all_batches
+
+    @property
+    def parameters(self) -> List[Dict]:
+        return self._model_proxy.parameters
 
 class StationProcess:
     TRIGGER_METHOD = '_process_state_transitions'
@@ -26,25 +58,32 @@ class StationProcess:
 
     @classmethod
     def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
-                                 lot: Lot, key_process_ops: Dict[str, Type[StationOpDescriptor]],
-                                 processing_slot: int, args_dict: dict):
+                                 lot: Lot, key_op_dicts_list: List[Dict[str, Any]],
+                                 processing_slot: int, **kwargs):
         proc_model.uuid = uuid.uuid4()
         proc_model.lot = lot.model
-        proc_model.key_process_ops = {key_op_name: key_process_op.object_id for key_op_name, key_process_op in key_process_ops.items()}
+        
+        if key_op_dicts_list:
+            for key_op_dict in key_op_dicts_list:
+                key_op_name = key_op_dict["name"]
+                key_op_details = keyOpDetails.from_dict(key_op_dict)
+                proc_model.key_ops_dict[key_op_name] = key_op_details.model
+        
         if processing_slot:
             proc_model.processing_slot = processing_slot
         proc_model.associated_station = associated_station
-        if "skip_robot_ops" in args_dict and args_dict["skip_robot_ops"]:
+        
+        if "skip_robot_ops" in kwargs and kwargs["skip_robot_ops"]:
             proc_model.skip_robot_ops = True
-        if "skip_station_ops" in args_dict and args_dict["skip_station_ops"]:
+        if "skip_station_ops" in kwargs and kwargs["skip_station_ops"]:
             proc_model.skip_station_ops = True
-        if "skip_ext_procs" in args_dict and args_dict["skip_ext_procs"]:
+        if "skip_ext_procs" in kwargs and kwargs["skip_ext_procs"]:
             proc_model.skip_ext_procs = True
 
     @classmethod
-    def from_args(cls, lot: Lot, key_process_ops: Dict[str, Type[StationOpDescriptor]], processing_slot: int = None, args_dict: Dict = {}):
+    def from_args(cls, lot: Lot, key_op_dicts_list: List[Dict[str, Any]] = None, processing_slot: int = None, **kwargs):
         model = StationProcessModel()
-        cls._set_model_common_fields(model, "Station", lot, key_process_ops, processing_slot, args_dict)
+        cls._set_model_common_fields(model, "Station", lot, key_op_dicts_list, processing_slot, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.save()
@@ -119,8 +158,8 @@ class StationProcess:
         return ListProxy(self._model_proxy.robot_ops_history, RobotOpFactory.create_from_model)
     
     @property
-    def key_process_ops(self) -> Dict[str, Type[StationOpDescriptor]]:
-        return DictProxy(self._model_proxy.key_process_ops, StationOpFactory.create_from_object_id)
+    def key_ops_dict(self) -> Dict[str, keyOpDetails]:
+        return DictProxy(self._model_proxy.key_ops_dict, keyOpDetails)
     
     @property
     def req_station_ops(self) -> List[Type[StationOpDescriptor]]:
@@ -161,6 +200,20 @@ class StationProcess:
             self._model_proxy.status = ProcessStatus.RUNNING
             return True
         return False
+
+    def create_key_op(self, key_op_name: str, batch_index: int=0) -> Type[StationOpDescriptor]:
+        key_op_dtl = self.key_ops_dict[key_op_name]
+
+        if not key_op_dtl.parameters:
+            key_op = StationOpFactory.create_from_args(key_op_dtl.op_type)
+        else:
+            if key_op_dtl.repeat_for_all_batches and batch_index > 0:
+                print(f"warning: non-zero index is specified for op with repeat_for_all_batches flag")
+                print(f"warning: setting the index to zero")
+                batch_index = 0
+            key_op = StationOpFactory.create_from_args(key_op_dtl.op_type, key_op_dtl.parameters[batch_index])
+        
+        return key_op
     
     def request_station_op(self, station_op: Type[StationOpDescriptor]):
         if not self.skip_station_ops:

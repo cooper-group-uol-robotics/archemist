@@ -119,7 +119,7 @@ class Station:
     @property
     def running_procs_slots(self) -> Dict[int, Type[StationProcess]]:
         # to handle empty slots with None value
-        modified_constructor = lambda obj_id: ProcessFactory.create_from_object_id(obj_id) if obj_id else None
+        modified_constructor = lambda model: ProcessFactory.create_from_object_id(model.object_id) if model else None
         return DictProxy(self._model_proxy.running_procs_slots, modified_constructor)
     
     @property

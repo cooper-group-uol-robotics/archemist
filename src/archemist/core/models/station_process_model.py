@@ -4,6 +4,11 @@ from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.util.enums import ProcessStatus
 
+class keyOpDetailsModel(EmbeddedDocument):
+    op_type = fields.StringField(required=True)
+    repeat_for_all_batches = fields.BooleanField(required=True)
+    parameters = fields.ListField(default=[])
+
 class StationProcessModel(Document):
 
     _type = fields.StringField(required=True)
@@ -28,7 +33,7 @@ class StationProcessModel(Document):
     robot_ops_history = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
     
     '''station ops'''
-    key_process_ops = fields.MapField(fields.ObjectIdField(),default={})
+    key_ops_dict = fields.MapField(field=fields.EmbeddedDocumentField(keyOpDetailsModel), default={})
     req_station_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
     station_ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
 
