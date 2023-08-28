@@ -208,6 +208,10 @@ class TestDbProxy(unittest.TestCase):
         for k,v in self.foo_wrapper.a_dict:
             self.assertEqual(a_dict[k], v)
 
+        # test items
+        for k, v in self.foo_wrapper.a_dict.items():
+            self.assertEqual(a_dict[k], v)
+
     def test_doc_reference_field(self):
         # test field is empty
         self.assertIsNone(self.foo_wrapper.doc)
@@ -325,6 +329,11 @@ class TestDbProxy(unittest.TestCase):
         # test iterator
         dict_docs = {'a': self.bar_wrapper, 'b': self.baz_wrapper}
         for k, v in self.foo_wrapper.dict_docs:
+            self.assertEqual(dict_docs[k].uuid, v.uuid)
+
+        # test items
+        dict_docs = {'a': self.bar_wrapper, 'b': self.baz_wrapper}
+        for k, v in self.foo_wrapper.dict_docs.items():
             self.assertEqual(dict_docs[k].uuid, v.uuid)
 
         # test del
@@ -484,6 +493,10 @@ class TestDbProxy(unittest.TestCase):
 
         # test iterator
         for k,v in embed.a_dict:
+            self.assertEqual(self.foo_model.embed.a_dict[k], v)
+
+        # test items
+        for k,v in embed.a_dict.items():
             self.assertEqual(self.foo_model.embed.a_dict[k], v)
 
 
