@@ -34,7 +34,7 @@ class Recipe:
         model = RecipeModel()
         model.name = recipe_dict['general']['name']
         model.exp_id = recipe_dict['general']['id']
-        for state_dict in recipe_dict['process']:
+        for state_dict in recipe_dict['steps']:
             model.states.append(state_dict['state_name'])
             model.transitions.extend([{'trigger': trigger, 'source': state_dict['state_name'],
                                 'dest': state_dict['transitions'][trigger]} 

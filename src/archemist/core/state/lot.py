@@ -3,6 +3,7 @@ from typing import Union, List
 from archemist.core.models.lot_model import LotModel
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
+from archemist.core.state.recipe import Recipe
 
 class Lot:
     def __init__(self, lot_model: Union[LotModel, ModelProxy]) -> None:
@@ -38,6 +39,17 @@ class Lot:
     def add_station_stamp(self, station_stamp: str):
         for batch in self.batches:
             batch.add_station_stamp(station_stamp)
+
+    @property
+    def recipe(self) -> Recipe:
+        if self.is_recipe_attached():
+            return Recipe(self._model_proxy.recipe)
+
+    def is_recipe_attached(self) -> bool:
+        return self._model_proxy.recipe is not None
+
+    def attach_recipe(self, recipe: Recipe):
+        self._model_proxy.recipe = recipe.model
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.uuid}'

@@ -1,5 +1,5 @@
 import yaml
-from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, dirty_load
+from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, dirty_load, Bool
 from pkg_resources import resource_string
 from typing import Dict
 from pathlib import Path
@@ -78,7 +78,7 @@ class WorkflowSchemas:
                     'id': Int(),
                 }
             ),
-            'process': Seq(Map(
+            'steps': Seq(Map(
                 {
                     'state_name': Str(),
                     'station': Map(
@@ -88,7 +88,14 @@ class WorkflowSchemas:
                             'process': Map(
                                 {
                                     'type': Str(),
-                                    'key_operations': MapPattern(Str(), MapPattern(Str(), Any())),
+                                    Optional('operations'): Seq(Map(
+                                        {
+                                            'name': Str(),
+                                            'type': Str(),
+                                            'repeat_for_all_batches': Bool(),
+                                            Optional('parameters'): Seq(MapPattern(Str(), Any())) | EmptyNone()
+                                        }
+                                    )),
                                     Optional('args'): EmptyNone() | MapPattern(Str(), Any())
                                 }
                             )

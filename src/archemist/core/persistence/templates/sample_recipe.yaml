@@ -26,11 +26,18 @@
 #       type: station process class name as defined in archemist.stations.X.process
 #             note that X stands for the stations's given module found in archemist's 
 #             stations module
-#       key_operations: a dict the describe key station ops used in the process, where
-#                       the key gives a name for the op that is used inside the process
-#                       while the associated value is a dict describing the involved station_op
-#                       as defined in archemist.stations.X.state note that X stands for the 
-#                       stations's given module found in archemist's stations module
+#       operations: a list that describe key station ops used in the process
+#         name: name of the op that is going to be used as a key inside the process to retrieve
+#               the operation parameters
+#         type: class name of op to be executed as defined in archemist.stations.X.state
+#               note that X stands for the stations's given module found in archemist's 
+#               stations module
+#         repeat_for_all_batches: if true the parameters of the op are repeated for all the 
+#                                 batches. This assume that only one set of parameters
+#                                 are defined. Otherwise, each batch should have its own
+#                                 set of parameters.
+#         parameters: list of op parameters for each batch. If repeat_for_all_batches is set
+#                     to true, then only a single set of parameters need to be provided
 #       args: any extra arguments needed to construct the process 
 #   transitions: this section describes current state transitions
 #     on_success: the new state the workflow will transition to in case the current state
@@ -43,14 +50,19 @@
 general:
   name: 
   id:
-process:
+steps:
   - state_name:
     station:
       type:
       id:
       process:
         type:
-        key_operations:
+        operations:
+          - name: 
+            type:
+            repeat_for_all_batches: True
+            parameters:
+              - some_parameter: value
         args:
     transitions:
       on_success: 

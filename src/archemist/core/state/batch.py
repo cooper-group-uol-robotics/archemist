@@ -2,9 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any, List, Union, Dict, Type
 from bson.objectid import ObjectId
-from pickle import loads,dumps
 from archemist.core.persistence.object_factory import StationOpFactory
-from archemist.core.state.recipe import Recipe
 from archemist.core.models.batch_model import SampleModel,BatchModel
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.persistence.models_proxy import EmbedModelProxy, ModelProxy, ListProxy
@@ -70,17 +68,6 @@ class Batch:
     @property
     def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
-    
-    @property
-    def recipe(self) -> Recipe:
-        if self.is_recipe_attached():
-            return Recipe(self._model_proxy.recipe)
-
-    def is_recipe_attached(self) -> bool:
-        return self._model_proxy.recipe is not None
-
-    def attach_recipe(self, recipe: Recipe):
-        self._model_proxy.recipe = recipe.model
 
     @property
     def location(self) -> Location:

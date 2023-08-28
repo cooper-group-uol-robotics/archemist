@@ -1,7 +1,7 @@
 general:
   name: test_archemist_recipe
   id: 198
-process:
+steps:
   - state_name: 1234
     station:
       type: IkaPlateDigital

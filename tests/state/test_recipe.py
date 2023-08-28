@@ -12,7 +12,7 @@ class RecipeTest(unittest.TestCase):
 
         self._recipe_doc = {
             "general": {"name": "test_archemist_recipe", "id": 198},
-            "process": [
+            "steps": [
                 {
                     "state_name": "stirring_operation",
                     "station": {
@@ -20,17 +20,25 @@ class RecipeTest(unittest.TestCase):
                         "id": 2,
                         "process": {
                             "type": "CrystalBotWorkflowProcess",
-                            "key_operations": {
-                                "stir": {
-                                        "type": "IKAStirringOpDescriptor",
-                                        "properties": {
+                            "operations": [
+                                {
+                                    "name": "stir",
+                                    "type": "IKAStirringOpDescriptor",
+                                    "repeat_for_all_batches": False,
+                                    "parameters": [
+                                        {
                                             "stirring_speed": 200,
-                                            "duration": 10
+                                            "duration": 10,
                                         },
+                                        {
+                                            "stirring_speed": 150,
+                                            "duration": 5,
+                                        },
+                                    ],
                                 },
-                            },
+                            ],
                             "args": None,
-                        }
+                        },
                     },
                     "transitions": {
                         "on_success": "weighing_operation",
@@ -44,15 +52,21 @@ class RecipeTest(unittest.TestCase):
                         "id": 5,
                         "process": {
                             "type": "SomeProcess",
-                            "key_operations": {
-                                "weigh": {
-                                        "type": "FisherWeightOpDescriptor"
+                            "operations": [
+                                {
+                                    "name": "weigh",
+                                    "type": "FisherWeightOpDescriptor",
+                                    "repeat_for_all_batches": True,
+                                    "parameters": [{"some_param": 123}],
                                 },
-                            },
+                            ],
                             "args": {"some_variable": 42},
                         },
                     },
-                    "transitions": {"on_success": "end_state", "on_fail": "failed_state"},
+                    "transitions": {
+                        "on_success": "end_state",
+                        "on_fail": "failed_state",
+                    },
                 },
             ],
         }
@@ -63,7 +77,6 @@ class RecipeTest(unittest.TestCase):
             self._client[self._db_name][coll].drop()
 
     def test_recipe(self):
-
         # construct a recipe
         recipe = Recipe.from_dict(self._recipe_doc)
 
@@ -78,14 +91,17 @@ class RecipeTest(unittest.TestCase):
         process_1 = current_state_details.station_process
         self.assertEqual(process_1["type"], "CrystalBotWorkflowProcess")
         self.assertIsNone(process_1["args"])
-        key_operations_1 = {"stir": {
-                                "type": "IKAStirringOpDescriptor",
-                                "properties": {
-                                    "stirring_speed": 200,
-                                    "duration": 10
-                                },
-                            },}
-        self.assertDictEqual(process_1["key_operations"], key_operations_1)
+        key_operations_1 = [
+            {   "name" : "stir",
+                "type": "IKAStirringOpDescriptor",
+                "repeat_for_all_batches": False,
+                "parameters": [
+                    {"stirring_speed": 200, "duration": 10},
+                    {"stirring_speed": 150, "duration": 5}
+                    ],
+            },
+        ]
+        self.assertListEqual(process_1["operations"], key_operations_1)
         self.assertFalse(recipe.is_complete())
         self.assertFalse(recipe.is_failed())
         next_state_details = recipe.get_next_state_details(success=True)
@@ -103,13 +119,17 @@ class RecipeTest(unittest.TestCase):
         process_2 = current_state_details.station_process
         self.assertEqual(process_2["type"], "SomeProcess")
         self.assertEqual(process_2["args"], {"some_variable": 42})
-        key_operations_2 = {"weigh": {
-                                        "type": "FisherWeightOpDescriptor"
-                                    },
-                            }
-        self.assertDictEqual(process_2["key_operations"], key_operations_2)
+        key_operations_2 = [
+            {
+                "name": "weigh",
+                "type": "FisherWeightOpDescriptor",
+                "repeat_for_all_batches": True,
+                "parameters": [{"some_param": 123}],
+            },
+        ]
+        self.assertListEqual(process_2["operations"], key_operations_2)
         self.assertFalse(recipe.is_complete())
-        
+
         self.assertIsNone(recipe.get_next_state_details(success=True))
         # end state
         recipe.advance_state(True)
@@ -117,7 +137,6 @@ class RecipeTest(unittest.TestCase):
         self.assertFalse(recipe.is_failed())
 
     def test_recipe_failed(self):
-
         # construct a recipe
         recipe = Recipe.from_dict(self._recipe_doc)
         self.assertFalse(recipe.is_complete())

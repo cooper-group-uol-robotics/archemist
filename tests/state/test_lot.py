@@ -1,6 +1,7 @@
 import unittest
 
 from archemist.core.state.batch import Batch
+from archemist.core.state.recipe import Recipe
 from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
 from mongoengine import connect
@@ -10,12 +11,74 @@ class LotTest(unittest.TestCase):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
+        self.recipe_doc = {
+            "general": {"name": "test_archemist_recipe", "id": 198},
+            "steps": [
+                {
+                    "state_name": "stirring_operation",
+                    "station": {
+                        "type": "IkaPlateDigital",
+                        "id": 2,
+                        "process": {
+                            "type": "CrystalBotWorkflowProcess",
+                            "operations": [
+                                {
+                                    "name": "stir",
+                                    "type": "IKAStirringOpDescriptor",
+                                    "repeat_for_all_batches": False,
+                                    "parameters": [
+                                        {
+                                            "stirring_speed": 200,
+                                            "duration": 10,
+                                        },
+                                        {
+                                            "stirring_speed": 150,
+                                            "duration": 5,
+                                        },
+                                    ],
+                                },
+                            ],
+                            "args": None,
+                        },
+                    },
+                    "transitions": {
+                        "on_success": "weighing_operation",
+                        "on_fail": "failed_state",
+                    },
+                },
+                {
+                    "state_name": "weighing_operation",
+                    "station": {
+                        "type": "FisherWeightingStation",
+                        "id": 5,
+                        "process": {
+                            "type": "SomeProcess",
+                            "operations": [
+                                {
+                                    "name": "weigh",
+                                    "type": "FisherWeightOpDescriptor",
+                                    "repeat_for_all_batches": True,
+                                    "parameters": [{"some_param": 123}],
+                                },
+                            ],
+                            "args": {"some_variable": 42},
+                        },
+                    },
+                    "transitions": {
+                        "on_success": "end_state",
+                        "on_fail": "failed_state",
+                    },
+                },
+            ],
+        }
+
     def  tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
 
     def test_lot(self):
+        # test construction
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
@@ -28,6 +91,14 @@ class LotTest(unittest.TestCase):
         for batch in lot.batches:
             self.assertEqual(len(batch.station_stamps), 1)
             self.assertTrue("test_station_stamp" in batch.station_stamps[0])
+        
+        # test recipe
+        self.assertFalse(lot.is_recipe_attached())
+        self.assertIsNone(lot.recipe)
+        recipe = Recipe.from_dict(self.recipe_doc)
+        lot.attach_recipe(recipe)
+        self.assertTrue(lot.is_recipe_attached())
+        self.assertIsNotNone(lot.recipe)
 
 if __name__ == "__main__":
     unittest.main()

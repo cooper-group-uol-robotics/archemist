@@ -1,5 +1,4 @@
 from mongoengine import Document, EmbeddedDocument, fields
-from archemist.core.models.recipe_model import RecipeModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 
 class SampleModel(EmbeddedDocument):
@@ -10,7 +9,6 @@ class SampleModel(EmbeddedDocument):
 class BatchModel(Document):
     uuid = fields.UUIDField(binary=False, required=True)
     location = fields.DictField(default={})
-    recipe = fields.ReferenceField(RecipeModel, null=True)
     samples = fields.EmbeddedDocumentListField(SampleModel)
     station_stamps = fields.ListField(fields.StringField(), default=[])
 

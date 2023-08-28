@@ -1,9 +1,6 @@
 import unittest
 from archemist.core.state.batch import Batch
 from archemist.stations.ika_digital_plate_station.state import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
-from archemist.core.state.recipe import Recipe
-import yaml
-from pathlib import Path
 from mongoengine import connect
 from archemist.core.util.location import Location
 
@@ -24,18 +21,6 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
-        self.assertFalse(batch.is_recipe_attached())
-        self.assertIsNone(batch.recipe)
-        
-        # test recipe
-        recipe_doc = dict()
-        resources_path = Path.joinpath(Path.cwd(), "tests/state/resources/testing_recipe.yaml")
-        with resources_path.open() as fs:
-            recipe_doc = yaml.load(fs, Loader=yaml.SafeLoader)
-        recipe = Recipe.from_dict(recipe_doc)
-        batch.attach_recipe(recipe)
-        self.assertTrue(batch.is_recipe_attached())
-        self.assertIsNotNone(batch.recipe)
 
         # test station_stamps
         self.assertEqual(len(batch.station_stamps), 0)
