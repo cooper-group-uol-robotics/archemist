@@ -1,6 +1,12 @@
 from mongoengine import Document, fields
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 from archemist.core.util.enums import RobotState
+from enum import Enum, auto
+
+class MobileRobotMode(Enum):
+    OPERTIAONAL = auto()
+    COOLDOWN = auto()
+    MAINTENANCE = auto()
 
 
 class RobotModel(Document):
@@ -19,4 +25,5 @@ class RobotModel(Document):
     meta = {'collection': 'robots', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
 class MobileRobotModel(RobotModel):
+    operational_mode = fields.EnumField(MobileRobotMode, default=MobileRobotMode.OPERTIAONAL)
     onboard_batches = fields.ListField(fields.IntField(),default=[])

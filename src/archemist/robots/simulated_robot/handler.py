@@ -13,7 +13,7 @@ class GenericRobotHandler(RobotHandler):
         try:
             while True:
                 self.handle()
-                time.sleep(2)
+                time.sleep(0.1)
         except KeyboardInterrupt:
             print(f'{self._robot}_handler is terminating!!!')
 
@@ -33,4 +33,4 @@ class GenericRobotHandler(RobotHandler):
         return True
 
     def _mock_execution(self):
-        time.sleep(1)
+        time.sleep(0.1)

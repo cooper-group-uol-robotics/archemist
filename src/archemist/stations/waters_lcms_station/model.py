@@ -13,4 +13,4 @@ class WatersLCMSStationModel(StationModel):
     machine_status = fields.EnumField(LCMSStatus, null=True)
 
 class LCMSOpModel(StationOpDescriptorModel):
-    rack = fields.IntField(default=1, min_value=1, max_value=2)
+    used_rack_index = fields.IntField(default=1, min_value=1, max_value=2)

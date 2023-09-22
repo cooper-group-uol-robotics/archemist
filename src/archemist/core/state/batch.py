@@ -147,4 +147,7 @@ class Batch:
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.id}'
+    
+    def __eq__(self, other_batch) -> bool:
+        return self.model.exp_id == other_batch.model.exp_id
 

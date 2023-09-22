@@ -1,13 +1,54 @@
 from archemist.core.state.robot import Robot, RobotState
-from archemist.core.state.station import Station, StationState
+from archemist.core.state.station import Station, OpState
 from archemist.core.persistence.object_factory import StationFactory
+from archemist.core.state.station_process import StationProcessData
 from typing import Tuple,Dict
 
 
 class StationHandler:
+    class ProcessHandler:
+        def __init__(self, station: Station) -> None:
+            self._station = station
+            num_slots = int(station.batch_capacity/station.process_batch_capacity)
+            self._processing_slots = {slot: None for slot in range(num_slots)}
+            for process_data in self._station.get_all_processes_data():
+                self._processing_slots[process_data.processing_slot] = StationFactory.create_station_process(self._station, process_data)
+            
+
+        def _process_assigned_batches(self):
+            assigned_batches = self._station.assigned_batches
+            new_batches = [batch for batch in assigned_batches + self._in_process_batches 
+                           if batch in assigned_batches and batch not in self._in_process_batches]
+            batches_per_process = self._station.process_batch_capacity
+            if len(new_batches) > 0 and (len(new_batches) % batches_per_process) == 0:
+                processes_split_batches_ = [new_batches[i: i + batches_per_process] for i in range(0, len(new_batches) , batches_per_process)]
+                for batches in processes_split_batches_:
+                    for slot, process in self._processing_slots.items():
+                        if process is None:
+                            process_data = StationProcessData.from_args(batches, slot)
+                            new_process = StationFactory.create_station_process(self._station, process_data) #TODO batch or op process can be passed as an arg
+                            self._processing_slots[slot] = new_process
+                            break
+
+
+        def _handle_processes(self):
+            self._in_process_batches = []
+            for slot, process in self._processing_slots.items():
+                if process is not None:
+                    if process.data.status['state'] != 'final_state':
+                        process.process_state_transitions()
+                        self._in_process_batches.extend(process.data.batches)
+                    else:
+                        self._station.delete_process_data(process.data.uuid)
+                        self._processing_slots[slot] = None
+
+        def run_processes(self):
+            self._handle_processes()
+            self._process_assigned_batches()
+    
     def __init__(self, station: Station):
         self._station = station
-        self._station_sm = StationFactory.create_state_machine(self._station)
+        self._process_handler = self.ProcessHandler(station)
 
     def execute_op(self):
         pass
@@ -19,21 +60,20 @@ class StationHandler:
         pass
 
     def handle(self):
-        self._station_sm.process_state_transitions()
-        if self._station.state == StationState.OP_ASSIGNED:
-            self._station.start_executing_op()
+        self._process_handler.run_processes()
+        self._station.update_assigned_op()
+        if self._station.assigned_op_state == OpState.ASSIGNED:
+            self._station.add_timestamp_to_assigned_op()
+            self._station.assigned_op_state = OpState.EXECUTING
             self.execute_op()
-        elif self._station.state == StationState.EXECUTING_OP:
+        elif self._station.assigned_op_state == OpState.EXECUTING:
             if self.is_op_execution_complete():
                 op_successful, op_results = self.get_op_result()
                 self._station.complete_assigned_station_op(op_successful, **op_results)
-                self._station.set_to_processing()
-        elif self._station.state == StationState.REPEAT_OP:
-            self._station.start_executing_op()
-            self.execute_op()
-        elif self._station.state == StationState.SKIP_OP:
+        elif self._station.assigned_op_state == OpState.TO_BE_REPEATED:
+            self._station.assigned_op_state = OpState.ASSIGNED
+        elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
             self._station.complete_assigned_station_op(True, **{})
-            self._station.set_to_processing()
 
     def run(self):
         pass

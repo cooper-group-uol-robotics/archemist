@@ -15,11 +15,18 @@ class RobotTaskType(Enum):
     OTHER = auto()
 
 class StationState(Enum):
-    IDLE = auto()
-    PROCESSING = auto()
-    WAITING_ON_ROBOT = auto()
-    OP_ASSIGNED = auto()
-    SKIP_OP = auto()
-    REPEAT_OP = auto()
-    EXECUTING_OP = auto()
-    OP_COMPLETE = auto()
+    INACTIVE = auto()
+    ACTIVE = auto()
+    ERROR = auto()
+
+class OpState(Enum):
+    INVALID = auto()
+    ASSIGNED = auto()
+    EXECUTING = auto()
+    TO_BE_REPEATED = auto()
+    TO_BE_SKIPPED = auto()
+
+class TimeUnit(Enum):
+    SECONDS = auto()
+    MINUTES = auto()
+    HOURS = auto()

@@ -1,6 +1,6 @@
 import rospy
 from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand, KMRStatus, LBRStatus
-from archemist.core.state.robot import Robot
+from archemist.core.state.robot import Robot,MobileRobotMode, RobotState
 from archemist.core.util.location import Location
 from archemist.core.processing.handler import RobotHandler
 from .state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
@@ -32,6 +32,9 @@ class KmriiwaROSHandler(RobotHandler):
         self._lbr_task_name = ''
         self._lbr_done = False
         self._lbr_exec_successful = False
+
+        self._need_to_charge = False
+        self._need_to_calibrate = False
         rospy.sleep(3)
 
     def run(self):
@@ -44,6 +47,8 @@ class KmriiwaROSHandler(RobotHandler):
             rospy.loginfo(f'{self._robot}_handler is running')
             while (not rospy.is_shutdown()):
                 self.handle()
+                if self._robot.state == RobotState.IDLE:
+                    self._handle_robot_status()
                 rospy.sleep(3)
         except KeyboardInterrupt:
             rospy.loginfo(f'{self._robot}_handler is terminating!!!')
@@ -77,6 +82,10 @@ class KmriiwaROSHandler(RobotHandler):
                 self._robot.operational = True
             elif self._lbr_current_op_state != 'BUSY':
                 self._robot.operational = False
+        if self._need_to_charge != msg.is_charging_needed:
+            self._need_to_charge = msg.is_charging_needed
+        if self._need_to_calibrate != msg.is_calibration_needed:
+            self._need_to_calibrate = msg.is_calibration_needed
 
     def _lbr_task_cb(self, msg):
         if msg.task_name != '' and msg.task_name == self._lbr_task_name and msg.cmd_seq == self._lbr_cmd_seq:
@@ -128,7 +137,26 @@ class KmriiwaROSHandler(RobotHandler):
         return kmr_task, lbr_task
 
     def _handle_robot_status(self):
-        pass
+        if self._robot.operational_mode ==  MobileRobotMode.OPERTIAONAL:
+            if self._need_to_charge or self._need_to_calibrate:
+                if len(self._robot.onboard_batches) == 0 or self._robot.is_onboard_capacity_full():
+                    self._robot.operational_mode =  MobileRobotMode.COOLDOWN
+        if self._robot.operational_mode ==  MobileRobotMode.COOLDOWN:
+            if len(self._robot.onboard_batches) == 0:
+                self._robot.operational_mode =  MobileRobotMode.MAINTENANCE
+                # enable auto functions
+                self._lbr_cmd_seq += 1
+                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='EnableAutoFunctions', task_parameters=["False"])
+                for _ in range(10):
+                    self._lbrCmdPub.publish(lbr_task)
+        if self._robot.operational_mode ==  MobileRobotMode.MAINTENANCE:
+            if not self._need_to_charge and self._lbr_current_op_state == "IDLE" and not self._need_to_calibrate:
+                # disable auto functions
+                self._lbr_cmd_seq += 1
+                lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name='DiableAutoFunctions', task_parameters=["False"])
+                for _ in range(10):
+                    self._lbrCmdPub.publish(lbr_task)
+                self._robot.operational_mode =  MobileRobotMode.OPERTIAONAL
 
     def execute_op(self):
         robot_op = self._robot.get_assigned_op()
