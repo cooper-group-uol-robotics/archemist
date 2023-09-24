@@ -360,7 +360,7 @@ class DictProxy:
         return self._callable(self._dict_wrapper.__getitem__(key))
     
     def __setitem__(self, key, object):
-        return self._dict_wrapper.__setitem__(key, object.model)
+        return self._dict_wrapper.__setitem__(key, object.model if object else None)
     
     def __delitem__(self, key):
         return self._dict_wrapper.__delitem__(key)
