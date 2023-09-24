@@ -53,3 +53,6 @@ class Lot:
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.uuid}'
+    
+    def __eq__(self, __value: object) -> bool:
+        return self.uuid == __value.uuid
