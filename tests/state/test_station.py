@@ -19,8 +19,7 @@ class StationTest(unittest.TestCase):
             'type': 'Station',
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'handler': 'GenericStationHandler',
+            'handler': 'SimStationOpHandler',
             'total_batch_capacity': 2,
             'process_batch_capacity': 1,
         }
@@ -66,7 +65,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.total_batch_capacity, 2)
         self.assertEqual(self.station.process_batch_capacity, 1)
         self.assertEqual(self.station.module_path, "archemist.core.state.station")
-        self.assertEqual(self.station.selected_handler, "GenericStationHandler")
+        self.assertEqual(self.station.selected_handler, "SimStationOpHandler")
         self.assertEqual(self.station.location, Location(1,7,''))
     
     def test_material_members(self):

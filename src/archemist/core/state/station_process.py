@@ -45,8 +45,6 @@ class keyOpDetails:
 
 class StationProcess:
     TRIGGER_METHOD = '_process_state_transitions'
-    STATES: List[State] = []
-    TRANSITIONS: List[Dict[str, str]] = []
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         if isinstance(process_model, ModelProxy):
@@ -54,36 +52,32 @@ class StationProcess:
         else:
             self._model_proxy = ModelProxy(process_model)
         
+        self.STATES: List[State] = []
+        self.TRANSITIONS: List[Dict[str, str]] = []
         self._state_machine = None
 
     @classmethod
     def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
-                                 lot: Lot, key_op_dicts_list: List[Dict[str, Any]],
-                                 processing_slot: int, **kwargs):
+                                 lot: Lot, key_op_dicts_list: List[Dict[str, Any]], **kwargs):
         proc_model.uuid = uuid.uuid4()
         proc_model.lot = lot.model
+        proc_model.associated_station = associated_station
         
         if key_op_dicts_list:
             for key_op_dict in key_op_dicts_list:
                 key_op_name = key_op_dict["name"]
                 key_op_details = keyOpDetails.from_dict(key_op_dict)
                 proc_model.key_ops_dict[key_op_name] = key_op_details.model
-        
-        if processing_slot:
-            proc_model.processing_slot = processing_slot
-        proc_model.associated_station = associated_station
-        
-        if "skip_robot_ops" in kwargs and kwargs["skip_robot_ops"]:
-            proc_model.skip_robot_ops = True
-        if "skip_station_ops" in kwargs and kwargs["skip_station_ops"]:
-            proc_model.skip_station_ops = True
-        if "skip_ext_procs" in kwargs and kwargs["skip_ext_procs"]:
-            proc_model.skip_ext_procs = True
+
+        proc_model.processing_slot = kwargs.get("processing_slot")        
+        proc_model.skip_robot_ops = kwargs.get("skip_robot_ops", False)
+        proc_model.skip_station_ops = kwargs.get("skip_station_ops", False)
+        proc_model.skip_ext_procs =  kwargs.get("skip_ext_procs", False)
 
     @classmethod
-    def from_args(cls, lot: Lot, key_op_dicts_list: List[Dict[str, Any]] = None, processing_slot: int = None, **kwargs):
+    def from_args(cls, lot: Lot, key_op_dicts_list: List[Dict[str, Any]] = None, **kwargs):
         model = StationProcessModel()
-        cls._set_model_common_fields(model, "Station", lot, key_op_dicts_list, processing_slot, **kwargs)
+        cls._set_model_common_fields(model, "Station", lot, key_op_dicts_list, **kwargs)
         model._type = cls.__name__
         model._module = cls.__module__
         model.save()
@@ -248,8 +242,8 @@ class StationProcess:
         return False
     
     def _construct_state_machine(self) -> Machine:
-        states = self.STATES
-        transitions = self.TRANSITIONS
+        states = self.STATES if self.STATES else [State(name="init_state"), State(name="final_state")]
+        transitions = self.TRANSITIONS if self.TRANSITIONS else [{'source':'init_state','dest':'final_state'}]
         # add default trigger function to all transitions
         for transition in transitions:
             transition['trigger'] = self.TRIGGER_METHOD

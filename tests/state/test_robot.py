@@ -25,13 +25,13 @@ class RobotTest(unittest.TestCase):
             "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 187,
             "batch_capacity":2,
-            "handler": "GenericRobotHandler"
+            "handler": "SimRobotOpHandler"
         }
 
         # test general fields
         robot = Robot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.selected_handler, "GenericRobotHandler")
+        self.assertEqual(robot.selected_handler, "SimRobotOpHandler")
         self.assertEqual(robot.module_path, "archemist.core.state.robot")
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         t_loc = Location(node_id=3, graph_id=2, frame_name="b_frame")
@@ -99,13 +99,13 @@ class RobotTest(unittest.TestCase):
             "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 187,
             "batch_capacity":2,
-            "handler": "GenericRobotHandler"
+            "handler": "SimRobotOpHandler"
         }
 
         # test general fields
         robot = MobileRobot.from_dict(robot_dict)
         self.assertEqual(robot.id, 187)
-        self.assertEqual(robot.selected_handler, "GenericRobotHandler")
+        self.assertEqual(robot.selected_handler, "SimRobotOpHandler")
         self.assertEqual(robot.module_path, "archemist.core.state.robot")
         self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         self.assertEqual(robot.operational_mode, MobileRobotMode.OPERATIONAL)

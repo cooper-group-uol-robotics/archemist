@@ -3,31 +3,33 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from mongoengine import connect
 from transitions import State
-from time import sleep
-
-
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.station_process import StationProcess, ProcessStatus, keyOpDetails
+from archemist.core.state.station_process import StationProcess,ProcessStatus, keyOpDetails
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.location import Location
 from archemist.core.util.enums import OpResult
 
 class TestProcess(StationProcess):
-    STATES = [State(name='init_state'),
-        State(name='prep_state', on_enter='initialise_process_data'), 
-        State(name='pickup_batch', on_enter=['request_pickup_batch']),
-        State(name='run_op', on_enter=['request_to_run_op']),
-        State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
-        State(name='final_state')]
-    
-    TRANSITIONS = [
-        {'source':'init_state','dest':'prep_state'},
-        {'source':'prep_state','dest':'pickup_batch'},
-        {'source':'pickup_batch','dest':'run_op', 'conditions':'are_req_robot_ops_completed'},
-        {'source':'run_op','dest':'run_analysis_proc', 'conditions':'are_req_station_ops_completed'},
-        {'source':'run_analysis_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
-    ]
+
+    def __init__(self, process_model) -> None:
+        super().__init__(process_model)
+        
+        self.STATES = [State(name='init_state'),
+            State(name='prep_state', on_enter='initialise_process_data'), 
+            State(name='pickup_batch', on_enter=['request_pickup_batch']),
+            State(name='run_op', on_enter=['request_to_run_op']),
+            State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
+            State(name='final_state')]
+        
+        self.TRANSITIONS = [
+            {'source':'init_state','dest':'prep_state'},
+            {'source':'prep_state','dest':'pickup_batch'},
+            {'source':'pickup_batch','dest':'run_op', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'run_op','dest':'run_analysis_proc', 'conditions':'are_req_station_ops_completed'},
+            {'source':'run_analysis_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
+        ]
+
 
     def initialise_process_data(self):
         self.data['batch_index'] = 0
@@ -79,11 +81,11 @@ class StationProcessTest(unittest.TestCase):
                     "name": "some_op",
                     "type": "StationOpDescriptor",
                     "repeat_for_all_batches": True,
-                    "parameters": []
+                    "parameters": None
                 }
             ]
         # construct process
-        proc = StationProcess.from_args(lot, key_op_dicts_list, 1)
+        proc = StationProcess.from_args(lot, key_op_dicts_list, processing_slot=1)
         self.assertIsNotNone(proc.uuid)
         self.assertIsNotNone(proc.object_id)
         self.assertIsNone(proc.requested_by)
@@ -157,7 +159,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_procs), 0)
         self.assertEqual(len(proc.station_procs_history), 0)
         
-        station_proc = StationProcess.from_args(lot, [], 2)
+        station_proc = StationProcess.from_args(lot, processing_slot=2)
         proc.request_station_process(station_proc)
         self.assertFalse(proc.are_req_station_procs_completed())
         self.assertEqual(len(proc.req_station_procs), 1)
@@ -179,11 +181,11 @@ class StationProcessTest(unittest.TestCase):
                     "name": "some_op",
                     "type": "StationOpDescriptor",
                     "repeat_for_all_batches": True,
-                    "parameters": []
+                    "parameters": None
                 }
             ]
         # construct process
-        proc = TestProcess.from_args(lot, key_op_dicts_list, 1)
+        proc = TestProcess.from_args(lot, key_op_dicts_list, processing_slot=1)
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)
         self.assertIsNone(proc._state_machine)
         self.assertEqual(proc.m_state, "init_state")
@@ -250,11 +252,11 @@ class StationProcessTest(unittest.TestCase):
                     "name": "some_op",
                     "type": "StationOpDescriptor",
                     "repeat_for_all_batches": True,
-                    "parameters": []
+                    "parameters": None
                 }
             ]
         # construct process
-        proc = TestProcess.from_args(lot, key_op_dicts_list, 1,
+        proc = TestProcess.from_args(lot, key_op_dicts_list, processing_slot=1,
                                      skip_robot_ops=True, skip_station_ops=True,
                                       skip_ext_procs=True)
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)

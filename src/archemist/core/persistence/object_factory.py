@@ -48,9 +48,9 @@ class RobotFactory:
         return cls(model)
 
     @staticmethod
-    def create_handler(robot: Robot, use_sim_handler: bool=False):
-        if use_sim_handler or robot.selected_handler == "GenericRobotHandler":
-            cls = _import_class_from_module('GenericRobotHandler', 'archemist.robots.simulated_robot.handler')
+    def create_op_handler(robot: Robot, use_sim_handler: bool=False):
+        if use_sim_handler or robot.selected_handler == "SimRobotOpHandler":
+            cls = _import_class_from_module('SimRobotOpHandler', 'archemist.core.processing.handler')
         else:
             handler_type =  robot.selected_handler
             robot_module_path = robot.module_path
@@ -116,9 +116,9 @@ class StationFactory:
         return cls(model)
 
     @staticmethod
-    def create_handler(station: Station, use_sim_handler: bool=False):
-        if use_sim_handler or station.selected_handler == "GenericStationHandler":
-            cls = _import_class_from_module('GenericStationHandler', 'archemist.stations.simulated_station.handler')
+    def create_op_handler(station: Station, use_sim_handler: bool=False):
+        if use_sim_handler or station.selected_handler == "SimStationOpHandler":
+            cls = _import_class_from_module('SimStationOpHandler', 'archemist.core.processing.handler')
         else:
             handler_type =  station.selected_handler
             station_module_path = station.module_path
@@ -164,9 +164,10 @@ class ProcessFactory:
         return cls(process_model)
     
     @staticmethod
-    def create_from_args(proc_type: str, lot: Lot, key_process_ops: Dict[str, Type[StationOpDescriptor]],
-                         processing_slot: int = None, args_dict: Dict = {},
-                         station_module: str = None) -> Type[StationProcess]:
+    def create_from_dict(proc_dict: Dict, lot: Lot, station_module: str = None) -> Type[StationProcess]:
+        proc_type = proc_dict["type"]
+        key_process_ops = proc_dict.get("operations")
+        args_dict = {} if proc_dict.get("args") is None else proc_dict.get("args")
         if proc_type == "StationProcess":
             cls = _import_class_from_module(proc_type, 'archemist.core.state.station_process')
         else:
@@ -181,7 +182,7 @@ class ProcessFactory:
                         break
 
         if cls:
-            return cls.from_args(lot, key_process_ops, processing_slot, args_dict)
+            return cls.from_args(lot, key_process_ops, **args_dict)
         else:
             raise NameError(f"StationProcess type {proc_type} is not defined")
         

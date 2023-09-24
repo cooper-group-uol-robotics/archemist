@@ -4,6 +4,7 @@ from mongoengine import connect
 from archemist.core.persistence.object_factory import RobotFactory, RobotOpFactory, StationFactory,\
                                                         StationOpFactory, ProcessFactory
 from archemist.core.state.lot import Lot, Batch
+from archemist.core.processing.handler import SimStationOpHandler, SimRobotOpHandler
 from archemist.core.util.location import Location
 from bson.objectid import ObjectId
 
@@ -46,7 +47,10 @@ class ObjectFactoryTest(unittest.TestCase):
         station_from_object_id = StationFactory.create_from_object_id(station_from_dict.object_id)
         self.assertEqual(station_from_object_id.id, 23)
 
-        # TODO test generic handler
+        # test sim station op handler
+        sim_op_handler = StationFactory.create_op_handler(station_from_dict, use_sim_handler=True)
+        self.assertIsNotNone(sim_op_handler)
+        self.assertTrue(isinstance(sim_op_handler, SimStationOpHandler))
 
         # TODO test station from archemist.stations
 
@@ -91,7 +95,10 @@ class ObjectFactoryTest(unittest.TestCase):
         robot_from_object_id = RobotFactory.create_from_object_id(robot_from_dict.object_id)
         self.assertEqual(robot_from_object_id.id, 187)
 
-        # TODO test generic handler
+        # test sim robot op handler
+        sim_op_handler = RobotFactory.create_op_handler(robot_from_dict, use_sim_handler=True)
+        self.assertIsNotNone(sim_op_handler)
+        self.assertTrue(isinstance(sim_op_handler, SimRobotOpHandler))
 
         # TODO test robot from archemist.robots
 
@@ -127,10 +134,11 @@ class ObjectFactoryTest(unittest.TestCase):
 
     def test_process_factory(self):
         # general station process
-        # construct from args
+        proc_dict = {"type": "StationProcess"}
+        # construct from dict
         batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
-        proc_from_args = ProcessFactory.create_from_args("StationProcess",lot, {})
+        proc_from_args = ProcessFactory.create_from_dict(proc_dict,lot)
         self.assertIsNotNone(proc_from_args.uuid)
 
         # construct from model
@@ -143,3 +151,5 @@ class ObjectFactoryTest(unittest.TestCase):
 
         # TODO test station_process from archemist.stations
 
+if __name__ == "__main__":
+    unittest.main()
