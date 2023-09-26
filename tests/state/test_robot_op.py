@@ -34,7 +34,7 @@ class RobotOpTest(unittest.TestCase):
 
         # test related batch
         self.assertIsNone(robot_op.related_batch)
-        batch = Batch.from_arguments(2, Location(1,3,'table_frame'))
+        batch = Batch.from_args(2, Location(1,3,'table_frame'))
         robot_op.related_batch = batch
         ret_batch = robot_op.related_batch
         self.assertIsNotNone(ret_batch)
@@ -63,7 +63,7 @@ class RobotOpTest(unittest.TestCase):
     def test_robot_task(self):
         # construct op
         station_object_id = ObjectId.from_datetime(datetime.now())
-        batch = Batch.from_arguments(2, Location(1,3,'table_frame'))
+        batch = Batch.from_args(2, Location(1,3,'table_frame'))
         task_loc = Location(1,3,'table_frame')
         params_list = ["1", "false"]
         robot_op = RobotTaskOpDescriptor.from_args("test_task", RobotTaskType.LOAD_TO_ROBOT,

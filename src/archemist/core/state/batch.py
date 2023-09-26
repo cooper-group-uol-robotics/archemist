@@ -48,10 +48,10 @@ class Batch:
             self._model_proxy = ModelProxy(batch_model)
 
     @classmethod
-    def from_arguments(cls, num_samples: int, location:Location):
+    def from_args(cls, num_samples: int, location:Location=None):
         model = BatchModel()
         model.uuid = uuid.uuid4()
-        model.location = location.to_dict()
+        model.location = location.to_dict() if location else {}
         model.samples.extend([SampleModel() for _ in range(num_samples)])
         model.save()
         return cls(model)

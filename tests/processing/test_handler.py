@@ -261,8 +261,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_procs(self):
         # construct lots
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
         
@@ -315,8 +315,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_lots(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
         recipe_1_doc = self.recipe_doc
@@ -366,8 +366,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_mixed(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
         recipe_1_doc = self.recipe_doc
@@ -380,7 +380,7 @@ class HandlerTest(unittest.TestCase):
         lot_2.attach_recipe(recipe_2)
 
         # construct process
-        batch_3 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_3 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_3 = Lot.from_args([batch_3])
         proc = TestProcess.from_args(lot_3)
 

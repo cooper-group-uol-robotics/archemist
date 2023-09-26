@@ -73,8 +73,8 @@ class StationProcessTest(unittest.TestCase):
 
     def test_station_process_fields(self):
         # construct lot
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         key_op_dicts_list = [
                 {
@@ -173,8 +173,8 @@ class StationProcessTest(unittest.TestCase):
 
     def test_station_process_state_machine(self):
         # construct lot
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         key_op_dicts_list = [
                 {
@@ -244,8 +244,8 @@ class StationProcessTest(unittest.TestCase):
 
     def test_station_process_skip_requests(self):
         # construct lot
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         key_op_dicts_list = [
                 {

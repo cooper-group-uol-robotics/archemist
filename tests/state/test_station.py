@@ -83,9 +83,9 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.processed_lots)
 
         # lots creation
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
-        batch_2 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_2 = Lot.from_args([batch_2])
         
 
@@ -215,7 +215,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.procs_history)
 
         # construct process
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
         proc = StationProcess.from_args(lot)
 

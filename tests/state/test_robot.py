@@ -116,8 +116,8 @@ class RobotTest(unittest.TestCase):
 
         # create batches and loading ops
         station_object_id = ObjectId.from_datetime(datetime.now())
-        batch_1 = Batch.from_arguments(2, Location(1,3,'table_frame'))
-        batch_2 = Batch.from_arguments(2, Location(1,3,'table_frame'))
+        batch_1 = Batch.from_args(2, Location(1,3,'table_frame'))
+        batch_2 = Batch.from_args(2, Location(1,3,'table_frame'))
         task_loc = Location(1,3,'table_frame')
         params_list = ["1", "false"]
         loading_robot_op_1 = RobotTaskOpDescriptor.from_args("load_batch", RobotTaskType.LOAD_TO_ROBOT,

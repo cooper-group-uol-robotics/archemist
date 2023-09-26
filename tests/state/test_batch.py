@@ -16,7 +16,7 @@ class BatchTest(unittest.TestCase):
 
     def test_batch_general_fields(self):
         # test uuid and location
-        batch = Batch.from_arguments(2,Location(1,3,'table_frame'))
+        batch = Batch.from_args(2,Location(1,3,'table_frame'))
         self.assertIsNotNone(batch.uuid)
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
@@ -32,7 +32,7 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(batch.num_samples, 2)
 
     def test_batch_samples_field(self):
-        batch = Batch.from_arguments(2,Location(1,3,'table_frame'))
+        batch = Batch.from_args(2,Location(1,3,'table_frame'))
         samples = batch.samples
 
         for sample in samples:

@@ -136,7 +136,7 @@ class ObjectFactoryTest(unittest.TestCase):
         # general station process
         proc_dict = {"type": "StationProcess"}
         # construct from dict
-        batch_1 = Batch.from_arguments(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
         proc_from_args = ProcessFactory.create_from_dict(proc_dict,lot)
         self.assertIsNotNone(proc_from_args.uuid)
