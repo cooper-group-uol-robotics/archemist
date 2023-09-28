@@ -1,6 +1,6 @@
 from typing import Dict, List
 from mongoengine import Document, fields
-import pickle
+import dill
 
 class OptimisationRecordsModel(Document):
     optimiser_module = fields.StringField(required=True)
@@ -87,7 +87,7 @@ class OptimisationRecords:
     def stored_optimisation_obj(self) -> object:
         self._model.reload("stored_optimisation_obj")
         if self._model.stored_optimisation_obj is not None:
-            return pickle.loads(self._model.stored_optimisation_obj)
+            return dill.loads(self._model.stored_optimisation_obj)
         else:
             return None
     
@@ -101,5 +101,5 @@ class OptimisationRecords:
         self._model.update(push__batches_seen=batch_id)
 
     def update_stored_optimisation_model(self, optimisation_obj: object):
-        binary_obj = pickle.dumps(optimisation_obj)
+        binary_obj = dill.dumps(optimisation_obj)
         self._model.update(set__stored_optimisation_obj=binary_obj)

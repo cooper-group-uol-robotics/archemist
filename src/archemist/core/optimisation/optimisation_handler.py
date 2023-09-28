@@ -6,7 +6,7 @@ from archemist.core.optimisation.optimisation_records import OptimisationRecords
 from archemist.core.optimisation.optimiser_base import OptimiserBase
 from archemist.core.state.state import State
 from archemist.core.optimisation.recipe_generator import RecipeGenerator
-import math
+import  numpy as np
 
 class OptimisationHandler:
     def __init__(self, optimiser: Type[OptimiserBase], optimisation_records: OptimisationRecords, state: State,
@@ -41,7 +41,8 @@ class OptimisationHandler:
                     result_data_dict = batch.extract_samples_op_data(self._optimisation_records.objective_variable)
                     result_data_df = pd.DataFrame(result_data_dict)
                     y_df = pd.DataFrame(columns=['result'])
-                    y_df['result'] = result_data_df.apply(lambda row: math.sqrt(row[0]**2 - row[1]**2), axis=1)
+                    #y_df['result'] = result_data_df.apply(lambda row: math.sqrt(row[0]**2 - row[1]**2), axis=1)
+                    y_df['result'] = result_data_df["target_diff_1"]
                     #combine_dict = {**decision_vars_dict, **result_data_dict}
                     #result_data_pd = pd.DataFrame(combine_dict)
                     data_df = pd.concat([x_df, y_df], axis=1)
@@ -72,10 +73,14 @@ class OptimisationHandler:
                     _optimized_values = self._optimiser.generate_random_values()
                     self._recipe_generator.generate_recipe(_optimized_values)
         while True:
-            if len(self._state.recipes_queue) == 0 and not self._optimisation_records.need_new_recipes:
+            if len(self._state.recipes_queue) == 0 and self._optimisation_records.need_new_recipes:
                 self._log_opt_handler(f"recipes queue is empty. Creating new {self._optimisation_records.max_recipe_count} recipes")
                 for _ in range(self._optimisation_records.max_recipe_count):
                     _optimized_values = self._optimiser.generate_batch()
+                    while np.any(_optimized_values.values < 0.):
+                        _optimized_values = self._optimiser.generate_batch()
+                        if not np.any(_optimized_values.values < 0.):
+                            break
                     self._recipe_generator.generate_recipe(_optimized_values)
                 self._optimisation_records.need_new_recipes = False
             time.sleep(1)

@@ -36,9 +36,9 @@ class LightBoxStation(Station):
         current_op = self.get_assigned_station_op()
         if kwargs.get("color_index") is not None:
             if isinstance(current_op, SampleColorRGBOpDescriptor):
-                diff = abs(kwargs["color_index"] - self.rgb_target)
+                diff = -1*abs(kwargs["color_index"] - self.rgb_target)
             elif isinstance(current_op, SampleColorLABOpDescriptor):
-                diff = math.sqrt(kwargs["color_index"]**2 - self.lab_target**2)
+                diff = -1*math.sqrt(kwargs["color_index"]**2 - self.lab_target**2)
             super().complete_assigned_station_op(success, target_diff=diff, **kwargs)
         else:
             super().complete_assigned_station_op(success, **kwargs)
@@ -153,7 +153,12 @@ class SampleColorLABOpDescriptor(StationOpDescriptor):
             self._model.color_index = kwargs['color_index']
             self._model.target_diff = kwargs['target_diff']
         else:
-            print('missing one or all color intensity values')
+            print('missing one or all color intensity values. adding defaults')
+            self._model.l_value = 0
+            self._model.a_value = 0
+            self._model.b_value = 0
+            self._model.color_index = 0
+            self._model.target_diff = 0
     
     
 
