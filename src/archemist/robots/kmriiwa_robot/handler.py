@@ -44,6 +44,10 @@ class KmriiwaROSHandler(RobotHandler):
                 latest_task_msg = rospy.wait_for_message('/kuka2/lbr/task_status', TaskStatus,timeout=5)
                 if latest_task_msg.cmd_seq > self._lbr_cmd_seq:
                     self._lbr_cmd_seq = latest_task_msg.cmd_seq
+            if self._kmr_cmd_seq == 0:
+                latest_task_msg = rospy.wait_for_message('/kuka2/kmr/task_status', TaskStatus,timeout=5)
+                if latest_task_msg.cmd_seq > self._kmr_cmd_seq:
+                    self._kmr_cmd_seq = latest_task_msg.cmd_seq
             rospy.loginfo(f'{self._robot}_handler is running')
             while (not rospy.is_shutdown()):
                 self.handle()
@@ -59,7 +63,7 @@ class KmriiwaROSHandler(RobotHandler):
     
     def _kmr_task_cb(self, msg):
         #TODO if published task sequence != 0, while local task counter == 0 it means we restarted and thus set local task counter = published task counter 
-        if msg.task_name != '' and msg.task_name == self._kmr_task_name:
+        if msg.task_name != '' and msg.task_name == self._kmr_task_name and msg.cmd_seq == self._kmr_cmd_seq:
             if msg.task_state == TaskStatus.FINISHED:
                 self._kmr_task_name = ''
                 self._kmr_done = True
@@ -111,6 +115,8 @@ class KmriiwaROSHandler(RobotHandler):
             self._lbr_cmd_seq += 1
             lbr_task = LBRCommand(cmd_seq=self._lbr_cmd_seq, priority_task=True, task_name=robotOp.name, task_parameters=robotOp.params)
         elif isinstance(robotOp, KukaLBRTask):
+            if robotOp.lock_robot == "lock":
+                self._robot.locked_to_station = True
             if robotOp.location.get_map_coordinates() != self._robot.location.get_map_coordinates():
                 self._kmr_cmd_seq += 1
                 kmr_task = NavCommand(cmd_seq=self._kmr_cmd_seq, priority_task=False,robot_id=self._robot.id,graph_id=robotOp.location.graph_id,

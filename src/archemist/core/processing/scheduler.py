@@ -165,8 +165,9 @@ class LazyRobotScheduler(RobotScheduler):
                             job_assigned = True
                         elif robot.operational_mode != MobileRobotMode.MAINTENANCE:
                             if isinstance(robot_job, KukaNAVTask):
-                                robot.assign_op(robot_job)
-                                job_assigned = True
+                                if not robot.locked_to_station:
+                                    robot.assign_op(robot_job)
+                                    job_assigned = True
                             elif isinstance(robot_job, KukaLBRTask):
                                 if robot_job.task_type == RobotTaskType.LOAD_TO_ROBOT:
                                     if robot.operational_mode == MobileRobotMode.OPERTIAONAL:

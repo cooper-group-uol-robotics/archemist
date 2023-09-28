@@ -43,9 +43,10 @@ class LightBoxProcess(StationProcess):
         batch_index = self._process_data.status['batch_index']
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         allow_auto_func = False # to stop auto charing and calibration when presentig the sample
+        lock_cmd = "lock" if self._process_data.status['sample_index'] == 0 and self._process_data.status['batch_index'] == 0 else ""
         robot_job = KukaLBRTask.from_args(name='PresentVial',
                                           params=[perform_6p,batch_index+1, sample_index+1,allow_auto_func],
-                                        type=RobotTaskType.MANIPULATION, location=self._station.location)
+                                        type=RobotTaskType.MANIPULATION, location=self._station.location, lock_robot=lock_cmd)
         current_batch_id = self._process_data.batches[batch_index].id
         self.request_robot_op(robot_job,current_batch_id)
 
@@ -54,9 +55,10 @@ class LightBoxProcess(StationProcess):
         batch_index = self._process_data.status['batch_index']
         perform_6p = False # this will be later evaluated by the KMRiiwa handler
         allow_auto_func = False
+        unlock_cmd = "unlock" if self._process_data.status['sample_index'] == (self._process_data.batches[batch_index].num_samples-1) and self._process_data.status['batch_index'] == (len(self._process_data.batches)-1) else ""
         robot_job = KukaLBRTask.from_args(name='ReturnVial',
                                           params=[perform_6p,batch_index+1, sample_index+1,allow_auto_func],
-                                        type=RobotTaskType.MANIPULATION, location=self._station.location)
+                                        type=RobotTaskType.MANIPULATION, location=self._station.location, lock_robot=unlock_cmd)
         current_batch_id = self._process_data.batches[batch_index].id
         self.request_robot_op(robot_job,current_batch_id)
 
