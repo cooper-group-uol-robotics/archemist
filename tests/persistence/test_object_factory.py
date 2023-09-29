@@ -26,8 +26,7 @@ class ObjectFactoryTest(unittest.TestCase):
             'location': {'node_id': 1, 'graph_id': 7},
             'batch_capacity': 2,
             'handler': 'GenericStationHandler',
-            'total_batch_capacity': 2,
-            'process_batch_capacity': 1,
+            'total_lot_capacity': 2,
         }
 
         # general station

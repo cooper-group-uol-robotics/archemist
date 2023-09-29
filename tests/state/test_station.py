@@ -20,8 +20,7 @@ class StationTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'handler': 'SimStationOpHandler',
-            'total_batch_capacity': 2,
-            'process_batch_capacity': 1,
+            'total_lot_capacity': 2
         }
 
         liquid_dict = {
@@ -62,8 +61,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.state, StationState.INACTIVE)
         self.station.state = StationState.ACTIVE
         self.assertEqual(self.station.state, StationState.ACTIVE)
-        self.assertEqual(self.station.total_batch_capacity, 2)
-        self.assertEqual(self.station.process_batch_capacity, 1)
+        self.assertEqual(self.station.total_lot_capacity, 2)
         self.assertEqual(self.station.module_path, "archemist.core.state.station")
         self.assertEqual(self.station.selected_handler, "SimStationOpHandler")
         self.assertEqual(self.station.location, Location(1,7,''))
@@ -90,11 +88,11 @@ class StationTest(unittest.TestCase):
         
 
         # lot assignment
-        self.assertEqual(self.station.free_batch_capacity, 2)
+        self.assertEqual(self.station.free_lot_capacity, 2)
         self.station.add_lot(lot_1)
-        self.assertEqual(self.station.free_batch_capacity, 1)
+        self.assertEqual(self.station.free_lot_capacity, 1)
         self.station.add_lot(lot_2)
-        self.assertEqual(self.station.free_batch_capacity, 0)
+        self.assertEqual(self.station.free_lot_capacity, 0)
 
         assigned_lots = self.station.assigned_lots
         self.assertEqual(len(assigned_lots),2)
@@ -106,11 +104,13 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.assigned_lots), 1)
         self.assertEqual(len(self.station.processed_lots), 1)
         self.assertEqual(self.station.processed_lots[0].uuid, lot_1.uuid)
+        self.assertEqual(self.station.free_lot_capacity, 1)
 
         self.station.finish_processing_lot(lot_2)
         self.assertEqual(len(self.station.assigned_lots), 0)
         self.assertEqual(len(self.station.processed_lots), 2)
         self.assertEqual(self.station.processed_lots[1].uuid, lot_2.uuid)
+        self.assertEqual(self.station.free_lot_capacity, 2)
 
     def test_robot_ops_members(self):
         # assert empty members

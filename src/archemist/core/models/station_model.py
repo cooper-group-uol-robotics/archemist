@@ -22,8 +22,7 @@ class StationModel(Document):
     solids = fields.ListField(fields.ReferenceField(SolidMaterialModel), default=[])
     
     ''' batch capacity '''
-    total_batch_capacity = fields.IntField(min_value=1, default=1)
-    process_batch_capacity = fields.IntField(min_value=1, default=1)
+    total_lot_capacity = fields.IntField(min_value=1, default=1)
     
     ''' processes '''
     requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])

@@ -72,8 +72,7 @@ robots:
 #   id: the station unique workflow id
 #   location: station's location in the robot navigation graph where node_id stands for the 
 #             node number in the navigation graph whose id is given 
-#   total_batch_capacity: number of batches the station can handle at a time
-#   process_batch_capacity: number of batches a station processes can handle at a time
+#   total_lot_capacity: number of lots the station can handle at a time
 #   handler: station handler class name as defined in archemist.stations.X.handler
 #   parameters: any additional parameters need to be passed to the station when initialized
 #
@@ -84,7 +83,6 @@ stations:
     location: 
       node_id: 
       graph_id: 
-    total_batch_capacity:
-    process_batch_capacity:
+    total_lot_capacity:
     handler: 
     parameters: 

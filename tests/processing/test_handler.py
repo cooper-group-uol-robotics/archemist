@@ -44,8 +44,7 @@ class HandlerTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'handler': 'SimStationOpHandler',
-            'total_batch_capacity': 2,
-            'process_batch_capacity': 1,
+            'total_lot_capacity': 2,
         }
 
         self.recipe_doc = {

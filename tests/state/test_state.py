@@ -74,8 +74,7 @@ class StateTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'handler': 'SimStationOpHandler',
-            'total_batch_capacity': 2,
-            'process_batch_capacity': 1,
+            'total_lot_capacity': 2,
         }
 
         station_dict_2 = {
@@ -83,8 +82,7 @@ class StateTest(unittest.TestCase):
             'id': 24,
             'location': {'node_id': 2, 'graph_id': 7},
             'handler': 'SimStationOpHandler',
-            'total_batch_capacity': 2,
-            'process_batch_capacity': 1,
+            'total_lot_capacity': 2,
         }
 
         self.station_1 = Station.from_dict(station_dict_1)

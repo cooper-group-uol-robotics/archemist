@@ -55,8 +55,7 @@ class WorkflowSchemas:
                 'type': Str(),
                 'id': Int(),
                 'location': Map({'node_id': Int(), 'graph_id': Int()}),
-                'total_batch_capacity': Int(),
-                'process_batch_capacity': Int(),
+                'total_lot_capacity': Int(),
                 'handler': Str(),
                 Optional('parameters'): EmptyNone() | MapPattern(Str(), Any())
             }

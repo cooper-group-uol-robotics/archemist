@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Union, Type
+from typing import List, Dict, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import StationState, OpState, OpResult
 from archemist.core.models.station_model import StationModel
@@ -10,7 +10,6 @@ from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess
 from archemist.core.persistence.object_factory import StationOpFactory, RobotOpFactory, ProcessFactory
 from bson.objectid import ObjectId
-import uuid
 
 class Station:
     def __init__(self, station_model: Union[Type[StationModel], ModelProxy]) -> None:
@@ -22,19 +21,18 @@ class Station:
     @classmethod
     def from_dict(cls, station_dict: dict, liquids: List[Liquid] = None, solids: List[Solid] = None):
         model = StationModel()
-        cls._set_model_common_fields(station_dict, liquids, solids, model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict, liquids, solids)
         model.save()
         return cls(model)
 
-    @staticmethod
-    def _set_model_common_fields(station_dict: dict, liquids: List[Liquid], solids: List[Solid], station_model: StationModel):
+    @classmethod
+    def _set_model_common_fields(cls, station_model: StationModel, station_dict: dict, liquids: List[Liquid], solids: List[Solid]):
         station_model._type = station_dict['type']
+        station_model._module = cls.__module__
         station_model.exp_id = station_dict['id']
         station_model.location = station_dict['location']
-        station_model.total_batch_capacity = station_dict['total_batch_capacity']
-        station_model.process_batch_capacity = station_dict['process_batch_capacity']
-        proc_slots_num = int(station_model.total_batch_capacity/station_model.process_batch_capacity)
+        station_model.total_lot_capacity = station_dict['total_lot_capacity']
+        proc_slots_num = station_dict['total_lot_capacity']
         station_model.running_procs_slots = {str(slot_num): None for slot_num in range(proc_slots_num)}
         station_model.selected_handler = station_dict['handler']
         if liquids:
@@ -88,23 +86,15 @@ class Station:
         if self._model_proxy.solids:
             return ListProxy(self._model_proxy.solids, Solid)
     
-    ''' batch capacity '''
+    ''' lot capacity '''
 
     @property
-    def total_batch_capacity(self) -> int:
-        return self._model_proxy.total_batch_capacity
+    def total_lot_capacity(self) -> int:
+        return self._model_proxy.total_lot_capacity
     
     @property
-    def free_batch_capacity(self) -> int:
-        if self.assigned_lots:
-            num_current_batches = sum([lot.num_batches for lot in self.assigned_lots])
-        else:
-            num_current_batches = 0
-        return self.total_batch_capacity - num_current_batches
-    
-    @property
-    def process_batch_capacity(self) -> int:
-        return self._model_proxy.process_batch_capacity
+    def free_lot_capacity(self) -> int:
+        return self.total_lot_capacity - len(self.assigned_lots)
     
     ''' Process properties and methods '''
     
@@ -143,7 +133,7 @@ class Station:
         return ListProxy(self._model_proxy.processed_lots, Lot)
 
     def add_lot(self, lot: Lot):
-        if self.free_batch_capacity >= lot.num_batches:
+        if self.free_lot_capacity > 0:
             lot.add_station_stamp(str(self))
             self.assigned_lots.append(lot)
             self._log_station(f'{lot} is added for processing')

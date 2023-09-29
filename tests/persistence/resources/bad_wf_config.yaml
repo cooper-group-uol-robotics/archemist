@@ -40,16 +40,14 @@ stations:
     location:
       node_id: 25
       graph_id: 1
-    batch_capacity: 2
-    process_batch_capacity: 2
+    lot_capacity: 2
     handler: GenericStationHandler
   - type: Station
     id: 12
     location:
       node_id: 27
       graph_id: 1
-    total_batch_capacity: 2
-    process_batch_capacity: 2
+    total_lot_capacity: 2
     handler: GenericStationHandler
     parameters:
       used_liquids:
