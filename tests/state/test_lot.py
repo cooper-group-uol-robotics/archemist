@@ -4,6 +4,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
+from archemist.core.util.enums import LotStatus
 from mongoengine import connect
 
 class LotTest(unittest.TestCase):
@@ -83,6 +84,9 @@ class LotTest(unittest.TestCase):
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         self.assertIsNotNone(lot.uuid)
+        self.assertEqual(lot.status, LotStatus.STANDBY)
+        lot.status = LotStatus.FINISHED
+        self.assertEqual(lot.status, LotStatus.FINISHED)
         self.assertEqual(len(lot.batches), 2)
         self.assertEqual(lot.num_batches, 2)
         self.assertEqual(lot.batches[0].uuid, batch_1.uuid)

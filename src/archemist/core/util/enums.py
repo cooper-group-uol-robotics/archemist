@@ -41,6 +41,14 @@ class ProcessStatus(Enum):
     WAITING_ON_STATION_PROCS = auto()
     FINISHED = auto()
 
+class LotStatus(Enum):
+    STANDBY = auto()
+    ONBOARDING = auto()
+    READY_FOR_COLLECTION = auto()
+    IN_WORKFLOW = auto()
+    NEED_REMOVAL = auto()
+    FINISHED = auto()
+
 class TimeUnit(Enum):
     SECONDS = auto()
     MINUTES = auto()

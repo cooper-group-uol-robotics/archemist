@@ -4,6 +4,7 @@ from archemist.core.models.lot_model import LotModel
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.state.recipe import Recipe
+from archemist.core.util.enums import LotStatus
 
 class Lot:
     def __init__(self, lot_model: Union[LotModel, ModelProxy]) -> None:
@@ -27,6 +28,14 @@ class Lot:
     @property
     def uuid(self) -> uuid.UUID:
         return self._model_proxy.uuid
+    
+    @property
+    def status(self) -> LotStatus:
+        return self._model_proxy.status
+    
+    @status.setter
+    def status(self, new_status: LotStatus):
+        self._model_proxy.status = new_status
     
     @property
     def batches(self) -> List[Batch]:

@@ -1,9 +1,11 @@
 from mongoengine import Document, fields
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.models.recipe_model import RecipeModel
+from archemist.core.util.enums import LotStatus
 
 class LotModel(Document):
     uuid = fields.UUIDField(binary=False, required=True)
+    status = fields.EnumField(LotStatus, default=LotStatus.STANDBY)
     batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     recipe = fields.ReferenceField(RecipeModel, null=True)
 
