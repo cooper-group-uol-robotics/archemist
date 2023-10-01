@@ -1,5 +1,6 @@
 import uuid
 from typing import Union, List
+from bson.objectid import ObjectId
 from archemist.core.models.lot_model import LotModel
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
@@ -21,9 +22,18 @@ class Lot:
         model.save()
         return cls(model)
     
+    @classmethod
+    def from_object_id(cls, object_id: ObjectId):
+        model = LotModel.objects.get(id=object_id)
+        return cls(model)
+    
     @property
     def model(self) -> LotModel:
         return self._model_proxy.model
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
     
     @property
     def uuid(self) -> uuid.UUID:

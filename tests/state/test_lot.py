@@ -104,5 +104,9 @@ class LotTest(unittest.TestCase):
         self.assertTrue(lot.is_recipe_attached())
         self.assertIsNotNone(lot.recipe)
 
+        # test construction from object id
+        lot_copy = Lot.from_object_id(lot.object_id)
+        self.assertEqual(lot.uuid, lot_copy.uuid)
+
 if __name__ == "__main__":
     unittest.main()
