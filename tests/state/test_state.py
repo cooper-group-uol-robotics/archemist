@@ -1,15 +1,12 @@
 import unittest
 from datetime import date
 from archemist.core.util.location import Location
-from archemist.core.state.material import Liquid, Solid
-from archemist.core.state.robot import Robot, MobileRobot
 from archemist.core.state.robot_op import RobotOpDescriptor
-from archemist.core.state.station import Station
 from archemist.core.state.station_process import StationProcess
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
-from archemist.core.state.state import State
+from archemist.core.state.state import InputState, WorkflowState, OutputState
 from mongoengine import connect
 
 
@@ -17,79 +14,73 @@ class StateTest(unittest.TestCase):
 
     def setUp(self):
         self._db_name = 'archemist_test'
-        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')     
 
-        self.state_dict = {
-            "name": "test_workflow",
+    def tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
+
+    def test_input_state(self):
+        input_dict = {
+            "location":  {'node_id': 1, 'graph_id': 7},
+            "samples_per_batch": 3,
+            "batches_per_lot": 1,
+            "total_lot_capacity": 2
         }
-
-        # construct materials
-        liquid_dict = {
-            'name': 'water',
-            'id': 1254,
-            'amount': 400,
-            'unit': 'mL',
-            'density': 997,
-            'density_unit': 'kg/m3',
-            'expiry_date': date.fromisoformat('2025-02-11'),
-            'details': {
-                'pump_id': 'pUmP1'
-                }
-        }
-
-        solid_dict = {
-            'name': 'sodium_chloride',
-            'id': 133,
-            'amount': 10000,
-            'unit': 'ug',
-            'expiry_date': date.fromisoformat('2025-02-11'),
-            'details': {'dispense_src': 'quantos', 'cartridge_id': 123}
-        }
-
-        liquid = Liquid.from_dict(liquid_dict)
-        solid = Solid.from_dict(solid_dict)
-
-        # construct robots
-        robot_dict_1 = {
-            "type": "Robot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
-            "id": 187,
-            "handler": "SimRobotOpHandler"
-        }
-
-        robot_dict_2 = {
-            "type": "MobileRobot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
-            "id": 17,
-            "batch_capacity":1,
-            "handler": "SimRobotOpHandler"
-        }
-
-        self.robot_1 = Robot.from_dict(robot_dict_1)
-        self.robot_2 = MobileRobot.from_dict(robot_dict_2)
-
-        # construct stations
-        station_dict_1 = {
-            'type': 'Station',
-            'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'handler': 'SimStationOpHandler',
-            'total_lot_capacity': 2,
-        }
-
-        station_dict_2 = {
-            'type': 'Station',
-            'id': 24,
-            'location': {'node_id': 2, 'graph_id': 7},
-            'handler': 'SimStationOpHandler',
-            'total_lot_capacity': 2,
-        }
-
-        self.station_1 = Station.from_dict(station_dict_1)
-        self.station_2 = Station.from_dict(station_dict_2)
+        input_state = InputState.from_dict(input_dict)
+        self.assertEqual(input_state.location, Location(1,7,''))
+        self.assertEqual(input_state.samples_per_batch, 3)
+        self.assertEqual(input_state.batches_per_lot, 1)
+        self.assertEqual(input_state.total_lot_capacity, 2)
         
-        # construct recipes
-        self.recipe_doc_1 = {
+        # test empty queues
+        self.assertFalse(input_state.batches_queue)
+        self.assertFalse(input_state.recipes_queue)
+        self.assertFalse(input_state.requested_robot_ops)
+
+        # test empty lot_slots
+        self.assertEqual(len(input_state.lot_slots), 2)
+        self.assertIsNone(input_state.lot_slots["0"])
+        self.assertIsNone(input_state.lot_slots["1"])
+        self.assertEqual(input_state.num_lots, 0)
+
+        # test empty proc slots
+        self.assertEqual(len(input_state.proc_slots), 2)
+        self.assertIsNone(input_state.proc_slots["0"])
+        self.assertIsNone(input_state.proc_slots["1"])
+
+        # test batches_queue
+        input_state.add_clean_batch()
+        self.assertEqual(len(input_state.batches_queue), 1)
+        input_state.add_clean_batch()
+        self.assertEqual(len(input_state.batches_queue), 2)
+        input_state.add_clean_batch()
+        self.assertEqual(len(input_state.batches_queue), 2)
+
+        # test lot_slots
+        batch_1 = input_state.batches_queue.pop(left=True)
+        self.assertIsNotNone(batch_1)
+        self.assertEqual(len(input_state.batches_queue), 1)
+        lot_1 = Lot.from_args([batch_1])
+        input_state.lot_slots["0"] = lot_1
+        self.assertEqual(input_state.num_lots, 1)
+        self.assertIsNotNone(input_state.lot_slots["0"])
+
+        batch_2 = input_state.batches_queue.pop(left=True)
+        self.assertIsNotNone(batch_2)
+        self.assertEqual(len(input_state.batches_queue), 0)
+        lot_2 = Lot.from_args([batch_2])
+        input_state.lot_slots["1"] = lot_2
+        self.assertEqual(input_state.num_lots, 2)
+        self.assertIsNotNone(input_state.lot_slots["1"])
+
+        # set lots to None
+        input_state.lot_slots["1"] = None
+        self.assertIsNone(input_state.lot_slots["1"])
+
+        # test recipes queue
+        recipe_doc_1 = {
             "general": {"name": "test_archemist_recipe", "id": 198},
             "steps": [
                 {
@@ -111,162 +102,112 @@ class StateTest(unittest.TestCase):
             ],
         }
 
-        recipe_doc_2 = {
-            "general": {"name": "test_archemist_recipe", "id": 199},
-            "steps": [
-                {
-                    "state_name": "start_state",
-                    "station": {
-                        "type": "Station",
-                        "id": 23,
-                        "process": {
-                            "type": "StationProcess",
-                            "operations": None,
-                            "args": None,
-                        },
-                    },
-                    "transitions": {
-                        "on_success": "end_state",
-                        "on_fail": "failed_state",
-                    },
-                },
-            ],
-        }
+        recipe_1 = Recipe.from_dict(recipe_doc_1)
 
-        self.recipe_doc_3 = {
-            "general": {"name": "test_archemist_recipe", "id": 200},
-            "steps": [
-                {
-                    "state_name": "start_state",
-                    "station": {
-                        "type": "Station",
-                        "id": 23,
-                        "process": {
-                            "type": "StationProcess",
-                            "operations": None,
-                            "args": None,
-                        },
-                    },
-                    "transitions": {
-                        "on_success": "end_state",
-                        "on_fail": "failed_state",
-                    },
-                },
-            ],
-        }
+        input_state.recipes_queue.append(recipe_1)
+        self.assertEqual(len(input_state.recipes_queue), 1)
+        self.assertIsNotNone(input_state.recipes_queue.pop())
+        self.assertEqual(len(input_state.recipes_queue), 0)
 
-        recipe_1 = Recipe.from_dict(self.recipe_doc_1)
-        recipe_2 = Recipe.from_dict(recipe_doc_2)
-
-        # construct batches
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
-
-        # construct lots
-        lot_1 = Lot.from_args([batch_1])
-        lot_2 = Lot.from_args([batch_2])
-
-        # attach recipes
-        lot_1.attach_recipe(recipe_1)
-        lot_2.attach_recipe(recipe_2)
-
-    def tearDown(self) -> None:
-        coll_list = self._client[self._db_name].list_collection_names()
-        for coll in coll_list:
-            self._client[self._db_name][coll].drop()
-
-    def test_state_fields(self):
-        state = State.from_dict(self.state_dict)
-        self.assertEqual(state.workflow_name, "test_workflow")
-
-        # test material fields
-        liquids = state.liquids
-        self.assertEqual(len(liquids), 1)
-        self.assertEqual(liquids[0].id, 1254)
-
-        solids = state.solids
-        self.assertEqual(len(solids), 1)
-        self.assertEqual(solids[0].id, 133)
-
-        # test stations fields
-        stations = state.stations
-        self.assertEqual(len(stations), 2)
-        self.assertEqual(stations[0].id, 23)
-        self.assertEqual(stations[1].id, 24)
-
-        # test robots fields
-        robots = state.robots
-        self.assertEqual(len(robots), 2)
-        self.assertEqual(robots[0].id, 187)
-        self.assertEqual(robots[1].id, 17)
-
-        # test recipes fields
-        recipes = state.recipes
-        self.assertEqual(len(recipes), 2)
-        
-        self.assertFalse(state.recipes_queue)
-        state.recipes_queue.append(recipes[0])
-        self.assertEqual(len(state.recipes_queue), 1)
-        self.assertIsNotNone(state.recipes_queue.pop())
-        self.assertFalse(state.recipes_queue)
-
-        self.assertFalse(state.is_new_recipe_dict(self.recipe_doc_1))
-        self.assertTrue(state.is_new_recipe_dict(self.recipe_doc_3))
-
-        # test lots fields
-        lots = state.lots
-        self.assertEqual(len(lots), 2)
-        self.assertFalse(state.lots_buffer)
-        state.lots_buffer.append(lots[0])
-        self.assertEqual(len(state.lots_buffer), 1)
-        self.assertIsNotNone(state.lots_buffer.pop())
-        self.assertFalse(state.lots_buffer)
-
-        completed_lots = state.get_completed_lots()
-        self.assertFalse(completed_lots)
-        recipes[0].advance_state(True)
-        completed_lots = state.get_completed_lots()
-        self.assertEqual(len(completed_lots), 1)
-        self.assertEqual(completed_lots[0], lots[0])
-
-        # test robot op queue
-        self.assertFalse(state.robot_ops_queue)
+        # test requested_robot_ops
         robot_op = RobotOpDescriptor.from_args()
-        state.robot_ops_queue.append(robot_op)
-        self.assertEqual(len(state.robot_ops_queue), 1)
-        self.assertIsNotNone(state.robot_ops_queue.pop())
-        self.assertFalse(state.robot_ops_queue)
+        input_state.requested_robot_ops.append(robot_op)
+        self.assertEqual(len(input_state.requested_robot_ops), 1)
+        self.assertIsNotNone(input_state.requested_robot_ops.pop())
+        self.assertEqual(len(input_state.requested_robot_ops), 0)
 
-        # test station process
-        self.assertFalse(state.proc_requests_queue)
-        station_proc = StationProcess.from_args(lots[0])
-        state.proc_requests_queue.append(station_proc)
-        self.assertEqual(len(state.proc_requests_queue), 1)
-        self.assertIsNotNone(state.proc_requests_queue.pop())
-        self.assertFalse(state.proc_requests_queue)
+        # test proc_slots
+        proc = StationProcess.from_args(lot_1)
+        input_state.proc_slots["0"] = proc
+        self.assertIsNotNone(input_state.proc_slots["0"])
+        input_state.proc_slots["0"] = None
+        self.assertIsNone(input_state.proc_slots["0"])
 
-        # test getting individual station
-        # by using object id
-        station_by_obj_id = state.get_station(self.station_1.object_id)
-        self.assertEqual(station_by_obj_id.id, self.station_1.id)
+    def test_workflow_state(self):
+        workflow_state = WorkflowState.from_args("test_workflow")
+        self.assertEqual(workflow_state.workflow_name, "test_workflow")
 
-        # by using station type and id
-        station_by_type = state.get_station("Station", 24)
-        self.assertEqual(station_by_type.id, self.station_2.id)
+        # test lots buffer
+        self.assertFalse(workflow_state.lots_buffer)
 
-        # test getting individual robot
-        # by using object id
-        robot_by_obj_id = state.get_robot(self.robot_1.object_id)
-        self.assertEqual(robot_by_obj_id.id, self.robot_1.id)
+        batch = Batch.from_args(3, Location(1, 2, "some_frame"))
+        lot = Lot.from_args([batch])
+        workflow_state.lots_buffer.append(lot)
+        self.assertEqual(len(workflow_state.lots_buffer), 1)
+        self.assertIsNotNone(workflow_state.lots_buffer.pop())
+        self.assertEqual(len(workflow_state.lots_buffer), 0)
 
-        # by using station type and id
-        robot_by_type = state.get_robot("MobileRobot", 17)
-        self.assertEqual(robot_by_type.id, self.robot_2.id)
+        # test requested_robot_ops
+        self.assertFalse(workflow_state.robot_ops_queue)
+        
+        robot_op = RobotOpDescriptor.from_args()
+        workflow_state.robot_ops_queue.append(robot_op)
+        self.assertEqual(len(workflow_state.robot_ops_queue), 1)
+        self.assertIsNotNone(workflow_state.robot_ops_queue.pop())
+        self.assertEqual(len(workflow_state.robot_ops_queue), 0)
 
-        # get robots of specific types
-        mobile_robots = state.get_robots_of_type("MobileRobot")
-        self.assertEqual(len(mobile_robots), 1)
-        self.assertEqual(mobile_robots[0].id, self.robot_2.id)
+        # test proc_requests_queue
+        self.assertFalse(workflow_state.proc_requests_queue)
+
+        proc = StationProcess.from_args(lot)
+        workflow_state.proc_requests_queue.append(proc)
+        self.assertEqual(len(workflow_state.proc_requests_queue), 1)
+        self.assertIsNotNone(workflow_state.proc_requests_queue.pop())
+        self.assertEqual(len(workflow_state.proc_requests_queue), 0)
+
+    def test_output_state(self):
+        output_dict = {
+            "location":  {'node_id': 12, 'graph_id': 7},
+            "total_lot_capacity": 2
+        }
+        output_state = OutputState.from_dict(output_dict)
+        self.assertEqual(output_state.location, Location(12,7,''))
+        self.assertEqual(output_state.total_lot_capacity, 2)
+        
+        # test empty queues
+        self.assertFalse(output_state.requested_robot_ops)
+
+        # test empty lot_slots
+        self.assertEqual(len(output_state.lot_slots), 2)
+        self.assertIsNone(output_state.lot_slots["0"])
+        self.assertIsNone(output_state.lot_slots["1"])
+        self.assertEqual(output_state.num_lots, 0)
+
+        # test empty proc slots
+        self.assertEqual(len(output_state.proc_slots), 2)
+        self.assertIsNone(output_state.proc_slots["0"])
+        self.assertIsNone(output_state.proc_slots["1"])
+
+        # test lot_slots
+        batch_1 = Batch.from_args(3, Location(12, 7, "some_frame"))
+        lot_1 = Lot.from_args([batch_1])
+        output_state.lot_slots["0"] = lot_1
+        self.assertEqual(output_state.num_lots, 1)
+        self.assertIsNotNone(output_state.lot_slots["0"])
+
+        batch_2 = Batch.from_args(3, Location(12, 7, "some_frame"))
+        lot_2 = Lot.from_args([batch_2])
+        output_state.lot_slots["1"] = lot_2
+        self.assertEqual(output_state.num_lots, 2)
+        self.assertIsNotNone(output_state.lot_slots["1"])
+
+        # set lots to None
+        output_state.lot_slots["1"] = None
+        self.assertIsNone(output_state.lot_slots["1"])
+
+        # test requested_robot_ops
+        robot_op = RobotOpDescriptor.from_args()
+        output_state.requested_robot_ops.append(robot_op)
+        self.assertEqual(len(output_state.requested_robot_ops), 1)
+        self.assertIsNotNone(output_state.requested_robot_ops.pop())
+        self.assertEqual(len(output_state.requested_robot_ops), 0)
+
+        # test proc_slots
+        proc = StationProcess.from_args(lot_1)
+        output_state.proc_slots["0"] = proc
+        self.assertIsNotNone(output_state.proc_slots["0"])
+        output_state.proc_slots["0"] = None
+        self.assertIsNone(output_state.proc_slots["0"])
 
 
 if __name__ == '__main__':
