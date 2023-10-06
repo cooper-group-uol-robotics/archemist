@@ -36,8 +36,11 @@ class OpResult(Enum):
 class ProcessStatus(Enum):
     INACTIVE = auto()
     RUNNING = auto()
+    REQUESTING_ROBOT_OPS = auto()
     WAITING_ON_ROBOT_OPS = auto()
+    REQUESTING_STATION_OPS = auto()
     WAITING_ON_STATION_OPS = auto()
+    REQUESTING_STATION_PROCS = auto()
     WAITING_ON_STATION_PROCS = auto()
     FINISHED = auto()
 

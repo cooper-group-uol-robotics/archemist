@@ -119,7 +119,7 @@ class StationProcess:
     def skip_ext_procs(self) -> bool:
         return self._model_proxy.skip_ext_procs
 
-    @ property
+    @property
     def status(self) -> ProcessStatus:
         return self._model_proxy.status
     
@@ -173,7 +173,8 @@ class StationProcess:
 
     def tick(self):
         if not self._state_machine:
-            self._model_proxy.status = ProcessStatus.RUNNING
+            if self.status == ProcessStatus.INACTIVE:
+                self._model_proxy.status = ProcessStatus.RUNNING
             self._state_machine = self._construct_state_machine()
         self._process_state_transitions()
         if self.m_state == "final_state":
@@ -182,7 +183,7 @@ class StationProcess:
     def request_robot_op(self, robot_op: Type[RobotOpDescriptor]):
         if not self.skip_robot_ops:
             self.req_robot_ops.append(robot_op)
-            self._model_proxy.status = ProcessStatus.WAITING_ON_ROBOT_OPS
+            self._model_proxy.status = ProcessStatus.REQUESTING_ROBOT_OPS
 
     def are_req_robot_ops_completed(self) -> bool:
         req_robot_ops = [robot_op for robot_op in self.req_robot_ops]
@@ -212,7 +213,7 @@ class StationProcess:
     def request_station_op(self, station_op: Type[StationOpDescriptor]):
         if not self.skip_station_ops:
             self.req_station_ops.append(station_op)
-            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
+            self._model_proxy.status = ProcessStatus.REQUESTING_STATION_OPS
     
     def are_req_station_ops_completed(self) -> bool:
         req_station_ops = [station_op for station_op in self.req_station_ops]
@@ -228,7 +229,7 @@ class StationProcess:
     def request_station_process(self, station_process: Type[StationProcess]):
         if not self.skip_ext_procs:
             self.req_station_procs.append(station_process)
-            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
+            self._model_proxy.status = ProcessStatus.REQUESTING_STATION_PROCS
     
     def are_req_station_procs_completed(self) -> bool:
         req_station_procs = [station_proc for station_proc in self.req_station_procs]
@@ -240,6 +241,14 @@ class StationProcess:
             self._model_proxy.status = ProcessStatus.RUNNING
             return True
         return False
+    
+    def switch_to_waiting(self):
+        if self.status == ProcessStatus.REQUESTING_ROBOT_OPS:
+            self._model_proxy.status = ProcessStatus.WAITING_ON_ROBOT_OPS
+        elif self.status == ProcessStatus.REQUESTING_STATION_OPS:
+            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
+        elif self.status == ProcessStatus.REQUESTING_STATION_PROCS:
+            self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
     
     def _construct_state_machine(self) -> Machine:
         states = self.STATES if self.STATES else [State(name="init_state"), State(name="final_state")]

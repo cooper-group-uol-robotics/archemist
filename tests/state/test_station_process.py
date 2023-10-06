@@ -124,6 +124,8 @@ class StationProcessTest(unittest.TestCase):
         proc.request_robot_op(robot_op)
         self.assertFalse(proc.are_req_robot_ops_completed())
         self.assertEqual(len(proc.req_robot_ops), 1)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_ROBOT_OPS)
+        proc.switch_to_waiting()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
 
         robot_op.complete_op(None, OpResult.SUCCEEDED)
@@ -147,6 +149,8 @@ class StationProcessTest(unittest.TestCase):
         proc.request_station_op(station_op)
         self.assertFalse(proc.are_req_station_ops_completed())
         self.assertEqual(len(proc.req_station_ops), 1)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_OPS)
+        proc.switch_to_waiting()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
 
         station_op.complete_op(OpResult.SUCCEEDED)
@@ -163,6 +167,8 @@ class StationProcessTest(unittest.TestCase):
         proc.request_station_process(station_proc)
         self.assertFalse(proc.are_req_station_procs_completed())
         self.assertEqual(len(proc.req_station_procs), 1)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_PROCS)
+        proc.switch_to_waiting()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_PROCS)
 
         station_proc._model_proxy.status = ProcessStatus.FINISHED
@@ -201,37 +207,41 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to pickup_batch
         proc.tick()
-        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_ROBOT_OPS)
         self.assertEqual(proc.m_state, "pickup_batch")
         self.assertEqual(len(proc.req_robot_ops), 1)
 
         # no transition
         proc.tick()
-        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_ROBOT_OPS)
         self.assertEqual(proc.m_state, "pickup_batch")
         self.assertEqual(len(proc.req_robot_ops), 1)
 
         # transition to run_op
+        proc.switch_to_waiting()
+        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_ROBOT_OPS)
         robot_op = proc.req_robot_ops[0]
         robot_op.complete_op(None, OpResult.SUCCEEDED)
         proc.tick()
-        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_OPS)
         self.assertEqual(len(proc.robot_ops_history), 1)
         self.assertEqual(proc.m_state, "run_op")
         self.assertEqual(len(proc.req_station_ops), 1)
 
         # transition to run_analysis_proc
+        proc.switch_to_waiting()
+        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
         station_op = proc.req_station_ops[0]
         station_op.complete_op(OpResult.SUCCEEDED)
         proc.tick()
-        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_PROCS)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_PROCS)
         self.assertEqual(len(proc.station_ops_history), 1)
         self.assertEqual(proc.m_state, "run_analysis_proc")
         self.assertEqual(len(proc.req_station_procs), 1)
 
         # no transition
         proc.tick()
-        self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_PROCS)
+        self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_PROCS)
         self.assertEqual(proc.m_state, "run_analysis_proc")
         self.assertEqual(len(proc.req_station_procs), 1)
 

@@ -2,7 +2,7 @@ from time import sleep
 from archemist.core.state.robot import Robot
 from archemist.core.state.station import Station, OpState
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
-from archemist.core.util.enums import StationState, RobotState, OpResult
+from archemist.core.util.enums import StationState, RobotState, OpResult, ProcessStatus
 from typing import Tuple,Dict
 from abc import ABC, abstractmethod
 
@@ -117,11 +117,29 @@ class StationProcessHandler:
             if lot not in self._lots_seen:
                 self._lots_seen.append(lot)
 
+    def _handle_proc_requests(self):
+        for slot, proc in self._station.running_procs_slots.items():
+            if proc:
+                if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
+                    for robot_op in proc.req_robot_ops:
+                        self._station.requested_robot_ops.append(robot_op)
+                    proc.switch_to_waiting()
+                
+                if proc.status == ProcessStatus.REQUESTING_STATION_OPS:
+                    for station_op in proc.req_station_ops:
+                        self._station.add_station_op(station_op)
+                    proc.switch_to_waiting()
+                
+                if proc.status == ProcessStatus.REQUESTING_STATION_PROCS:
+                    for req_station_proc in proc.req_station_procs:
+                        self._station.request_external_process(req_station_proc)
+                    proc.switch_to_waiting()
 
     def handle(self):
         self._update_seen_lots()
         self._handle_assigned_lots()
         self._handle_processes()
+        self._handle_proc_requests()
 
 class StationHandler:
     def __init__(self, station: Station, use_sim: bool):
