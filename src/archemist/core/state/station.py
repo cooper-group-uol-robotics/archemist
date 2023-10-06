@@ -94,7 +94,7 @@ class Station:
     
     @property
     def free_lot_capacity(self) -> int:
-        return self.total_lot_capacity - len(self.assigned_lots)
+        return self.total_lot_capacity - len(self.assigned_lots) - len(self.processed_lots)
     
     ''' Process properties and methods '''
     
