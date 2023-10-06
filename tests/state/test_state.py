@@ -5,7 +5,7 @@ from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_process import StationProcess
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
-from archemist.core.state.lot import Lot
+from archemist.core.state.lot import Lot, LotStatus
 from archemist.core.state.state import InputState, WorkflowState, OutputState
 from mongoengine import connect
 
@@ -26,24 +26,31 @@ class StateTest(unittest.TestCase):
             "location":  {'node_id': 1, 'graph_id': 7},
             "samples_per_batch": 3,
             "batches_per_lot": 1,
-            "total_lot_capacity": 2
+            "total_lot_capacity": 2,
+            "lot_input_process": {
+                "type": "StationProcess",
+                "args": None
+            }
         }
         input_state = InputState.from_dict(input_dict)
         self.assertEqual(input_state.location, Location(1,7,''))
         self.assertEqual(input_state.samples_per_batch, 3)
         self.assertEqual(input_state.batches_per_lot, 1)
         self.assertEqual(input_state.total_lot_capacity, 2)
-        
+        self.assertEqual(input_state.lot_input_process["type"], input_dict["lot_input_process"]["type"])
+        self.assertEqual(input_state.lot_input_process["args"], input_dict["lot_input_process"]["args"])
+
         # test empty queues
         self.assertFalse(input_state.batches_queue)
         self.assertFalse(input_state.recipes_queue)
         self.assertFalse(input_state.requested_robot_ops)
+        self.assertFalse(input_state.procs_history)
 
         # test empty lot_slots
         self.assertEqual(len(input_state.lot_slots), 2)
         self.assertIsNone(input_state.lot_slots["0"])
         self.assertIsNone(input_state.lot_slots["1"])
-        self.assertEqual(input_state.num_lots, 0)
+        self.assertEqual(input_state.get_lots_num(), 0)
 
         # test empty proc slots
         self.assertEqual(len(input_state.proc_slots), 2)
@@ -51,11 +58,9 @@ class StateTest(unittest.TestCase):
         self.assertIsNone(input_state.proc_slots["1"])
 
         # test batches_queue
-        input_state.add_clean_batch()
+        input_state.batches_queue.append(Batch.from_args(input_state.samples_per_batch, input_state.location))
         self.assertEqual(len(input_state.batches_queue), 1)
-        input_state.add_clean_batch()
-        self.assertEqual(len(input_state.batches_queue), 2)
-        input_state.add_clean_batch()
+        input_state.batches_queue.append(Batch.from_args(input_state.samples_per_batch, input_state.location))
         self.assertEqual(len(input_state.batches_queue), 2)
 
         # test lot_slots
@@ -64,7 +69,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(len(input_state.batches_queue), 1)
         lot_1 = Lot.from_args([batch_1])
         input_state.lot_slots["0"] = lot_1
-        self.assertEqual(input_state.num_lots, 1)
+        self.assertEqual(input_state.get_lots_num(), 1)
         self.assertIsNotNone(input_state.lot_slots["0"])
 
         batch_2 = input_state.batches_queue.pop(left=True)
@@ -72,9 +77,12 @@ class StateTest(unittest.TestCase):
         self.assertEqual(len(input_state.batches_queue), 0)
         lot_2 = Lot.from_args([batch_2])
         input_state.lot_slots["1"] = lot_2
-        self.assertEqual(input_state.num_lots, 2)
+        self.assertEqual(input_state.get_lots_num(), 2)
         self.assertIsNotNone(input_state.lot_slots["1"])
 
+        lot_2.status = LotStatus.READY_FOR_COLLECTION
+        self.assertEqual(input_state.get_lots_num(status=LotStatus.READY_FOR_COLLECTION), 1)
+        
         # set lots to None
         input_state.lot_slots["1"] = None
         self.assertIsNone(input_state.lot_slots["1"])
@@ -123,6 +131,12 @@ class StateTest(unittest.TestCase):
         input_state.proc_slots["0"] = None
         self.assertIsNone(input_state.proc_slots["0"])
 
+        # test proc history
+        input_state.procs_history.append(proc)
+        self.assertEqual(len(input_state.procs_history), 1)
+        self.assertIsNotNone(input_state.procs_history.pop())
+        self.assertEqual(len(input_state.procs_history), 0)
+
     def test_workflow_state(self):
         workflow_state = WorkflowState.from_args("test_workflow")
         self.assertEqual(workflow_state.workflow_name, "test_workflow")
@@ -158,20 +172,25 @@ class StateTest(unittest.TestCase):
     def test_output_state(self):
         output_dict = {
             "location":  {'node_id': 12, 'graph_id': 7},
-            "total_lot_capacity": 2
+            "total_lot_capacity": 2,
+            "lot_output_process": None,
+            "lots_need_manual_removal": False
         }
         output_state = OutputState.from_dict(output_dict)
         self.assertEqual(output_state.location, Location(12,7,''))
         self.assertEqual(output_state.total_lot_capacity, 2)
+        self.assertIsNone(output_state.lot_output_process)
+        self.assertFalse(output_state.lots_need_manual_removal)
         
         # test empty queues
         self.assertFalse(output_state.requested_robot_ops)
+        self.assertFalse(output_state.procs_history)
 
         # test empty lot_slots
         self.assertEqual(len(output_state.lot_slots), 2)
         self.assertIsNone(output_state.lot_slots["0"])
         self.assertIsNone(output_state.lot_slots["1"])
-        self.assertEqual(output_state.num_lots, 0)
+        self.assertEqual(output_state.get_lots_num(), 0)
 
         # test empty proc slots
         self.assertEqual(len(output_state.proc_slots), 2)
@@ -182,14 +201,17 @@ class StateTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(12, 7, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
         output_state.lot_slots["0"] = lot_1
-        self.assertEqual(output_state.num_lots, 1)
+        self.assertEqual(output_state.get_lots_num(), 1)
         self.assertIsNotNone(output_state.lot_slots["0"])
 
         batch_2 = Batch.from_args(3, Location(12, 7, "some_frame"))
         lot_2 = Lot.from_args([batch_2])
         output_state.lot_slots["1"] = lot_2
-        self.assertEqual(output_state.num_lots, 2)
+        self.assertEqual(output_state.get_lots_num(), 2)
         self.assertIsNotNone(output_state.lot_slots["1"])
+
+        lot_2.status = LotStatus.NEED_REMOVAL
+        self.assertEqual(output_state.get_lots_num(status=LotStatus.NEED_REMOVAL), 1)
 
         # set lots to None
         output_state.lot_slots["1"] = None
@@ -208,6 +230,12 @@ class StateTest(unittest.TestCase):
         self.assertIsNotNone(output_state.proc_slots["0"])
         output_state.proc_slots["0"] = None
         self.assertIsNone(output_state.proc_slots["0"])
+
+        # test proc history
+        output_state.procs_history.append(proc)
+        self.assertEqual(len(output_state.procs_history), 1)
+        self.assertIsNotNone(output_state.procs_history.pop())
+        self.assertEqual(len(output_state.procs_history), 0)
 
 
 if __name__ == '__main__':

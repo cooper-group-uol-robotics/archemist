@@ -19,6 +19,7 @@ class InputStateModel(Document):
     samples_per_batch = fields.IntField(min_value=1, default=1)
     batches_per_lot = fields.IntField(min_value=1, default=1)
     total_lot_capacity = fields.IntField(min_value=1, default=1)
+    lot_input_process = fields.DictField(null=True)
     
     batches_queue = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     recipes_queue = fields.ListField(fields.ReferenceField(RecipeModel), default=[])
@@ -27,15 +28,21 @@ class InputStateModel(Document):
     lot_slots = fields.DictField(default={})
     proc_slots = fields.DictField(default={})
 
+    procs_history = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
+
     meta = {'collection': 'state', 'db_alias': 'archemist_state'}
 
 class OutputStateModel(Document):
     location = fields.DictField(default={})
     total_lot_capacity = fields.IntField(min_value=1, default=1)
+    lot_output_process = fields.DictField(null=True)
+    lots_need_manual_removal = fields.BooleanField(required=True)
 
     requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
     
     lot_slots = fields.DictField(default={})
     proc_slots = fields.DictField(default={})
+
+    procs_history = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
 
     meta = {'collection': 'state', 'db_alias': 'archemist_state'}
