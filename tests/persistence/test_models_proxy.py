@@ -176,11 +176,16 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.a_dict), 2)
         self.assertEqual(len(self.foo_wrapper.a_dict), len(self.foo_model.a_dict))
         
-        # test get operation
+        # test __get__ operation
         a_dict = {'a':1, 'b':2}
         for key in a_dict.keys():
             self.assertEqual(self.foo_wrapper.a_dict[key], a_dict[key])
             self.assertEqual(self.foo_wrapper.a_dict[key], self.foo_model.a_dict[key])
+
+        # test get operation
+        self.assertEqual(self.foo_wrapper.a_dict.get('a'), a_dict['a'])
+        self.assertIsNone(self.foo_wrapper.a_dict.get('c'))
+        self.assertEqual(self.foo_wrapper.a_dict.get('c', 23), 23)
 
         # test set operation
         self.foo_wrapper.a_dict['c'] = 3
@@ -314,12 +319,22 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.dict_docs), len(self.foo_wrapper.dict_docs))
         
         
-        # test get operation
+        # test __get__ operation
         bar_wrapper = self.foo_wrapper.dict_docs['a']
         self.assertEqual(bar_wrapper.uuid, self.bar_model.uuid)
 
         baz_wrapper = self.foo_wrapper.dict_docs['b']
         self.assertEqual(baz_wrapper.uuid, self.baz_model.uuid)
+
+        # test get operation
+        bar_wrapper = self.foo_wrapper.dict_docs.get('a')
+        self.assertEqual(bar_wrapper.uuid, self.bar_model.uuid)
+
+        baz_wrapper = self.foo_wrapper.dict_docs.get('b')
+        self.assertEqual(baz_wrapper.uuid, self.baz_model.uuid)
+
+        bar_wrapper = self.foo_wrapper.dict_docs.get('c')
+        self.assertIsNone(bar_wrapper)
 
         # test set existing key
         self.foo_wrapper.dict_docs['b'] = self.bar_model
@@ -486,10 +501,15 @@ class TestDbProxy(unittest.TestCase):
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.a_dict), 2)
 
-        # test get operation
+        # test __get__ operation
         a_dict = {'a':1, 'b':2}
         for k, v in self.foo_model.embed.a_dict.items():
             self.assertEqual(embed.a_dict[k],v)
+
+        # test get operation
+        self.assertEqual(embed.a_dict.get('a'),a_dict['a'])
+        self.assertIsNone(embed.a_dict.get('c'))
+        self.assertEqual(embed.a_dict.get('c', 24), 24)
 
         # test iterator
         for k,v in embed.a_dict:

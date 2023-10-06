@@ -303,6 +303,20 @@ class DictFieldWrapper:
             else:
                 yield key, item
 
+    def get(self, key, default=None):
+        self._reload()
+        item = self._dict_instance.get(key, default)
+        if isinstance(item, EmbeddedDocument):
+            if self._parent_type == ParentType.DOCUMENT:
+                return EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
+                                    ParentType.DICT)
+            else:
+                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+        elif isinstance(item, Document):
+            return ModelProxy(item)
+        else:
+            return item
+
     def items(self):
         self._reload()
         items = []
@@ -371,6 +385,10 @@ class DictProxy:
     def __iter__(self):
         for key, value in self._dict_wrapper:
             yield key, self._callable(value)
+
+    def get(self, key, default=None):
+        value = self._dict_wrapper.get(key, default)
+        return self._callable(value) if value else default
 
     def items(self):
         return [(key, self._callable(item)) for key, item in self._dict_wrapper.items()]      
