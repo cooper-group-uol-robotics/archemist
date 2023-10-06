@@ -174,8 +174,13 @@ class ObjectsGetterTest(unittest.TestCase):
         station_by_obj_id = StationsGetter.get_station(self.station_1.object_id)
         self.assertEqual(station_by_obj_id.id, self.station_1.id)
 
+        # by using station type
+        station_by_type_only = StationsGetter.get_station("Station")
+        self.assertIsNotNone(station_by_type_only)
+        self.assertEqual(station_by_type_only.id, self.station_1.id)
+
         # by using station type and id
-        station_by_type = StationsGetter.get_station("Station", 24)
+        station_by_type = StationsGetter.get_station(24, "Station")
         self.assertEqual(station_by_type.id, self.station_2.id)
 
     def test_robots_getter(self):
@@ -195,8 +200,13 @@ class ObjectsGetterTest(unittest.TestCase):
         robot_by_obj_id = RobotsGetter.get_robot(self.robot_1.object_id)
         self.assertEqual(robot_by_obj_id.id, self.robot_1.id)
 
-        # by using station type and id
-        robot_by_type = RobotsGetter.get_robot("MobileRobot", 17)
+        # by using robot type
+        robot_by_type_only = RobotsGetter.get_robot("MobileRobot")
+        self.assertIsNotNone(robot_by_type_only)
+        self.assertEqual(robot_by_type_only.id, self.robot_2.id)
+
+        # by using robot type and id
+        robot_by_type = RobotsGetter.get_robot(17, "MobileRobot")
         self.assertEqual(robot_by_type.id, self.robot_2.id)
 
     def test_lots_getter(self):
