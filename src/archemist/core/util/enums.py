@@ -42,6 +42,7 @@ class ProcessStatus(Enum):
     FINISHED = auto()
 
 class LotStatus(Enum):
+    CREATED = auto()
     STANDBY = auto()
     ONBOARDING = auto()
     READY_FOR_COLLECTION = auto()

@@ -5,7 +5,7 @@ from archemist.core.util.enums import LotStatus
 
 class LotModel(Document):
     uuid = fields.UUIDField(binary=False, required=True)
-    status = fields.EnumField(LotStatus, default=LotStatus.STANDBY)
+    status = fields.EnumField(LotStatus, default=LotStatus.CREATED)
     batches = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     recipe = fields.ReferenceField(RecipeModel, null=True)
 
