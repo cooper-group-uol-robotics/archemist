@@ -1,8 +1,9 @@
 import unittest
+from time import sleep
 from mongoengine import connect
 from archemist.core.state.robot import Robot
 from archemist.core.state.station import Station
-from archemist.core.state.robot_op import RobotOpDescriptor
+from archemist.core.state.robot_op import RobotOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.processing.handler import RobotHandler, StationHandler, StationProcessHandler
 from archemist.core.util.enums import RobotState, StationState, OpState, OpResult
@@ -118,8 +119,11 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(robot.state, RobotState.ACTIVE)
 
         robot_op = RobotOpDescriptor.from_args()
-        self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
+        self.assertIsNone(robot.assigned_op)
+        self.assertEqual(robot.assigned_op_state, OpState.INVALID)
+
+        robot_handler.tick()
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(robot_op.start_timestamp)
@@ -146,6 +150,9 @@ class HandlerTest(unittest.TestCase):
         robot_op = RobotOpDescriptor.from_args()
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
+        self.assertIsNone(robot.assigned_op)
+        
+        robot_handler.tick()
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(robot_op.start_timestamp)
@@ -180,6 +187,9 @@ class HandlerTest(unittest.TestCase):
         robot_op = RobotOpDescriptor.from_args()
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
+        self.assertIsNone(robot.assigned_op)
+
+        robot_handler.tick()
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(robot_op.start_timestamp)
@@ -197,6 +207,50 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.result, OpResult.SKIPPED)
+
+    def test_robot_op_handler_with_wait_op(self):
+        robot = Robot.from_dict(self.robot_dict)
+        self.assertEqual(robot.state, RobotState.INACTIVE)
+        robot_handler = RobotHandler(robot, use_sim=False)
+        robot_handler.initialise()
+        self.assertEqual(robot.state, RobotState.ACTIVE)
+
+        robot_op = RobotWaitOpDescriptor.from_args("Robot", 3)
+        robot.add_op(robot_op)
+        self.assertIsNone(robot.assigned_op)
+        self.assertEqual(robot.assigned_op_state, OpState.INVALID)
+
+        robot_handler.tick()
+        self.assertIsNotNone(robot.assigned_op)
+        self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
+        self.assertIsNone(robot_op.start_timestamp)
+        self.assertIsNone(robot_op.end_timestamp)
+
+        robot_handler.tick()
+        self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
+        self.assertTrue(robot_op.has_result)
+        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertIsNotNone(robot_op.start_timestamp)
+        self.assertIsNotNone(robot.assigned_op)
+
+        robot_handler.tick()
+        self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
+        self.assertIsNotNone(robot.assigned_op)
+        self.assertTrue(robot_op.has_result)
+        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+
+        robot_handler.tick()
+        self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
+        self.assertIsNotNone(robot.assigned_op)
+        self.assertTrue(robot_op.has_result)
+        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+
+        
+        sleep(3) # the wait op should be complete
+        robot_handler.tick()
+        self.assertIsNone(robot.assigned_op)
+        self.assertEqual(robot.assigned_op_state, OpState.INVALID)
+        self.assertEqual(len(robot.ops_history), 1)
 
     def test_station_op_handler(self):
         station = Station.from_dict(self.station_dict)

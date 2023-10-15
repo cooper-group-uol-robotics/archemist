@@ -4,8 +4,9 @@ import uuid
 from bson.objectid import ObjectId
 from mongoengine import connect
 
+from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor, RobotTaskType, OpResult
+from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor, RobotTaskType, OpResult, RobotNavOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.util.location import Location
 
 class RobotOpTest(unittest.TestCase):
@@ -24,6 +25,7 @@ class RobotOpTest(unittest.TestCase):
         self.assertIsNotNone(robot_op.uuid)
         self.assertIsNone(robot_op.requested_by)
         self.assertIsNone(robot_op.executed_by)
+        self.assertEqual(robot_op.target_robot, "Robot")
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         robot_op.requested_by = dummy_object_id
         self.assertEqual(robot_op.requested_by, dummy_object_id)
@@ -31,14 +33,6 @@ class RobotOpTest(unittest.TestCase):
         self.assertIsNone(robot_op.result)
         self.assertIsNone(robot_op.start_timestamp)
         self.assertIsNone(robot_op.end_timestamp)
-
-        # test related batch
-        self.assertIsNone(robot_op.related_batch)
-        batch = Batch.from_args(2, Location(1,3,'table_frame'))
-        robot_op.related_batch = batch
-        ret_batch = robot_op.related_batch
-        self.assertIsNotNone(ret_batch)
-        self.assertEqual(ret_batch.uuid, batch.uuid)
         
         # test start timestamp
         robot_op.add_start_timestamp()
@@ -64,18 +58,43 @@ class RobotOpTest(unittest.TestCase):
         # construct op
         station_object_id = ObjectId.from_datetime(datetime.now())
         batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        lot = Lot.from_args([batch])
         task_loc = Location(1,3,'table_frame')
-        params_list = ["1", "false"]
-        robot_op = RobotTaskOpDescriptor.from_args("test_task", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params_list, task_loc,
-                                                   station_object_id, batch)
+        params_dict = {"rack_index": 1, "calibrate": False}
+        robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot", RobotTaskType.LOAD_TO_ROBOT,
+                                                   params_dict, location=task_loc,
+                                                   station_object_id=station_object_id, related_batch=batch,
+                                                   related_lot=lot)
+        self.assertEqual(robot_op._model_proxy._type, "RobotTaskOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
         self.assertEqual(robot_op.name, "test_task")
+        self.assertEqual(robot_op.target_robot, "TestRobot")
         self.assertEqual(robot_op.task_type, RobotTaskType.LOAD_TO_ROBOT)
         self.assertEqual(len(robot_op.params), 2)
-        for idx, param in enumerate(params_list):
-            self.assertEqual(robot_op.params[idx], param)
+        for key, val in params_dict.items():
+            self.assertEqual(robot_op.params[key], val)
 
         self.assertTrue(robot_op.location == task_loc)
+        self.assertEqual(robot_op.related_batch, batch)
+        self.assertEqual(robot_op.related_lot, lot)
+
+    def test_robot_nav_task(self):
+        # construct op
+        target_loc = Location(1,3,'')
+        params_dict =  {"fine_localisation": True}
+        robot_op = RobotNavOpDescriptor.from_args("test_nav_task", "MobileRobot",target_loc, params_dict)
+        self.assertIsNotNone(robot_op.uuid)
+        self.assertEqual(robot_op.name, "test_nav_task")
+        self.assertEqual(robot_op.target_location, target_loc)
+        for key, val in params_dict.items():
+            self.assertEqual(robot_op.params[key], val)
+        self.assertEqual(robot_op._model_proxy._type, "RobotNavOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
+
+    def test_robot_wait_op(self):
+        wait_op = RobotWaitOpDescriptor.from_args(target_robot="Robot", timeout=10)
+        self.assertIsNotNone(wait_op.uuid)
+        self.assertEqual(wait_op.timeout, 10)
 
 if __name__ == "__main__":
     unittest.main()

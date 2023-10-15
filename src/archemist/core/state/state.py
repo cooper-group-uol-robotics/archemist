@@ -1,4 +1,5 @@
 from typing import Dict, List, Union, Type
+from bson.objectid import ObjectId
 
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.batch import Batch
@@ -24,6 +25,10 @@ class WorkflowState:
         model.workflow_name = workflow_name
         model.save()
         return cls(model)
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
 
     @property
     def workflow_name(self) -> str:
@@ -62,6 +67,10 @@ class InputState:
         model.proc_slots = slots
         model.save()
         return cls(model)
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
     
     @property
     def location(self) -> Location:
@@ -144,6 +153,10 @@ class OutputState:
         return cls(model)
     
     @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
+    
+    @property
     def location(self) -> Location:
         loc_dict = self._model_proxy.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
@@ -151,6 +164,10 @@ class OutputState:
     @property
     def total_lot_capacity(self) -> int:
         return self._model_proxy.total_lot_capacity
+    
+    @property
+    def free_lot_capacity(self) -> int:
+        return self.total_lot_capacity - self.get_lots_num()
 
     @property
     def lot_output_process(self) -> Dict:

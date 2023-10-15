@@ -6,6 +6,7 @@ from archemist.core.state.lot import Lot, LotModel
 from archemist.core.util.enums import LotStatus
 from archemist.core.state.batch import Batch, BatchModel
 from archemist.core.state.recipe import Recipe, RecipeModel
+from archemist.core.state.state import InputState, InputStateModel, OutputState, OutputStateModel
 from archemist.stations import import_stations_models
 from archemist.robots import import_robots_models
 
@@ -88,6 +89,12 @@ class LotsGetter:
     @staticmethod
     def get_finished_lots() -> List[Lot]:
         return [Lot(model) for model in LotModel.objects(status=LotStatus.FINISHED)]
+
+    @staticmethod
+    def get_containing_lot(batch: Batch):
+        model = LotModel.objects(batches=batch.model).first()
+        if model is not None:
+            return Lot(model)
     
 class BatchesGetter:
     @staticmethod
@@ -102,3 +109,14 @@ class RecipesGetter:
     @staticmethod
     def recipe_exists(exp_id: int) -> bool:
         return bool(RecipeModel.objects(exp_id=exp_id))
+    
+class StateGetter:
+    @staticmethod
+    def get_input_state() -> InputState:
+        model = InputStateModel.objects(_type="InputStateModel").first()
+        return InputState(model)
+    
+    @staticmethod
+    def get_output_state() -> OutputState:
+        model = OutputStateModel.objects(_type="OutputStateModel").first()
+        return OutputState(model)

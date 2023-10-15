@@ -6,6 +6,7 @@ from archemist.core.models.lot_model import LotModel
 from archemist.core.models.recipe_model import RecipeModel
 
 class WorkflowStateModel(Document):
+    _type = fields.StringField(default="WorkflowStateModel")
     workflow_name = fields.StringField(required=True)
     
     robot_ops_queue = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
@@ -15,6 +16,7 @@ class WorkflowStateModel(Document):
     meta = {'collection': 'state', 'db_alias': 'archemist_state'}
 
 class InputStateModel(Document):
+    _type = fields.StringField(default="InputStateModel")
     location = fields.DictField(default={})
     samples_per_batch = fields.IntField(min_value=1, default=1)
     batches_per_lot = fields.IntField(min_value=1, default=1)
@@ -33,6 +35,7 @@ class InputStateModel(Document):
     meta = {'collection': 'state', 'db_alias': 'archemist_state'}
 
 class OutputStateModel(Document):
+    _type = fields.StringField(default="OutputStateModel")
     location = fields.DictField(default={})
     total_lot_capacity = fields.IntField(min_value=1, default=1)
     lot_output_process = fields.DictField(null=True)

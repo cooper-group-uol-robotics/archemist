@@ -1,5 +1,7 @@
 from time import sleep
+from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
+from archemist.core.state.robot_op import RobotWaitOpDescriptor
 from archemist.core.state.station import Station, OpState
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from archemist.core.util.enums import StationState, RobotState, OpResult, ProcessStatus
@@ -39,8 +41,8 @@ class StationOpHandler(OpHandler):
             self.execute_op()
         elif self._station.assigned_op_state == OpState.EXECUTING:
             if self.is_op_execution_complete():
-                op_successful, op_results = self.get_op_result()
-                self._station.complete_assigned_op(op_successful, **op_results)
+                op_outcome, op_results = self.get_op_result()
+                self._station.complete_assigned_op(op_outcome, **op_results)
         elif self._station.assigned_op_state == OpState.TO_BE_REPEATED:
             self._station.set_assigned_op_to_execute()
             self.execute_op()
@@ -61,18 +63,34 @@ class RobotOpHandler(OpHandler):
         self._robot = robot
 
     def handle(self):
-        if self._robot.assigned_op_state == OpState.ASSIGNED:
-            self._robot.set_assigned_op_to_execute()
-            self.execute_op()
+        if self._robot.assigned_op_state == OpState.INVALID:
+            self._robot.update_assigned_op()
+        elif self._robot.assigned_op_state == OpState.ASSIGNED:
+            self._begin_execution()
         elif self._robot.assigned_op_state == OpState.EXECUTING:
-            if self.is_op_execution_complete():
-                op_successful = self.get_op_result()
-                self._robot.complete_assigned_op(op_successful)
+            self._check_op_execution()
         elif self._robot.assigned_op_state == OpState.TO_BE_REPEATED:
             self._robot.set_assigned_op_to_execute()
             self.execute_op()
         elif self._robot.assigned_op_state == OpState.TO_BE_SKIPPED:
             self._robot.complete_assigned_op(OpResult.SKIPPED)
+
+    def _begin_execution(self):
+        self._robot.set_assigned_op_to_execute()
+        if isinstance(self._robot.assigned_op, RobotWaitOpDescriptor):
+            self._robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        else:
+            self.execute_op()
+
+    def _check_op_execution(self):
+        if isinstance(self._robot.assigned_op, RobotWaitOpDescriptor):
+             op = self._robot.assigned_op
+             if (datetime.now() - op.start_timestamp) >= timedelta(seconds=op.timeout):
+                self._robot.clear_assigned_op()
+        else:
+            if self.is_op_execution_complete():
+                op_outcome = self.get_op_result()
+                self._robot.complete_assigned_op(op_outcome)
 
 class StationProcessHandler:
     def __init__(self, station: Station):
@@ -122,7 +140,7 @@ class StationProcessHandler:
             if proc:
                 if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                     for robot_op in proc.req_robot_ops:
-                        self._station.requested_robot_ops.append(robot_op)
+                        self._station.add_req_robot_op(robot_op)
                     proc.switch_to_waiting()
                 
                 if proc.status == ProcessStatus.REQUESTING_STATION_OPS:

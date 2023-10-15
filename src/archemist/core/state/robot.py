@@ -1,11 +1,11 @@
-from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
+from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor
 from archemist.core.util.enums import RobotState,RobotTaskType, OpState, OpResult
 from archemist.core.util.location import Location
+from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.exceptions.exception import RobotAssignedRackError
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any, Union, Type
 from archemist.core.persistence.object_factory import RobotOpFactory
 from bson.objectid import ObjectId
 
@@ -20,20 +20,18 @@ class Robot:
     @classmethod
     def from_dict(cls, robot_dict: Dict):
         model = RobotModel()
-        cls._set_model_common_fields(robot_dict, model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, robot_dict)
         model.save()
         return cls(model)
 
-    @staticmethod
-    def _set_model_common_fields(robot_dict: Dict, robot_model: RobotModel):
+    @classmethod
+    def _set_model_common_fields(cls, robot_model: RobotModel, robot_dict: Dict):
         robot_model._type = robot_dict['type']
+        robot_model._module = cls.__module__
         robot_model.exp_id = robot_dict['id']
         robot_model.selected_handler = robot_dict['handler']
         if 'location' in robot_dict:
             robot_model.location = robot_dict['location']
-        if 'batch_capacity' in robot_dict:
-            robot_model.batch_capacity = robot_dict['batch_capacity']
 
     @property
     def model(self) -> RobotModel:
@@ -42,7 +40,6 @@ class Robot:
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
-
 
     @property
     def id(self) -> int:
@@ -79,6 +76,18 @@ class Robot:
         self._model_proxy.state = new_state
 
     @property
+    def attending_to(self) -> ObjectId:
+        return self._model_proxy.attending_to
+    
+    @attending_to.setter
+    def attending_to(self, new_station: ObjectId):
+        self._model_proxy.attending_to = new_station
+
+    @property
+    def queued_ops(self) -> List[Type[RobotOpDescriptor]]:
+        return ListProxy(self._model_proxy.queued_ops, RobotOpFactory.create_from_model)
+
+    @property
     def ops_history(self) -> List[Any]:
         return ListProxy(self._model_proxy.ops_history, RobotOpFactory.create_from_model)
 
@@ -87,31 +96,42 @@ class Robot:
         return self._model_proxy.assigned_op_state
 
     @property
-    def assigned_op(self) -> RobotOpDescriptor:
+    def assigned_op(self) -> Type[RobotOpDescriptor]:
         return RobotOpFactory.create_from_model(self._model_proxy.assigned_op) \
                if self._model_proxy.assigned_op else None
-
-    def add_op(self, robot_op: RobotOpDescriptor):
-        if not self.assigned_op:
-            self._model_proxy.assigned_op = robot_op.model
-            self._log_robot(f'Job ({robot_op}) is assigned.')
+    
+    def update_assigned_op(self):
+        if self.queued_ops and self.assigned_op is None:
+            op = self.queued_ops.pop()
+            self._model_proxy.assigned_op = op.model
             self._model_proxy.assigned_op_state = OpState.ASSIGNED
+            if self.attending_to != op.requested_by:
+                self.attending_to = op.requested_by
 
-        else:
-            raise RobotAssignedRackError(self.__class__.__name__)
+    def add_op(self, robot_op: Type[RobotOpDescriptor]):
+        self.queued_ops.append(robot_op)
+        self._log_robot(f'({robot_op}) is queued')
         
     def set_assigned_op_to_execute(self):
         self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, result: OpResult):
+    def complete_assigned_op(self, result: OpResult, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
             op.complete_op(self._model_proxy.object_id, result)
-            self._model_proxy.assigned_op = None
-            self._model_proxy.assigned_op_state = OpState.INVALID
-            self.ops_history.append(op)
-            self._log_robot(f'Job ({op} is complete.')
+            self._log_robot(f'{op} is complete')
+            if clear_assigned_op:
+                self.clear_assigned_op()
+    
+    def clear_assigned_op(self):
+        op = self.assigned_op
+        self._model_proxy.assigned_op = None
+        self._model_proxy.assigned_op_state = OpState.INVALID
+        self.ops_history.append(op)
+        
+        if not self.queued_ops:
+                self.attending_to = None
 
     def repeat_assigned_op(self):
         if self.assigned_op:
@@ -123,7 +143,7 @@ class Robot:
         if self.assigned_op:
             self._model_proxy.assigned_op_state = OpState.TO_BE_SKIPPED
         else:
-            self._log_station('Unable to skip. No op assigned')
+            self._log_robot('Unable to skip. No op assigned')
 
     def _log_robot(self, message: str):
         print(f'[{self}]: {message}')
@@ -131,24 +151,42 @@ class Robot:
     def __str__(self) -> str:
         return f'{self.__class__.__name__}_{self.id}'
 
+class FixedRobot(Robot):
+    def __init__(self, robot_model: Union[RobotModel, ModelProxy]) -> None:
+        super().__init__(robot_model)
+
 class MobileRobot(Robot):
     def __init__(self, robot_model: Union[MobileRobotModel, ModelProxy]) -> None:
-        if isinstance(robot_model, ModelProxy):
-            self._model_proxy = robot_model
-        else:
-            self._model_proxy = ModelProxy(robot_model)
+       super().__init__(robot_model)
     
     @classmethod
     def from_dict(cls, robot_dict: Dict):
         model = MobileRobotModel()
-        cls._set_model_common_fields(robot_dict, model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, robot_dict)
+        model.total_lot_capacity = robot_dict["total_lot_capacity"]
+        model.onboard_capacity = robot_dict["onboard_capacity"]
         model.save()
         return cls(model)
 
     @property
-    def batch_capacity(self) -> int:
-        return self._model_proxy.batch_capacity
+    def total_lot_capacity(self) -> int:
+        return self._model_proxy.total_lot_capacity
+    
+    @property
+    def free_lot_capacity(self) -> int:
+        return self._model_proxy.total_lot_capacity - len(self.consigned_lots)
+    
+    @property 
+    def consigned_lots(self) -> List[Lot]:
+        return ListProxy(self._model_proxy.consigned_lots, Lot)
+    
+    @property
+    def onboard_capacity(self) -> int:
+        return self._model_proxy.onboard_capacity
+    
+    @property
+    def free_batch_capacity(self) -> int:
+        return self.onboard_capacity - len(self.onboard_batches)
 
     @property 
     def onboard_batches(self) -> List[Batch]:
@@ -162,27 +200,22 @@ class MobileRobot(Robot):
     def operational_mode(self, new_mode: MobileRobotMode):
         self._model_proxy.operational_mode = new_mode
 
-    def is_onboard_capacity_full(self) -> bool:
-        return len(self.onboard_batches) == self.batch_capacity
+    def add_op(self, robot_op: type[RobotOpDescriptor]):
+        if isinstance(robot_op, RobotTaskOpDescriptor) and robot_op.task_type == RobotTaskType.LOAD_TO_ROBOT:
+            if robot_op.related_lot not in self.consigned_lots:
+                self.consigned_lots.append(robot_op.related_lot)
+            else:
+                self._log_robot(f"{robot_op} cannot be added to the robot queue since robot has no free lot capacity")
+        return super().add_op(robot_op)
 
-    def is_batch_onboard(self, batch: Batch) -> bool:
-        return batch in self.onboard_batches
-
-    def complete_assigned_op(self, success: bool):
+    def complete_assigned_op(self, result: OpResult, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
             if isinstance(op, RobotTaskOpDescriptor):
                 if op.task_type == RobotTaskType.LOAD_TO_ROBOT:
-                    self._add_to_onboard_batches(op.related_batch)
+                    self.onboard_batches.append(op.related_batch)
                 elif op.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                    self._remove_from_onboard_batches(op.related_batch)
-            super().complete_assigned_op(success)
-
-    def _add_to_onboard_batches(self, batch: Batch):
-        if not self.is_onboard_capacity_full():
-            self.onboard_batches.append(batch)
-        else:
-            self._log_robot(f'Cannot add batch {batch} to deck. Batch capacity exceeded')
-
-    def _remove_from_onboard_batches(self, batch: Batch):
-        self.onboard_batches.remove(batch)
+                    self.onboard_batches.remove(op.related_batch)
+                    if all(batch not in self.onboard_batches for batch in op.related_lot.batches):
+                        self.consigned_lots.remove(op.related_lot)
+            super().complete_assigned_op(result, clear_assigned_op)

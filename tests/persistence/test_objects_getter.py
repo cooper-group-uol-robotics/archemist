@@ -7,12 +7,14 @@ from archemist.core.state.station import Station
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
+from archemist.core.state.state import InputState, OutputState
 from archemist.core.persistence.objects_getter import (MaterialsGetter,
                                                        StationsGetter,
                                                        RobotsGetter,
                                                        LotsGetter,
                                                        BatchesGetter,
-                                                       RecipesGetter)
+                                                       RecipesGetter,
+                                                       StateGetter)
 from archemist.core.util.enums import LotStatus
 from mongoengine import connect
 
@@ -61,7 +63,8 @@ class ObjectsGetterTest(unittest.TestCase):
             "type": "MobileRobot",
             "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 17,
-            "batch_capacity":1,
+            "total_lot_capacity":1,
+            "onboard_capacity": 2,
             "handler": "SimRobotOpHandler"
         }
 
@@ -138,15 +141,37 @@ class ObjectsGetterTest(unittest.TestCase):
 
         # construct batches
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        self.batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
 
         # construct lots
         lot_1 = Lot.from_args([batch_1])
-        lot_2 = Lot.from_args([batch_2])
+        self.lot_2 = Lot.from_args([self.batch_2])
 
         # attach recipes
         lot_1.attach_recipe(recipe_1)
-        lot_2.attach_recipe(recipe_2)
+        self.lot_2.attach_recipe(recipe_2)
+
+        # construct input state
+        input_dict = {
+            "location":  {'node_id': 1, 'graph_id': 7},
+            "samples_per_batch": 3,
+            "batches_per_lot": 1,
+            "total_lot_capacity": 2,
+            "lot_input_process": {
+                "type": "StationProcess",
+                "args": None
+            }
+        }
+        input_state = InputState.from_dict(input_dict)
+
+        # construct ouput state
+        output_dict = {
+            "location":  {'node_id': 12, 'graph_id': 7},
+            "total_lot_capacity": 2,
+            "lot_output_process": None,
+            "lots_need_manual_removal": False
+        }
+        output_state = OutputState.from_dict(output_dict)
 
     def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
@@ -220,6 +245,10 @@ class ObjectsGetterTest(unittest.TestCase):
         self.assertEqual(len(finished_lots), 1)
         self.assertEqual(finished_lots[0], lots[0])
 
+        # test finding lot using batch inside
+        lot_by_batch = LotsGetter.get_containing_lot(self.batch_2)
+        self.assertEqual(lot_by_batch, self.lot_2)
+
     def test_batches_getter(self):
         batches = BatchesGetter.get_batches()
         self.assertEqual(len(batches), 2)
@@ -229,6 +258,18 @@ class ObjectsGetterTest(unittest.TestCase):
         self.assertEqual(len(recipes), 2)
         self.assertTrue(RecipesGetter.recipe_exists(198))
         self.assertFalse(RecipesGetter.recipe_exists(200))
+
+    def test_state_getter(self):
+        # test getting input state
+        input_state = StateGetter.get_input_state()
+        self.assertIsNotNone(input_state)
+        self.assertEqual(input_state.samples_per_batch, 3)
+
+        # test getting output state
+        output_state = StateGetter.get_output_state()
+        self.assertIsNotNone(output_state)
+        self.assertEqual(output_state.total_lot_capacity, 2)
+
 
 if __name__ == '__main__':
     unittest.main()

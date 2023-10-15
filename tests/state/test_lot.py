@@ -84,7 +84,7 @@ class LotTest(unittest.TestCase):
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         self.assertIsNotNone(lot.uuid)
-        self.assertEqual(lot.status, LotStatus.STANDBY)
+        self.assertEqual(lot.status, LotStatus.CREATED)
         lot.status = LotStatus.FINISHED
         self.assertEqual(lot.status, LotStatus.FINISHED)
         self.assertEqual(len(lot.batches), 2)

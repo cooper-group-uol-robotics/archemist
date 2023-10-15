@@ -9,7 +9,6 @@ class RobotTaskType(Enum):
     LOAD_TO_ROBOT = auto()
     UNLOAD_FROM_ROBOT = auto()
     MANIPULATION = auto()
-    OTHER = auto()
 
 class MobileRobotMode(Enum):
     OPERATIONAL = auto()

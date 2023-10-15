@@ -152,6 +152,11 @@ class Station:
     def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
         return ListProxy(self._model_proxy.requested_robot_ops, RobotOpFactory.create_from_model)
 
+    def add_req_robot_op(self, robot_op: Type[RobotOpDescriptor]):
+        robot_op.requested_by = self.object_id
+        self.requested_robot_ops.append(robot_op)
+
+
     ''' Station ops properties and methods '''
 
     @property

@@ -33,6 +33,7 @@ class StateTest(unittest.TestCase):
             }
         }
         input_state = InputState.from_dict(input_dict)
+        self.assertIsNotNone(input_state.object_id)
         self.assertEqual(input_state.location, Location(1,7,''))
         self.assertEqual(input_state.samples_per_batch, 3)
         self.assertEqual(input_state.batches_per_lot, 1)
@@ -144,6 +145,7 @@ class StateTest(unittest.TestCase):
         # test lots buffer
         self.assertFalse(workflow_state.lots_buffer)
 
+        self.assertIsNotNone(workflow_state.object_id)
         batch = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch])
         workflow_state.lots_buffer.append(lot)
@@ -177,8 +179,10 @@ class StateTest(unittest.TestCase):
             "lots_need_manual_removal": False
         }
         output_state = OutputState.from_dict(output_dict)
+        self.assertIsNotNone(output_state.object_id)
         self.assertEqual(output_state.location, Location(12,7,''))
         self.assertEqual(output_state.total_lot_capacity, 2)
+        self.assertEqual(output_state.free_lot_capacity, 2)
         self.assertIsNone(output_state.lot_output_process)
         self.assertFalse(output_state.lots_need_manual_removal)
         
@@ -202,12 +206,14 @@ class StateTest(unittest.TestCase):
         lot_1 = Lot.from_args([batch_1])
         output_state.lot_slots["0"] = lot_1
         self.assertEqual(output_state.get_lots_num(), 1)
+        self.assertEqual(output_state.free_lot_capacity, 1)
         self.assertIsNotNone(output_state.lot_slots["0"])
 
         batch_2 = Batch.from_args(3, Location(12, 7, "some_frame"))
         lot_2 = Lot.from_args([batch_2])
         output_state.lot_slots["1"] = lot_2
         self.assertEqual(output_state.get_lots_num(), 2)
+        self.assertEqual(output_state.free_lot_capacity, 0)
         self.assertIsNotNone(output_state.lot_slots["1"])
 
         lot_2.status = LotStatus.NEED_REMOVAL

@@ -104,25 +104,31 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.assigned_lots), 1)
         self.assertEqual(len(self.station.processed_lots), 1)
         self.assertEqual(self.station.processed_lots[0].uuid, lot_1.uuid)
-        self.assertEqual(self.station.free_lot_capacity, 1)
+        self.assertEqual(self.station.free_lot_capacity, 0)
 
         self.station.finish_processing_lot(lot_2)
         self.assertEqual(len(self.station.assigned_lots), 0)
         self.assertEqual(len(self.station.processed_lots), 2)
         self.assertEqual(self.station.processed_lots[1].uuid, lot_2.uuid)
-        self.assertEqual(self.station.free_lot_capacity, 2)
+        self.assertEqual(self.station.free_lot_capacity, 0)
+
+        finisehd_lot = self.station.processed_lots.pop(left=True)
+        self.assertEqual(finisehd_lot, lot_1)
+        self.assertEqual(self.station.free_lot_capacity, 1)
 
     def test_robot_ops_members(self):
         # assert empty members
         self.assertFalse(self.station.requested_robot_ops)
 
         # op creation
-        robot_op1 = RobotTaskOpDescriptor.from_args('test_task1', params=['False','1'])
-        robot_op2 = RobotTaskOpDescriptor.from_args('test_task2', params=['False','2'])
+        robot_op1 = RobotTaskOpDescriptor.from_args('test_task1', "Robot", params={'calibrate': False, 'index': 1})
+        robot_op2 = RobotTaskOpDescriptor.from_args('test_task2', "Robot", params={'calibrate': False, 'index': 1})
         
         # op assignment
-        self.station.requested_robot_ops.append(robot_op1)
-        self.station.requested_robot_ops.append(robot_op2)
+        self.station.add_req_robot_op(robot_op1)
+        self.assertEqual(robot_op1.requested_by, self.station.object_id)
+        self.station.add_req_robot_op(robot_op2)
+        self.assertEqual(robot_op2.requested_by, self.station.object_id)
         self.assertEqual(len(self.station.requested_robot_ops), 2)
         
         # op retrival
