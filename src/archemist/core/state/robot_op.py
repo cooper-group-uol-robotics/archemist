@@ -104,9 +104,7 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         model.location = location.to_dict() if location is not None else None
         model.requested_by = kwargs.get("origin_station_id")
         related_batch = kwargs.get("related_batch")
-        related_lot = kwargs.get("related_lot")
         model.related_batch = related_batch.model if related_batch else None
-        model.related_lot = related_lot.model if related_lot else None
         model.save()
         return cls(model)
     
@@ -139,12 +137,9 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
 
     @property
     def related_lot(self) -> Lot:
-        if self._model_proxy.related_lot:
-            return Lot(self._model_proxy.related_lot)
-
-    @related_lot.setter
-    def related_lot(self, lot: Lot) -> None:
-        self._model_proxy.related_lot = lot.model
+        related_batch = self.related_batch
+        if related_batch:
+            return Lot.from_object_id(related_batch.parent_lot_id)
 
     def __str__(self) -> str:
         params = self.params if self.params else None

@@ -1,4 +1,5 @@
 import unittest
+from bson.objectid import ObjectId
 from archemist.core.state.batch import Batch
 from archemist.stations.ika_digital_plate_station.state import IKAHeatingOpDescriptor, IKAStirringOpDescriptor
 from mongoengine import connect
@@ -21,6 +22,10 @@ class BatchTest(unittest.TestCase):
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
+        self.assertIsNone(batch.parent_lot_id)
+        lot_id = ObjectId()
+        batch.parent_lot_id = lot_id
+        self.assertEqual(batch.parent_lot_id, lot_id)
 
         # test station_stamps
         self.assertEqual(len(batch.station_stamps), 0)

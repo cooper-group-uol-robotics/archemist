@@ -91,6 +91,7 @@ class LotTest(unittest.TestCase):
         self.assertEqual(lot.num_batches, 2)
         self.assertEqual(lot.batches[0].uuid, batch_1.uuid)
         self.assertEqual(lot.batches[1].uuid, batch_2.uuid)
+        self.assertEqual(lot.batches[0].parent_lot_id, lot.object_id)
         lot.add_station_stamp("test_station_stamp")
         for batch in lot.batches:
             self.assertEqual(len(batch.station_stamps), 1)

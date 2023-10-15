@@ -70,6 +70,14 @@ class Batch:
         return self._model_proxy.uuid
 
     @property
+    def parent_lot_id(self) -> ObjectId:
+        return self._model_proxy.parent_lot_id
+    
+    @parent_lot_id.setter
+    def parent_lot_id(self, lot_id: ObjectId):
+        self._model_proxy.parent_lot_id = lot_id
+
+    @property
     def location(self) -> Location:
         loc_dict = self._model_proxy.location
         return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])

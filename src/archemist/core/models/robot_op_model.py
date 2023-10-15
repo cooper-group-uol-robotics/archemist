@@ -24,7 +24,6 @@ class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
     task_type = fields.EnumField(RobotTaskType, required=True)
     params = fields.DictField(default={})
     related_batch = fields.ReferenceField(BatchModel, null=True)
-    related_lot = fields.ReferenceField(LotModel, null=True)
     location = fields.DictField()
 
 class RobotMaintenanceOpDescriptorModel(RobotOpDescriptorModel):

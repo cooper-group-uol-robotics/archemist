@@ -162,9 +162,9 @@ class RobotTest(unittest.TestCase):
         task_loc = Location(1,3,'table_frame')
         params = {"rack_number": 1, "calibrate": False}
         loading_robot_op_1 = RobotTaskOpDescriptor.from_args("load_batch", "Robot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_1, related_lot=lot)
+                                                   params, location=task_loc, related_batch=batch_1)
         loading_robot_op_2 = RobotTaskOpDescriptor.from_args("load_batch", "Robot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_2, related_lot=lot)
+                                                   params, location=task_loc, related_batch=batch_2)
 
         # test loading batches
         self.assertEqual(robot.free_batch_capacity, 2)
@@ -188,9 +188,9 @@ class RobotTest(unittest.TestCase):
 
         # create unloading ops
         unloading_robot_op_1 = RobotTaskOpDescriptor.from_args("unload_batch","Robot",  RobotTaskType.UNLOAD_FROM_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_1, related_lot=lot)
+                                                   params, location=task_loc, related_batch=batch_1)
         unloading_robot_op_2 = RobotTaskOpDescriptor.from_args("unload_batch", "Robot", RobotTaskType.UNLOAD_FROM_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_2, related_lot=lot)
+                                                   params, location=task_loc, related_batch=batch_2)
 
         # test unloading batches
         self.assertEqual(robot.free_batch_capacity, 0)

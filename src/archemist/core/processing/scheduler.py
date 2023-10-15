@@ -104,7 +104,12 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         priority = 0
         if isinstance(op, RobotMaintenanceOpDescriptor):
             priority += 200
-        elif robot.attending_to is None:
+        elif isinstance(op, RobotWaitOpDescriptor):
+            priority += 5
+        else:
+            priority += 10
+        
+        if robot.attending_to is None:
             priority += 100
         elif robot.attending_to == op.requested_by:
             priority += 150

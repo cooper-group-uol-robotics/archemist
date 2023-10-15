@@ -20,6 +20,9 @@ class Lot:
         model.uuid = uuid.uuid4()
         model.batches = [batch.model for batch in batches]
         model.save()
+        # update batches lot parent id
+        for batch in batches:
+            batch.parent_lot_id = model.id
         return cls(model)
     
     @classmethod

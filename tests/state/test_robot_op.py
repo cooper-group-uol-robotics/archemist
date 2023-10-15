@@ -63,8 +63,7 @@ class RobotOpTest(unittest.TestCase):
         params_dict = {"rack_index": 1, "calibrate": False}
         robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot", RobotTaskType.LOAD_TO_ROBOT,
                                                    params_dict, location=task_loc,
-                                                   station_object_id=station_object_id, related_batch=batch,
-                                                   related_lot=lot)
+                                                   station_object_id=station_object_id, related_batch=batch)
         self.assertEqual(robot_op._model_proxy._type, "RobotTaskOpDescriptor")
         self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
         self.assertEqual(robot_op.name, "test_task")

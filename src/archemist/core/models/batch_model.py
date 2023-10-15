@@ -9,6 +9,7 @@ class SampleModel(EmbeddedDocument):
 class BatchModel(Document):
     uuid = fields.UUIDField(binary=False, required=True)
     location = fields.DictField(default={})
+    parent_lot_id = fields.ObjectIdField(null=True)
     samples = fields.EmbeddedDocumentListField(SampleModel)
     station_stamps = fields.ListField(fields.StringField(), default=[])
 
