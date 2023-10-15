@@ -245,7 +245,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 1)
         self.assertEqual(len(self.fixed_robot.queued_ops), 2)
-        self.assertEqual(self.fixed_robot.queued_ops[0].uuid, op_1.uuid)
+        self.assertEqual(self.fixed_robot.queued_ops[0], op_1)
         self.fixed_robot.update_assigned_op()
 
         # schedule ops -> op_3 not added since robot attending to requester
@@ -274,7 +274,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 1)
         self.assertEqual(len(self.fixed_robot.queued_ops), 1)
-        self.assertEqual(self.fixed_robot.queued_ops[0].uuid, op_4.uuid)
+        self.assertEqual(self.fixed_robot.queued_ops[0], op_4)
 
         # complete the assigned op -> op_2
         self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
@@ -290,7 +290,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 1)
         self.assertEqual(len(self.fixed_robot.queued_ops), 1)
-        self.assertEqual(self.fixed_robot.queued_ops[0].uuid, op_5.uuid)
+        self.assertEqual(self.fixed_robot.queued_ops[0], op_5)
 
         # complete the assigned op -> op_4
         self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
@@ -303,7 +303,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertFalse(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.fixed_robot.queued_ops), 1)
-        self.assertEqual(self.fixed_robot.queued_ops[0].uuid, op_3.uuid)
+        self.assertEqual(self.fixed_robot.queued_ops[0], op_3)
 
         # update the assigned op and complete it
         self.fixed_robot.update_assigned_op()
@@ -361,7 +361,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s1_load_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s1_load_op_1)
 
         # update the assigned op and complete it -> s1_load_op_1
         self.mobile_robot.update_assigned_op()
@@ -402,7 +402,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_nav_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_nav_op_1)
 
         # update the assigned op and complete it -> s2_nav_op_1
         self.mobile_robot.update_assigned_op()
@@ -434,7 +434,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_unload_op_1)
 
         # clear wait operation
         self.mobile_robot.clear_assigned_op()
@@ -466,7 +466,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 1)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_wait_op_2.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_wait_op_2)
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
@@ -490,7 +490,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_load_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_load_op_1)
 
         # clear wait operation
         self.mobile_robot.clear_assigned_op()
@@ -531,7 +531,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_man_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_man_op_1)
 
         # update the assigned op and complete it -> s3_man_op_1
         self.mobile_robot.update_assigned_op()
@@ -559,7 +559,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_unload_op_1)
 
         # clear wait operation
         self.mobile_robot.clear_assigned_op()
@@ -577,7 +577,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s1_load_op_3.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s1_load_op_3)
 
         # update the assigned op and complete it -> s1_load_op_3
         self.mobile_robot.update_assigned_op()
@@ -609,7 +609,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_nav_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_nav_op_1)
 
         # update the assigned op and complete it -> s2_nav_op_1
         self.mobile_robot.update_assigned_op()
@@ -637,7 +637,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_unload_op_1)
 
         # clear wait operation
         self.mobile_robot.clear_assigned_op()
@@ -665,7 +665,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 1)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_wait_op_2.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_wait_op_2)
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
@@ -710,7 +710,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_load_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_load_op_1)
 
         # update the assigned op and complete it -> s3_load_op_1
         self.mobile_robot.update_assigned_op()
@@ -746,7 +746,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 2)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s4_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s4_unload_op_1)
 
         # update the assigned op and complete it -> s4_unload_op_1
         self.mobile_robot.update_assigned_op()
@@ -768,7 +768,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s2_load_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s2_load_op_1)
 
         # update the assigned op and complete it -> s2_load_op_1
         self.mobile_robot.update_assigned_op()
@@ -802,7 +802,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_man_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_man_op_1)
 
         # update the assigned op and complete it -> s3_man_op_1
         self.mobile_robot.update_assigned_op()
@@ -830,7 +830,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_unload_op_1)
 
         # clear wait operation
         self.mobile_robot.clear_assigned_op()
@@ -861,7 +861,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s3_load_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s3_load_op_1)
 
         # update the assigned op and complete it -> s3_load_op_1
         self.mobile_robot.update_assigned_op()
@@ -897,7 +897,7 @@ class SchedulerTest(unittest.TestCase):
         scheduler.schedule(self.workflow_state.robot_ops_queue)
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 0)
         self.assertEqual(len(self.mobile_robot.queued_ops), 2)
-        self.assertEqual(self.mobile_robot.queued_ops[0].uuid, s4_unload_op_1.uuid)
+        self.assertEqual(self.mobile_robot.queued_ops[0], s4_unload_op_1)
 
         # update the assigned op and complete it -> s4_unload_op_1
         self.mobile_robot.update_assigned_op()

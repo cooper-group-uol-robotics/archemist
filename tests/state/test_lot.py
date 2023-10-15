@@ -83,14 +83,14 @@ class LotTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
-        self.assertIsNotNone(lot.uuid)
+        self.assertIsNotNone(lot.object_id)
         self.assertEqual(lot.status, LotStatus.CREATED)
         lot.status = LotStatus.FINISHED
         self.assertEqual(lot.status, LotStatus.FINISHED)
         self.assertEqual(len(lot.batches), 2)
         self.assertEqual(lot.num_batches, 2)
-        self.assertEqual(lot.batches[0].uuid, batch_1.uuid)
-        self.assertEqual(lot.batches[1].uuid, batch_2.uuid)
+        self.assertEqual(lot.batches[0], batch_1)
+        self.assertEqual(lot.batches[1], batch_2)
         self.assertEqual(lot.batches[0].parent_lot_id, lot.object_id)
         lot.add_station_stamp("test_station_stamp")
         for batch in lot.batches:
@@ -107,7 +107,7 @@ class LotTest(unittest.TestCase):
 
         # test construction from object id
         lot_copy = Lot.from_object_id(lot.object_id)
-        self.assertEqual(lot.uuid, lot_copy.uuid)
+        self.assertEqual(lot, lot_copy)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,4 @@
 from __future__ import annotations
-import uuid
 from bson.objectid import ObjectId
 from transitions import Machine, State
 from typing import Dict, List, Any, Union, Type
@@ -59,7 +58,6 @@ class StationProcess:
     @classmethod
     def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
                                  lot: Lot, key_op_dicts_list: List[Dict[str, Any]], **kwargs):
-        proc_model.uuid = uuid.uuid4()
         proc_model.lot = lot.model
         proc_model.associated_station = associated_station
         
@@ -90,10 +88,6 @@ class StationProcess:
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
-
-    @property
-    def uuid(self) -> uuid.UUID:
-        return self._model_proxy.uuid
     
     @property
     def requested_by(self) -> ObjectId:

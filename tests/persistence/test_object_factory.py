@@ -56,15 +56,15 @@ class ObjectFactoryTest(unittest.TestCase):
     def test_station_op_factory(self):
         # test construction from args
         station_op_from_args = StationOpFactory.create_from_args(op_type="StationOpDescriptor")
-        self.assertIsNotNone(station_op_from_args.uuid)
+        self.assertIsNotNone(station_op_from_args)
 
         # test construction from model
         station_op_from_model = StationOpFactory.create_from_model(station_op_from_args.model)
-        self.assertEqual(station_op_from_args.uuid, station_op_from_model.uuid)
+        self.assertEqual(station_op_from_args, station_op_from_model)
 
         # test construction from object id
         station_op_from_object_id = StationOpFactory.create_from_object_id(station_op_from_args.object_id)
-        self.assertEqual(station_op_from_args.uuid, station_op_from_object_id.uuid)
+        self.assertEqual(station_op_from_args, station_op_from_object_id)
 
         # TODO test station_op from archemist.stations
 
@@ -104,30 +104,30 @@ class ObjectFactoryTest(unittest.TestCase):
     def test_robot_op_factory(self):
         # test construction from args
         robot_op_from_args = RobotOpFactory.create_from_args("RobotOpDescriptor")
-        self.assertIsNotNone(robot_op_from_args.uuid)
+        self.assertIsNotNone(robot_op_from_args)
 
         # test construction from model
         robot_op_from_model = RobotOpFactory.create_from_model(robot_op_from_args.model)
-        self.assertEqual(robot_op_from_args.uuid, robot_op_from_model.uuid)
+        self.assertEqual(robot_op_from_args, robot_op_from_model)
 
         # test construction from args
         random_station_id = ObjectId()
         op_params = {
             "name": "some_random_task",
+            "target_robot": "Robot",
             "origin_station_id": random_station_id,
-            "params": ["1", "True"]
+            "params": {"index": 1}
             }
         robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOpDescriptor", op_params)
         
-        self.assertIsNotNone(robot_op_from_args.uuid)
-        self.assertEqual(len(robot_op_from_args.params), 2)
-        self.assertEqual(robot_op_from_args.params[0], "1")
-        self.assertEqual(robot_op_from_args.params[1], "True")
+        self.assertIsNotNone(robot_op_from_args)
+        self.assertEqual(len(robot_op_from_args.params), 1)
+        self.assertEqual(robot_op_from_args.params["index"], 1)
         self.assertEqual(robot_op_from_args.requested_by, random_station_id)
 
         # test construction from model
         robot_op_from_model = RobotOpFactory.create_from_model(robot_op_from_args.model)
-        self.assertEqual(robot_op_from_args.uuid, robot_op_from_model.uuid)
+        self.assertEqual(robot_op_from_args, robot_op_from_model)
 
         # TODO test robot_op from archemist.robots
 
@@ -138,15 +138,15 @@ class ObjectFactoryTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1])
         proc_from_args = ProcessFactory.create_from_dict(proc_dict,lot)
-        self.assertIsNotNone(proc_from_args.uuid)
+        self.assertIsNotNone(proc_from_args)
 
         # construct from model
         proc_from_model  = ProcessFactory.create_from_model(proc_from_args.model)
-        self.assertEqual(proc_from_args.uuid, proc_from_model.uuid)
+        self.assertEqual(proc_from_args, proc_from_model)
 
         # construct from objectid
         proc_from_object_id = ProcessFactory.create_from_object_id(proc_from_args.object_id)
-        self.assertEqual(proc_from_args.uuid, proc_from_object_id.uuid)
+        self.assertEqual(proc_from_args, proc_from_object_id)
 
         # TODO test station_process from archemist.stations
 

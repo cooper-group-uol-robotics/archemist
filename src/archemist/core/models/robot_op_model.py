@@ -7,7 +7,6 @@ from archemist.core.util.enums import OpResult
 class RobotOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
-    uuid = fields.UUIDField(binary=False, required=True)
     target_robot = fields.StringField(required=True)
     requested_by = fields.ObjectIdField(null=True) # station that generated the op
     executed_by = fields.ObjectIdField(null=True) # robot that executed the op

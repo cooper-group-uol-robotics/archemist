@@ -4,7 +4,6 @@ from datetime import datetime
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.util.enums import OpResult
-import uuid
 from bson.objectid import ObjectId
 
 class StationOpDescriptor:
@@ -16,7 +15,6 @@ class StationOpDescriptor:
 
     @classmethod
     def _set_model_common_fields(cls, op_model: StationOpDescriptorModel, associated_station: str, **kwargs):
-        op_model.uuid = uuid.uuid4()
         op_model.associated_station = associated_station
 
     @classmethod
@@ -39,10 +37,6 @@ class StationOpDescriptor:
     @property
     def associated_station(self) -> str:
         return self._model_proxy.associated_station
-
-    @property
-    def uuid(self) -> uuid.UUID:
-        return self._model_proxy.uuid
     
     @property
     def requested_by(self) -> ObjectId:
@@ -83,3 +77,6 @@ class StationOpDescriptor:
         self._model_proxy.has_result = True
         self._model_proxy.result = result
         self._model_proxy.end_timestamp = datetime.now()
+
+    def __eq__(self, __value: object) -> bool:
+        return self.object_id == __value.object_id

@@ -86,7 +86,6 @@ class StationProcessTest(unittest.TestCase):
             ]
         # construct process
         proc = StationProcess.from_args(lot, key_op_dicts_list, processing_slot=1)
-        self.assertIsNotNone(proc.uuid)
         self.assertIsNotNone(proc.object_id)
         self.assertIsNone(proc.requested_by)
         dummy_object_id = ObjectId.from_datetime(datetime.now())
@@ -112,9 +111,9 @@ class StationProcessTest(unittest.TestCase):
 
         # test lot
         proc_lot  = proc.lot
-        self.assertEqual(proc_lot.uuid, lot.uuid)
+        self.assertEqual(proc_lot, lot)
         self.assertEqual(proc_lot.num_batches, 2)
-        self.assertEqual(proc_lot.batches[0].uuid, batch_1.uuid)
+        self.assertEqual(proc_lot.batches[0], batch_1)
 
         # test robot_op fields
         self.assertEqual(len(proc.req_robot_ops), 0)
@@ -143,7 +142,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.station_ops_history), 0)
         
         station_op = proc.create_key_op("some_op")
-        self.assertIsNotNone(station_op.uuid)
+        self.assertIsNotNone(station_op.object_id)
         self.assertIsInstance(station_op, StationOpDescriptor)
         
         proc.request_station_op(station_op)

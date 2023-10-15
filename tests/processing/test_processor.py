@@ -384,9 +384,9 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_1_proc_handler to assigns proc slots
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].uuid, proc_1.uuid)
+        self.assertEqual(station_1.running_procs_slots["0"].object_id, proc_1.object_id)
         self.assertEqual(station_1.running_procs_slots["0"].m_state, "init_state")
-        self.assertEqual(station_1.running_procs_slots["1"].uuid, proc_2.uuid)
+        self.assertEqual(station_1.running_procs_slots["1"].object_id, proc_2.object_id)
         self.assertEqual(station_1.running_procs_slots["1"].m_state, "init_state")
 
         #  tick station_1_proc_handler to advance proc states
@@ -443,9 +443,9 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_2_proc_handler to assigns proc slots
         station_2_proc_handler.handle()
-        self.assertEqual(station_2.running_procs_slots["0"].uuid, proc_1.uuid)
+        self.assertEqual(station_2.running_procs_slots["0"].object_id, proc_1.object_id)
         self.assertEqual(station_2.running_procs_slots["0"].m_state, "init_state")
-        self.assertEqual(station_2.running_procs_slots["1"].uuid, proc_2.uuid)
+        self.assertEqual(station_2.running_procs_slots["1"].object_id, proc_2.object_id)
         self.assertEqual(station_2.running_procs_slots["1"].m_state, "init_state")
 
         # tick station_2_proc_handler to advance proc states

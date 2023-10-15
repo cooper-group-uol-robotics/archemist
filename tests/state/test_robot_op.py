@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime
-import uuid
 from bson.objectid import ObjectId
 from mongoengine import connect
 
@@ -22,7 +21,7 @@ class RobotOpTest(unittest.TestCase):
     def test_robot_op(self):
         # construct op
         robot_op = RobotOpDescriptor.from_args()
-        self.assertIsNotNone(robot_op.uuid)
+        self.assertIsNotNone(robot_op.object_id)
         self.assertIsNone(robot_op.requested_by)
         self.assertIsNone(robot_op.executed_by)
         self.assertEqual(robot_op.target_robot, "Robot")
@@ -82,7 +81,7 @@ class RobotOpTest(unittest.TestCase):
         target_loc = Location(1,3,'')
         params_dict =  {"fine_localisation": True}
         robot_op = RobotNavOpDescriptor.from_args("test_nav_task", "MobileRobot",target_loc, params_dict)
-        self.assertIsNotNone(robot_op.uuid)
+        self.assertIsNotNone(robot_op.object_id)
         self.assertEqual(robot_op.name, "test_nav_task")
         self.assertEqual(robot_op.target_location, target_loc)
         for key, val in params_dict.items():
@@ -92,7 +91,7 @@ class RobotOpTest(unittest.TestCase):
 
     def test_robot_wait_op(self):
         wait_op = RobotWaitOpDescriptor.from_args(target_robot="Robot", timeout=10)
-        self.assertIsNotNone(wait_op.uuid)
+        self.assertIsNotNone(wait_op.object_id)
         self.assertEqual(wait_op.timeout, 10)
 
 if __name__ == "__main__":

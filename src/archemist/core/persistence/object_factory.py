@@ -68,6 +68,18 @@ class RobotOpFactory:
             cls = _import_class_from_module('RobotTaskOpDescriptor', 'archemist.core.state.robot_op')
             params = op_params if op_params is not None else {}
             return cls.from_args(**params)
+        elif op_type == "RobotMaintenanceOpDescriptor":
+            cls = _import_class_from_module('RobotMaintenanceOpDescriptor', 'archemist.core.state.robot_op')
+            params = op_params if op_params is not None else {}
+            return cls.from_args(**params)
+        elif op_type == "RobotNavOpDescriptor":
+            cls = _import_class_from_module('RobotNavOpDescriptor', 'archemist.core.state.robot_op')
+            params = op_params if op_params is not None else {}
+            return cls.from_args(**params)
+        elif op_type == "RobotWaitOpDescriptor":
+            cls = _import_class_from_module('RobotWaitOpDescriptor', 'archemist.core.state.robot_op')
+            params = op_params if op_params is not None else {}
+            return cls.from_args(**params)
         else:
             pkg = importlib.import_module('archemist.robots')
             for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):

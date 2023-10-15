@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Any, List, Union, Dict, Type
 from bson.objectid import ObjectId
@@ -50,7 +49,6 @@ class Batch:
     @classmethod
     def from_args(cls, num_samples: int, location:Location=None):
         model = BatchModel()
-        model.uuid = uuid.uuid4()
         model.location = location.to_dict() if location else {}
         model.samples.extend([SampleModel() for _ in range(num_samples)])
         model.save()
@@ -66,8 +64,8 @@ class Batch:
         return self._model_proxy.model
 
     @property
-    def uuid(self) -> uuid.UUID:
-        return self._model_proxy.uuid
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
 
     @property
     def parent_lot_id(self) -> ObjectId:
@@ -110,8 +108,8 @@ class Batch:
         print(f'[{self}]: {message}')
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self.uuid}'
+        return f'{self.__class__.__name__}-{self.object_id}'
     
     def __eq__(self, other_batch) -> bool:
-        return self.model.uuid == other_batch.model.uuid
+        return self.object_id == other_batch.object_id
 

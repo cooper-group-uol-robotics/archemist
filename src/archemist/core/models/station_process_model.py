@@ -14,7 +14,6 @@ class StationProcessModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
     ''' general '''
-    uuid = fields.UUIDField(binary=False)
     requested_by = fields.ObjectIdField(null=True) # station that requested the process
     associated_station = fields.StringField(required=True) # station associated with the process
     status = fields.EnumField(enum=ProcessStatus, default=ProcessStatus.INACTIVE)

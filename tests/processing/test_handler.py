@@ -376,8 +376,8 @@ class HandlerTest(unittest.TestCase):
         
         # test processes assignment
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].uuid, proc_1.uuid)
-        self.assertEqual(station_procs_dict["1"].uuid, proc_2.uuid)
+        self.assertEqual(station_procs_dict["0"].object_id, proc_1.object_id)
+        self.assertEqual(station_procs_dict["1"].object_id, proc_2.object_id)
         self.assertEqual(len(station.queued_procs), 0)
 
         # test processes state advancement
@@ -435,8 +435,8 @@ class HandlerTest(unittest.TestCase):
         
         # test processes assignment
         proc_handler.handle()
-        self.assertIsNotNone(station_procs_dict["0"].uuid)
-        self.assertIsNotNone(station_procs_dict["1"].uuid)
+        self.assertIsNotNone(station_procs_dict["0"])
+        self.assertIsNotNone(station_procs_dict["1"])
         self.assertEqual(station_procs_dict["0"].status, ProcessStatus.INACTIVE)
         self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
 
@@ -492,8 +492,8 @@ class HandlerTest(unittest.TestCase):
         # test processes assignment
         proc_handler.handle()
         self.assertEqual(len(station.queued_procs), 0)
-        self.assertEqual(station_procs_dict["0"].uuid, proc.uuid)
-        self.assertIsNotNone(station_procs_dict["1"].uuid)
+        self.assertEqual(station_procs_dict["0"].object_id, proc.object_id)
+        self.assertIsNotNone(station_procs_dict["1"])
         self.assertEqual(station_procs_dict["0"].status, ProcessStatus.INACTIVE)
         self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
 
@@ -519,7 +519,7 @@ class HandlerTest(unittest.TestCase):
         proc_handler.handle()
         self.assertIsNone(station_procs_dict["0"])
         self.assertEqual(proc.status, ProcessStatus.FINISHED)
-        self.assertIsNotNone(station_procs_dict["1"].uuid)
+        self.assertIsNotNone(station_procs_dict["1"])
         self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
         self.assertEqual(len(station.procs_history), 2)
 
@@ -582,8 +582,8 @@ class HandlerTest(unittest.TestCase):
         
         # test processes assignment
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].uuid, proc_1.uuid)
-        self.assertEqual(station_procs_dict["1"].uuid, proc_2.uuid)
+        self.assertEqual(station_procs_dict["0"].object_id, proc_1.object_id)
+        self.assertEqual(station_procs_dict["1"].object_id, proc_2.object_id)
         self.assertEqual(len(station.queued_procs), 0)
 
         # test processes state advancement

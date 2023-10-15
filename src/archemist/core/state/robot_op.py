@@ -8,7 +8,6 @@ from archemist.core.util import Location
 from bson.objectid import ObjectId
 from datetime import datetime
 from typing import List, Union, Dict
-import uuid
 
 
 class RobotOpDescriptor:
@@ -20,7 +19,6 @@ class RobotOpDescriptor:
         
     @classmethod
     def _set_model_common_fields(cls, op_model: RobotOpDescriptorModel, target_robot: str):
-        op_model.uuid = uuid.uuid4()
         op_model.target_robot = target_robot
         op_model._type = cls.__name__
         op_model._module = cls.__module__
@@ -37,8 +35,8 @@ class RobotOpDescriptor:
         return self._model_proxy.model
     
     @property
-    def uuid(self) -> uuid.UUID:
-        return self._model_proxy.uuid
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
 
     @property
     def target_robot(self) -> str:
@@ -88,6 +86,9 @@ class RobotOpDescriptor:
         self._model_proxy.result = result
         self._model_proxy.executed_by = robot_id
         self._model_proxy.end_timestamp = datetime.now()
+
+    def __eq__(self, __value: object) -> bool:
+        return self.object_id == __value.object_id
 
 class RobotTaskOpDescriptor(RobotOpDescriptor):
     def __init__(self, op_model: Union[RobotTaskOpDescriptorModel, ModelProxy]) -> None:

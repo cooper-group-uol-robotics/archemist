@@ -77,7 +77,7 @@ class RobotTest(unittest.TestCase):
         # get assigned op
         assigned_op = robot.assigned_op
         self.assertIsNotNone(assigned_op)
-        self.assertEqual(assigned_op.uuid, robot_op_1.uuid)
+        self.assertEqual(assigned_op, robot_op_1)
         
         # start executing
         robot.set_assigned_op_to_execute()
@@ -102,7 +102,7 @@ class RobotTest(unittest.TestCase):
         # test history
         history = robot.ops_history
         self.assertEqual(len(history), 1)
-        self.assertEqual(history[0].uuid, robot_op_1.uuid)
+        self.assertEqual(history[0], robot_op_1)
         self.assertEqual(history[0].executed_by,  robot.model.id)
         self.assertTrue(history[0].has_result)
         self.assertEqual(history[0].result, OpResult.SUCCEEDED)
@@ -127,7 +127,7 @@ class RobotTest(unittest.TestCase):
         # test history
         history = robot.ops_history
         self.assertEqual(len(history), 2)
-        self.assertEqual(history[1].uuid, robot_op_2.uuid)
+        self.assertEqual(history[1], robot_op_2)
 
     def test_mobile_robot(self):
         robot_dict = {

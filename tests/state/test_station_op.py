@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime
-import uuid
 from bson.objectid import ObjectId
 from mongoengine import connect
 
@@ -20,7 +19,7 @@ class StationOpTest(unittest.TestCase):
         # construct op
         station_op = StationOpDescriptor.from_args()
         self.assertEqual(station_op.associated_station, "Station")
-        self.assertIsNotNone(station_op.uuid)
+        self.assertIsNotNone(station_op.object_id)
         self.assertIsNone(station_op.requested_by)
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         station_op.requested_by = dummy_object_id

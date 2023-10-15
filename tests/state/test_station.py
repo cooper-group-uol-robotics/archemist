@@ -96,20 +96,20 @@ class StationTest(unittest.TestCase):
 
         assigned_lots = self.station.assigned_lots
         self.assertEqual(len(assigned_lots),2)
-        self.assertEqual(assigned_lots[0].uuid, lot_1.uuid)
-        self.assertEqual(assigned_lots[1].uuid, lot_2.uuid)
+        self.assertEqual(assigned_lots[0], lot_1)
+        self.assertEqual(assigned_lots[1], lot_2)
 
         # lot processing
         self.station.finish_processing_lot(lot_1)
         self.assertEqual(len(self.station.assigned_lots), 1)
         self.assertEqual(len(self.station.processed_lots), 1)
-        self.assertEqual(self.station.processed_lots[0].uuid, lot_1.uuid)
+        self.assertEqual(self.station.processed_lots[0], lot_1)
         self.assertEqual(self.station.free_lot_capacity, 0)
 
         self.station.finish_processing_lot(lot_2)
         self.assertEqual(len(self.station.assigned_lots), 0)
         self.assertEqual(len(self.station.processed_lots), 2)
-        self.assertEqual(self.station.processed_lots[1].uuid, lot_2.uuid)
+        self.assertEqual(self.station.processed_lots[1], lot_2)
         self.assertEqual(self.station.free_lot_capacity, 0)
 
         finisehd_lot = self.station.processed_lots.pop(left=True)
@@ -134,11 +134,11 @@ class StationTest(unittest.TestCase):
         # op retrival
         robot_op = self.station.requested_robot_ops.pop()
         self.assertEqual(len(self.station.requested_robot_ops), 1)
-        self.assertEqual(robot_op.uuid, robot_op1.uuid)
+        self.assertEqual(robot_op, robot_op1)
 
         robot_op = self.station.requested_robot_ops.pop()
         self.assertEqual(len(self.station.requested_robot_ops), 0)
-        self.assertEqual(robot_op.uuid, robot_op2.uuid)
+        self.assertEqual(robot_op, robot_op2)
         
     def test_station_ops_members(self):
         # assert empty members
@@ -165,7 +165,7 @@ class StationTest(unittest.TestCase):
         self.assertIsNotNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.ASSIGNED)
 
-        self.assertEqual(self.station.assigned_op.uuid, station_op_1.uuid)
+        self.assertEqual(self.station.assigned_op, station_op_1)
         self.assertIsNone(self.station.assigned_op.start_timestamp)
         
         self.station.set_assigned_op_to_execute()
@@ -179,7 +179,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.ops_history), 1)
         
         complete_op = self.station.ops_history[0]
-        self.assertEqual(complete_op.uuid, station_op_1.uuid)
+        self.assertEqual(complete_op, station_op_1)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
         self.assertEqual(complete_op.result, OpResult.SUCCEEDED)
@@ -189,7 +189,7 @@ class StationTest(unittest.TestCase):
         self.station.update_assigned_op()
         self.assertEqual(len(self.station._queued_ops), 0)
         self.assertIsNotNone(self.station.assigned_op)
-        self.assertEqual(self.station.assigned_op.uuid, station_op_2.uuid)
+        self.assertEqual(self.station.assigned_op, station_op_2)
         self.assertEqual(self.station.assigned_op_state, OpState.ASSIGNED)
 
         # test repeat and skip op
@@ -206,7 +206,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertEqual(len(self.station.ops_history), 2)
         complete_op = self.station.ops_history[1]
-        self.assertEqual(complete_op.uuid, station_op_2.uuid)
+        self.assertEqual(complete_op, station_op_2)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
         self.assertEqual(complete_op.result, OpResult.SUCCEEDED)
@@ -230,16 +230,16 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.requested_ext_procs),1)
         ext_proc = self.station.requested_ext_procs.pop()
         self.assertEqual(len(self.station.requested_ext_procs),0)
-        self.assertEqual(ext_proc.uuid, proc.uuid)
+        self.assertEqual(ext_proc.object_id, proc.object_id)
 
         # normal procs
         self.station.add_process(ext_proc)
         self.assertEqual(len(self.station.queued_procs),1)
-        self.assertEqual(self.station.queued_procs[0].uuid, proc.uuid)
+        self.assertEqual(self.station.queued_procs[0].object_id, proc.object_id)
 
         # add process to running_procs_slots
         self.station.running_procs_slots["0"] = ext_proc
-        self.assertEqual(self.station.running_procs_slots["0"].uuid, ext_proc.uuid)
+        self.assertEqual(self.station.running_procs_slots["0"].object_id, ext_proc.object_id)
 
 if __name__ == '__main__':
     unittest.main()

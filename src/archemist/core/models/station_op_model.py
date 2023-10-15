@@ -4,7 +4,6 @@ from archemist.core.util.enums import OpResult
 class StationOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
-    uuid = fields.UUIDField(binary=False, required=True)
     requested_by = fields.ObjectIdField(null=True) # station that generated the op
     associated_station = fields.StringField(required=True) # station associated with the op
 

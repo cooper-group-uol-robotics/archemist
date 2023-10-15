@@ -1,4 +1,3 @@
-import uuid
 from typing import Union, List
 from bson.objectid import ObjectId
 from archemist.core.models.lot_model import LotModel
@@ -17,7 +16,6 @@ class Lot:
     @classmethod
     def from_args(cls, batches: List[Batch]):
         model = LotModel()
-        model.uuid = uuid.uuid4()
         model.batches = [batch.model for batch in batches]
         model.save()
         # update batches lot parent id
@@ -37,10 +35,6 @@ class Lot:
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
-    
-    @property
-    def uuid(self) -> uuid.UUID:
-        return self._model_proxy.uuid
     
     @property
     def status(self) -> LotStatus:
@@ -74,7 +68,7 @@ class Lot:
         self._model_proxy.recipe = recipe.model
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}-{self.uuid}'
+        return f'{self.__class__.__name__}-{self.object_id}'
     
     def __eq__(self, __value: object) -> bool:
-        return self.uuid == __value.uuid
+        return self.object_id == __value.object_id

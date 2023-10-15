@@ -7,7 +7,6 @@ class SampleModel(EmbeddedDocument):
     details = fields.DictField(default={})
 
 class BatchModel(Document):
-    uuid = fields.UUIDField(binary=False, required=True)
     location = fields.DictField(default={})
     parent_lot_id = fields.ObjectIdField(null=True)
     samples = fields.EmbeddedDocumentListField(SampleModel)

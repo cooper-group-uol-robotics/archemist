@@ -16,9 +16,9 @@ class BatchTest(unittest.TestCase):
             self._client[self._db_name][coll].drop()
 
     def test_batch_general_fields(self):
-        # test uuid and location
+        # test object_id and location
         batch = Batch.from_args(2,Location(1,3,'table_frame'))
-        self.assertIsNotNone(batch.uuid)
+        self.assertIsNotNone(batch.object_id)
         self.assertEqual(batch.location, Location(1,3,'table_frame'))
         batch.location = Location(1,3,'chair_frame')
         self.assertEqual(batch.location, Location(1,3,'chair_frame'))
