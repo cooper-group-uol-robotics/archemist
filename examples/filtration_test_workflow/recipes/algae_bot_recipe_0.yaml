@@ -36,18 +36,15 @@
 # note that the process is considered complete when it reaches the end_state so
 # make sure your process teminates with the end_state
 general:
-  name: paracetamol_synthesis_recipe
+  name: algae_bot_recipe
   id: 198
 process:
   - state_name: filtration
     station:
       type: FiltrationStation
-      id: 14
+      id: 11
       operation:
         type: BaseValveOpenOpDescriptor
-        properties: # No feedback from the filtration station, when the funnel is drained completely
-          # valve_on/off_count: 7 # number of times the drain valve turns on and off
-          # wait_time: 5 # wait time after draining
     transitions:
       on_success: end_state
       on_fail: end_state

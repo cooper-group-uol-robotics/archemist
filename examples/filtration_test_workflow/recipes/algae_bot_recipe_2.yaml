@@ -36,19 +36,68 @@
 # note that the process is considered complete when it reaches the end_state so
 # make sure your process teminates with the end_state
 general:
-  name: paracetamol_synthesis_recipe
-  id: 198
+  name: algae_bot_recipe
+  id: 200
 process:
-  - state_name: filtration
+  - state_name: pickup
     station:
-      type: FiltrationStation
+      type: InputStation
+      id: 11
+      operation:
+        type: InputStationPickupOp
+    transitions:
+      on_success: dispense_liquid
+      on_fail: end_state
+  - state_name: dispense_liquid
+    station:
+      type: ChemSpeedFlexStation
+      id: 12
+      operation:
+        type: CSCSVJobOpDescriptor
+        properties:
+          dispense_info:
+            water: [29,32,34,37,40,43]
+            dye_A: [0.30,0.33,0.35,0.38,0.41,0.44]
+            dye_B: [0.31,0.34,0.36,0.39,0.42,0.45]
+    transitions:
+      on_success: analyse
+      on_fail: end_state
+  - state_name: analyse
+    station:
+      type: LightBoxStation
+      id: 13
+      operation:
+        type: SampleColorRGBOpDescriptor
+    transitions:
+      on_success: wait
+      on_fail: end_state
+  - state_name: wait
+    station:
+      type: WaitingStation
+      id: 15
+      operation:
+        type: WaitingOpDescriptor
+        properties:
+          duration: 3
+          time_unit: sec
+    transitions:
+      on_success: analyse_again
+      on_fail: end_state
+  - state_name: analyse_again
+    station:
+      type: LightBoxStation
+      id: 13
+      operation:
+        type: SampleColorRGBOpDescriptor
+    transitions:
+      on_success: dispose
+      on_fail: end_state
+  - state_name: dispose
+    station:
+      type: OutputStation
       id: 14
       operation:
-        type: BaseValveOpenOpDescriptor
-        properties: # No feedback from the filtration station, when the funnel is drained completely
-          # valve_on/off_count: 7 # number of times the drain valve turns on and off
-          # wait_time: 5 # wait time after draining
+        type: OutputStationPlaceOp
     transitions:
       on_success: end_state
       on_fail: end_state
-

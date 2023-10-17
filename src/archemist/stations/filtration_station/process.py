@@ -28,6 +28,7 @@ class FiltrationStationSm(StationProcessFSM):
             State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
             State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
             State(name='navigate_to_filtration_station', on_enter=['request_navigate_to_filtration']),
+            State(name='initial_pour', on_enter=['request_initial_pour']),
             State(name='open_base_valve', on_enter=['request_open_base_valve']),
             State(name='close_base_valve', on_enter=['request_close_base_valve']),
             State(name='open_vacuum', on_enter=['request_open_vacuum']),
@@ -40,7 +41,8 @@ class FiltrationStationSm(StationProcessFSM):
 
         ''' Transitions '''
         transitions = [
-            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'open_vacuum', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
+            {'trigger':self._trigger_function, 'source':'init_state', 'dest': 'initial_pour', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
+            {'trigger':self._trigger_function, 'source':'initial_pour', 'dest': 'open_vacuum', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
             {'trigger':self._trigger_function, 'source':'open_vacuum', 'dest': 'open_base_valve', 'conditions':['is_station_job_ready', 'all_batches_assigned']},
             {'trigger':self._trigger_function, 'source':'open_base_valve','dest':'close_base_valve', 'conditions':['is_station_job_ready','is_funnel_filled']},
             {'trigger':self._trigger_function, 'source':'close_base_valve','dest':'close_vacuum', 'conditions':['is_station_job_ready', 'is_filtration_process_complete'], 'before':'process_sample'},
@@ -58,6 +60,12 @@ class FiltrationStationSm(StationProcessFSM):
 
     def is_station_operation_complete(self):
         return self._status['operation_complete']
+    
+    def request_initial_pour(self):
+        self._station.assign_station_op(BaseValveOpenOpDescriptor.from_args())
+        self.timer(5)
+        self._station.assign_station_op(BaseValveCloseOpDescriptor.from_args())
+        self.timer(30)
 
     def request_open_base_valve(self):
         self._station.assign_station_op(BaseValveOpenOpDescriptor.from_args())

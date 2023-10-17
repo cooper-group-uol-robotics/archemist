@@ -67,48 +67,16 @@ general:
 #
 # for every station used in the workflow, add a new entry and fill its fields as defined
 stations:
-  - type: SyringePump
-    id: 12
-    location: 
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 1
-    handler: SyringePumpStationROSHandler
-    process_state_machine: 
-      type: SyringePumpStationSm
-      args: 
-    parameters:
-  - type: SynthesisStation
-    id: 13
-    location: 
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 1
-    handler: SynthesisStationROSHandler
-    process_state_machine: 
-      type: SynthesisStationSm
-      args: 
-    parameters:
   - type: FiltrationStation
     id: 14
     location: 
       node_id: 25
       graph_id: 1
     batch_capacity: 1
+    process_batch_capacity: 1
     handler: FiltrationStationROSHandler
     process_state_machine: 
       type: FiltrationStationSm
       args: 
-    parameters:
-  - type: WeighingStation
-    id: 15
-    location:
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 1
-    handler: KernPcbROSHandler
-    process_state_machine:
-      type: WeighingSM
-      args:
     parameters:
 

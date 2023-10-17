@@ -3,5 +3,5 @@
 # db_name: the name of the database inside mongodb that will be used to store
 #          workflow state and data
 # mongodb_host: mongodb host connection URI
-db_name: 'paracetamol_synthesis_workflow'
+db_name: 'paracetamol_workflow'
 mongodb_host: 'mongodb://localhost:27017'

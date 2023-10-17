@@ -7,7 +7,7 @@
 #                                 where node_id stands for the node number in the navigation
 # 
 general:
-  name: paracetamol_workflow
+  name: filtration_test_workflow
   samples_per_batch: 1
   default_batch_input_location:
     node_id: 25
@@ -33,8 +33,6 @@ general:
 #
 # for every solid and liquid used in the workflow, add a new entry and fill its fields as defined
 
-
-
 # robots: this section describes the robots used in the workflow
 #   type: the robot's class name as defined in archemist.robots.X.state 
 #         note that X stands for the robot's given module found in archemist's robots 
@@ -45,11 +43,6 @@ general:
 #
 # for every robot used in the workflow, add a new entry and fill its fields as defined
 
-#robots:
-#  - type: KukaLBRIIWA
-#    id: 1
-#    batch_capacity: 1
-#    handler: KmriiwaROSHandler
 
 # stations: this section describes the stations used in the workflow
 #   type: the station's class name as defined in archemist.stations.X.state
@@ -69,13 +62,14 @@ general:
 stations:
   - type: FiltrationStation
     id: 15
-    location: 
+    location:
       node_id: 25
       graph_id: 1
     batch_capacity: 1
     process_batch_capacity: 1
     handler: FiltrationStationROSHandler
-    process_state_machine: 
+    process_state_machine:
       type: FiltrationStationSm
-      args: 
+      args:
     parameters:
+  

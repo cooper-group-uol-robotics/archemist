@@ -46,7 +46,7 @@ class FiltrationStation(Station):
     
 ''' ==== Station Operation Descriptors ==== '''
 class BaseValveOpenOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -57,7 +57,7 @@ class BaseValveOpenOpDescriptor(StationOpDescriptor):
         return cls(model)
 
 class BaseValveCloseOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -68,7 +68,7 @@ class BaseValveCloseOpDescriptor(StationOpDescriptor):
         return cls(model)
     
 class VacuumOpenOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -79,7 +79,7 @@ class VacuumOpenOpDescriptor(StationOpDescriptor):
         return cls(model)
 
 class VacuumCloseOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -90,7 +90,7 @@ class VacuumCloseOpDescriptor(StationOpDescriptor):
         return cls(model)
 
 class DrainValveOpenOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -101,7 +101,7 @@ class DrainValveOpenOpDescriptor(StationOpDescriptor):
         return cls(model)
 
 class DrainValveCloseOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod
@@ -112,7 +112,7 @@ class DrainValveCloseOpDescriptor(StationOpDescriptor):
         return cls(model)
 
 class IdleOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: StationOpDescriptorModel)-> None:
+    def __init__(self, stationOpModel: StationOpDescriptorModel):
         self._model = stationOpModel
 
     @classmethod

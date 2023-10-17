@@ -37,17 +37,15 @@
 # make sure your process teminates with the end_state
 general:
   name: paracetamol_synthesis_recipe
-  id: 198
+  id: 204
 process:
   - state_name: filtration
     station:
       type: FiltrationStation
-      id: 14
+      id: 15
       operation:
         type: BaseValveOpenOpDescriptor
-        properties: # No feedback from the filtration station, when the funnel is drained completely
-          # valve_on/off_count: 7 # number of times the drain valve turns on and off
-          # wait_time: 5 # wait time after draining
+        properties: # No properties required for LCMS      
     transitions:
       on_success: end_state
       on_fail: end_state
