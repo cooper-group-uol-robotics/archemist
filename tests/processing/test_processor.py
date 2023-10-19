@@ -201,6 +201,11 @@ class ProcessorTest(unittest.TestCase):
         input_state = InputState.from_dict(input_dict)
         input_processor = InputProcessor(input_state)
 
+        # test requested_robot_ops
+        self.assertFalse(input_processor.requested_robot_ops)
+        input_processor.requested_robot_ops.append(RobotOpDescriptor.from_args())
+        self.assertEqual(len(input_processor.requested_robot_ops), 1)
+
         # test adding clean batches
         self.assertFalse(input_state.batches_queue)
         input_processor.add_clean_batch()
@@ -279,6 +284,11 @@ class ProcessorTest(unittest.TestCase):
 
         self.assertEqual(output_state.get_lots_num(), 0)
         self.assertTrue(output_processor.has_free_lot_capacity())
+
+        # test requested_robot_ops
+        self.assertFalse(output_processor.requested_robot_ops)
+        output_processor.requested_robot_ops.append(RobotOpDescriptor.from_args())
+        self.assertEqual(len(output_processor.requested_robot_ops), 1)
 
         # create lots
         batch_1 = Batch.from_args(3)
@@ -398,7 +408,7 @@ class ProcessorTest(unittest.TestCase):
         # tick workflow processor to pick requested robot ops from station 1
         workflow_processor.process_workflow()
         self.assertFalse(station_1.requested_robot_ops)
-        req_robot_ops = workflow_processor.get_robot_ops_queue()
+        req_robot_ops = workflow_processor.robot_ops_queue
         self.assertEqual(len(req_robot_ops), 2)
 
         # tick station_1_proc_handler to sanity check it doesn't advance state
@@ -457,7 +467,7 @@ class ProcessorTest(unittest.TestCase):
         # tick workflow processor to pick robot ops
         workflow_processor.process_workflow()
         self.assertFalse(station_2.requested_robot_ops)
-        req_robot_ops = workflow_processor.get_robot_ops_queue()
+        req_robot_ops = workflow_processor.robot_ops_queue
         self.assertEqual(len(req_robot_ops), 2)
 
         # complete req robot ops to be able to advance procs
@@ -515,9 +525,13 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(len(workflow_state.lots_buffer), 2)
 
         # test retrieve complete lots
-        completed_lots = workflow_processor.retrieve_completed_lots()
-        self.assertFalse(workflow_state.lots_buffer)
-        self.assertEqual(len(completed_lots), 2)
+        completed_lot = workflow_processor.retrieve_completed_lot()
+        self.assertIsNotNone(completed_lot)
+        self.assertEqual(len(workflow_state.lots_buffer), 1)
+
+        completed_lot = workflow_processor.retrieve_completed_lot()
+        self.assertIsNotNone(completed_lot)
+        self.assertEqual(len(workflow_state.lots_buffer), 0)
 
 
 

@@ -13,6 +13,10 @@ class InputProcessor:
     def __init__(self, input_state: InputState):
         self._state = input_state
 
+    @property
+    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+        return self._state.requested_robot_ops
+
     def add_clean_batch(self):
         current_num_lots = self._state.get_lots_num()
         total_batches_num = len(self._state.batches_queue) + current_num_lots*self._state.batches_per_lot
@@ -29,7 +33,6 @@ class InputProcessor:
             print(f"new recipe with id {new_recipe_id} queued")
         else:
             print(f"recipe with id {new_recipe_id} already exists. Recipe is not added to queue")
-
 
     def process_lots(self):
         for slot, lot in self._state.lot_slots.items():
@@ -76,8 +79,6 @@ class InputProcessor:
                         self._state.procs_history.append(proc)
                         lot.status = LotStatus.READY_FOR_COLLECTION
                         
-
-
     def retrieve_ready_for_collection_lots(self) -> List[Lot]:
         ready_for_collection_lots = []
         for slot, lot in self._state.lot_slots.items():
@@ -90,6 +91,10 @@ class InputProcessor:
 class OutputProcessor:
     def __init__(self, output_state: OutputState):
         self._state = output_state
+
+    @property
+    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+        return self._state.requested_robot_ops
 
     def has_free_lot_capacity(self) -> bool:
         return self._state.get_lots_num() < self._state.total_lot_capacity
@@ -146,6 +151,10 @@ class WorkflowProcessor:
     def __init__(self, workflow_state: WorkflowState):
         self._state = workflow_state
 
+    @property
+    def robot_ops_queue(self) -> List[Type[RobotOpDescriptor]]:
+        return self._state.robot_ops_queue
+
     def add_ready_for_collection_lots(self, collection_lots: List[Lot]):
         for lot in collection_lots:
             lot.status = LotStatus.IN_WORKFLOW
@@ -195,18 +204,15 @@ class WorkflowProcessor:
             station = StationsGetter.get_station(req_station_type)
             station.add_process(ext_proc)
 
-    def retrieve_completed_lots(self) -> List[Lot]:
-        completed_lots = []
+    def retrieve_completed_lot(self) -> Lot:
+        completed_lot = None
         lots_buffer = [lot for lot in self._state.lots_buffer]
         for lot in lots_buffer:
             if lot.recipe.is_complete():
-                completed_lots.append(lot)
+                completed_lot = lot
                 self._state.lots_buffer.remove(lot)
-
-        return completed_lots
-
-    def get_robot_ops_queue(self) -> List[Type[RobotOpDescriptor]]:
-        return self._state.robot_ops_queue
+                break
+        return completed_lot
 
     def _log_processor(self, message:str):
         print(f'[{self}]: {message}')
