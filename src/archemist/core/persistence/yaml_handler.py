@@ -1,5 +1,4 @@
-import yaml
-from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, EmptyNone, MapPattern, dirty_load, Bool
+from strictyaml import Map, Str, Int, Seq, Any, Optional, Float, Datetime, NullNone, MapPattern, dirty_load, Bool
 from pkg_resources import resource_string
 from typing import Dict
 from pathlib import Path
@@ -11,13 +10,11 @@ class WorkflowSchemas:
         'general': Map(
             {
                 'name': Str(),
-                'samples_per_batch': Int(),
-                'default_batch_input_location': Map({'node_id': Int(), 'graph_id': Int()})
             }
         ),
-        Optional('materials'): Map(
+        'materials': NullNone() | Map(
             {
-                Optional('liquids'): Seq(Map(
+                Optional('liquids'): NullNone() | Seq(Map(
                     {
                         'name': Str(),
                         'id': Int(),
@@ -25,29 +22,30 @@ class WorkflowSchemas:
                         'unit': Str(),
                         'density': Float(),
                         'density_unit': Str(),
-                        'details': MapPattern(Str(), Any()),
+                        'details':  NullNone() | MapPattern(Str(), Any()),
                         'expiry_date': Datetime()
                     }
                 )),
-                Optional('solids'): Seq(Map(
+                Optional('solids'): NullNone() | Seq(Map(
                     {
                         'name': Str(),
                         'id': Int(),
                         'amount': Float(),
                         'unit': Str(),
                         'expiry_date': Datetime(),
-                        'details': MapPattern(Str(), Any())
+                        'details':  NullNone() | MapPattern(Str(), Any())
                     }
                 ))
             }
         ),
-        Optional('robots'): Seq(Map(
+        'robots': NullNone() | Seq(Map(
             {
                 'type': Str(),
                 'id': Int(),
-                'batch_capacity': Int(),
                 'handler': Str(),
-                Optional('location'): Map({'node_id': Int(), 'graph_id': Int()})
+                Optional('location'): Map({'node_id': Int(), 'graph_id': Int()}),
+                Optional('total_lot_capacity'): Int(),
+                Optional('onboard_capacity'): Int(),
             }
         )),
         'stations': Seq(Map(
@@ -57,9 +55,30 @@ class WorkflowSchemas:
                 'location': Map({'node_id': Int(), 'graph_id': Int()}),
                 'total_lot_capacity': Int(),
                 'handler': Str(),
-                Optional('parameters'): EmptyNone() | MapPattern(Str(), Any())
+                'properties': NullNone() | MapPattern(Str(), Any())
             }
-        ))
+        )),
+        'workflow_input': Map(
+            {
+            'location': Map({'node_id': Int(), 'graph_id': Int()}),
+            'samples_per_batch': Int(),
+            'batches_per_lot': Int(),
+            'total_lot_capacity': Int(),
+            'lot_input_process': NullNone() | Map({
+                'type': Str(),
+                'args': NullNone() | MapPattern(Str(), Any())
+                })
+            }),    
+        'workflow_output': Map(
+            {
+            'location': Map({'node_id': Int(), 'graph_id': Int()}),
+            'total_lot_capacity': Int(),
+            'lot_output_process': NullNone() | Map({
+                'type': Str(),
+                'args': NullNone() | MapPattern(Str(), Any())
+                }),
+            'lots_need_manual_removal': Bool()
+            })
     })
 
     server_settings_schema = Map(
@@ -87,15 +106,15 @@ class WorkflowSchemas:
                             'process': Map(
                                 {
                                     'type': Str(),
-                                    Optional('operations'): Seq(Map(
+                                    'operations': NullNone() | Seq(Map(
                                         {
                                             'name': Str(),
                                             'type': Str(),
                                             'repeat_for_all_batches': Bool(),
-                                            Optional('parameters'): Seq(MapPattern(Str(), Any())) | EmptyNone()
+                                            'parameters': NullNone() | Seq(MapPattern(Str(), Any()))
                                         }
                                     )),
-                                    Optional('args'): EmptyNone() | MapPattern(Str(), Any())
+                                    'args': NullNone() | MapPattern(Str(), Any())
                                 }
                             )
                         }

@@ -17,7 +17,7 @@ steps:
                 duration: 10
               - stirring_speed: 150
                 duration: 10
-        args:
+        args: Null
     transitions:
       on_success: weighing_operation
       on_fail: failed_state
@@ -31,7 +31,7 @@ steps:
           - name: weigh
             type: FisherWeightOpDescriptor
             repeat_for_all_batches: True
-            parameters:
+            parameters: Null
         args:
           some_variable: 42
     transitions:
@@ -43,10 +43,7 @@ steps:
       id: 5
       process:
         type: SomeProcess
-        operations:
-          - name: weigh
-            type: FisherWeightOpDescriptor
-            repeat_for_all_batches: True
+        operations: Null
         args:
           some_variable: 42
     transitions:
