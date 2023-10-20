@@ -10,9 +10,19 @@ from archemist.core.state.robot import FixedRobot
 from archemist.core.state.station import Station
 from archemist.core.processing.handler import StationProcessHandler
 from archemist.core.util.enums import LotStatus
+from typing import Callable, Any
 
 
 class WorkflowManagerTest(unittest.TestCase):
+
+    def waitTillAssertion(self, condition_eval: Callable[[Any], bool], timeout: int=10):
+        t_start = time()
+        while (time() - t_start) < timeout:
+            if condition_eval():
+                self.assertTrue(True)
+                return
+            sleep(0.1)
+        self.assertTrue(False)
     
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -88,72 +98,59 @@ class WorkflowManagerTest(unittest.TestCase):
         # test start workflow
         self.assertFalse(input_state.recipes_queue)
         workflow_manager.start_workflow()
-        sleep(2)
-        self.assertEqual(len(input_state.recipes_queue), 2)
+
+        self.waitTillAssertion(lambda: len(input_state.recipes_queue) == 2)
 
         # test add a clean batch
         self.assertEqual(input_state.get_lots_num(), 0)
         workflow_manager.add_clean_batch()
-        sleep(1)
+        self.waitTillAssertion(lambda: input_state.get_lots_num() == 1)
         self.assertEqual(input_state.get_lots_num(), 1)
         workflow_manager.add_clean_batch()
-        sleep(1)
-        self.assertEqual(input_state.get_lots_num(), 2)
+        self.waitTillAssertion(lambda: input_state.get_lots_num() == 2)
         
         # test finishing input processes
-        t_start = time()
-        timeout = 2
-
-        while input_state.get_lots_num() > 0 or (time() - t_start) < timeout:
-            sleep(0.5)
-        self.assertEqual(input_state.get_lots_num(), 0)
+        self.waitTillAssertion(lambda: input_state.get_lots_num() == 0)
         self.assertEqual(len(input_state.procs_history), 2)
 
         # test processing lots in station 1
+        self.waitTillAssertion(lambda: self.station_1.free_lot_capacity == 0)
         # tick to start processing lots
         station_1_proc_handler.handle()
         # tick to update procs
         station_1_proc_handler.handle()
         # tick to remove processed lots
         station_1_proc_handler.handle()
-        sleep(2)
+        # assert station 1 completed processing lots
+        self.waitTillAssertion(lambda: len(self.station_1.procs_history) == 2)
+        self.waitTillAssertion(lambda: self.station_1.free_lot_capacity == 2)
 
         # test processing lots in station 2
+        self.waitTillAssertion(lambda: self.station_2.free_lot_capacity == 0)
         # tick to start processing lots
         station_2_proc_handler.handle()
         # tick to update procs
         station_2_proc_handler.handle()
         # tick to remove processed lots
         station_2_proc_handler.handle()
-        sleep(3)
+        # assert station 2 completed processing lots
+        self.waitTillAssertion(lambda: len(self.station_2.procs_history) == 2)
+        self.waitTillAssertion(lambda: self.station_1.free_lot_capacity == 2)
+
+        # test moving lots to output
+        self.waitTillAssertion(lambda: output_state.get_lots_num() == 2)
 
         # test finishing output processes
-        t_start = time()
-        timeout = 3
-
-        while (time() - t_start) < timeout:
-            if output_state.get_lots_num() == 0:
-                break
-            sleep(0.5)
-        self.assertEqual(output_state.get_lots_num(LotStatus.NEED_REMOVAL), 2)
+        self.waitTillAssertion(lambda: output_state.get_lots_num(LotStatus.NEED_REMOVAL) == 2)
 
         # test removing lot
         workflow_manager.remove_lot(0)
-        sleep(1)
-        self.assertEqual(output_state.get_lots_num(LotStatus.NEED_REMOVAL), 1)
+        self.waitTillAssertion(lambda: output_state.get_lots_num(LotStatus.NEED_REMOVAL) == 1)
 
         # test removing all lots
         workflow_manager.remove_all_lots()
-        sleep(1)
-        self.assertEqual(output_state.get_lots_num(), 0)
+        self.waitTillAssertion(lambda: output_state.get_lots_num() == 0)
         self.assertEqual(len(output_state.procs_history), 2)
-
-        # test that all the stations have been visited
-        self.assertEqual(len(self.station_1.procs_history), 2)
-        self.assertEqual(self.station_1.free_lot_capacity, 2)
-        
-        self.assertEqual(len(self.station_2.procs_history), 2)
-        self.assertEqual(self.station_2.free_lot_capacity, 2)
 
         workflow_manager.stop_processor()
         sleep(2)

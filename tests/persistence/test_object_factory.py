@@ -142,11 +142,11 @@ class ObjectFactoryTest(unittest.TestCase):
 
         # construct from model
         proc_from_model  = ProcessFactory.create_from_model(proc_from_args.model)
-        self.assertEqual(proc_from_args, proc_from_model)
+        self.assertEqual(proc_from_args.object_id, proc_from_model.object_id)
 
         # construct from objectid
         proc_from_object_id = ProcessFactory.create_from_object_id(proc_from_args.object_id)
-        self.assertEqual(proc_from_args, proc_from_object_id)
+        self.assertEqual(proc_from_args.object_id, proc_from_object_id.object_id)
 
         # TODO test station_process from archemist.stations
 

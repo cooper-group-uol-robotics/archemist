@@ -13,7 +13,7 @@ steps:
             type: StationOpDescriptor
             repeat_for_all_batches: True
             parameters: Null
-        args:
+        args: Null
     transitions:
       on_success: step_2
       on_fail: failed_state
@@ -28,7 +28,7 @@ steps:
             type: StationOpDescriptor
             repeat_for_all_batches: True
             parameters: Null
-        args:
+        args: Null
     transitions:
       on_success: end_state
       on_fail: failed_state
