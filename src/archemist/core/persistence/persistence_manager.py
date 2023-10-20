@@ -10,8 +10,10 @@ from typing import Tuple
 
 
 class PersistenceManager:
-    def __init__(self, db_host: str, db_name: str):
-        self._db_name = db_name
+    def __init__(self, server_config_path: Path):
+        server_config = YamlHandler.load_server_settings_file(server_config_path)
+        db_name = server_config["db_name"]
+        db_host = server_config["mongodb_host"]
         self._db_handler = DatabaseHandler(db_host, db_name)
         
     def construct_workflow_from_config_file(self, config_file_path: Path) -> Tuple[InputState, WorkflowState, OutputState]:

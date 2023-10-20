@@ -7,8 +7,8 @@ from archemist.core.persistence.objects_getter import RobotsGetter, StationsGett
 class PersistenceManagerTest(unittest.TestCase):
 
     def setUp(self):
-        self.p_manager = PersistenceManager(db_name='archemist_test', db_host='mongodb://localhost:27017')
-        self._workflow_config_path = Path.joinpath(Path.cwd(), "tests/persistence/resources/good_wf_config.yaml")
+        db_config_path = Path.joinpath(Path.cwd(), "tests/persistence/resources/good_server_config.yaml")
+        self.p_manager = PersistenceManager(db_config_path)
 
     def tearDown(self) -> None:
         self.p_manager._db_handler.delete_database()
@@ -19,7 +19,9 @@ class PersistenceManagerTest(unittest.TestCase):
             self.p_manager.construct_workflow_from_db()
         
         # test constructing workflow from config file
-        in_state, wf_state, out_state = self.p_manager.construct_workflow_from_config_file(self._workflow_config_path)
+        workflow_config_path = Path.joinpath(Path.cwd(), "tests/persistence/resources/good_wf_config.yaml")
+        
+        in_state, wf_state, out_state = self.p_manager.construct_workflow_from_config_file(workflow_config_path)
         self.assertIsNotNone(in_state)
         self.assertIsNotNone(wf_state)
         self.assertIsNotNone(out_state)
