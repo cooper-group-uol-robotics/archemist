@@ -3,6 +3,8 @@ from archemist.core.state.state import InputState, WorkflowState, OutputState
 from archemist.core.processing.scheduler import RobotScheduler, RobotOpDescriptor
 from archemist.core.processing.processor import InputProcessor, WorkflowProcessor, OutputProcessor
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
+from archemist.core.util.enums import WorkflowManagerStatus
+
 from threading import Thread
 from pathlib import Path
 from time import sleep
@@ -24,27 +26,30 @@ class WorkflowManager:
         self._robot_scheduler = robot_scheduler
         self._recipes_watchdog = RecipeFilesWatchdog(recipes_dir)
 
+        self._status = WorkflowManagerStatus.INVALID
         self._processing_thread = None
-        self._running = False
-        self._pause_workflow = False
 
-    def start_workflow(self):
-        self._running = True
+    @property
+    def status(self) -> WorkflowManagerStatus:
+        return self._status
+
+    def start(self):
+        self._status = WorkflowManagerStatus.RUNNING
         self._processor_thread = Thread(target=self._process, daemon=True)
         self._recipes_watchdog.start()
         self._processor_thread.start()
         self._log_processor('processor thread is started')
 
-    def stop_processor(self):
-        self._running = False
+    def terminate(self):
+        self._status = WorkflowManagerStatus.INVALID
         self._processor_thread.join(1)
         self._log_processor('processor thread is terminated')
 
-    def pause_processor(self):
-        self._pause_workflow = True
+    def pause(self):
+        self._status = WorkflowManagerStatus.PAUSED
 
-    def resume_processor(self):
-        self._pause_workflow = False
+    def resume(self):
+        self._status = WorkflowManagerStatus.RUNNING
 
     def add_clean_batch(self):
         return self._input_processor.add_clean_batch()
@@ -59,8 +64,8 @@ class WorkflowManager:
         self._workflow_processor.robot_ops_queue.append(robot_op)
 
     def _process(self):
-        while self._running:
-            if not self._pause_workflow:
+        while self._status != WorkflowManagerStatus.INVALID:
+            if self._status == WorkflowManagerStatus.RUNNING:
                 self._queue_added_recipes()
                 
                 # input processor update 

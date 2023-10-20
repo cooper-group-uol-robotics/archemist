@@ -9,7 +9,7 @@ from archemist.core.processing.workflow_manager import WorkflowManager
 from archemist.core.state.robot import FixedRobot
 from archemist.core.state.station import Station
 from archemist.core.processing.handler import StationProcessHandler
-from archemist.core.util.enums import LotStatus
+from archemist.core.util.enums import LotStatus, WorkflowManagerStatus
 from typing import Callable, Any
 
 
@@ -91,13 +91,15 @@ class WorkflowManagerTest(unittest.TestCase):
         workflow_manager = WorkflowManager(input_state, workflow_state,
                                            output_state, robot_scheduler,
                                            self._recipes_path)
+        self.assertEqual(workflow_manager.status, WorkflowManagerStatus.INVALID)
         
         station_1_proc_handler = StationProcessHandler(self.station_1)
         station_2_proc_handler = StationProcessHandler(self.station_2)
        
         # test start workflow
         self.assertFalse(input_state.recipes_queue)
-        workflow_manager.start_workflow()
+        workflow_manager.start()
+        self.assertEqual(workflow_manager.status, WorkflowManagerStatus.RUNNING)
 
         self.waitTillAssertion(lambda: len(input_state.recipes_queue) == 2)
 
@@ -152,7 +154,16 @@ class WorkflowManagerTest(unittest.TestCase):
         self.waitTillAssertion(lambda: output_state.get_lots_num() == 0)
         self.assertEqual(len(output_state.procs_history), 2)
 
-        workflow_manager.stop_processor()
+        # test pause workflow
+        workflow_manager.pause()
+        self.assertEqual(workflow_manager.status, WorkflowManagerStatus.PAUSED)
+
+        # test resume workflow
+        workflow_manager.resume()
+        self.assertEqual(workflow_manager.status, WorkflowManagerStatus.RUNNING)
+
+        workflow_manager.terminate()
+        self.assertEqual(workflow_manager.status, WorkflowManagerStatus.INVALID)
         sleep(2)
         
 

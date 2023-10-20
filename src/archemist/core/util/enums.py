@@ -52,6 +52,11 @@ class LotStatus(Enum):
     NEED_REMOVAL = auto()
     FINISHED = auto()
 
+class WorkflowManagerStatus(Enum):
+    INVALID = auto()
+    RUNNING = auto()
+    PAUSED = auto()
+
 class TimeUnit(Enum):
     SECONDS = auto()
     MINUTES = auto()
