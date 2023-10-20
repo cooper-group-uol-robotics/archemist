@@ -1,0 +1,19 @@
+general:
+  name: test_archemist_recipe
+  id: 198
+steps:
+  - state_name: step_1
+    station:
+      type: Station
+      id: 11
+      process:
+        type: StationProcess
+        operations:
+          - name: some_op
+            type: StationOpDescriptor
+            repeat_for_all_batches: True
+            parameters: Null
+        args: Null
+    transitions:
+      on_success: end_state
+      on_fail: failed_state

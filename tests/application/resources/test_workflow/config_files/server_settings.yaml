@@ -1,0 +1,2 @@
+db_name: 'archemist_test'
+mongodb_host: 'mongodb://localhost:27017'

@@ -18,27 +18,27 @@ class ArchemistCLI:
                 'type': 'list',
                 'name': 'main_menu',
                 'message': 'Please select from one of the options below:',
-                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Remove waiting batches','Stations', 'Robots', 'Terminate']
+                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Clear need to remove lots','Stations', 'Robots', 'Terminate']
             }
         ]
         while True:
             try:
                 selection = prompt(main_menu)
                 if selection['main_menu'] == 'Start/Resume':
-                    print('Staring workflow')
+                    self._log_client('staring workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='start')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Pause':
-                    print('Pausing workflow')
+                    self._log_client('pausing workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='pause')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Add clean batch':
-                    print('Adding clean batch to the workflow')
+                    self._log_client('adding clean batch to the workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='add_batch')
                     self._client.send_json(msg.to_json())
-                elif selection['main_menu'] == 'Remove waiting batches':
-                    print('Removing waiting batches from the workflow')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='manual_batch_removal')
+                elif selection['main_menu'] == 'Clear need to remove lots':
+                    self._log_client('clearing all need to remove lots')
+                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='remove_all_lots')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Stations':
                     msg = CMDMessage(category=CMDCategory.STATION, cmd='get_list')
@@ -53,7 +53,7 @@ class ArchemistCLI:
                     robots_dict = json.loads(reply)
                     self._process_list_menu(robots_dict, CMDCategory.ROBOT)
                 elif selection['main_menu'] == 'Terminate':
-                    print('Terminating workflow')
+                    self._log_client('Terminating workflow')
                     msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='terminate')
                     self._client.send_json(msg.to_json())
                     break
@@ -86,15 +86,15 @@ class ArchemistCLI:
             'type': 'list',
             'name': 'station_menu',
             'message': 'Please select from one of the stations below:',
-            'choices': ['Repeate assigned op', 'Skip assigned op', 'Return']
+            'choices': ['Repeat assigned op', 'Skip assigned op', 'Return']
             }
         selection = prompt(station_menu)
-        if selection['station_menu'] == 'Repeate assigned op':
-            print(f'Repeating assigned op for station {station_name} with id: {station_id}')
+        if selection['station_menu'] == 'Repeat assigned op':
+            self._log_client(f'repeating assigned op for station {station_name} with id: {station_id}')
             msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_name,station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Skip assigned op':
-            print(f'Skipping assigned op for station {station_name} with id: {station_id}')
+            self._log_client(f'skipping assigned op for station {station_name} with id: {station_id}')
             msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_name,station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Return':
@@ -105,30 +105,19 @@ class ArchemistCLI:
             'type': 'list',
             'name': 'robot_menu',
             'message': 'Please select from one of the stations below:',
-            'choices': ['Repeate assigned op', 'Skip assigned op', 'Return']
+            'choices': ['Repeat assigned op', 'Skip assigned op', 'Return']
             }
-        if robot_name == 'KukaLBRIIWA':
-            robot_menu['choices'] = ['Send to charge', 'Stop charging', 'Send LBR resume signal'] + robot_menu['choices']
         selection = prompt(robot_menu)
-        if selection['robot_menu'] == 'Repeate assigned op':
-            print(f'Repeating assigned op for station {robot_name} with id: {robot_id}')
+        if selection['robot_menu'] == 'Repeat assigned op':
+            self._log_client(f'repeating assigned op for station {robot_name} with id: {robot_id}')
             msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_name,robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Skip assigned op':
-            print(f'Skipping assigned op for station {robot_name} with id: {robot_id}')
+            self._log_client(f'skipping assigned op for station {robot_name} with id: {robot_id}')
             msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_name,robot_id])
-            self._client.send_json(msg.to_json())
-        elif selection['robot_menu'] == 'Send to charge':
-            print(f'Sending {robot_name} with id: {robot_id} to charge')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='charge', params=[robot_name,robot_id])
-            self._client.send_json(msg.to_json())
-        elif selection['robot_menu'] == 'Stop charging':
-            print(f'Sending a stop charge message to {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='stop_charge', params=[robot_name,robot_id])
-            self._client.send_json(msg.to_json())
-        elif selection['robot_menu'] == 'Send LBR resume signal':
-            print(f'Sending a resume app message to {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='resume_app', params=[robot_name,robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Return':
             pass
+
+    def _log_client(self, message:str):
+        print(f'[{self.__class__.__name__}]: {message}')

@@ -1,12 +1,10 @@
 from time import sleep
-from archemist.core.processing.prcessor import WorkflowManager
+from archemist.core.processing.scheduler import PriorityQueueRobotScheduler
+from archemist.core.processing.workflow_manager import WorkflowManager
 from archemist.core.persistence.persistence_manager import PersistenceManager
-from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
-from archemist.core.persistence.yaml_handler import YamlHandler
-from archemist.core.util.location import Location
+from archemist.core.persistence.objects_getter import RobotsGetter, StationsGetter
+from archemist.core.util.enums import WorkflowManagerStatus
 from pathlib import Path
-from datetime import datetime
-from archemist.robots.kmriiwa_robot.state import KukaLBRMaintenanceTask
 from archemist.application.cmd_message import CMDCategory,CMDMessage
 import zmq
 import json
@@ -14,61 +12,60 @@ import json
 class ArchemistServer:
     def __init__(self, workflow_dir: Path, existing_db: bool=False) -> None:
         server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
-        self._server_config = YamlHandler.load_server_settings_file(server_config_file_path)
-        
         workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
         recipes_dir_path = workflow_dir.joinpath(f'recipes')
 
-        db_name = self._server_config['db_name']
 
-        # Construct state from config file
-        mongo_host= self._server_config['mongodb_host']
-        persistence_mgr = PersistenceManager(mongo_host,db_name)
-        if not existing_db:
-            print('constructing new workflow state from config file')
-            self._state = persistence_mgr.construct_state_from_config_file(workflow_config_file_path)
-        else:
-            print('reconstructing workflow state from existing database')
-            self._state = persistence_mgr.construct_state_from_db()
+        # construct persistence manager
+        self._persistence_mgr = PersistenceManager(server_config_file_path)
         
-        self._workflow_mgr = WorkflowManager(self._state)
+        # construct workflow
+        if not existing_db:
+            self._log_server('constructing new workflow state from config file')
+            in_state, wf_state, out_state = self._persistence_mgr.construct_workflow_from_config_file(workflow_config_file_path)
+        else:
+            self._log_server('reconstructing workflow state from existing database')
+            in_state, wf_state, out_state = self._persistence_mgr.construct_workflow_from_db()
+        
+        # construct workflow manager
+        robot_scheduler = PriorityQueueRobotScheduler()
+        self._workflow_mgr = WorkflowManager(in_state, wf_state, out_state, robot_scheduler, recipes_dir_path)
 
+        # start ARChemist server
         context = zmq.Context()
         self._server = context.socket(zmq.PAIR)
         self._server.bind('tcp://127.0.0.1:5555')
         
-        self._recipes_watchdog = RecipeFilesWatchdog(recipes_dir_path)
-        self._recipes_watchdog.start()
-        print(f'[{datetime.now().strftime("%H:%M:%S")}] Archemist server started')
+        self._log_server(f'ARChemist server started')
 
 
     def run(self):
         # spin
         while True:
-            self._queue_added_recipes()
             try:
                 json_msg = self._server.recv_json(flags=zmq.NOBLOCK)
                 msg = CMDMessage.from_json(json_msg)
                 if msg.category == CMDCategory.WORKFLOW:
                     if msg.cmd == 'start':
-                        if not self._workflow_mgr.is_running():
-                            self._workflow_mgr.start_processor()
-                        else:
-                            self._workflow_mgr.resume_processor()
+                        if self._workflow_mgr.status == WorkflowManagerStatus.INVALID:
+                            self._workflow_mgr.start()
+                        elif self._workflow_mgr.status == WorkflowManagerStatus.PAUSED:
+                            self._workflow_mgr.resume()
                     elif msg.cmd == 'pause':
-                        self._workflow_mgr.pause_processor()
+                        self._workflow_mgr.pause()
                     elif msg.cmd == 'add_batch':
-                        self._state.add_clean_batch()
-                    elif msg.cmd == 'manual_batch_removal':
-                        for station in self._state.stations:
-                            if station.batches_need_removal:
-                                station.batches_need_removal = False
+                        self._workflow_mgr.add_clean_batch()
+                    elif msg.cmd == 'remove_lot':
+                        lot_slot = msg.params[0]
+                        self._workflow_mgr.remove_lot(lot_slot)
+                    elif msg.cmd == 'remove_all_lots':
+                        self._workflow_mgr.remove_all_lots()
                     elif msg.cmd == 'terminate':
                         self.shut_down()
                         break
                 elif msg.category == CMDCategory.ROBOT:
                     if msg.cmd == 'get_list':
-                        robots = self._state.robots
+                        robots = RobotsGetter.get_robots()
                         robots_dict = {
                             'names': [robot.__class__.__name__ for robot in robots],
                             'ids':  [robot.id for robot in robots],
@@ -76,21 +73,14 @@ class ArchemistServer:
                         json_msg = json.dumps(robots_dict)
                         self._server.send_json(json_msg)
                     elif msg.cmd == 'repeat_op':
-                        robot = self._state.get_robot(msg.params[0], msg.params[1])
+                        robot = RobotsGetter.get_robot(msg.params[0], msg.params[1])
                         robot.repeat_assigned_op()
                     elif msg.cmd == 'skip_op':
-                        robot = self._state.get_robot(msg.params[0], msg.params[1])
+                        robot = RobotsGetter.get_robot(msg.params[0], msg.params[1])
                         robot.skip_assigned_op()
-                    elif msg.cmd == 'charge':
-                        #TODO make queue_robot_op accept specific robot 
-                        self._workflow_mgr.queue_robot_op(KukaLBRMaintenanceTask.from_args('ChargeRobot',[False,85]))
-                    elif msg.cmd == 'stop_charge':
-                        self._workflow_mgr.queue_robot_op(KukaLBRMaintenanceTask.from_args('StopCharge',[False]))
-                    elif msg.cmd == 'resume_app':
-                        self._workflow_mgr.queue_robot_op(KukaLBRMaintenanceTask.from_args('resumeLBRApp',[False]))
                 elif msg.category == CMDCategory.STATION:
                     if msg.cmd == 'get_list':
-                        stations = self._state.stations
+                        stations = StationsGetter.get_stations()
                         stations_dict = {
                             'names': [station.__class__.__name__ for station in stations],
                             'ids':  [station.id for station in stations],
@@ -98,10 +88,10 @@ class ArchemistServer:
                         json_msg = json.dumps(stations_dict)
                         self._server.send_json(json_msg)
                     elif msg.cmd == 'repeat_op':
-                        station = self._state.get_station(msg.params[0], msg.params[1])
+                        station = StationsGetter.get_station(msg.params[0], msg.params[1])
                         station.repeat_assigned_op()
                     elif msg.cmd == 'skip_op':
-                        station = self._state.get_station(msg.params[0], msg.params[1])
+                        station = StationsGetter.get_station(msg.params[0], msg.params[1])
                         station.skip_assigned_op()
             except zmq.ZMQError:
                 sleep(0.2)
@@ -109,14 +99,10 @@ class ArchemistServer:
                 self.shut_down()
                 break
 
-    def _queue_added_recipes(self):
-        while self._recipes_watchdog.recipes_queue:
-                recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
-                recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
-                self._workflow_mgr.queue_recipe(recipe_dict)
-                print(f'new recipe with id {recipe_dict["general"]["id"]} queued')
-
     def shut_down(self):
-        if self._workflow_mgr.is_running():
-            self._workflow_mgr.stop_processor()
-            self._server.close()
+        if self._workflow_mgr.status != WorkflowManagerStatus.INVALID:
+            self._workflow_mgr.terminate()
+        self._server.close()
+
+    def _log_server(self, message:str):
+        print(f'[{self.__class__.__name__}]: {message}')

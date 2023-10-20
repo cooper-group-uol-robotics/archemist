@@ -1,0 +1,54 @@
+general:
+  name: test_workflow
+
+workflow_input:
+  location:
+    node_id: 25
+    graph_id: 1
+  samples_per_batch: 3
+  batches_per_lot: 1
+  total_lot_capacity: 2
+  lot_input_process: Null
+
+workflow_output:
+  location:
+    node_id: 25
+    graph_id: 1
+  total_lot_capacity: 2
+  lots_need_manual_removal: True
+  lot_output_process: Null
+
+materials:
+  liquids:
+    - name: water
+      id: 1
+      amount: 5000
+      unit: mL
+      density: 1000
+      density_unit: kg/m3
+      details: 
+        source: pump_1
+      expiry_date: 31/03/2023
+  solids:
+    - name: salt
+      id: 1
+      amount: 500
+      unit: mg
+      details:
+        catridge_id: 123
+      expiry_date: 31/03/2023
+
+robots:
+  - type: Robot
+    id: 1
+    handler: GenericRobotHandler
+
+stations:
+  - type: Station
+    id: 11
+    location:
+      node_id: 25
+      graph_id: 1
+    total_lot_capacity: 1
+    handler: GenericStationHandler
+    properties: Null
