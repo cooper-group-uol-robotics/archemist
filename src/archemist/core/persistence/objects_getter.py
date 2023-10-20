@@ -6,7 +6,12 @@ from archemist.core.state.lot import Lot, LotModel
 from archemist.core.util.enums import LotStatus
 from archemist.core.state.batch import Batch, BatchModel
 from archemist.core.state.recipe import Recipe, RecipeModel
-from archemist.core.state.state import InputState, InputStateModel, OutputState, OutputStateModel
+from archemist.core.state.state import (InputState,
+                                        InputStateModel,
+                                        WorkflowState,
+                                        WorkflowStateModel,
+                                        OutputState,
+                                        OutputStateModel)
 from archemist.stations import import_stations_models
 from archemist.robots import import_robots_models
 
@@ -115,6 +120,11 @@ class StateGetter:
     def get_input_state() -> InputState:
         model = InputStateModel.objects(_type="InputStateModel").first()
         return InputState(model)
+
+    @staticmethod
+    def get_workflow_state() -> WorkflowState:
+        model = WorkflowStateModel.objects(_type="WorkflowStateModel").first()
+        return WorkflowState(model)
     
     @staticmethod
     def get_output_state() -> OutputState:

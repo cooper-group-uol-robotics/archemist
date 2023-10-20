@@ -7,7 +7,7 @@ from archemist.core.state.station import Station
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
-from archemist.core.state.state import InputState, OutputState
+from archemist.core.state.state import InputState, OutputState, WorkflowState
 from archemist.core.persistence.objects_getter import (MaterialsGetter,
                                                        StationsGetter,
                                                        RobotsGetter,
@@ -164,6 +164,9 @@ class ObjectsGetterTest(unittest.TestCase):
         }
         input_state = InputState.from_dict(input_dict)
 
+        # construct workflow state
+        workflow_state = WorkflowState.from_args("test_workflow")
+
         # construct ouput state
         output_dict = {
             "location":  {'node_id': 12, 'graph_id': 7},
@@ -264,6 +267,11 @@ class ObjectsGetterTest(unittest.TestCase):
         input_state = StateGetter.get_input_state()
         self.assertIsNotNone(input_state)
         self.assertEqual(input_state.samples_per_batch, 3)
+
+        # test getting workflow state
+        workflow_state = StateGetter.get_workflow_state()
+        self.assertIsNotNone(workflow_state)
+        self.assertEqual(workflow_state.workflow_name, "test_workflow")
 
         # test getting output state
         output_state = StateGetter.get_output_state()
