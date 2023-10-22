@@ -24,15 +24,15 @@ class InputProcessor:
             new_batch = Batch.from_args(self._state.samples_per_batch, self._state.location)
             self._state.batches_queue.append(new_batch)
         else:
-            print("maximum number of batches is reached. Cannot add a new batch")
+            self._log("maximum number of batches is reached. Cannot add a new batch")
 
     def add_recipe(self, recipe_dict: Dict):
         new_recipe_id = recipe_dict["general"]["id"]
         if not RecipesGetter.recipe_exists(new_recipe_id):
             self._state.recipes_queue.append(Recipe.from_dict(recipe_dict))
-            print(f"new recipe with id {new_recipe_id} queued")
+            self._log(f"new recipe with id {new_recipe_id} queued")
         else:
-            print(f"recipe with id {new_recipe_id} already exists. Recipe is not added to queue")
+            self._log(f"recipe with id {new_recipe_id} already exists. Recipe is not added to queue")
 
     def process_lots(self):
         for slot, lot in self._state.lot_slots.items():
@@ -44,6 +44,7 @@ class InputProcessor:
                         new_lot_batches.append(self._state.batches_queue.pop(left=True))
                     new_lot = Lot.from_args(new_lot_batches)
                     self._state.lot_slots[slot] = new_lot
+                    self._log(f"{new_lot} is created")
             else:
                 if lot.status == LotStatus.CREATED:
                     if self._state.recipes_queue:
@@ -78,6 +79,7 @@ class InputProcessor:
                         self._state.proc_slots[slot] = None
                         self._state.procs_history.append(proc)
                         lot.status = LotStatus.READY_FOR_COLLECTION
+                        self._log(f"{lot} is ready for collection")
                         
     def retrieve_ready_for_collection_lots(self) -> List[Lot]:
         ready_for_collection_lots = []
@@ -87,6 +89,9 @@ class InputProcessor:
                 self._state.lot_slots[slot] = None
         
         return ready_for_collection_lots
+    
+    def _log(self, message:str):
+        print(f'[{self.__class__.__name__}]: {message}')
     
 class OutputProcessor:
     def __init__(self, output_state: OutputState):
@@ -103,6 +108,7 @@ class OutputProcessor:
         for slot, lot in self._state.lot_slots.items():
             if lot is None:
                 self._state.lot_slots[slot] = added_lot
+                self._log(f"{added_lot} is added to output slot {slot}")
                 break
 
     def process_lots(self):
@@ -132,20 +138,28 @@ class OutputProcessor:
                         self._state.procs_history.append(proc)
                         if self._state.lots_need_manual_removal:
                             lot.status = LotStatus.NEED_REMOVAL
+                            self._log(f"{lot} is waiting for manual removal")
                         else:
                             lot.status = LotStatus.FINISHED
                             self._state.lot_slots[slot] = None
+                            self._log(f"{lot} processing is finished")
 
     def remove_lot(self, slot: str):
         lot = self._state.lot_slots[slot]
-        lot.status = LotStatus.FINISHED
-        self._state.lot_slots[slot] = None
+        if lot and lot.status == LotStatus.NEED_REMOVAL:
+            lot.status = LotStatus.FINISHED
+            self._state.lot_slots[slot] = None
+            self._log(f"{lot} was manually removed. Lot processing is finished")
+        else:
+            self._log(f"unable to remove lot at output slot {slot}")
 
     def remove_all_lots(self):
         for slot, lot in self._state.lot_slots.items():
             if lot and lot.status == LotStatus.NEED_REMOVAL:
-                lot.status = LotStatus.FINISHED
-                self._state.lot_slots[slot] = None
+                self.remove_lot(slot)
+
+    def _log(self, message:str):
+        print(f'[{self.__class__.__name__}]: {message}')
 
 class WorkflowProcessor:
     def __init__(self, workflow_state: WorkflowState):
