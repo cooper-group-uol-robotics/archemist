@@ -1,8 +1,9 @@
 from archemist.application.archemist_server import ArchemistServer
 from archemist.application.archemist_cli import ArchemistCLI
 from archemist.core.persistence.yaml_handler import YamlHandler
-from archemist.core.persistence.persistence_manager import PersistenceManager
+from archemist.core.processing.handler import StationHandler, RobotHandler
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory
+from archemist.core.persistence.objects_getter import StationsGetter, RobotsGetter
 from archemist.core.persistence.db_handler import DatabaseHandler
 import multiprocessing as mp
 from pathlib import Path
@@ -25,16 +26,18 @@ def run_local_server(args):
     server = ArchemistServer(workflow_dir,existing_db)
     server.run()
 
-def run_station_handler(db_host, db_name, station, use_sim_handler):
-        p_manager = PersistenceManager(db_host, db_name) # required to establish connection with db
-        p_manager.load_station_models()  # required to load db models
-        handler = StationFactory.create_handler(station, use_sim_handler)
+def run_station_handler(db_host, db_name, station_object_id, use_sim_handler):
+        db_handler = DatabaseHandler(db_host, db_name) # needed to establish connection with db
+        station = StationFactory.create_from_object_id(station_object_id)
+        handler = StationHandler(station, use_sim_handler)
+        handler.initialise()
         handler.run()
 
-def run_robot_handler(db_host, db_name, robot, use_sim_handler):
-    p_manager = PersistenceManager(db_host, db_name) # required to establish connection with db
-    p_manager.load_robot_models() # required to load db models
-    handler = RobotFactory.create_handler(robot, use_sim_handler)
+def run_robot_handler(db_host, db_name, robot_object_id, use_sim_handler):
+    db_handler = DatabaseHandler(db_host, db_name) # needed to establish connection with db
+    robot = RobotFactory.create_from_object_id(robot_object_id)
+    handler = RobotHandler(robot, use_sim_handler)
+    handler.initialise()
     handler.run()
 
 def launch_handler(args):
@@ -47,34 +50,33 @@ def launch_handler(args):
     db_host = server_settings['mongodb_host']
 
     try:
-        p_manager = PersistenceManager(db_host, db_name)
+        db_handler = DatabaseHandler(db_host, db_name)
 
         start_time = time.time()
-        while not p_manager.is_db_state_existing():
+        while not db_handler.is_database_existing():
             print('waiting on database state to exist')
             time.sleep(0.5)
             if time.time() - start_time > args.timeout:
                 sys.exit('timeout reached! no db state is available. Exiting')
 
-        state = p_manager.construct_state_from_db()
         mp.set_start_method('spawn') # to avoid forking error with mongodb
         # define robot handlers processes
         robot_handlers_processes = []
-        for robot in state.robots:
+        for robot in RobotsGetter.get_robots():
             kwargs = {
                 'db_host': db_host,
                 'db_name': db_name,
-                'robot': robot,
+                'robot_object_id': robot.object_id,
                 'use_sim_handler': args.sim_mode
                 }
             robot_handlers_processes.append(mp.Process(target=run_robot_handler, kwargs=kwargs))
         # define station handlers processes
         station_handlers_processes = []
-        for station in state.stations:
+        for station in StationsGetter.get_stations():
             kwargs = {
                 'db_host': db_host,
                 'db_name': db_name,
-                'station': station,
+                'station_object_id': station.object_id,
                 'use_sim_handler': args.sim_mode
                 }
             station_handlers_processes.append(mp.Process(target=run_station_handler, kwargs=kwargs))
@@ -97,7 +99,7 @@ def main():
 
     # start_server parser
     local_server_parser = subparsers.add_parser('start_server', help='command to run ARCHemist server locally')
-    local_server_parser.add_argument('-path', dest='workflow_path', action='store', type=str,
+    local_server_parser.add_argument('-p', '--path', dest='workflow_path', action='store', type=str,
                     help='path to the workflow directory', required=True)
     local_server_parser.add_argument('--exists', dest='existing_db', action='store_true',
                     help='run server with already existing database')
@@ -111,7 +113,7 @@ def main():
     launch_handlers_parser = subparsers.add_parser('launch_handlers', help='command to Launch ARCHemist workflow handlers')
     launch_handlers_parser.add_argument('--sim', dest='sim_mode', action='store_true',
                     help='run the given recipe continuously in test mode')
-    launch_handlers_parser.add_argument('-path', dest='workflow_dir', action='store', type=str,
+    launch_handlers_parser.add_argument('-p', '--path', dest='workflow_dir', action='store', type=str,
                     help='path to the workflow directory', required=True)
     launch_handlers_parser.add_argument('-timeout', dest='timeout', action='store', type=int,
                     default=5, help='timeout for db state to be available')
