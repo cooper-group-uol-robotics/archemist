@@ -58,6 +58,8 @@ class StationProcess:
     @classmethod
     def _set_model_common_fields(cls, proc_model: StationProcessModel, associated_station: str,
                                  lot: Lot, key_op_dicts_list: List[Dict[str, Any]], **kwargs):
+        proc_model._type = cls.__name__
+        proc_model._module = cls.__module__
         proc_model.lot = lot.model
         proc_model.associated_station = associated_station
         
@@ -76,8 +78,6 @@ class StationProcess:
     def from_args(cls, lot: Lot, key_op_dicts_list: List[Dict[str, Any]] = None, **kwargs):
         model = StationProcessModel()
         cls._set_model_common_fields(model, "Station", lot, key_op_dicts_list, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
         model.save()
         return cls(model)
     
@@ -174,9 +174,10 @@ class StationProcess:
         if self.m_state == "final_state":
             self._model_proxy.status = ProcessStatus.FINISHED
     
-    def request_robot_op(self, robot_op: Type[RobotOpDescriptor]):
+    def request_robot_ops(self, robot_ops: List[Type[RobotOpDescriptor]]):
         if not self.skip_robot_ops:
-            self.req_robot_ops.append(robot_op)
+            for robot_op in robot_ops:
+                self.req_robot_ops.append(robot_op)
             self._model_proxy.status = ProcessStatus.REQUESTING_ROBOT_OPS
 
     def are_req_robot_ops_completed(self) -> bool:

@@ -53,7 +53,7 @@ class TestFullProcess(StationProcess):
 
     def request_pickup_batch(self):
         robot_op = RobotOpDescriptor.from_args()
-        self.request_robot_op(robot_op)
+        self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
         station_op = self.create_key_op("some_op")

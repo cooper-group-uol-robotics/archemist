@@ -36,7 +36,7 @@ class TestProcess(StationProcess):
 
     def request_pickup_batch(self):
         robot_op = RobotOpDescriptor.from_args()
-        self.request_robot_op(robot_op)
+        self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
         station_op = self.create_key_op("some_op")
@@ -120,7 +120,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.robot_ops_history), 0)
         
         robot_op = RobotOpDescriptor.from_args()
-        proc.request_robot_op(robot_op)
+        proc.request_robot_ops([robot_op])
         self.assertFalse(proc.are_req_robot_ops_completed())
         self.assertEqual(len(proc.req_robot_ops), 1)
         self.assertEqual(proc.status, ProcessStatus.REQUESTING_ROBOT_OPS)
