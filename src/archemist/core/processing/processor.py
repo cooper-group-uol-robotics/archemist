@@ -61,9 +61,10 @@ class InputProcessor:
                             new_proc_dict = self._state.lot_input_process
                         else:
                             new_proc_dict = {"type": "StationProcess", "args": None}
-
+                        
                         new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
                         self._state.proc_slots[slot] = new_proc
+                        new_proc.processing_slot = slot
                         lot.status = LotStatus.ONBOARDING
 
                 elif lot.status == LotStatus.ONBOARDING:
@@ -122,6 +123,7 @@ class OutputProcessor:
 
                     new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
                     self._state.proc_slots[slot] = new_proc
+                    new_proc.processing_slot = slot
                     lot.status = LotStatus.ONBOARDING
                 
                 elif lot.status == LotStatus.ONBOARDING:

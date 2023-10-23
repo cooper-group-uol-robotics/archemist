@@ -15,8 +15,11 @@ from bson.objectid import ObjectId
 
 
 def _import_class_from_module(cls_name: str, module_path: str) -> Any:
-    module = importlib.import_module(module_path)
-    return getattr(module, cls_name, None)
+    try:
+        module = importlib.import_module(module_path)
+        return getattr(module, cls_name, None)
+    except ModuleNotFoundError:
+        return None
 
 
 class RobotFactory:
@@ -186,12 +189,23 @@ class ProcessFactory:
             if station_module:
                 cls = _import_class_from_module(proc_type, station_module)
             else:
+                found = False
+                # first search all the station processes
                 pkg = importlib.import_module('archemist.stations')
                 for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
                     process_module = f'{module_itr.name}.process'
                     cls = _import_class_from_module(proc_type, process_module)
                     if cls: 
+                        found = True
                         break
+                
+                # if not found search processes module
+                if not found:
+                    pkg = importlib.import_module('archemist.processes')
+                    for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
+                        cls = _import_class_from_module(proc_type, module_itr.name)
+                        if cls:
+                            break
 
         if cls:
             return cls.from_args(lot, key_process_ops, **args_dict)
