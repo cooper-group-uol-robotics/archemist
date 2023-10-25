@@ -27,8 +27,19 @@ class OpResult:
         return cls(model)
 
     @property
+    def model(self) -> Type[OpResultModel]:
+        return self._model_proxy.model
+    
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
+
+    @property
     def origin_op(self) -> ObjectId:
         return self._model_proxy.origin_op
+    
+    def __eq__(self, __value: object) -> bool:
+        return self.object_id == __value.object_id
     
 class MaterialOpResult(OpResult):
     def __init__(self, result_model: Union[MaterialOpResultModel, ModelProxy]):

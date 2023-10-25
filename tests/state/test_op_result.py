@@ -18,7 +18,9 @@ class OpResultTest(unittest.TestCase):
         mock_origin_op = ObjectId()
         op_result = OpResult.from_args(origin_op=mock_origin_op)
         self.assertIsNotNone(op_result)
+        self.assertIsNotNone(op_result.object_id)
         self.assertEqual(op_result.origin_op, mock_origin_op)
+
 
     def test_material_op_result(self):
         mock_origin_op = ObjectId()

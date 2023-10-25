@@ -2,9 +2,10 @@ import unittest
 from mongoengine import connect
 
 from archemist.core.persistence.object_factory import RobotFactory, RobotOpFactory, StationFactory,\
-                                                        StationOpFactory, ProcessFactory
+                                                        StationOpFactory, ProcessFactory, OpResultFactory
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.processing.handler import SimStationOpHandler, SimRobotOpHandler
+from archemist.core.state.op_result import OpResult, ProcessOpResult
 from archemist.core.util.location import Location
 from bson.objectid import ObjectId
 
@@ -65,6 +66,32 @@ class ObjectFactoryTest(unittest.TestCase):
         # test construction from object id
         station_op_from_object_id = StationOpFactory.create_from_object_id(station_op_from_args.object_id)
         self.assertEqual(station_op_from_args, station_op_from_object_id)
+
+        # TODO test station_op from archemist.stations
+
+    def test_op_result_factory(self):
+        # construct result_op 
+        op_result = OpResult.from_args(origin_op=ObjectId())
+        
+        # test construction from model
+        op_result_from_model = OpResultFactory.create_from_model(op_result.model)
+        self.assertEqual(op_result, op_result_from_model)
+
+        # test construction from object id
+        op_result_from_object_id = OpResultFactory.create_from_object_id(op_result.object_id)
+        self.assertEqual(op_result, op_result_from_object_id)
+
+        # construct process_op
+        parameters_dict = {"speed": 500} 
+        process_op_result = ProcessOpResult.from_args(origin_op=ObjectId(), parameters=parameters_dict)
+        
+        # test construction from model
+        op_result_from_model = OpResultFactory.create_from_model(process_op_result.model)
+        self.assertEqual(process_op_result, op_result_from_model)
+
+        # test construction from object id
+        op_result_from_object_id = OpResultFactory.create_from_object_id(process_op_result.object_id)
+        self.assertEqual(process_op_result, op_result_from_object_id)
 
         # TODO test station_op from archemist.stations
 
