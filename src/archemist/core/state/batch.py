@@ -1,43 +1,10 @@
 from datetime import datetime
-from typing import Any, List, Union, Dict, Type
+from typing import List, Union
 from bson.objectid import ObjectId
-from archemist.core.persistence.object_factory import StationOpFactory
-from archemist.core.models.batch_model import SampleModel,BatchModel
-from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.persistence.models_proxy import EmbedModelProxy, ModelProxy, ListProxy
+from archemist.core.models.batch_model import BatchModel
+from archemist.core.state.sample import Sample
+from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.util import Location
-
-class Sample:
-    def __init__(self, sample_model: Union[SampleModel, EmbedModelProxy]):
-        self._model_proxy = sample_model
-
-    @property
-    def materials(self) -> List[Dict]:
-        return self._model_proxy.materials
-
-    @property
-    def details(self) -> Dict:
-        return self._model_proxy.details
-
-    @details.setter
-    def details(self, new_details: Dict):
-        self._model_proxy.details = new_details
-
-    @property
-    def station_ops(self) -> List[Type[StationOpDescriptor]]:
-        return ListProxy(self._model_proxy.station_ops, StationOpFactory.create_from_model)
-
-    def add_station_op(self, station_op: Any):
-        self._model_proxy.station_ops.append(station_op.model)
-
-    def add_material(self, material_name: str, material_id: int, amount: float, unit: str):
-        added_material_dict = {
-            "name": material_name,
-            "id": material_id,
-            "amount": amount,
-            "unit": unit
-        }
-        self._model_proxy.materials.append(added_material_dict)
 
 class Batch:
     def __init__(self, batch_model: Union[BatchModel, ModelProxy]) -> None:
@@ -50,8 +17,12 @@ class Batch:
     def from_args(cls, num_samples: int, location:Location=None):
         model = BatchModel()
         model.location = location.to_dict() if location else {}
-        model.samples.extend([SampleModel() for _ in range(num_samples)])
         model.save()
+        samples = []
+        for _ in range(num_samples):
+            sample = Sample.from_args(model.id)
+            samples.append(sample.model)
+        model.update(samples=samples)
         return cls(model)
 
     @classmethod
