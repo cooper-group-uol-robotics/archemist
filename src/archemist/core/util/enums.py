@@ -27,7 +27,7 @@ class OpState(Enum):
     TO_BE_REPEATED = auto()
     TO_BE_SKIPPED = auto()
 
-class OpResult(Enum):
+class OpOutcome(Enum):
     SUCCEEDED = auto()
     FAILED = auto()
     SKIPPED = auto()

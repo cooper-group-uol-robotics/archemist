@@ -6,7 +6,7 @@ from archemist.core.state.station import Station
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.processing.handler import RobotHandler, StationHandler, StationProcessHandler
-from archemist.core.util.enums import RobotState, StationState, OpState, OpResult
+from archemist.core.util.enums import RobotState, StationState, OpState, OpOutcome
 from archemist.core.util.location import Location
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -137,7 +137,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(robot_op.end_timestamp)
 
     def test_robot_op_handler_with_repeat(self):
@@ -175,7 +175,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
     def test_robot_op_handler_with_skip(self):
         robot = Robot.from_dict(self.robot_dict)
@@ -206,7 +206,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SKIPPED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SKIPPED)
 
     def test_robot_op_handler_with_wait_op(self):
         robot = Robot.from_dict(self.robot_dict)
@@ -229,7 +229,7 @@ class HandlerTest(unittest.TestCase):
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(robot_op.start_timestamp)
         self.assertIsNotNone(robot.assigned_op)
 
@@ -237,13 +237,13 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         self.assertIsNotNone(robot.assigned_op)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         self.assertIsNotNone(robot.assigned_op)
         self.assertTrue(robot_op.has_result)
-        self.assertEqual(robot_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
         
         sleep(3) # the wait op should be complete
@@ -277,7 +277,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
         self.assertTrue(station_op.has_result)
-        self.assertEqual(station_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
 
     def test_station_op_handler_with_repeat(self):
@@ -315,7 +315,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
         self.assertTrue(station_op.has_result)
-        self.assertEqual(station_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
 
     def test_op_station_handler_with_skip(self):
@@ -345,7 +345,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
         self.assertTrue(station_op.has_result)
-        self.assertEqual(station_op.result, OpResult.SKIPPED)
+        self.assertEqual(station_op.outcome, OpOutcome.SKIPPED)
         self.assertIsNotNone(station_op.end_timestamp)
 
     def test_station_process_handler_with_added_procs(self):
@@ -601,7 +601,7 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(station_procs_dict["1"].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
         self.assertEqual(len(station.requested_robot_ops), 2)
         robot_op = station.requested_robot_ops.pop(left=True)
-        robot_op.complete_op(None, OpResult.SUCCEEDED)
+        robot_op.complete_op(None, OpOutcome.SUCCEEDED)
 
         # test processes state advancement
         proc_handler.handle()
@@ -612,7 +612,7 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(len(station.requested_robot_ops), 1)
         self.assertEqual(len(station._queued_ops), 1)
         station_op = station._queued_ops.pop()
-        station_op.complete_op(OpResult.SUCCEEDED)
+        station_op.complete_op(OpOutcome.SUCCEEDED)
 
         # test processes state advancement
         proc_handler.handle()

@@ -1,7 +1,7 @@
 import unittest
 from archemist.core.state.robot import RobotTaskOpDescriptor
 from mongoengine import connect
-from archemist.core.state.station import Station, StationState, OpState, OpResult
+from archemist.core.state.station import Station, StationState, OpState, OpOutcome
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -173,7 +173,7 @@ class StationTest(unittest.TestCase):
         
         # complete station op1
         self.station.assigned_op.add_start_timestamp()
-        self.station.complete_assigned_op(OpResult.SUCCEEDED)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertEqual(len(self.station.ops_history), 1)
@@ -182,7 +182,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(complete_op, station_op_1)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
-        self.assertEqual(complete_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(complete_op.outcome, OpOutcome.SUCCEEDED)
 
         # process station op 2
 
@@ -201,7 +201,7 @@ class StationTest(unittest.TestCase):
 
         # complete station op 2
         self.station.assigned_op.add_start_timestamp()
-        self.station.complete_assigned_op(OpResult.SUCCEEDED)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertEqual(len(self.station.ops_history), 2)
@@ -209,7 +209,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(complete_op, station_op_2)
         self.assertIsNotNone(complete_op.start_timestamp)
         self.assertTrue(complete_op.has_result)
-        self.assertEqual(complete_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(complete_op.outcome, OpOutcome.SUCCEEDED)
         
     def test_process_members(self):
         # assert empty members

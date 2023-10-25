@@ -1,5 +1,5 @@
 from mongoengine import Document, fields
-from archemist.core.util.enums import OpResult
+from archemist.core.util.enums import OpOutcome
 
 class StationOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
@@ -8,7 +8,7 @@ class StationOpDescriptorModel(Document):
     associated_station = fields.StringField(required=True) # station associated with the op
 
     has_result = fields.BooleanField(default=False)
-    result = fields.EnumField(OpResult, null=True)
+    outcome = fields.EnumField(OpOutcome, null=True)
     start_timestamp = fields.ComplexDateTimeField(null=True)
     end_timestamp = fields.ComplexDateTimeField(null=True)
 

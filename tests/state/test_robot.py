@@ -1,7 +1,7 @@
 from datetime import datetime
 from bson.objectid import ObjectId
 import unittest
-from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState, OpResult
+from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState, OpOutcome
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot_op import RobotTaskOpDescriptor
@@ -94,7 +94,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.attending_to, station_object_id)
        
         # complete robot job
-        robot.complete_assigned_op(OpResult.SUCCEEDED)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertEqual(robot.attending_to, station_object_id)
@@ -105,7 +105,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(history[0], robot_op_1)
         self.assertEqual(history[0].executed_by,  robot.model.id)
         self.assertTrue(history[0].has_result)
-        self.assertEqual(history[0].result, OpResult.SUCCEEDED)
+        self.assertEqual(history[0].outcome, OpOutcome.SUCCEEDED)
 
         # update assigned op
         robot.update_assigned_op()
@@ -113,7 +113,7 @@ class RobotTest(unittest.TestCase):
         self.assertFalse(robot.queued_ops)
 
         # test complete assigned op without clearning slot
-        robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
         self.assertEqual(len(robot.ops_history), 1)
@@ -173,7 +173,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.free_lot_capacity, 0)
 
         robot.update_assigned_op()
-        robot.complete_assigned_op(OpResult.SUCCEEDED)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertEqual(robot.free_batch_capacity, 1)
         self.assertTrue(loading_robot_op_1.related_batch in robot.onboard_batches)
@@ -181,7 +181,7 @@ class RobotTest(unittest.TestCase):
         robot.add_op(loading_robot_op_2)
         self.assertEqual(len(robot.consigned_lots), 1)
         robot.update_assigned_op()
-        robot.complete_assigned_op(OpResult.SUCCEEDED)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.onboard_batches), 2)
         self.assertEqual(robot.free_batch_capacity, 0)
         self.assertTrue(loading_robot_op_2.related_batch in robot.onboard_batches)
@@ -196,7 +196,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.free_batch_capacity, 0)
         robot.add_op(unloading_robot_op_1)
         robot.update_assigned_op()
-        robot.complete_assigned_op(OpResult.SUCCEEDED)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.consigned_lots), 1)
         self.assertEqual(len(robot.onboard_batches), 1)
         self.assertFalse(loading_robot_op_1.related_batch in robot.onboard_batches)
@@ -204,7 +204,7 @@ class RobotTest(unittest.TestCase):
 
         robot.add_op(unloading_robot_op_2)
         robot.update_assigned_op()
-        robot.complete_assigned_op(OpResult.SUCCEEDED)
+        robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.consigned_lots), 0)
         self.assertEqual(robot.free_lot_capacity, 1)
         self.assertEqual(len(robot.onboard_batches), 0)

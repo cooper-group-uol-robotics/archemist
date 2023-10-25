@@ -1,7 +1,7 @@
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor
-from archemist.core.util.enums import RobotState,RobotTaskType, OpState, OpResult
+from archemist.core.util.enums import RobotState,RobotTaskType, OpState, OpOutcome
 from archemist.core.util.location import Location
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
@@ -116,10 +116,10 @@ class Robot:
         self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, result: OpResult, clear_assigned_op: bool=True):
+    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
-            op.complete_op(self._model_proxy.object_id, result)
+            op.complete_op(self._model_proxy.object_id, outcome)
             self._log_robot(f'{op} is complete')
             if clear_assigned_op:
                 self.clear_assigned_op()
@@ -208,7 +208,7 @@ class MobileRobot(Robot):
                 self._log_robot(f"{robot_op} cannot be added to the robot queue since robot has no free lot capacity")
         return super().add_op(robot_op)
 
-    def complete_assigned_op(self, result: OpResult, clear_assigned_op: bool=True):
+    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
             if isinstance(op, RobotTaskOpDescriptor):
@@ -218,4 +218,4 @@ class MobileRobot(Robot):
                     self.onboard_batches.remove(op.related_batch)
                     if all(batch not in self.onboard_batches for batch in op.related_lot.batches):
                         self.consigned_lots.remove(op.related_lot)
-            super().complete_assigned_op(result, clear_assigned_op)
+            super().complete_assigned_op(outcome, clear_assigned_op)

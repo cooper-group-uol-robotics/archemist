@@ -13,7 +13,7 @@ from archemist.core.processing.scheduler import PriorityQueueRobotScheduler
 from archemist.core.state.station import Station
 from archemist.core.state.lot import Batch, Lot
 from archemist.core.state.recipe import Recipe
-from archemist.core.util.enums import OpResult
+from archemist.core.util.enums import OpOutcome
 from archemist.core.util.location import Location
 
 class SchedulerTest(unittest.TestCase):
@@ -253,7 +253,7 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(len(self.workflow_state.robot_ops_queue), 1)
 
         # complete the assigned op -> op_1
-        self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.fixed_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> op_3 not added since robot attending to requester
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -277,7 +277,7 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(self.fixed_robot.queued_ops[0], op_4)
 
         # complete the assigned op -> op_2
-        self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.fixed_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # upate the assigned op -> op_4
         self.fixed_robot.update_assigned_op()
@@ -293,11 +293,11 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(self.fixed_robot.queued_ops[0], op_5)
 
         # complete the assigned op -> op_4
-        self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.fixed_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> op_5
         self.fixed_robot.update_assigned_op()
-        self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.fixed_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> robot_queue should be [op_3]
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -307,7 +307,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it
         self.fixed_robot.update_assigned_op()
-        self.fixed_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.fixed_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertFalse(self.fixed_robot.queued_ops)
         self.assertIsNone(self.fixed_robot.assigned_op)
 
@@ -365,7 +365,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s1_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> no change 
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -373,7 +373,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s1_load_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 1 and remove lot
         self.station_1.finish_processing_lot(lot_1)
@@ -406,11 +406,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_nav_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # schedule ops -> no change since robot is waiting and also has no space
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -441,7 +441,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> no change since robot is assigned to s1
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -449,7 +449,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> no change since s2 is full
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -470,7 +470,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # create ops queue
         s2_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
@@ -497,11 +497,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s2_load_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 2 and remove lot
         self.station_2.finish_processing_lot(lot_1)
@@ -535,11 +535,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_man_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s3 robot ops
         s3_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
@@ -566,11 +566,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> robot_queue should be [s1_load_op_3, s1_load_op_4]
         # while req_robot_queue be []
@@ -581,11 +581,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s1_load_op_3
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s1_load_op_4
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 1 and remove lot
         self.station_1.finish_processing_lot(lot_2)
@@ -613,11 +613,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_nav_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s2 robot ops
         s2_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
@@ -644,11 +644,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s2_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # schedule ops -> no change since queue is empty
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -669,7 +669,7 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s2 ops
         s2_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
@@ -714,11 +714,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_load_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 3 and remove lot
         self.station_3.finish_processing_lot(lot_1)
@@ -750,11 +750,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s4_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s4_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 3 and remove lot
         self.station_4.finish_processing_lot(lot_1)
@@ -772,11 +772,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s2_load_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 2 and remove lot
         self.station_2.finish_processing_lot(lot_2)
@@ -806,11 +806,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_man_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s3 robot ops
         s3_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
@@ -837,11 +837,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # add s3 ops
         s3_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
@@ -865,11 +865,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s3_load_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 3 and remove lot
         self.station_3.finish_processing_lot(lot_2)
@@ -901,11 +901,11 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s4_unload_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # update the assigned op and complete it -> s4_unload_op_2
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpResult.SUCCEEDED)
+        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED)
 
         # complete lot processing for station 3 and remove lot
         self.station_4.finish_processing_lot(lot_2)

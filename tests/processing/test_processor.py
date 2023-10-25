@@ -11,7 +11,7 @@ from archemist.core.state.recipe import Recipe
 from archemist.core.state.state import InputState, WorkflowState, OutputState
 from archemist.core.processing.processor import InputProcessor, OutputProcessor, WorkflowProcessor
 from archemist.core.processing.handler import StationProcessHandler
-from archemist.core.util.enums import LotStatus, OpResult
+from archemist.core.util.enums import LotStatus, OpOutcome
 
 class TestProcess1(StationProcess):
 
@@ -419,9 +419,9 @@ class ProcessorTest(unittest.TestCase):
 
         # complete req robot ops to be able to advance procs
         req_robot_op_1 = req_robot_ops.pop(left=True)
-        req_robot_op_1.complete_op(None, OpResult.SUCCEEDED)
+        req_robot_op_1.complete_op(None, OpOutcome.SUCCEEDED)
         req_robot_op_2 = req_robot_ops.pop(left=True)
-        req_robot_op_2.complete_op(None, OpResult.SUCCEEDED)
+        req_robot_op_2.complete_op(None, OpOutcome.SUCCEEDED)
 
         # tick station_1_proc_handler to advance state
         station_1_proc_handler.handle()
@@ -472,9 +472,9 @@ class ProcessorTest(unittest.TestCase):
 
         # complete req robot ops to be able to advance procs
         req_robot_op_1 = req_robot_ops.pop(left=True)
-        req_robot_op_1.complete_op(None, OpResult.SUCCEEDED)
+        req_robot_op_1.complete_op(None, OpOutcome.SUCCEEDED)
         req_robot_op_2 = req_robot_ops.pop(left=True)
-        req_robot_op_2.complete_op(None, OpResult.SUCCEEDED)
+        req_robot_op_2.complete_op(None, OpOutcome.SUCCEEDED)
 
         # tick station_2_proc_handler to advance proc states
         station_2_proc_handler.handle()

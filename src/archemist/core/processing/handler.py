@@ -4,7 +4,7 @@ from archemist.core.state.robot import Robot
 from archemist.core.state.robot_op import RobotWaitOpDescriptor
 from archemist.core.state.station import Station, OpState
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
-from archemist.core.util.enums import StationState, RobotState, OpResult, ProcessStatus
+from archemist.core.util.enums import StationState, RobotState, OpOutcome, ProcessStatus
 from typing import Tuple,Dict
 from abc import ABC, abstractmethod
 
@@ -22,7 +22,7 @@ class OpHandler(ABC):
         pass
 
     @abstractmethod
-    def get_op_result(self) -> Tuple[OpResult,Dict]:
+    def get_op_result(self) -> Tuple[OpOutcome,Dict]:
         pass
 
     @abstractmethod
@@ -47,7 +47,7 @@ class StationOpHandler(OpHandler):
             self._station.set_assigned_op_to_execute()
             self.execute_op()
         elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
-            self._station.complete_assigned_op(OpResult.SKIPPED)
+            self._station.complete_assigned_op(OpOutcome.SKIPPED)
     def run(self):
         try:
             while True:
@@ -73,12 +73,12 @@ class RobotOpHandler(OpHandler):
             self._robot.set_assigned_op_to_execute()
             self.execute_op()
         elif self._robot.assigned_op_state == OpState.TO_BE_SKIPPED:
-            self._robot.complete_assigned_op(OpResult.SKIPPED)
+            self._robot.complete_assigned_op(OpOutcome.SKIPPED)
 
     def _begin_execution(self):
         self._robot.set_assigned_op_to_execute()
         if isinstance(self._robot.assigned_op, RobotWaitOpDescriptor):
-            self._robot.complete_assigned_op(OpResult.SUCCEEDED, clear_assigned_op=False)
+            self._robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
         else:
             self.execute_op()
 
@@ -232,8 +232,8 @@ class SimRobotOpHandler(RobotOpHandler):
     def is_op_execution_complete(self):
             return True
 
-    def get_op_result(self) -> OpResult:
-        return OpResult.SUCCEEDED
+    def get_op_result(self) -> OpOutcome:
+        return OpOutcome.SUCCEEDED
     
     def shut_down(self):
          print(f"[{self.__class__.__name__}] is shutting down")
@@ -253,8 +253,8 @@ class SimStationOpHandler(StationOpHandler):
     def is_op_execution_complete(self):
             return True
 
-    def get_op_result(self) -> Tuple[OpResult, Dict]:
-        return OpResult.SUCCEEDED, {}
+    def get_op_result(self) -> Tuple[OpOutcome, Dict]:
+        return OpOutcome.SUCCEEDED, {}
     
     def shut_down(self):
          print(f"[{self.__class__.__name__}] is shutting down")

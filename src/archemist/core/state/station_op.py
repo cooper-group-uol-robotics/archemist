@@ -3,7 +3,7 @@ from typing import Union
 from datetime import datetime
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.models.station_op_model import StationOpDescriptorModel
-from archemist.core.util.enums import OpResult
+from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
 class StationOpDescriptor:
@@ -51,8 +51,8 @@ class StationOpDescriptor:
         return self._model_proxy.has_result
 
     @property
-    def result(self) -> OpResult:
-        return self._model_proxy.result
+    def outcome(self) -> OpOutcome:
+        return self._model_proxy.outcome
 
     @property
     def start_timestamp(self) -> datetime:
@@ -73,9 +73,9 @@ class StationOpDescriptor:
     def add_start_timestamp(self):
         self._model_proxy.start_timestamp = datetime.now()
 
-    def complete_op(self, result: OpResult, **kwargs):
+    def complete_op(self, outcome: OpOutcome, **kwargs):
         self._model_proxy.has_result = True
-        self._model_proxy.result = result
+        self._model_proxy.outcome = outcome
         self._model_proxy.end_timestamp = datetime.now()
 
     def __eq__(self, __value: object) -> bool:

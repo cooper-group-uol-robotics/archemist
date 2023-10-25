@@ -8,7 +8,7 @@ from archemist.core.models.station_process_model import StationProcessModel, key
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.lot import Lot
-from archemist.core.util.enums import ProcessStatus, OpResult
+from archemist.core.util.enums import ProcessStatus, OpOutcome
 
 
 class keyOpDetails:
@@ -183,7 +183,7 @@ class StationProcess:
     def are_req_robot_ops_completed(self) -> bool:
         req_robot_ops = [robot_op for robot_op in self.req_robot_ops]
         for robot_op in req_robot_ops:
-            if robot_op.has_result and robot_op.result != OpResult.FAILED:
+            if robot_op.has_result and robot_op.outcome != OpOutcome.FAILED:
                 self.req_robot_ops.remove(robot_op)
                 self.robot_ops_history.append(robot_op)
         if len(self.req_robot_ops) == 0:
@@ -213,7 +213,7 @@ class StationProcess:
     def are_req_station_ops_completed(self) -> bool:
         req_station_ops = [station_op for station_op in self.req_station_ops]
         for station_op in req_station_ops:
-            if station_op.has_result and station_op.result != OpResult.FAILED:
+            if station_op.has_result and station_op.outcome != OpOutcome.FAILED:
                 self.req_station_ops.remove(station_op)
                 self.station_ops_history.append(station_op)
         if len(self.req_station_ops) == 0:

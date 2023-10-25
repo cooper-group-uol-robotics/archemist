@@ -3,7 +3,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from mongoengine import connect
 
-from archemist.core.state.station_op import StationOpDescriptor, StationOpDescriptorModel, OpResult
+from archemist.core.state.station_op import StationOpDescriptor, StationOpDescriptorModel, OpOutcome
 
 class StationOpTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -25,7 +25,7 @@ class StationOpTest(unittest.TestCase):
         station_op.requested_by = dummy_object_id
         self.assertEqual(station_op.requested_by, dummy_object_id)
         self.assertFalse(station_op.has_result)
-        self.assertIsNone(station_op.result)
+        self.assertIsNone(station_op.outcome)
         self.assertIsNone(station_op.start_timestamp)
         self.assertIsNone(station_op.end_timestamp)
         
@@ -38,9 +38,9 @@ class StationOpTest(unittest.TestCase):
         self.assertGreater(station_op.start_timestamp, start_timestamp)
 
         # test end timestamp
-        station_op.complete_op(OpResult.SUCCEEDED)
+        station_op.complete_op(OpOutcome.SUCCEEDED)
         self.assertTrue(station_op.has_result)
-        self.assertEqual(station_op.result, OpResult.SUCCEEDED)
+        self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
         self.assertLessEqual(station_op.end_timestamp, datetime.now())
         self.assertGreater(station_op.end_timestamp, station_op.start_timestamp)
