@@ -47,10 +47,6 @@ class StationOpDescriptor:
         self._model_proxy.requested_by = station_id
 
     @property
-    def has_result(self) -> bool:
-        return self._model_proxy.has_result
-
-    @property
     def outcome(self) -> OpOutcome:
         return self._model_proxy.outcome
 
@@ -74,7 +70,6 @@ class StationOpDescriptor:
         self._model_proxy.start_timestamp = datetime.now()
 
     def complete_op(self, outcome: OpOutcome, **kwargs):
-        self._model_proxy.has_result = True
         self._model_proxy.outcome = outcome
         self._model_proxy.end_timestamp = datetime.now()
 

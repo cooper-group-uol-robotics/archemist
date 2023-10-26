@@ -55,10 +55,6 @@ class RobotOpDescriptor:
         return self._model_proxy.executed_by
 
     @property
-    def has_result(self) -> bool:
-        return self._model_proxy.has_result
-
-    @property
     def outcome(self) -> OpOutcome:
         return self._model_proxy.outcome
 
@@ -82,7 +78,6 @@ class RobotOpDescriptor:
         self._model_proxy.start_timestamp = datetime.now()
 
     def complete_op(self, robot_id: ObjectId, outcome: OpOutcome):
-        self._model_proxy.has_result = True
         self._model_proxy.outcome = outcome
         self._model_proxy.executed_by = robot_id
         self._model_proxy.end_timestamp = datetime.now()

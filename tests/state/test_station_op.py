@@ -24,7 +24,6 @@ class StationOpTest(unittest.TestCase):
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         station_op.requested_by = dummy_object_id
         self.assertEqual(station_op.requested_by, dummy_object_id)
-        self.assertFalse(station_op.has_result)
         self.assertIsNone(station_op.outcome)
         self.assertIsNone(station_op.start_timestamp)
         self.assertIsNone(station_op.end_timestamp)
@@ -39,7 +38,6 @@ class StationOpTest(unittest.TestCase):
 
         # test end timestamp
         station_op.complete_op(OpOutcome.SUCCEEDED)
-        self.assertTrue(station_op.has_result)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
         self.assertLessEqual(station_op.end_timestamp, datetime.now())

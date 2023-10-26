@@ -104,7 +104,6 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0], robot_op_1)
         self.assertEqual(history[0].executed_by,  robot.model.id)
-        self.assertTrue(history[0].has_result)
         self.assertEqual(history[0].outcome, OpOutcome.SUCCEEDED)
 
         # update assigned op

@@ -11,7 +11,6 @@ class RobotOpDescriptorModel(Document):
     requested_by = fields.ObjectIdField(null=True) # station that generated the op
     executed_by = fields.ObjectIdField(null=True) # robot that executed the op
 
-    has_result = fields.BooleanField(default=False)
     outcome = fields.EnumField(OpOutcome, null=True)
     start_timestamp = fields.ComplexDateTimeField()
     end_timestamp = fields.ComplexDateTimeField()

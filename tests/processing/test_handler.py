@@ -136,7 +136,6 @@ class HandlerTest(unittest.TestCase):
         robot_handler.tick()
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(robot_op.end_timestamp)
 
@@ -174,7 +173,6 @@ class HandlerTest(unittest.TestCase):
         robot_handler.tick()
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
     def test_robot_op_handler_with_skip(self):
@@ -205,7 +203,6 @@ class HandlerTest(unittest.TestCase):
        
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SKIPPED)
 
     def test_robot_op_handler_with_wait_op(self):
@@ -228,7 +225,6 @@ class HandlerTest(unittest.TestCase):
 
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(robot_op.start_timestamp)
         self.assertIsNotNone(robot.assigned_op)
@@ -236,13 +232,11 @@ class HandlerTest(unittest.TestCase):
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         self.assertIsNotNone(robot.assigned_op)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         self.assertIsNotNone(robot.assigned_op)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
         
@@ -276,7 +270,6 @@ class HandlerTest(unittest.TestCase):
         station_handler.tick()
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        self.assertTrue(station_op.has_result)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
 
@@ -314,7 +307,6 @@ class HandlerTest(unittest.TestCase):
         station_handler.tick()
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        self.assertTrue(station_op.has_result)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(station_op.end_timestamp)
 
@@ -344,7 +336,6 @@ class HandlerTest(unittest.TestCase):
         station_handler.tick()
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        self.assertTrue(station_op.has_result)
         self.assertEqual(station_op.outcome, OpOutcome.SKIPPED)
         self.assertIsNotNone(station_op.end_timestamp)
 

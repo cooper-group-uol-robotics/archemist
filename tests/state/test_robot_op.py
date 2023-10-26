@@ -28,7 +28,6 @@ class RobotOpTest(unittest.TestCase):
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         robot_op.requested_by = dummy_object_id
         self.assertEqual(robot_op.requested_by, dummy_object_id)
-        self.assertFalse(robot_op.has_result)
         self.assertIsNone(robot_op.outcome)
         self.assertIsNone(robot_op.start_timestamp)
         self.assertIsNone(robot_op.end_timestamp)
@@ -44,7 +43,6 @@ class RobotOpTest(unittest.TestCase):
         # test end timestamp
         dummy_robot_object_id = ObjectId.from_datetime(datetime.now())
         robot_op.complete_op(dummy_robot_object_id, OpOutcome.SUCCEEDED)
-        self.assertTrue(robot_op.has_result)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
         self.assertIsNotNone(robot_op.end_timestamp)
         self.assertLessEqual(robot_op.end_timestamp, datetime.now())

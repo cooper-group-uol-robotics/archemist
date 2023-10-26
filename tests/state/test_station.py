@@ -181,7 +181,6 @@ class StationTest(unittest.TestCase):
         complete_op = self.station.ops_history[0]
         self.assertEqual(complete_op, station_op_1)
         self.assertIsNotNone(complete_op.start_timestamp)
-        self.assertTrue(complete_op.has_result)
         self.assertEqual(complete_op.outcome, OpOutcome.SUCCEEDED)
 
         # process station op 2
@@ -208,7 +207,6 @@ class StationTest(unittest.TestCase):
         complete_op = self.station.ops_history[1]
         self.assertEqual(complete_op, station_op_2)
         self.assertIsNotNone(complete_op.start_timestamp)
-        self.assertTrue(complete_op.has_result)
         self.assertEqual(complete_op.outcome, OpOutcome.SUCCEEDED)
         
     def test_process_members(self):

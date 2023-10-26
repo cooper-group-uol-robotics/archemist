@@ -12,12 +12,6 @@ class DummyDocumentB(Document):
 
 class TestDatabaseHandler(unittest.TestCase):
 
-    def setUp(self):
-          client = connect(host="mongodb://localhost:27017")
-          # delete db in case it exists previously
-          if "test_db" in client.list_database_names():
-                client.drop_database("test_db")
-
     def test_db_methods(self):
         db_handler = DatabaseHandler(db_name="test_db", host="mongodb://localhost:27017")
 

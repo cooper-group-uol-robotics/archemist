@@ -7,8 +7,8 @@ class StationOpDescriptorModel(Document):
     requested_by = fields.ObjectIdField(null=True) # station that generated the op
     associated_station = fields.StringField(required=True) # station associated with the op
 
-    has_result = fields.BooleanField(default=False)
     outcome = fields.EnumField(OpOutcome, null=True)
+    
     start_timestamp = fields.ComplexDateTimeField(null=True)
     end_timestamp = fields.ComplexDateTimeField(null=True)
 
