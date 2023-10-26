@@ -233,10 +233,10 @@ class SchedulerTest(unittest.TestCase):
         
         op_1 = RobotTaskOpDescriptor.from_args("load_rack", "FixedRobot",
                                             RobotTaskType.MANIPULATION, {"index": 0},
-                                            origin_station_id=requester_object_id)
+                                            requested_by=requester_object_id)
         op_2 = RobotTaskOpDescriptor.from_args("load_rack", "FixedRobot",
                                             RobotTaskType.MANIPULATION, {"index": 1},
-                                            origin_station_id=requester_object_id)
+                                            requested_by=requester_object_id)
         op_3 = RobotTaskOpDescriptor.from_args("load_rack", "FixedRobot",
                                             RobotTaskType.MANIPULATION, {"index": 0})
         self.workflow_state.robot_ops_queue.extend([op_1, op_2, op_3])
@@ -261,7 +261,7 @@ class SchedulerTest(unittest.TestCase):
 
         op_4 = RobotTaskOpDescriptor.from_args("unload_rack", "FixedRobot",
                                             RobotTaskType.MANIPULATION, {"index": 0},
-                                            origin_station_id=requester_object_id)
+                                            requested_by=requester_object_id)
         
         # update the assigned op -> op_2
         self.fixed_robot.update_assigned_op()
@@ -336,19 +336,19 @@ class SchedulerTest(unittest.TestCase):
         # create ops queue
         s1_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_1.object_id,
+                                            requested_by=self.station_1.object_id,
                                             related_batch=batch_1)
         s1_load_op_2 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_1.object_id,
+                                            requested_by=self.station_1.object_id,
                                             related_batch=batch_2)
         s1_load_op_3 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 3},
-                                            origin_station_id=self.station_1.object_id,
+                                            requested_by=self.station_1.object_id,
                                             related_batch=batch_3)
         s1_load_op_4 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 4},
-                                            origin_station_id=self.station_1.object_id,
+                                            requested_by=self.station_1.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s1_load_op_1)
@@ -390,9 +390,9 @@ class SchedulerTest(unittest.TestCase):
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOpDescriptor.from_args("move_to_s2", "MobileRobot",
                                             Location(1,1), {"fine_local": False},
-                                            origin_station_id=self.station_2.object_id,)
+                                            requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_2.object_id)
+                                            requested_by=self.station_2.object_id)
         
         self.workflow_state.robot_ops_queue.append(s2_nav_op_1)
         self.workflow_state.robot_ops_queue.append(s2_wait_op_1)
@@ -419,11 +419,11 @@ class SchedulerTest(unittest.TestCase):
         # add s2 robot ops
         s2_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_1)
         s2_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_2)
         
         self.workflow_state.robot_ops_queue.append(s2_unload_op_1)
@@ -457,7 +457,7 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 robot ops
         s2_wait_op_2 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_2.object_id)
+                                            requested_by=self.station_2.object_id)
         
         self.workflow_state.robot_ops_queue.append(s2_wait_op_2)
 
@@ -475,11 +475,11 @@ class SchedulerTest(unittest.TestCase):
         # create ops queue
         s2_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_1)
         s2_load_op_2 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_2)
         
         self.workflow_state.robot_ops_queue.append(s2_load_op_1)
@@ -518,10 +518,10 @@ class SchedulerTest(unittest.TestCase):
         # add s3 robot ops
         s3_man_op_1 = RobotTaskOpDescriptor.from_args("image_vial", "MobileRobot",
                                             RobotTaskType.MANIPULATION, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_1)
         s3_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_3.object_id)
+                                            requested_by=self.station_3.object_id)
         
         self.workflow_state.robot_ops_queue.append(s3_man_op_1)
         self.workflow_state.robot_ops_queue.append(s3_wait_op_1)
@@ -544,11 +544,11 @@ class SchedulerTest(unittest.TestCase):
         # add s3 robot ops
         s3_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_1)
         s3_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_2)
         
         self.workflow_state.robot_ops_queue.append(s3_unload_op_1)
@@ -598,9 +598,9 @@ class SchedulerTest(unittest.TestCase):
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOpDescriptor.from_args("move_to_s2", "MobileRobot",
                                             Location(1,1), {"fine_local": False},
-                                            origin_station_id=self.station_2.object_id,)
+                                            requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_2.object_id)
+                                            requested_by=self.station_2.object_id)
         
         self.workflow_state.robot_ops_queue.append(s2_nav_op_1)
         self.workflow_state.robot_ops_queue.append(s2_wait_op_1)
@@ -622,11 +622,11 @@ class SchedulerTest(unittest.TestCase):
         # add s2 robot ops
         s2_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_3)
         s2_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s2_unload_op_1)
@@ -656,7 +656,7 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 ops
         s2_wait_op_2 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_2.object_id)
+                                            requested_by=self.station_2.object_id)
         
         self.workflow_state.robot_ops_queue.append(s2_wait_op_2)
 
@@ -674,11 +674,11 @@ class SchedulerTest(unittest.TestCase):
         # add s2 ops
         s2_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_3)
         s2_load_op_2 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_2.object_id,
+                                            requested_by=self.station_2.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s2_load_op_1)
@@ -687,11 +687,11 @@ class SchedulerTest(unittest.TestCase):
         # add s3 ops
         s3_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_1)
         s3_load_op_2 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_2)
         
         self.workflow_state.robot_ops_queue.append(s3_load_op_1)
@@ -731,11 +731,11 @@ class SchedulerTest(unittest.TestCase):
         # add s4 robot ops
         s4_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_4.object_id,
+                                            requested_by=self.station_4.object_id,
                                             related_batch=batch_1)
         s4_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_4.object_id,
+                                            requested_by=self.station_4.object_id,
                                             related_batch=batch_2)
         
         self.workflow_state.robot_ops_queue.append(s4_unload_op_1)
@@ -789,10 +789,10 @@ class SchedulerTest(unittest.TestCase):
         # add s3 robot ops
         s3_man_op_1 = RobotTaskOpDescriptor.from_args("image_vial", "MobileRobot",
                                             RobotTaskType.MANIPULATION, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_3)
         s3_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
-                                            origin_station_id=self.station_3.object_id)
+                                            requested_by=self.station_3.object_id)
         
         self.workflow_state.robot_ops_queue.append(s3_man_op_1)
         self.workflow_state.robot_ops_queue.append(s3_wait_op_1)
@@ -815,11 +815,11 @@ class SchedulerTest(unittest.TestCase):
         # add s3 robot ops
         s3_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_3)
         s3_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s3_unload_op_1)
@@ -846,11 +846,11 @@ class SchedulerTest(unittest.TestCase):
         # add s3 ops
         s3_load_op_1 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_3)
         s3_load_op_2 = RobotTaskOpDescriptor.from_args("load_rack", "MobileRobot",
                                             RobotTaskType.LOAD_TO_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_3.object_id,
+                                            requested_by=self.station_3.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s3_load_op_1)
@@ -882,11 +882,11 @@ class SchedulerTest(unittest.TestCase):
         # add s4 robot ops
         s4_unload_op_1 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 0},
-                                            origin_station_id=self.station_4.object_id,
+                                            requested_by=self.station_4.object_id,
                                             related_batch=batch_3)
         s4_unload_op_2 = RobotTaskOpDescriptor.from_args("unload_rack", "MobileRobot",
                                             RobotTaskType.UNLOAD_FROM_ROBOT, {"index": 1},
-                                            origin_station_id=self.station_4.object_id,
+                                            requested_by=self.station_4.object_id,
                                             related_batch=batch_4)
         
         self.workflow_state.robot_ops_queue.append(s4_unload_op_1)

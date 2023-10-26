@@ -142,7 +142,7 @@ class ObjectFactoryTest(unittest.TestCase):
         op_params = {
             "name": "some_random_task",
             "target_robot": "Robot",
-            "origin_station_id": random_station_id,
+            "requested_by": random_station_id,
             "params": {"index": 1}
             }
         robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOpDescriptor", op_params)

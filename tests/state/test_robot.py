@@ -44,15 +44,15 @@ class RobotTest(unittest.TestCase):
 
         # test op operation
         # construct op
-        station_object_id = ObjectId.from_datetime(datetime.now())
+        requested_by = ObjectId.from_datetime(datetime.now())
         task_loc = Location(1,3,'table_frame')
         params = {"rack_number": 1, "calibrate": False}
         robot_op_1 = RobotTaskOpDescriptor.from_args("test_task1", "Robot",RobotTaskType.LOAD_TO_ROBOT,
                                                    params, location=task_loc,
-                                                   origin_station_id=station_object_id)
+                                                   requested_by=requested_by)
         robot_op_2 = RobotTaskOpDescriptor.from_args("test_task2", "Robot", RobotTaskType.LOAD_TO_ROBOT,
                                                    params, location=task_loc,
-                                                   origin_station_id=station_object_id)
+                                                   requested_by=requested_by)
         # assign op
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertFalse(robot.queued_ops)
@@ -91,13 +91,13 @@ class RobotTest(unittest.TestCase):
 
         # return to start executing
         robot.set_assigned_op_to_execute()
-        self.assertEqual(robot.attending_to, station_object_id)
+        self.assertEqual(robot.attending_to, requested_by)
        
         # complete robot job
         robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
-        self.assertEqual(robot.attending_to, station_object_id)
+        self.assertEqual(robot.attending_to, requested_by)
 
         # test history
         history = robot.ops_history
@@ -154,7 +154,7 @@ class RobotTest(unittest.TestCase):
         self.assertFalse(robot.consigned_lots)
 
         # create batches and loading ops
-        station_object_id = ObjectId.from_datetime(datetime.now())
+        requested_by = ObjectId.from_datetime(datetime.now())
         batch_1 = Batch.from_args(2, Location(1,3,'table_frame'))
         batch_2 = Batch.from_args(2, Location(1,3,'table_frame'))
         lot = Lot.from_args([batch_1, batch_2])

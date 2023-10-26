@@ -90,16 +90,21 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, name: str, target_robot: str, type: RobotTaskType=RobotTaskType.MANIPULATION, params: Dict={}, **kwargs):
+    def from_args(cls, name: str,
+                  target_robot: str,
+                  type: RobotTaskType=RobotTaskType.MANIPULATION,
+                  params: Dict={},
+                  location: Location=None,
+                  requested_by: ObjectId()=None,
+                  related_batch: Batch=None
+                  ):
         model = RobotTaskOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.task_type = type
         model.params = params
-        location = kwargs.get("location")
         model.location = location.to_dict() if location is not None else None
-        model.requested_by = kwargs.get("origin_station_id")
-        related_batch = kwargs.get("related_batch")
+        model.requested_by = requested_by
         model.related_batch = related_batch.model if related_batch else None
         model.save()
         return cls(model)
@@ -180,13 +185,13 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, name: str, target_robot: str, target_location: Location, params: Dict={}, **kwargs):
+    def from_args(cls, name: str, target_robot: str, target_location: Location, params: Dict={}, requested_by: ObjectId()=None):
         model = RobotNavOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.target_location = target_location.to_dict()
         model.params = params
-        model.requested_by = kwargs.get("origin_station_id")
+        model.requested_by = requested_by
         model.save()
         return cls(model)
     
@@ -213,11 +218,11 @@ class RobotWaitOpDescriptor(RobotOpDescriptor):
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, target_robot: str, timeout: int, **kwargs):
+    def from_args(cls, target_robot: str, timeout: int, requested_by: ObjectId()=None):
         model = RobotWaitOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.timeout = timeout
-        model.requested_by = kwargs.get("origin_station_id")
+        model.requested_by = requested_by
         model.save()
         return cls(model)
     
