@@ -603,7 +603,7 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(len(station.requested_robot_ops), 1)
         self.assertEqual(len(station._queued_ops), 1)
         station_op = station._queued_ops.pop()
-        station_op.complete_op(OpOutcome.SUCCEEDED)
+        station_op.complete_op(OpOutcome.SUCCEEDED, None)
 
         # test processes state advancement
         proc_handler.handle()

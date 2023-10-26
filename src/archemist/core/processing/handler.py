@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
 from archemist.core.state.robot_op import RobotWaitOpDescriptor
 from archemist.core.state.station import Station, OpState
+from archemist.core.state.op_result import OpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from archemist.core.util.enums import StationState, RobotState, OpOutcome, ProcessStatus
-from typing import Tuple,Dict
+from typing import Tuple,Dict, List, Type, Optional
 from abc import ABC, abstractmethod
 
 class OpHandler(ABC):
@@ -22,7 +23,7 @@ class OpHandler(ABC):
         pass
 
     @abstractmethod
-    def get_op_result(self) -> Tuple[OpOutcome,Dict]:
+    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[Type[OpResult]]]]:
         pass
 
     @abstractmethod
@@ -42,12 +43,12 @@ class StationOpHandler(OpHandler):
         elif self._station.assigned_op_state == OpState.EXECUTING:
             if self.is_op_execution_complete():
                 op_outcome, op_results = self.get_op_result()
-                self._station.complete_assigned_op(op_outcome, **op_results)
+                self._station.complete_assigned_op(op_outcome, op_results)
         elif self._station.assigned_op_state == OpState.TO_BE_REPEATED:
             self._station.set_assigned_op_to_execute()
             self.execute_op()
         elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
-            self._station.complete_assigned_op(OpOutcome.SKIPPED)
+            self._station.complete_assigned_op(OpOutcome.SKIPPED, None)
     def run(self):
         try:
             while True:
@@ -254,7 +255,8 @@ class SimStationOpHandler(StationOpHandler):
             return True
 
     def get_op_result(self) -> Tuple[OpOutcome, Dict]:
-        return OpOutcome.SUCCEEDED, {}
+        origin_op = self._station.assigned_op
+        return OpOutcome.SUCCEEDED, [OpResult.from_args(origin_op=origin_op.object_id)]
     
     def shut_down(self):
          print(f"[{self.__class__.__name__}] is shutting down")

@@ -152,7 +152,7 @@ class StationProcessTest(unittest.TestCase):
         proc.switch_to_waiting()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
 
-        station_op.complete_op(OpOutcome.SUCCEEDED)
+        station_op.complete_op(OpOutcome.SUCCEEDED, None)
         self.assertTrue(proc.are_req_station_ops_completed())
         self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 1)
@@ -231,7 +231,7 @@ class StationProcessTest(unittest.TestCase):
         proc.switch_to_waiting()
         self.assertEqual(proc.status, ProcessStatus.WAITING_ON_STATION_OPS)
         station_op = proc.req_station_ops[0]
-        station_op.complete_op(OpOutcome.SUCCEEDED)
+        station_op.complete_op(OpOutcome.SUCCEEDED, None)
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.REQUESTING_STATION_PROCS)
         self.assertEqual(len(proc.station_ops_history), 1)
