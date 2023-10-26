@@ -5,7 +5,7 @@ from archemist.core.persistence.object_factory import RobotFactory, RobotOpFacto
                                                         StationOpFactory, ProcessFactory, OpResultFactory
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.processing.handler import SimStationOpHandler, SimRobotOpHandler
-from archemist.core.state.op_result import OpResult, ProcessOpResult
+from archemist.core.state.station_op_result import StationOpResult, ProcessOpResult
 from archemist.core.util.location import Location
 from bson.objectid import ObjectId
 
@@ -71,7 +71,7 @@ class ObjectFactoryTest(unittest.TestCase):
 
     def test_op_result_factory(self):
         # construct result_op 
-        op_result = OpResult.from_args(origin_op=ObjectId())
+        op_result = StationOpResult.from_args(origin_op=ObjectId())
         
         # test construction from model
         op_result_from_model = OpResultFactory.create_from_model(op_result.model)

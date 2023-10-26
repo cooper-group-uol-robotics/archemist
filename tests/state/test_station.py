@@ -3,7 +3,7 @@ from archemist.core.state.robot import RobotTaskOpDescriptor
 from mongoengine import connect
 from archemist.core.state.station import Station, StationState, OpState, OpOutcome
 from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.op_result import OpResult
+from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
@@ -201,7 +201,7 @@ class StationTest(unittest.TestCase):
 
         # complete station op 2
         self.station.assigned_op.add_start_timestamp()
-        result_op = OpResult.from_args(origin_op=self.station.assigned_op.object_id)
+        result_op = StationOpResult.from_args(origin_op=self.station.assigned_op.object_id)
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, [result_op])
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)

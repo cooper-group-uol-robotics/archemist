@@ -4,7 +4,7 @@ from archemist.core.models.op_result_model import OpResultModel, MaterialOpResul
 from typing import Union, Type, Dict, Any
 from bson.objectid import ObjectId
 
-class OpResult:
+class StationOpResult:
     def __init__(self, result_model: Union[Type[OpResultModel], ModelProxy]):
         if isinstance(result_model, ModelProxy):
             self._model_proxy = result_model
@@ -19,9 +19,9 @@ class OpResult:
 
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, origin_op: ObjectId):
         model = OpResultModel()
-        origin_op = kwargs.get("origin_op")
+        origin_op = origin_op#kwargs.get("origin_op")
         cls._set_model_common_fields(model, origin_op)
         model.save()
         return cls(model)
@@ -41,19 +41,19 @@ class OpResult:
     def __eq__(self, __value: object) -> bool:
         return self.object_id == __value.object_id
     
-class MaterialOpResult(OpResult):
+class MaterialOpResult(StationOpResult):
     def __init__(self, result_model: Union[MaterialOpResultModel, ModelProxy]):
         super().__init__(result_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, origin_op: ObjectId, material_name: str, material_id: int, amount: float, unit: str):
         model = MaterialOpResultModel()
-        origin_op = kwargs.get("origin_op")
-        model.material_name = kwargs.get("material_name")
-        model.material_id = kwargs.get("material_id")
-        model.amount = kwargs.get("amount")
-        model.unit = kwargs.get("unit")
+        origin_op = origin_op
         cls._set_model_common_fields(model, origin_op)
+        model.material_name = material_name
+        model.material_id = material_id
+        model.amount = amount
+        model.unit = unit
         model.save()
         return cls(model)
     
@@ -73,16 +73,16 @@ class MaterialOpResult(OpResult):
     def unit(self) -> str:
         return self._model_proxy.unit
     
-class ProcessOpResult(OpResult):
+class ProcessOpResult(StationOpResult):
     def __init__(self, result_model: Union[ProcessOpResultModel, ModelProxy]):
         super().__init__(result_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, origin_op: ObjectId, parameters: Dict[str, Any]):
         model = ProcessOpResultModel()
-        origin_op = kwargs.get("origin_op")
-        model.parameters = kwargs.get("parameters")
+        origin_op = origin_op
         cls._set_model_common_fields(model, origin_op)
+        model.parameters = parameters
         model.save()
         return cls(model)
     

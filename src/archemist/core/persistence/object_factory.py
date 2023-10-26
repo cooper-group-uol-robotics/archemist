@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from archemist.core.state.station import Station, StationModel
     from archemist.core.state.station_process import StationProcessModel, StationProcess
     from archemist.core.state.station_op import StationOpDescriptor, StationOpDescriptorModel
-    from archemist.core.state.op_result import OpResult, OpResultModel
+    from archemist.core.state.station_op_result import StationOpResult, OpResultModel
     from archemist.core.state.robot_op import RobotOpDescriptor, RobotOpDescriptorModel
     from archemist.core.state.lot import Lot
 
@@ -175,13 +175,13 @@ class StationOpFactory:
 
 class OpResultFactory:
     @staticmethod
-    def create_from_model(result_model: Type[OpResultModel]) -> Type[OpResult]:
+    def create_from_model(result_model: Type[OpResultModel]) -> Type[StationOpResult]:
         cls = _import_class_from_module(result_model._type, result_model._module)
         return cls(result_model)
     
     @staticmethod
-    def create_from_object_id(object_id: ObjectId) -> Type[OpResult]:
-        from archemist.core.state.op_result import OpResultModel
+    def create_from_object_id(object_id: ObjectId) -> Type[StationOpResult]:
+        from archemist.core.state.station_op_result import OpResultModel
         model = OpResultModel.objects.get(id=object_id)
         cls = _import_class_from_module(model._type, model._module)
         return cls(model)

@@ -8,7 +8,7 @@ from archemist.core.state.station_op import (StationOpDescriptor,
                                              StationBatchOpDescriptor,
                                              StationSampleOpDescriptor,
                                              OpOutcome,
-                                             OpResult)
+                                             StationOpResult)
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.sample import Sample
 
@@ -46,7 +46,7 @@ class StationOpTest(unittest.TestCase):
         # test op completion
         results = []
         for _ in range(2):
-            results.append(OpResult.from_args(origin_op=station_op.object_id))
+            results.append(StationOpResult.from_args(origin_op=station_op.object_id))
         
         station_op.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
@@ -68,7 +68,7 @@ class StationOpTest(unittest.TestCase):
         self.assertEqual(station_op_1.target_lot, lot)
 
         # test op complete with a single result
-        results = [OpResult.from_args(origin_op=station_op_1.object_id)]
+        results = [StationOpResult.from_args(origin_op=station_op_1.object_id)]
         station_op_1.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_1.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op_1.results), 1)
@@ -82,7 +82,7 @@ class StationOpTest(unittest.TestCase):
         station_op_2 = StationLotOpDescriptor.from_args(target_lot=lot)
         results = []
         for _ in range(lot.num_batches):
-            results.append(OpResult.from_args(origin_op=station_op_2.object_id))
+            results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
         
         station_op_2.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_2.outcome, OpOutcome.SUCCEEDED)
@@ -97,7 +97,7 @@ class StationOpTest(unittest.TestCase):
         station_op_3 = StationLotOpDescriptor.from_args(target_lot=lot)
         results = []
         for _ in range(lot.num_batches*num_samples):
-            results.append(OpResult.from_args(origin_op=station_op_3.object_id))
+            results.append(StationOpResult.from_args(origin_op=station_op_3.object_id))
         
         station_op_3.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_3.outcome, OpOutcome.SUCCEEDED)
@@ -118,7 +118,7 @@ class StationOpTest(unittest.TestCase):
         self.assertEqual(station_op_1.target_batch, batch)
 
         # test op complete with a single result
-        results = [OpResult.from_args(origin_op=station_op_1.object_id)]
+        results = [StationOpResult.from_args(origin_op=station_op_1.object_id)]
         station_op_1.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_1.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op_1.results), 1)
@@ -131,7 +131,7 @@ class StationOpTest(unittest.TestCase):
         station_op_2 = StationBatchOpDescriptor.from_args(target_batch=batch)
         results = []
         for _ in range(num_samples):
-            results.append(OpResult.from_args(origin_op=station_op_2.object_id))
+            results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
         
         station_op_2.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_2.outcome, OpOutcome.SUCCEEDED)
@@ -148,7 +148,7 @@ class StationOpTest(unittest.TestCase):
         self.assertEqual(station_op.target_sample, sample)
 
         # test op complete with a single result
-        results = [OpResult.from_args(origin_op=station_op.object_id)]
+        results = [StationOpResult.from_args(origin_op=station_op.object_id)]
         station_op.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op.results), 1)

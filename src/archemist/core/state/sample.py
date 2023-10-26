@@ -1,7 +1,7 @@
 from archemist.core.models.sample_model import SampleModel
 from archemist.core.persistence.object_factory import OpResultFactory
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
-from archemist.core.state.op_result import OpResult, MaterialOpResult
+from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult
 
 from bson.objectid import ObjectId
 from typing import Any, List, Union, Dict, Type
@@ -42,10 +42,10 @@ class Sample:
         return self._model_proxy.materials
     
     @property
-    def result_ops(self) -> List[Type[OpResult]]:
+    def result_ops(self) -> List[Type[StationOpResult]]:
         return ListProxy(self._model_proxy.result_ops, OpResultFactory.create_from_model)
 
-    def add_result_op(self, result_op: Type[OpResult]):
+    def add_result_op(self, result_op: Type[StationOpResult]):
         if isinstance(result_op, MaterialOpResult):
             material_name = result_op.material_name
             if self.materials.get(material_name, None):

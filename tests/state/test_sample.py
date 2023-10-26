@@ -1,7 +1,7 @@
 import unittest
 from bson.objectid import ObjectId
 from archemist.core.state.sample import Sample
-from archemist.core.state.op_result import MaterialOpResult, ProcessOpResult
+from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpResult
 from mongoengine import connect
 
 class BatchTest(unittest.TestCase):

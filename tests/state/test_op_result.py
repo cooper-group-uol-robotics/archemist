@@ -2,7 +2,7 @@ import unittest
 from bson.objectid import ObjectId
 from mongoengine import connect
 
-from archemist.core.state.op_result import OpResult, MaterialOpResult, ProcessOpResult
+from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult, ProcessOpResult
 
 class OpResultTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -16,7 +16,7 @@ class OpResultTest(unittest.TestCase):
 
     def test_op_result(self):
         mock_origin_op = ObjectId()
-        op_result = OpResult.from_args(origin_op=mock_origin_op)
+        op_result = StationOpResult.from_args(origin_op=mock_origin_op)
         self.assertIsNotNone(op_result)
         self.assertIsNotNone(op_result.object_id)
         self.assertEqual(op_result.origin_op, mock_origin_op)

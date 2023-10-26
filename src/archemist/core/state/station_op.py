@@ -10,7 +10,7 @@ from archemist.core.models.station_op_model import (StationOpDescriptorModel,
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
 from archemist.core.state.sample import Sample
-from archemist.core.state.op_result import OpResult
+from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
@@ -59,7 +59,7 @@ class StationOpDescriptor:
         return self._model_proxy.outcome
 
     @property
-    def results(self) -> List[Type[OpResult]]:
+    def results(self) -> List[Type[StationOpResult]]:
         return ListProxy(self._model_proxy.results, OpResultFactory.create_from_model)
 
     @property
@@ -81,7 +81,7 @@ class StationOpDescriptor:
     def add_start_timestamp(self):
         self._model_proxy.start_timestamp = datetime.now()
 
-    def complete_op(self, outcome: OpOutcome, results: List[Type[OpResult]]):
+    def complete_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         self._model_proxy.outcome = outcome
         if results:
             self.results.extend(results)
@@ -106,7 +106,7 @@ class StationLotOpDescriptor(StationOpDescriptor):
     def target_lot(self) -> Lot:
         return Lot(self._model_proxy.target_lot)
 
-    def complete_op(self, outcome: OpOutcome, results: List[type[OpResult]]):
+    def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
             print("[Warning] Station lot op completed with no results")
@@ -141,7 +141,7 @@ class StationBatchOpDescriptor(StationOpDescriptor):
     def target_batch(self) -> Batch:
         return Batch(self._model_proxy.target_batch)
     
-    def complete_op(self, outcome: OpOutcome, results: List[type[OpResult]]):
+    def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
             print("[Warning] Station lot op completed with no results")
@@ -170,7 +170,7 @@ class StationSampleOpDescriptor(StationOpDescriptor):
     def target_sample(self) -> Sample:
         return Sample(self._model_proxy.target_sample)
     
-    def complete_op(self, outcome: OpOutcome, results: List[type[OpResult]]):
+    def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
             print("[Warning] Station lot op completed with no results")

@@ -3,7 +3,7 @@ from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictP
 from archemist.core.util.enums import StationState, OpState, OpOutcome
 from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.op_result import OpResult
+from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
 from archemist.core.state.robot import RobotOpDescriptor
@@ -193,7 +193,7 @@ class Station:
         self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[OpResult]]):
+    def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         op = self.assigned_op
         if op:
             op.complete_op(outcome, results)

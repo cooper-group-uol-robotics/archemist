@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
 from archemist.core.state.robot_op import RobotWaitOpDescriptor
 from archemist.core.state.station import Station, OpState
-from archemist.core.state.op_result import OpResult
+from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from archemist.core.util.enums import StationState, RobotState, OpOutcome, ProcessStatus
 from typing import Tuple,Dict, List, Type, Optional
@@ -23,7 +23,7 @@ class OpHandler(ABC):
         pass
 
     @abstractmethod
-    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[Type[OpResult]]]]:
+    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[Type[StationOpResult]]]]:
         pass
 
     @abstractmethod
@@ -256,7 +256,7 @@ class SimStationOpHandler(StationOpHandler):
 
     def get_op_result(self) -> Tuple[OpOutcome, Dict]:
         origin_op = self._station.assigned_op
-        return OpOutcome.SUCCEEDED, [OpResult.from_args(origin_op=origin_op.object_id)]
+        return OpOutcome.SUCCEEDED, [StationOpResult.from_args(origin_op=origin_op.object_id)]
     
     def shut_down(self):
          print(f"[{self.__class__.__name__}] is shutting down")
