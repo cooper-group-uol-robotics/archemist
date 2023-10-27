@@ -24,11 +24,13 @@ class BasicLotOutputProcess(StationProcess):
         ]
 
     @classmethod
-    def from_args(cls, lot: Lot, key_op_dicts_list: List[Dict[str, Any]] = None, **kwargs):
-        model = StationProcessModel()
-        cls._set_model_common_fields(model, "", lot, key_op_dicts_list, **kwargs)
-        model.save()
-        return cls(model)
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        return super().from_args(lot, operations, skip_robot_ops, skip_station_ops, skip_ext_procs)
 
     ''' states callbacks '''
 

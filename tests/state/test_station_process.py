@@ -5,7 +5,7 @@ from mongoengine import connect
 from transitions import State
 from archemist.core.state.robot_op import RobotOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.station_process import StationProcess,ProcessStatus, keyOpDetails
+from archemist.core.state.station_process import StationProcess,ProcessStatus, OperationSpecs
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.location import Location
 from archemist.core.util.enums import OpOutcome
@@ -39,7 +39,7 @@ class TestProcess(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
-        station_op = self.create_key_op("some_op")
+        station_op = self.create_op("some_op")
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):
@@ -57,18 +57,16 @@ class StationProcessTest(unittest.TestCase):
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
 
-    def test_key_op_details_embed_document(self):
-        key_op_dict = {
+    def test_operation_specs_embed_document(self):
+        operation_spec_dict = {
             "name": "some_op",
-            "type": "StationOpDescriptor",
-            "repeat_for_all_batches": True,
-            "parameters": [{"stirring_speed": 200, "duration": 10}]
+            "op": "StationOpDescriptor",
+            "parameters": {"stirring_speed": 200, "duration": 10}
         }
-        key_op_d = keyOpDetails.from_dict(key_op_dict)
-        self.assertEqual(key_op_d.op_type, "StationOpDescriptor")
-        self.assertTrue(key_op_d.repeat_for_all_batches)
-        self.assertTrue(key_op_d.parameters)
-        self.assertDictEqual(key_op_d.parameters[0], key_op_dict["parameters"][0])
+        operation_spec = OperationSpecs.from_dict(operation_spec_dict)
+        self.assertEqual(operation_spec.op_type, "StationOpDescriptor")
+        self.assertTrue(operation_spec.parameters)
+        self.assertDictEqual(operation_spec.parameters, operation_spec_dict["parameters"])
 
 
     def test_station_process_fields(self):
@@ -76,16 +74,15 @@ class StationProcessTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
-        key_op_dicts_list = [
+        operations = [
                 {
                     "name": "some_op",
-                    "type": "StationOpDescriptor",
-                    "repeat_for_all_batches": True,
+                    "op": "StationOpDescriptor",
                     "parameters": None
                 }
             ]
         # construct process
-        proc = StationProcess.from_args(lot, key_op_dicts_list, processing_slot=1)
+        proc = StationProcess.from_args(lot, operations)
         self.assertIsNotNone(proc.object_id)
         self.assertIsNone(proc.requested_by)
         dummy_object_id = ObjectId.from_datetime(datetime.now())
@@ -94,7 +91,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(proc.associated_station, "Station")
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)
         self.assertEqual(proc.m_state, "init_state")
-        self.assertEqual(proc.processing_slot, 1)
+        self.assertIsNone(proc.processing_slot)
         proc.processing_slot = 3
         self.assertEqual(proc.processing_slot, 3)
 
@@ -134,14 +131,13 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(proc.status, ProcessStatus.RUNNING)
 
         # test station_op fields
-        key_op_details = proc.key_ops_dict["some_op"]
-        self.assertEqual(key_op_details.op_type, "StationOpDescriptor")
-        self.assertEqual(key_op_details.repeat_for_all_batches, True)
-        self.assertFalse(key_op_details.parameters)
+        operation_specs = proc.operation_specs_map["some_op"]
+        self.assertEqual(operation_specs.op_type, "StationOpDescriptor")
+        self.assertFalse(operation_specs.parameters)
         self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 0)
         
-        station_op = proc.create_key_op("some_op")
+        station_op = proc.create_op("some_op")
         self.assertIsNotNone(station_op.object_id)
         self.assertIsInstance(station_op, StationOpDescriptor)
         
@@ -162,7 +158,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_procs), 0)
         self.assertEqual(len(proc.station_procs_history), 0)
         
-        station_proc = StationProcess.from_args(lot, processing_slot=2)
+        station_proc = StationProcess.from_args(lot)
         proc.request_station_process(station_proc)
         self.assertFalse(proc.are_req_station_procs_completed())
         self.assertEqual(len(proc.req_station_procs), 1)
@@ -181,16 +177,15 @@ class StationProcessTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
-        key_op_dicts_list = [
+        operations = [
                 {
                     "name": "some_op",
-                    "type": "StationOpDescriptor",
-                    "repeat_for_all_batches": True,
-                    "parameters": None
+                    "op": "StationOpDescriptor",
+                    "parameters": {"amount": 100}
                 }
             ]
         # construct process
-        proc = TestProcess.from_args(lot, key_op_dicts_list, processing_slot=1)
+        proc = TestProcess.from_args(lot, operations)
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)
         self.assertIsNone(proc._state_machine)
         self.assertEqual(proc.m_state, "init_state")
@@ -256,16 +251,15 @@ class StationProcessTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
-        key_op_dicts_list = [
+        operations = [
                 {
                     "name": "some_op",
-                    "type": "StationOpDescriptor",
-                    "repeat_for_all_batches": True,
+                    "op": "StationOpDescriptor",
                     "parameters": None
                 }
             ]
         # construct process
-        proc = TestProcess.from_args(lot, key_op_dicts_list, processing_slot=1,
+        proc = TestProcess.from_args(lot, operations,
                                      skip_robot_ops=True, skip_station_ops=True,
                                       skip_ext_procs=True)
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)

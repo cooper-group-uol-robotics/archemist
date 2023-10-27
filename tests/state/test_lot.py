@@ -25,18 +25,11 @@ class LotTest(unittest.TestCase):
                             "operations": [
                                 {
                                     "name": "stir",
-                                    "type": "IKAStirringOpDescriptor",
-                                    "repeat_for_all_batches": False,
-                                    "parameters": [
-                                        {
+                                    "op": "IKAStirringOpDescriptor",
+                                    "parameters": {
                                             "stirring_speed": 200,
                                             "duration": 10,
-                                        },
-                                        {
-                                            "stirring_speed": 150,
-                                            "duration": 5,
-                                        },
-                                    ],
+                                    }
                                 },
                             ],
                             "args": None,
@@ -58,8 +51,7 @@ class LotTest(unittest.TestCase):
                                 {
                                     "name": "weigh",
                                     "type": "FisherWeightOpDescriptor",
-                                    "repeat_for_all_batches": True,
-                                    "parameters": [{"some_param": 123}],
+                                    "parameters": {"some_param": 123},
                                 },
                             ],
                             "args": {"some_variable": 42},

@@ -23,18 +23,10 @@ class RecipeTest(unittest.TestCase):
                             "operations": [
                                 {
                                     "name": "stir",
-                                    "type": "IKAStirringOpDescriptor",
-                                    "repeat_for_all_batches": False,
-                                    "parameters": [
-                                        {
-                                            "stirring_speed": 200,
-                                            "duration": 10,
-                                        },
-                                        {
-                                            "stirring_speed": 150,
-                                            "duration": 5,
-                                        },
-                                    ],
+                                    "op": "IKAStirringOpDescriptor",
+                                    "parameters": {
+                                        "stirring_speed": [200, 300]
+                                    },
                                 },
                             ],
                             "args": None,
@@ -55,9 +47,8 @@ class RecipeTest(unittest.TestCase):
                             "operations": [
                                 {
                                     "name": "weigh",
-                                    "type": "FisherWeightOpDescriptor",
-                                    "repeat_for_all_batches": True,
-                                    "parameters": [{"some_param": 123}],
+                                    "op": "FisherWeightOpDescriptor",
+                                    "parameters": {"some_param": 123},
                                 },
                             ],
                             "args": {"some_variable": 42},
@@ -91,17 +82,16 @@ class RecipeTest(unittest.TestCase):
         process_1 = current_state_details.station_process
         self.assertEqual(process_1["type"], "CrystalBotWorkflowProcess")
         self.assertIsNone(process_1["args"])
-        key_operations_1 = [
-            {   "name" : "stir",
-                "type": "IKAStirringOpDescriptor",
-                "repeat_for_all_batches": False,
-                "parameters": [
-                    {"stirring_speed": 200, "duration": 10},
-                    {"stirring_speed": 150, "duration": 5}
-                    ],
-            },
-        ]
-        self.assertListEqual(process_1["operations"], key_operations_1)
+        operation_1= [
+                        {
+                            "name": "stir",
+                            "op": "IKAStirringOpDescriptor",
+                            "parameters": {
+                                "stirring_speed": [200, 300]
+                            },
+                        },
+                    ]
+        self.assertListEqual(process_1["operations"], operation_1)
         self.assertFalse(recipe.is_complete())
         self.assertFalse(recipe.is_failed())
         next_state_details = recipe.get_next_state_details(success=True)
@@ -119,15 +109,14 @@ class RecipeTest(unittest.TestCase):
         process_2 = current_state_details.station_process
         self.assertEqual(process_2["type"], "SomeProcess")
         self.assertEqual(process_2["args"], {"some_variable": 42})
-        key_operations_2 = [
-            {
-                "name": "weigh",
-                "type": "FisherWeightOpDescriptor",
-                "repeat_for_all_batches": True,
-                "parameters": [{"some_param": 123}],
-            },
-        ]
-        self.assertListEqual(process_2["operations"], key_operations_2)
+        operation_2 =[
+                        {
+                            "name": "weigh",
+                            "op": "FisherWeightOpDescriptor",
+                            "parameters": {"some_param": 123},
+                        },
+                    ]
+        self.assertListEqual(process_2["operations"], operation_2)
         self.assertFalse(recipe.is_complete())
 
         self.assertIsNone(recipe.get_next_state_details(success=True))

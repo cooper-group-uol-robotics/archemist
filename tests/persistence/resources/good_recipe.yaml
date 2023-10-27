@@ -10,13 +10,10 @@ steps:
         type: CrystalBotWorkflowProcess
         operations:
           - name: stir
-            type: IKAStirringOpDescriptor
-            repeat_for_all_batches: False
+            op: IKAStirringOpDescriptor
             parameters:
-              - stirring_speed: 200
-                duration: 10
-              - stirring_speed: 150
-                duration: 10
+              stirring_speeds: [200, 150]
+              durations: [10, 30]
         args: Null
     transitions:
       on_success: weighing_operation
@@ -29,9 +26,10 @@ steps:
         type: SomeProcess
         operations:
           - name: weigh
-            type: FisherWeightOpDescriptor
-            repeat_for_all_batches: True
-            parameters: Null
+            op: FisherWeightOpDescriptor
+            parameters:
+              mode: stable
+              repeat_for_all_samples: True
         args:
           some_variable: 42
     transitions:

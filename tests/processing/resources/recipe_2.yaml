@@ -10,8 +10,7 @@ steps:
         type: StationProcess
         operations:
           - name: some_op
-            type: StationOpDescriptor
-            repeat_for_all_batches: True
+            op: StationOpDescriptor
             parameters: Null
         args: Null
     transitions:
@@ -25,8 +24,7 @@ steps:
         type: StationProcess
         operations:
           - name: some_op
-            type: StationOpDescriptor
-            repeat_for_all_batches: True
+            op: StationOpDescriptor
             parameters: Null
         args: Null
     transitions:

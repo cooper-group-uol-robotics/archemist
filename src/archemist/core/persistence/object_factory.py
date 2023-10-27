@@ -195,8 +195,8 @@ class ProcessFactory:
     @staticmethod
     def create_from_dict(proc_dict: Dict, lot: Lot, station_module: str = None) -> Type[StationProcess]:
         proc_type = proc_dict["type"]
-        key_process_ops = proc_dict.get("operations")
-        args_dict = {} if proc_dict.get("args") is None else proc_dict.get("args")
+        operations = proc_dict.get("operations")
+        args_dict = {} if not proc_dict.get("args") else proc_dict.get("args")
         if proc_type == "StationProcess":
             cls = _import_class_from_module(proc_type, 'archemist.core.state.station_process')
         else:
@@ -222,7 +222,7 @@ class ProcessFactory:
                             break
 
         if cls:
-            return cls.from_args(lot, key_process_ops, **args_dict)
+            return cls.from_args(lot, operations, **args_dict)
         else:
             raise NameError(f"StationProcess type {proc_type} is not defined")
         

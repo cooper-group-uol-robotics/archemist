@@ -109,9 +109,8 @@ class WorkflowSchemas:
                                     'operations': NullNone() | Seq(Map(
                                         {
                                             'name': Str(),
-                                            'type': Str(),
-                                            'repeat_for_all_batches': Bool(),
-                                            'parameters': NullNone() | Seq(MapPattern(Str(), Any()))
+                                            'op': Str(),
+                                            'parameters': NullNone() | MapPattern(Str(), Any())
                                         }
                                     )),
                                     'args': NullNone() | MapPattern(Str(), Any())

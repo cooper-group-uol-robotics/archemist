@@ -56,7 +56,7 @@ class TestFullProcess(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
-        station_op = self.create_key_op("some_op")
+        station_op = self.create_op("some_op")
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):
@@ -542,16 +542,15 @@ class HandlerTest(unittest.TestCase):
         lot_2 = Lot.from_args([batch_2])
         
         # construct process
-        key_op_dicts_list = [
+        operations = [
                 {
                     "name": "some_op",
-                    "type": "StationOpDescriptor",
-                    "repeat_for_all_batches": True,
+                    "op": "StationOpDescriptor",
                     "parameters": None
                 }
             ]
-        proc_1 = TestFullProcess.from_args(lot_1, key_op_dicts_list, processing_slot=0)
-        proc_2 = TestFullProcess.from_args(lot_2, key_op_dicts_list, processing_slot=1)
+        proc_1 = TestFullProcess.from_args(lot_1, operations)
+        proc_2 = TestFullProcess.from_args(lot_2, operations)
 
         # construct station and its process handler
         station = Station.from_dict(self.station_dict)

@@ -36,7 +36,7 @@ class TestProcess1(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
-        station_op = self.create_key_op("some_op")
+        station_op = self.create_op("some_op")
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):
@@ -150,11 +150,10 @@ class ProcessorTest(unittest.TestCase):
             ],
         }
 
-        self.key_op_dicts_list = [{
+        self.operations = [{
             "name": "some_op",
-            "type": "StationOpDescriptor",
-            "repeat_for_all_batches": True,
-            "parameters": [{"stirring_speed": 200, "duration": 10}]
+            "op": "StationOpDescriptor",
+            "parameters": {"stirring_speed": 200, "duration": 10}
         }]
 
         self.station_1_dict = {
@@ -387,8 +386,8 @@ class ProcessorTest(unittest.TestCase):
         self.assertFalse(workflow_state.lots_buffer)
 
         # create processes and add them to the station 1 (this is done to bypass using ProcessFactory)
-        proc_1 = TestProcess1.from_args(lot_1, self.key_op_dicts_list, processing_slot=1)
-        proc_2 = TestProcess1.from_args(lot_2, self.key_op_dicts_list, processing_slot=2)
+        proc_1 = TestProcess1.from_args(lot_1, self.operations)
+        proc_2 = TestProcess1.from_args(lot_2, self.operations)
         station_1.add_process(proc_1)
         station_1.add_process(proc_2)
 
@@ -446,8 +445,8 @@ class ProcessorTest(unittest.TestCase):
         self.assertFalse(workflow_state.lots_buffer)
 
         # create processes and add them to the station 1 (this is done to bypass using ProcessFactory)
-        proc_1 = TestProcess2.from_args(lot_1, processing_slot=1)
-        proc_2 = TestProcess2.from_args(lot_2, processing_slot=2)
+        proc_1 = TestProcess2.from_args(lot_1)
+        proc_2 = TestProcess2.from_args(lot_2)
         station_2.add_process(proc_1)
         station_2.add_process(proc_2)
 
