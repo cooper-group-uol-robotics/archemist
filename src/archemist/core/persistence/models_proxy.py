@@ -334,7 +334,24 @@ class DictFieldWrapper:
             key_val_pair = (key, value)
             items.append(key_val_pair)
         return items
-
+    
+    def values(self):
+        self._reload()
+        values = []
+        for key, item in self._dict_instance.items():
+            if isinstance(item, EmbeddedDocument):
+                if self._parent_type == ParentType.DOCUMENT:
+                    value = EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
+                                    ParentType.DICT)
+                else:
+                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+            elif isinstance(item, Document):
+                value = ModelProxy(item)
+            else:
+                value = item
+            values.append(value)
+        return values  
+            
     def _reload(self):
         if self._parent_type == ParentType.DOCUMENT:
             self._parent.reload(self._dict_field_name)
@@ -391,4 +408,7 @@ class DictProxy:
         return self._callable(value) if value else default
 
     def items(self):
-        return [(key, self._callable(item)) for key, item in self._dict_wrapper.items()]      
+        return [(key, self._callable(item)) for key, item in self._dict_wrapper.items()]
+
+    def values(self):
+        return [self._callable(value) for value in self._dict_wrapper.values()]  

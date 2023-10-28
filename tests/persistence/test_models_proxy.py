@@ -217,6 +217,11 @@ class TestDbProxy(unittest.TestCase):
         for k, v in self.foo_wrapper.a_dict.items():
             self.assertEqual(a_dict[k], v)
 
+        # test values
+        a_dict_values = list(a_dict.values())
+        for i, v in enumerate(self.foo_wrapper.a_dict.values()):
+            self.assertEqual(a_dict_values[i], v)
+
     def test_doc_reference_field(self):
         # test field is empty
         self.assertIsNone(self.foo_wrapper.doc)
@@ -350,6 +355,11 @@ class TestDbProxy(unittest.TestCase):
         dict_docs = {'a': self.bar_wrapper, 'b': self.baz_wrapper}
         for k, v in self.foo_wrapper.dict_docs.items():
             self.assertEqual(dict_docs[k].uuid, v.uuid)
+
+        # test values
+        dict_docs_values = list(dict_docs.values())
+        for i, v in enumerate(self.foo_wrapper.dict_docs.values()):
+            self.assertEqual(dict_docs_values[i].uuid, v.uuid)
 
         # test del
         del self.foo_wrapper.dict_docs['b']
@@ -518,6 +528,11 @@ class TestDbProxy(unittest.TestCase):
         # test items
         for k,v in embed.a_dict.items():
             self.assertEqual(self.foo_model.embed.a_dict[k], v)
+
+        # test values
+        embed_dict_values = list(self.foo_model.embed.a_dict.values())
+        for i,v in enumerate(embed.a_dict.values()):
+            self.assertEqual(embed_dict_values[i], v)
 
 
         # test set existing key operation
