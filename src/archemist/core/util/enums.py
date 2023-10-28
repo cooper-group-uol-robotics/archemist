@@ -5,11 +5,6 @@ class RobotState(Enum):
     ACTIVE = auto()
     ERROR = auto()
 
-class RobotTaskType(Enum):
-    LOAD_TO_ROBOT = auto()
-    UNLOAD_FROM_ROBOT = auto()
-    MANIPULATION = auto()
-
 class MobileRobotMode(Enum):
     OPERATIONAL = auto()
     COOLDOWN = auto()

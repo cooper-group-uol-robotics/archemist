@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
-from archemist.core.state.robot_op import RobotTaskOpDescriptor, RobotTaskType
+from archemist.core.state.robot_op import CollectBatchOpDescriptor
 
 class BasicLotInputProcess(StationProcess):
 
@@ -46,9 +46,8 @@ class BasicLotInputProcess(StationProcess):
             params_dict = {}
             params_dict["pick_batch_index"] = batches_offset + index + 1
             params_dict["perform_6p_calib"] = False
-            params_dict["place_batch_index"] = index + 1
-            robot_op = RobotTaskOpDescriptor.from_args(name='PickupInputRack', target_robot="MobileRobot", type=RobotTaskType.LOAD_TO_ROBOT,
-                                                       params=params_dict, related_batch=batch)
+            robot_op = CollectBatchOpDescriptor.from_args(name='PickupInputRack', target_robot="MobileRobot",
+                                                       params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         
         self.request_robot_ops(req_robot_ops)

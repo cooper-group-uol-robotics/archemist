@@ -26,4 +26,4 @@ class MobileRobotModel(RobotModel):
     total_lot_capacity = fields.IntField(min_value=1, default=1)
     consigned_lots = fields.ListField(fields.ReferenceField(LotModel),default=[])
     onboard_capacity = fields.IntField(min_value=1, default=1)
-    onboard_batches = fields.ListField(fields.ReferenceField(BatchModel),default=[])
+    onboard_batches_slots = fields.DictField(default={})

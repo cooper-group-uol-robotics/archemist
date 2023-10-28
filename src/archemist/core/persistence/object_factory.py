@@ -65,23 +65,11 @@ class RobotFactory:
 class RobotOpFactory:
     @staticmethod
     def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[RobotOpDescriptor]:
-        if op_type == "RobotOpDescriptor":
-            cls = _import_class_from_module('RobotOpDescriptor', 'archemist.core.state.robot_op')
-            return cls.from_args()
-        elif op_type == "RobotTaskOpDescriptor":
-            cls = _import_class_from_module('RobotTaskOpDescriptor', 'archemist.core.state.robot_op')
-            params = op_params if op_params is not None else {}
-            return cls.from_args(**params)
-        elif op_type == "RobotMaintenanceOpDescriptor":
-            cls = _import_class_from_module('RobotMaintenanceOpDescriptor', 'archemist.core.state.robot_op')
-            params = op_params if op_params is not None else {}
-            return cls.from_args(**params)
-        elif op_type == "RobotNavOpDescriptor":
-            cls = _import_class_from_module('RobotNavOpDescriptor', 'archemist.core.state.robot_op')
-            params = op_params if op_params is not None else {}
-            return cls.from_args(**params)
-        elif op_type == "RobotWaitOpDescriptor":
-            cls = _import_class_from_module('RobotWaitOpDescriptor', 'archemist.core.state.robot_op')
+        if op_type in ["RobotOpDescriptor", "RobotTaskOpDescriptor", "RobotMaintenanceOpDescriptor", \
+            "RobotNavOpDescriptor", "RobotWaitOpDescriptor", "DropBatchOpDescriptor", \
+            "CollectBatchOpDescriptor"]:
+            
+            cls = _import_class_from_module(op_type, 'archemist.core.state.robot_op')
             params = op_params if op_params is not None else {}
             return cls.from_args(**params)
         else:

@@ -1,17 +1,17 @@
 from mongoengine import Document, fields
-from archemist.core.util.enums import RobotTaskType
-from archemist.core.models.lot_model import LotModel
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.util.enums import OpOutcome
 
 class RobotOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
+    
     target_robot = fields.StringField(required=True)
     requested_by = fields.ObjectIdField(null=True) # station that generated the op
     executed_by = fields.ObjectIdField(null=True) # robot that executed the op
 
     outcome = fields.EnumField(OpOutcome, null=True)
+    
     start_timestamp = fields.ComplexDateTimeField()
     end_timestamp = fields.ComplexDateTimeField()
 
@@ -19,10 +19,15 @@ class RobotOpDescriptorModel(Document):
 
 class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
-    task_type = fields.EnumField(RobotTaskType, required=True)
     params = fields.DictField(default={})
-    related_batch = fields.ReferenceField(BatchModel, null=True)
-    location = fields.DictField()
+    target_batch = fields.ReferenceField(BatchModel, null=True)
+    target_location = fields.DictField()
+
+class CollectBatchOpDescriptorModel(RobotTaskOpDescriptorModel):
+    target_onboard_slot = fields.IntField(null=True)
+
+class DropBatchOpDescriptorModel(RobotTaskOpDescriptorModel):
+    onboard_collection_slot = fields.IntField(null=True)
 
 class RobotMaintenanceOpDescriptorModel(RobotOpDescriptorModel):
     target_robot_id = fields.IntField(required=True)

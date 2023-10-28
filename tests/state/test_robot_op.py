@@ -5,7 +5,13 @@ from mongoengine import connect
 
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor, RobotTaskType, OpOutcome, RobotNavOpDescriptor, RobotWaitOpDescriptor
+from archemist.core.state.robot_op import (RobotOpDescriptor,
+                                           RobotTaskOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor,
+                                           OpOutcome,
+                                           RobotNavOpDescriptor,
+                                           RobotWaitOpDescriptor)
 from archemist.core.util.location import Location
 
 class RobotOpTest(unittest.TestCase):
@@ -58,21 +64,71 @@ class RobotOpTest(unittest.TestCase):
         lot = Lot.from_args([batch])
         task_loc = Location(1,3,'table_frame')
         params_dict = {"rack_index": 1, "calibrate": False}
-        robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params_dict, location=task_loc,
-                                                   requested_by=requested_by, related_batch=batch)
+        robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot",
+                                                   params_dict, target_location=task_loc,
+                                                   requested_by=requested_by,
+                                                   target_batch=batch)
         self.assertEqual(robot_op._model_proxy._type, "RobotTaskOpDescriptor")
         self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
         self.assertEqual(robot_op.name, "test_task")
         self.assertEqual(robot_op.target_robot, "TestRobot")
-        self.assertEqual(robot_op.task_type, RobotTaskType.LOAD_TO_ROBOT)
         self.assertEqual(len(robot_op.params), 2)
         for key, val in params_dict.items():
             self.assertEqual(robot_op.params[key], val)
 
-        self.assertTrue(robot_op.location == task_loc)
-        self.assertEqual(robot_op.related_batch, batch)
+        self.assertTrue(robot_op.target_location == task_loc)
+        self.assertEqual(robot_op.target_batch, batch)
         self.assertEqual(robot_op.related_lot, lot)
+
+    def test_collect_batch_task(self):
+        # construct op
+        requested_by = ObjectId.from_datetime(datetime.now())
+        batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        lot = Lot.from_args([batch])
+        task_loc = Location(1,3,'table_frame')
+        params_dict = {"rack_index": 1, "calibrate": False}
+        robot_op = CollectBatchOpDescriptor.from_args("test_task", "TestRobot",
+                                                   params_dict, target_location=task_loc,
+                                                   requested_by=requested_by,
+                                                   target_batch=batch)
+        self.assertEqual(robot_op._model_proxy._type, "CollectBatchOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
+        self.assertEqual(robot_op.name, "test_task")
+        self.assertEqual(robot_op.target_robot, "TestRobot")
+        self.assertEqual(len(robot_op.params), 2)
+        for key, val in params_dict.items():
+            self.assertEqual(robot_op.params[key], val)
+
+        self.assertTrue(robot_op.target_location == task_loc)
+        self.assertEqual(robot_op.target_batch, batch)
+        self.assertEqual(robot_op.related_lot, lot)
+        self.assertIsNone(robot_op.target_onboard_slot)
+        robot_op.target_onboard_slot = 1
+        self.assertEqual(robot_op.target_onboard_slot, 1)
+
+    def test_drop_batch_task(self):
+        # construct op
+        requested_by = ObjectId.from_datetime(datetime.now())
+        batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        lot = Lot.from_args([batch])
+        task_loc = Location(1,3,'table_frame')
+        params_dict = {"rack_index": 1, "calibrate": False}
+        robot_op = DropBatchOpDescriptor.from_args("test_task", "TestRobot",
+                                                   params_dict, target_location=task_loc,
+                                                   requested_by=requested_by,
+                                                   target_batch=batch)
+        self.assertEqual(robot_op.name, "test_task")
+        self.assertEqual(robot_op.target_robot, "TestRobot")
+        self.assertEqual(len(robot_op.params), 2)
+        for key, val in params_dict.items():
+            self.assertEqual(robot_op.params[key], val)
+
+        self.assertTrue(robot_op.target_location == task_loc)
+        self.assertEqual(robot_op.target_batch, batch)
+        self.assertEqual(robot_op.related_lot, lot)
+        self.assertIsNone(robot_op.onboard_collection_slot)
+        robot_op.onboard_collection_slot = 1
+        self.assertEqual(robot_op.onboard_collection_slot, 1)
 
     def test_robot_nav_task(self):
         # construct op

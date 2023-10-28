@@ -1,7 +1,11 @@
 from time import sleep
 from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
-from archemist.core.state.robot_op import RobotWaitOpDescriptor
+from archemist.core.state.robot_op import (RobotWaitOpDescriptor,
+                                           RobotTaskOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor,
+                                           RobotNavOpDescriptor)
 from archemist.core.state.station import Station, OpState
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
@@ -141,6 +145,14 @@ class StationProcessHandler:
             if proc:
                 if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                     for robot_op in proc.req_robot_ops:
+                        if isinstance(robot_op, RobotTaskOpDescriptor) or \
+                            isinstance(robot_op, CollectBatchOpDescriptor) or\
+                            isinstance(robot_op, DropBatchOpDescriptor):
+                            
+                            robot_op.target_location = self._station.location
+                        elif isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None:
+                            robot_op.target_location = self._station.location
+                            
                         self._station.add_req_robot_op(robot_op)
                     proc.switch_to_waiting()
                 

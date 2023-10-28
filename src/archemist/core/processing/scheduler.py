@@ -2,9 +2,10 @@ from bson.objectid import ObjectId
 from archemist.core.persistence.objects_getter import RobotsGetter, LotsGetter, StationsGetter, StateGetter
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot import MobileRobotMode, MobileRobot, FixedRobot
-from archemist.core.util.enums import RobotTaskType
 from archemist.core.state.robot_op import (RobotOpDescriptor,
                                            RobotTaskOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor,
                                            RobotMaintenanceOpDescriptor,
                                            RobotWaitOpDescriptor,
                                            RobotNavOpDescriptor)
@@ -71,23 +72,23 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         if isinstance(op, RobotMaintenanceOpDescriptor):
             priority += 200
         else:
-            if isinstance(op, RobotTaskOpDescriptor):
-                if op.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                    if op.related_batch in robot.onboard_batches:
-                        priority += 30
-                    else:
-                        priority -= 100
-                elif op.task_type == RobotTaskType.LOAD_TO_ROBOT:
-                    if (self.robot_free_slots_num > 0
-                        and (op.related_lot in robot.consigned_lots or robot.free_lot_capacity > 0)
-                        and self._is_next_station_free(op.related_batch)
-                        and robot.operational_mode == MobileRobotMode.OPERATIONAL ):
-                        priority += 20
-                        self.robot_free_slots_num -= 1
-                    else:
-                        priority -= 100
+            if isinstance(op, DropBatchOpDescriptor):
+                if robot.is_batch_onboard(op.target_batch):
+                    priority += 30
                 else:
-                    priority += 10
+                    priority -= 100
+            elif isinstance(op, CollectBatchOpDescriptor):
+                if (self.robot_free_slots_num > 0
+                    and (op.related_lot in robot.consigned_lots or robot.free_lot_capacity > 0)
+                    and self._is_next_station_free(op.target_batch)
+                    and robot.operational_mode == MobileRobotMode.OPERATIONAL):
+                    
+                    priority += 20
+                    self.robot_free_slots_num -= 1
+                else:
+                    priority -= 100
+            elif isinstance(op, RobotTaskOpDescriptor):
+                priority += 10
             elif isinstance(op, RobotNavOpDescriptor):
                 priority += 10
             elif isinstance(op, RobotWaitOpDescriptor):

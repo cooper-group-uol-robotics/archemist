@@ -1,17 +1,22 @@
-from __future__ import annotations
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel,RobotTaskOpDescriptorModel, RobotNavOpDescriptorModel, RobotWaitOpDescriptorModel, RobotMaintenanceOpDescriptorModel
+from archemist.core.models.robot_op_model import (RobotOpDescriptorModel,
+                                                  RobotTaskOpDescriptorModel,
+                                                  CollectBatchOpDescriptorModel,
+                                                  DropBatchOpDescriptorModel,
+                                                  RobotNavOpDescriptorModel,
+                                                  RobotWaitOpDescriptorModel,
+                                                  RobotMaintenanceOpDescriptorModel)
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
-from archemist.core.util.enums import RobotTaskType, OpOutcome
+from archemist.core.util.enums import OpOutcome
 from archemist.core.util import Location
 from bson.objectid import ObjectId
 from datetime import datetime
-from typing import List, Union, Dict
+from typing import Union, Dict
 
 
 class RobotOpDescriptor:
-    def __init__(self, op_model: Union[RobotOpDescriptorModel, ModelProxy]) -> None:
+    def __init__(self, op_model: Union[RobotOpDescriptorModel, ModelProxy]):
         if isinstance(op_model, ModelProxy):
             self._model_proxy = op_model
         else:
@@ -92,20 +97,18 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
     @classmethod
     def from_args(cls, name: str,
                   target_robot: str,
-                  type: RobotTaskType=RobotTaskType.MANIPULATION,
                   params: Dict={},
-                  location: Location=None,
+                  target_location: Location=None,
                   requested_by: ObjectId()=None,
-                  related_batch: Batch=None
+                  target_batch: Batch=None
                   ):
         model = RobotTaskOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
-        model.task_type = type
         model.params = params
-        model.location = location.to_dict() if location is not None else None
+        model.target_location = target_location.to_dict() if target_location is not None else None
         model.requested_by = requested_by
-        model.related_batch = related_batch.model if related_batch else None
+        model.target_batch = target_batch.model if target_batch else None
         model.save()
         return cls(model)
     
@@ -114,39 +117,95 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         return self._model_proxy.name
 
     @property
-    def task_type(self) -> RobotTaskType:
-        return self._model_proxy.task_type
-
-    @property
     def params(self) -> Dict:
         return self._model_proxy.params
 
     @property
-    def location(self) -> Location:
-        loc_dict = self._model_proxy.location
+    def target_location(self) -> Location:
+        loc_dict = self._model_proxy.target_location
         if loc_dict:
             return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
         
     @property
-    def related_batch(self) -> Batch:
-        if self._model_proxy.related_batch:
-            return Batch(self._model_proxy.related_batch)
+    def target_batch(self) -> Batch:
+        if self._model_proxy.target_batch:
+            return Batch(self._model_proxy.target_batch)
 
-    @related_batch.setter
-    def related_batch(self, batch: Batch) -> None:
-        self._model_proxy.related_batch = batch.model
+    @target_batch.setter
+    def target_batch(self, batch: Batch) -> None:
+        self._model_proxy.target_batch = batch.model
 
     @property
     def related_lot(self) -> Lot:
-        related_batch = self.related_batch
-        if related_batch:
-            return Lot.from_object_id(related_batch.parent_lot_id)
+        target_batch = self.target_batch
+        if target_batch:
+            return Lot.from_object_id(target_batch.parent_lot_id)
 
     def __str__(self) -> str:
         params = self.params if self.params else None
-        location = f"{self.location.get_map_coordinates()}" if self.location else ""
+        location = f"{self.target_location.get_map_coordinates()}" if self.target_location else ""
         return f'{self.__class__.__name__} -> name: {self.name} - target:{self.target_robot}\
               - params: {params} - location: {location}'
+    
+class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
+    def __init__(self, op_model: Union[CollectBatchOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, name: str,
+                  target_robot: str,
+                  params: Dict={},
+                  target_location: Location=None,
+                  requested_by: ObjectId()=None,
+                  target_batch: Batch=None
+                  ):
+        model = CollectBatchOpDescriptorModel()
+        cls._set_model_common_fields(model, target_robot)
+        model.name = name
+        model.params = params
+        model.target_location = target_location.to_dict() if target_location is not None else None
+        model.requested_by = requested_by
+        model.target_batch = target_batch.model if target_batch else None
+        model.save()
+        return cls(model)
+
+    @property
+    def target_onboard_slot(self) -> int:
+        return self._model_proxy.target_onboard_slot
+
+    @target_onboard_slot.setter
+    def target_onboard_slot(self, onboard_slot: int):
+        self._model_proxy.target_onboard_slot = onboard_slot
+
+class DropBatchOpDescriptor(RobotTaskOpDescriptor):
+    def __init__(self, op_model: Union[DropBatchOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, name: str,
+                  target_robot: str,
+                  params: Dict={},
+                  target_location: Location=None,
+                  requested_by: ObjectId()=None,
+                  target_batch: Batch=None
+                  ):
+        model = DropBatchOpDescriptorModel()
+        cls._set_model_common_fields(model, target_robot)
+        model.name = name
+        model.params = params
+        model.target_location = target_location.to_dict() if target_location is not None else None
+        model.requested_by = requested_by
+        model.target_batch = target_batch.model if target_batch else None
+        model.save()
+        return cls(model)
+
+    @property
+    def onboard_collection_slot(self) -> int:
+        return self._model_proxy.onboard_collection_slot
+
+    @onboard_collection_slot.setter
+    def onboard_collection_slot(self, onboard_slot: int):
+        self._model_proxy.onboard_collection_slot = onboard_slot
     
 class RobotMaintenanceOpDescriptor(RobotOpDescriptor):
     def __init__(self, op_model: Union[RobotMaintenanceOpDescriptorModel, ModelProxy]) -> None:
@@ -189,7 +248,7 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
         model = RobotNavOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
-        model.target_location = target_location.to_dict()
+        model.target_location = target_location.to_dict() if target_location else None
         model.params = params
         model.requested_by = requested_by
         model.save()

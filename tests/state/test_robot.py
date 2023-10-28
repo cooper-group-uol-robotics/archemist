@@ -1,10 +1,10 @@
 from datetime import datetime
 from bson.objectid import ObjectId
 import unittest
-from archemist.core.state.robot import Robot, MobileRobot, RobotState,RobotTaskType, MobileRobotMode, OpState, OpOutcome
+from archemist.core.state.robot import Robot, MobileRobot, RobotState, MobileRobotMode, OpState, OpOutcome
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOpDescriptor, CollectBatchOpDescriptor, DropBatchOpDescriptor
 from archemist.core.util.location import Location
 from mongoengine import connect
 
@@ -47,11 +47,11 @@ class RobotTest(unittest.TestCase):
         requested_by = ObjectId.from_datetime(datetime.now())
         task_loc = Location(1,3,'table_frame')
         params = {"rack_number": 1, "calibrate": False}
-        robot_op_1 = RobotTaskOpDescriptor.from_args("test_task1", "Robot",RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc,
+        robot_op_1 = RobotTaskOpDescriptor.from_args("test_task1", "Robot",
+                                                   params, target_location=task_loc,
                                                    requested_by=requested_by)
-        robot_op_2 = RobotTaskOpDescriptor.from_args("test_task2", "Robot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc,
+        robot_op_2 = RobotTaskOpDescriptor.from_args("test_task2", "Robot",
+                                                   params, target_location=task_loc,
                                                    requested_by=requested_by)
         # assign op
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
@@ -150,64 +150,77 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.total_lot_capacity, 1)
         self.assertEqual(robot.free_lot_capacity, 1)
         self.assertEqual(robot.onboard_capacity, 2)
-        self.assertEqual(len(robot.onboard_batches), 0)
+        self.assertEqual(robot.free_batch_capacity, 2)
+        self.assertIsNone(robot.onboard_batches_slots["0"])
+        self.assertIsNone(robot.onboard_batches_slots["1"])
         self.assertFalse(robot.consigned_lots)
 
         # create batches and loading ops
-        requested_by = ObjectId.from_datetime(datetime.now())
         batch_1 = Batch.from_args(2, Location(1,3,'table_frame'))
         batch_2 = Batch.from_args(2, Location(1,3,'table_frame'))
         lot = Lot.from_args([batch_1, batch_2])
         task_loc = Location(1,3,'table_frame')
         params = {"rack_number": 1, "calibrate": False}
-        loading_robot_op_1 = RobotTaskOpDescriptor.from_args("load_batch", "Robot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_1)
-        loading_robot_op_2 = RobotTaskOpDescriptor.from_args("load_batch", "Robot", RobotTaskType.LOAD_TO_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_2)
+        loading_robot_op_1 = CollectBatchOpDescriptor.from_args("load_batch", "Robot",
+                                                   params, target_location=task_loc, target_batch=batch_1)
+        loading_robot_op_2 = CollectBatchOpDescriptor.from_args("load_batch", "Robot",
+                                                   params, target_location=task_loc, target_batch=batch_2)
 
         # test loading batches
         self.assertEqual(robot.free_batch_capacity, 2)
         robot.add_op(loading_robot_op_1)
+        self.assertIsNone(loading_robot_op_1.target_onboard_slot)
         self.assertEqual(len(robot.consigned_lots), 1)
         self.assertEqual(robot.free_lot_capacity, 0)
+        self.assertFalse(robot.is_batch_onboard(batch_1))
+        self.assertFalse(robot.is_batch_onboard(batch_2))
 
         robot.update_assigned_op()
+        self.assertEqual(loading_robot_op_1.target_onboard_slot, 0)
         robot.complete_assigned_op(OpOutcome.SUCCEEDED)
-        self.assertEqual(len(robot.onboard_batches), 1)
+        self.assertEqual(robot.onboard_batches_slots["0"], batch_1)
         self.assertEqual(robot.free_batch_capacity, 1)
-        self.assertTrue(loading_robot_op_1.related_batch in robot.onboard_batches)
+        self.assertTrue(robot.is_batch_onboard(batch_1))
+        self.assertEqual(batch_1.location, Location(-1, -1, frame_name=f"onboard {robot} at slot: {loading_robot_op_1.target_onboard_slot}"))
 
         robot.add_op(loading_robot_op_2)
+        self.assertIsNone(loading_robot_op_2.target_onboard_slot)
         self.assertEqual(len(robot.consigned_lots), 1)
         robot.update_assigned_op()
+        self.assertEqual(loading_robot_op_2.target_onboard_slot, 1)
         robot.complete_assigned_op(OpOutcome.SUCCEEDED)
-        self.assertEqual(len(robot.onboard_batches), 2)
+        self.assertEqual(robot.onboard_batches_slots["1"], batch_2)
         self.assertEqual(robot.free_batch_capacity, 0)
-        self.assertTrue(loading_robot_op_2.related_batch in robot.onboard_batches)
+        self.assertTrue(robot.is_batch_onboard(batch_2))
 
         # create unloading ops
-        unloading_robot_op_1 = RobotTaskOpDescriptor.from_args("unload_batch","Robot",  RobotTaskType.UNLOAD_FROM_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_1)
-        unloading_robot_op_2 = RobotTaskOpDescriptor.from_args("unload_batch", "Robot", RobotTaskType.UNLOAD_FROM_ROBOT,
-                                                   params, location=task_loc, related_batch=batch_2)
+        unloading_robot_op_1 = DropBatchOpDescriptor.from_args("unload_batch","Robot",
+                                                   params, target_location=task_loc, target_batch=batch_1)
+        unloading_robot_op_2 = DropBatchOpDescriptor.from_args("unload_batch", "Robot",
+                                                   params, target_location=task_loc, target_batch=batch_2)
 
         # test unloading batches
         self.assertEqual(robot.free_batch_capacity, 0)
         robot.add_op(unloading_robot_op_1)
+        self.assertIsNone(unloading_robot_op_1.onboard_collection_slot)
         robot.update_assigned_op()
+        self.assertEqual(unloading_robot_op_1.onboard_collection_slot, 0)
         robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.consigned_lots), 1)
-        self.assertEqual(len(robot.onboard_batches), 1)
-        self.assertFalse(loading_robot_op_1.related_batch in robot.onboard_batches)
+        self.assertIsNone(robot.onboard_batches_slots["0"])
+        self.assertFalse(robot.is_batch_onboard(batch_1))
+        self.assertEqual(batch_1.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
         self.assertEqual(robot.free_batch_capacity, 1)
 
         robot.add_op(unloading_robot_op_2)
+        self.assertIsNone(unloading_robot_op_2.onboard_collection_slot)
         robot.update_assigned_op()
+        self.assertEqual(unloading_robot_op_2.onboard_collection_slot, 1)
         robot.complete_assigned_op(OpOutcome.SUCCEEDED)
         self.assertEqual(len(robot.consigned_lots), 0)
         self.assertEqual(robot.free_lot_capacity, 1)
-        self.assertEqual(len(robot.onboard_batches), 0)
-        self.assertFalse(loading_robot_op_2.related_batch in robot.onboard_batches)
+        self.assertIsNone(robot.onboard_batches_slots["1"])
+        self.assertFalse(robot.is_batch_onboard(batch_2))
         self.assertEqual(robot.free_batch_capacity, 2)
 
 

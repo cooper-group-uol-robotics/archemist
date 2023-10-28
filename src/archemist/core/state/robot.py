@@ -1,11 +1,13 @@
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
-from archemist.core.state.robot_op import RobotOpDescriptor, RobotTaskOpDescriptor
-from archemist.core.util.enums import RobotState,RobotTaskType, OpState, OpOutcome
+from archemist.core.state.robot_op import (RobotOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor)
+from archemist.core.util.enums import RobotState, OpState, OpOutcome
 from archemist.core.util.location import Location
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from typing import Dict, List, Any, Union, Type
+from typing import Dict, List, Any, Union, Type, Optional
 from archemist.core.persistence.object_factory import RobotOpFactory
 from bson.objectid import ObjectId
 
@@ -165,6 +167,7 @@ class MobileRobot(Robot):
         cls._set_model_common_fields(model, robot_dict)
         model.total_lot_capacity = robot_dict["total_lot_capacity"]
         model.onboard_capacity = robot_dict["onboard_capacity"]
+        model.onboard_batches_slots = {str(slot_num): None for slot_num in range(model.onboard_capacity)}
         model.save()
         return cls(model)
 
@@ -186,11 +189,17 @@ class MobileRobot(Robot):
     
     @property
     def free_batch_capacity(self) -> int:
-        return self.onboard_capacity - len(self.onboard_batches)
+        free_capacity = 0
+        for batch in self.onboard_batches_slots.values():
+            if not batch:
+                free_capacity += 1
+        return free_capacity
 
     @property 
-    def onboard_batches(self) -> List[Batch]:
-        return ListProxy(self._model_proxy.onboard_batches, Batch)
+    def onboard_batches_slots(self) -> Dict[str, Optional[Batch]]:
+        # to handle empty slots with None value
+        modified_constructor = lambda model: Batch(model) if model else None
+        return DictProxy(self._model_proxy.onboard_batches_slots, modified_constructor)
     
     @property
     def operational_mode(self) -> MobileRobotMode:
@@ -200,8 +209,27 @@ class MobileRobot(Robot):
     def operational_mode(self, new_mode: MobileRobotMode):
         self._model_proxy.operational_mode = new_mode
 
+    def is_batch_onboard(self, batch: Batch) -> bool:
+        onboard_batches = [batch for batch in self.onboard_batches_slots.values() if batch is not None]
+        return batch in onboard_batches
+
+    def update_assigned_op(self):
+        super().update_assigned_op()
+        op = self.assigned_op
+        if isinstance(op, CollectBatchOpDescriptor):
+            for slot, batch in self.onboard_batches_slots.items():
+                if not batch:
+                    op.target_onboard_slot = int(slot)
+                    break
+        elif isinstance(op, DropBatchOpDescriptor):
+           for slot, batch in self.onboard_batches_slots.items():
+                if batch and batch == op.target_batch:
+                    op.onboard_collection_slot = int(slot)
+                    break
+
+
     def add_op(self, robot_op: type[RobotOpDescriptor]):
-        if isinstance(robot_op, RobotTaskOpDescriptor) and robot_op.task_type == RobotTaskType.LOAD_TO_ROBOT:
+        if isinstance(robot_op, CollectBatchOpDescriptor):
             if robot_op.related_lot not in self.consigned_lots:
                 self.consigned_lots.append(robot_op.related_lot)
             else:
@@ -211,11 +239,21 @@ class MobileRobot(Robot):
     def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
-            if isinstance(op, RobotTaskOpDescriptor):
-                if op.task_type == RobotTaskType.LOAD_TO_ROBOT:
-                    self.onboard_batches.append(op.related_batch)
-                elif op.task_type == RobotTaskType.UNLOAD_FROM_ROBOT:
-                    self.onboard_batches.remove(op.related_batch)
-                    if all(batch not in self.onboard_batches for batch in op.related_lot.batches):
-                        self.consigned_lots.remove(op.related_lot)
+            if isinstance(op, CollectBatchOpDescriptor):
+                slot = str(op.target_onboard_slot)
+                self.onboard_batches_slots[slot] = op.target_batch
+                op.target_batch.location = Location(frame_name=f"onboard {self} at slot: {slot}")
+            elif isinstance(op, DropBatchOpDescriptor):
+                slot = str(op.onboard_collection_slot)
+                self.onboard_batches_slots[slot] = None
+                op.target_batch.location = self.location
+                all_lot_batches_removed = True
+                for batch in op.related_lot.batches:
+                    if self.is_batch_onboard(batch):
+                        all_lot_batches_removed = False
+                        break
+                
+                if all_lot_batches_removed:
+                    self.consigned_lots.remove(op.related_lot)
+
             super().complete_assigned_op(outcome, clear_assigned_op)
