@@ -124,9 +124,9 @@ class OutputProcessor:
                     new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
                     self._state.proc_slots[slot] = new_proc
                     new_proc.processing_slot = slot
-                    lot.status = LotStatus.ONBOARDING
+                    lot.status = LotStatus.OFFBOARDING
                 
-                elif lot.status == LotStatus.ONBOARDING:
+                elif lot.status == LotStatus.OFFBOARDING:
                     proc = self._state.proc_slots[slot]
                     if proc.m_state != "final_state":
                         proc.tick()
@@ -207,11 +207,12 @@ class WorkflowProcessor:
                 self._state.proc_requests_queue.append(ext_proc)
 
             # get processed lots
-            while station.processed_lots:
-                processed_lot = station.processed_lots.pop(left=True)
-                processed_lot.recipe.advance_state(success=True)
-                self._log_processor(f'Processing {processed_lot} is complete. Adding to lots buffer')
-                self._state.lots_buffer.append(processed_lot)
+            ready_for_collection_lots = station.retrieve_ready_for_collection_lots()
+            for lot in ready_for_collection_lots:
+                lot.recipe.advance_state(success=True)
+                self._log_processor(f'Processing {lot} is complete. Adding to lots buffer')
+                lot.status = LotStatus.IN_WORKFLOW
+                self._state.lots_buffer.append(lot)
 
         # process external processes requests
         while self._state.proc_requests_queue:

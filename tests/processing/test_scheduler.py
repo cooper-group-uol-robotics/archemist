@@ -371,7 +371,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 1 and remove lot
         self.station_1.finish_processing_lot(lot_1)
-        self.station_1.processed_lots.pop()
+        self.station_1.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 2
         lot_1.recipe.advance_state(success=True)
@@ -495,7 +495,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 2 and remove lot
         self.station_2.finish_processing_lot(lot_1)
-        self.station_2.processed_lots.pop()
+        self.station_2.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 3
         lot_1.recipe.advance_state(success=True)
@@ -576,7 +576,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 1 and remove lot
         self.station_1.finish_processing_lot(lot_2)
-        self.station_1.processed_lots.pop()
+        self.station_1.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 2
         lot_2.recipe.advance_state(success=True)
@@ -703,7 +703,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 3 and remove lot
         self.station_3.finish_processing_lot(lot_1)
-        self.station_3.processed_lots.pop()
+        self.station_3.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 4
         lot_1.recipe.advance_state(success=True)
@@ -737,7 +737,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 3 and remove lot
         self.station_4.finish_processing_lot(lot_1)
-        self.station_4.processed_lots.pop()
+        self.station_4.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 4
         lot_1.recipe.advance_state(success=True)
@@ -759,7 +759,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 2 and remove lot
         self.station_2.finish_processing_lot(lot_2)
-        self.station_2.processed_lots.pop()
+        self.station_2.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 3
         lot_2.recipe.advance_state(success=True)
@@ -847,7 +847,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 3 and remove lot
         self.station_3.finish_processing_lot(lot_2)
-        self.station_3.processed_lots.pop()
+        self.station_3.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 4
         lot_2.recipe.advance_state(success=True)
@@ -881,7 +881,7 @@ class SchedulerTest(unittest.TestCase):
 
         # complete lot processing for station 3 and remove lot
         self.station_4.finish_processing_lot(lot_2)
-        self.station_4.processed_lots.pop()
+        self.station_4.retrieve_ready_for_collection_lots()
 
         # advance lot recipe and assign lot to station 4
         lot_2.recipe.advance_state(success=True)

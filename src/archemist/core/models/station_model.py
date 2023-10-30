@@ -27,12 +27,11 @@ class StationModel(Document):
     ''' processes '''
     requested_ext_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     queued_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
-    running_procs_slots = fields.DictField(default={})
+    running_procs = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     procs_history = fields.ListField(fields.ReferenceField(StationProcessModel), default=[])
     
     ''' lots '''
-    assigned_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
-    processed_lots = fields.ListField(fields.ReferenceField(LotModel), default=[])
+    lot_slots = fields.DictField(default={})
     
     ''' robot ops '''
     requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])

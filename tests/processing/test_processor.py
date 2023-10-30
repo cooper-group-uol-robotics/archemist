@@ -317,17 +317,17 @@ class ProcessorTest(unittest.TestCase):
         self.assertFalse(output_state.procs_history)
 
         output_processor.process_lots()
-        self.assertEqual(output_state.lot_slots["0"].status, LotStatus.ONBOARDING)
+        self.assertEqual(output_state.lot_slots["0"].status, LotStatus.OFFBOARDING)
         self.assertIsNotNone(output_state.proc_slots["0"])
         self.assertEqual(output_state.proc_slots["0"].m_state, "init_state")
-        self.assertEqual(output_state.lot_slots["1"].status, LotStatus.ONBOARDING)
+        self.assertEqual(output_state.lot_slots["1"].status, LotStatus.OFFBOARDING)
         self.assertIsNotNone(output_state.proc_slots["1"])
         self.assertEqual(output_state.proc_slots["1"].m_state, "init_state")
 
         output_processor.process_lots()
-        self.assertEqual(output_state.lot_slots["0"].status, LotStatus.ONBOARDING)
+        self.assertEqual(output_state.lot_slots["0"].status, LotStatus.OFFBOARDING)
         self.assertEqual(output_state.proc_slots["0"].m_state, "final_state")
-        self.assertEqual(output_state.lot_slots["1"].status, LotStatus.ONBOARDING)
+        self.assertEqual(output_state.lot_slots["1"].status, LotStatus.OFFBOARDING)
         self.assertEqual(output_state.proc_slots["1"].m_state, "final_state")
 
         output_processor.process_lots()
@@ -390,18 +390,20 @@ class ProcessorTest(unittest.TestCase):
         proc_2 = TestProcess1.from_args(lot_2, self.operations)
         station_1.add_process(proc_1)
         station_1.add_process(proc_2)
+        lot_1.status = LotStatus.IN_PROCESS
+        lot_2.status = LotStatus.IN_PROCESS
 
         # tick station_1_proc_handler to assigns proc slots
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].object_id, proc_1.object_id)
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "init_state")
-        self.assertEqual(station_1.running_procs_slots["1"].object_id, proc_2.object_id)
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "init_state")
+        self.assertEqual(station_1.running_procs[0].object_id, proc_1.object_id)
+        self.assertEqual(station_1.running_procs[0].m_state, "init_state")
+        self.assertEqual(station_1.running_procs[1].object_id, proc_2.object_id)
+        self.assertEqual(station_1.running_procs[1].m_state, "init_state")
 
         #  tick station_1_proc_handler to advance proc states
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "pickup_batch")
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "pickup_batch")
+        self.assertEqual(station_1.running_procs[0].m_state, "pickup_batch")
+        self.assertEqual(station_1.running_procs[1].m_state, "pickup_batch")
         self.assertEqual(len(station_1.requested_robot_ops), 2)
 
         # tick workflow processor to pick requested robot ops from station 1
@@ -412,8 +414,8 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_1_proc_handler to sanity check it doesn't advance state
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "pickup_batch")
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "pickup_batch")
+        self.assertEqual(station_1.running_procs[0].m_state, "pickup_batch")
+        self.assertEqual(station_1.running_procs[1].m_state, "pickup_batch")
         self.assertFalse(station_1.requested_robot_ops)
 
         # complete req robot ops to be able to advance procs
@@ -424,14 +426,14 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_1_proc_handler to advance state
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "final_state")
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "final_state")
+        self.assertEqual(station_1.running_procs[0].m_state, "final_state")
+        self.assertEqual(station_1.running_procs[1].m_state, "final_state")
 
         # tick station_1_proc_handler to finish
         station_1_proc_handler.handle()
-        self.assertIsNone(station_1.running_procs_slots["0"])
-        self.assertIsNone(station_1.running_procs_slots["1"])
-        self.assertEqual(len(station_1.processed_lots), 2)
+        self.assertFalse(station_1.queued_procs)
+        self.assertFalse(station_1.running_procs)
+        self.assertTrue(station_1.has_ready_for_collection_lots())
 
         # tick workflow processor to pick processed lots from station 1
         workflow_processor.process_workflow()
@@ -449,18 +451,20 @@ class ProcessorTest(unittest.TestCase):
         proc_2 = TestProcess2.from_args(lot_2)
         station_2.add_process(proc_1)
         station_2.add_process(proc_2)
+        lot_1.status = LotStatus.IN_PROCESS
+        lot_2.status = LotStatus.IN_PROCESS
 
         # tick station_2_proc_handler to assigns proc slots
         station_2_proc_handler.handle()
-        self.assertEqual(station_2.running_procs_slots["0"].object_id, proc_1.object_id)
-        self.assertEqual(station_2.running_procs_slots["0"].m_state, "init_state")
-        self.assertEqual(station_2.running_procs_slots["1"].object_id, proc_2.object_id)
-        self.assertEqual(station_2.running_procs_slots["1"].m_state, "init_state")
+        self.assertEqual(station_2.running_procs[0].object_id, proc_1.object_id)
+        self.assertEqual(station_2.running_procs[0].m_state, "init_state")
+        self.assertEqual(station_2.running_procs[1].object_id, proc_2.object_id)
+        self.assertEqual(station_2.running_procs[1].m_state, "init_state")
 
         # tick station_2_proc_handler to advance proc states
         station_2_proc_handler.handle()
-        self.assertEqual(station_2.running_procs_slots["0"].m_state, "pickup_batch")
-        self.assertEqual(station_2.running_procs_slots["1"].m_state, "pickup_batch")
+        self.assertEqual(station_2.running_procs[0].m_state, "pickup_batch")
+        self.assertEqual(station_2.running_procs[1].m_state, "pickup_batch")
         self.assertEqual(len(station_2.requested_robot_ops), 2)
 
         # tick workflow processor to pick robot ops
@@ -477,8 +481,8 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_2_proc_handler to advance proc states
         station_2_proc_handler.handle()
-        self.assertEqual(station_2.running_procs_slots["0"].m_state, "run_analysis_proc")
-        self.assertEqual(station_2.running_procs_slots["1"].m_state, "run_analysis_proc")
+        self.assertEqual(station_2.running_procs[0].m_state, "run_analysis_proc")
+        self.assertEqual(station_2.running_procs[1].m_state, "run_analysis_proc")
         self.assertEqual(len(station_2.requested_ext_procs), 2)
 
         # tick workflow processor to pick requested external processes
@@ -488,31 +492,29 @@ class ProcessorTest(unittest.TestCase):
 
         # tick station_1_proc_handler to advance proc states
         station_1_proc_handler.handle()
-        self.assertIsNotNone(station_1.running_procs_slots["0"])
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "init_state")
-        self.assertIsNotNone(station_1.running_procs_slots["1"])
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "init_state")
+        self.assertIsNotNone(station_1.running_procs[0])
+        self.assertEqual(station_1.running_procs[0].m_state, "init_state")
+        self.assertIsNotNone(station_1.running_procs[1])
+        self.assertEqual(station_1.running_procs[1].m_state, "init_state")
 
         # tick station_1_proc_handler to advance proc states
         station_1_proc_handler.handle()
-        self.assertEqual(station_1.running_procs_slots["0"].m_state, "final_state")
-        self.assertEqual(station_1.running_procs_slots["1"].m_state, "final_state")
+        self.assertEqual(station_1.running_procs[0].m_state, "final_state")
+        self.assertEqual(station_1.running_procs[1].m_state, "final_state")
 
         # tick station_1_proc_handler to finish procs
         station_1_proc_handler.handle()
-        self.assertIsNone(station_1.running_procs_slots["0"])
-        self.assertIsNone(station_1.running_procs_slots["1"])
+        self.assertFalse(station_1.running_procs)
 
         # tick station_2_proc_handler to advance proc states
         station_2_proc_handler.handle()
-        self.assertEqual(station_2.running_procs_slots["0"].m_state, "final_state")
-        self.assertEqual(station_2.running_procs_slots["1"].m_state, "final_state")
+        self.assertEqual(station_2.running_procs[0].m_state, "final_state")
+        self.assertEqual(station_2.running_procs[1].m_state, "final_state")
 
         # tick station_2_proc_handler to finish processes
         station_2_proc_handler.handle()
-        self.assertIsNone(station_2.running_procs_slots["0"])
-        self.assertIsNone(station_2.running_procs_slots["1"])
-        self.assertEqual(len(station_2.processed_lots), 2)
+        self.assertFalse(station_2.running_procs)
+        self.assertTrue(station_2.has_ready_for_collection_lots())
 
         # tick workflow processor to pick processed lots from station 2
         workflow_processor.process_workflow()

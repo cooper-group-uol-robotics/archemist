@@ -1,5 +1,5 @@
 import unittest
-from archemist.core.state.robot import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOpDescriptor
 from mongoengine import connect
 from archemist.core.state.station import Station, StationState, OpState, OpOutcome
 from archemist.core.state.station_op import StationOpDescriptor
@@ -7,6 +7,7 @@ from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
+from archemist.core.util.enums import LotStatus
 from archemist.core.state.station_process import StationProcess
 from archemist.core.state.material import Liquid, Solid
 from datetime import date
@@ -78,8 +79,8 @@ class StationTest(unittest.TestCase):
 
     def test_lot_members(self):
         # assert empty members
-        self.assertFalse(self.station.assigned_lots)
-        self.assertFalse(self.station.processed_lots)
+        self.assertIsNone(self.station.lot_slots["0"])
+        self.assertIsNone(self.station.lot_slots["1"])
 
         # lots creation
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
@@ -90,32 +91,37 @@ class StationTest(unittest.TestCase):
 
         # lot assignment
         self.assertEqual(self.station.free_lot_capacity, 2)
+        self.assertFalse(self.station.is_lot_onboard(lot_1))
         self.station.add_lot(lot_1)
         self.assertEqual(self.station.free_lot_capacity, 1)
+        self.assertEqual(self.station.lot_slots["0"], lot_1)
+        self.assertTrue(self.station.is_lot_onboard(lot_1))
         self.station.add_lot(lot_2)
         self.assertEqual(self.station.free_lot_capacity, 0)
-
-        assigned_lots = self.station.assigned_lots
-        self.assertEqual(len(assigned_lots),2)
-        self.assertEqual(assigned_lots[0], lot_1)
-        self.assertEqual(assigned_lots[1], lot_2)
+        self.assertEqual(self.station.lot_slots["1"], lot_2)
+        self.assertTrue(self.station.is_lot_onboard(lot_2))
 
         # lot processing
+        self.assertFalse(self.station.has_ready_for_collection_lots())
         self.station.finish_processing_lot(lot_1)
-        self.assertEqual(len(self.station.assigned_lots), 1)
-        self.assertEqual(len(self.station.processed_lots), 1)
-        self.assertEqual(self.station.processed_lots[0], lot_1)
+        self.assertEqual(self.station.lot_slots["0"].status, LotStatus.READY_FOR_COLLECTION)
         self.assertEqual(self.station.free_lot_capacity, 0)
+        self.assertTrue(self.station.has_ready_for_collection_lots())
+        collected_lots = self.station.retrieve_ready_for_collection_lots()
+        self.assertEqual(len(collected_lots), 1)
+        self.assertEqual(collected_lots[0], lot_1)
+        self.assertEqual(self.station.free_lot_capacity, 1)
+        self.assertIsNone(self.station.lot_slots["0"])
 
         self.station.finish_processing_lot(lot_2)
-        self.assertEqual(len(self.station.assigned_lots), 0)
-        self.assertEqual(len(self.station.processed_lots), 2)
-        self.assertEqual(self.station.processed_lots[1], lot_2)
-        self.assertEqual(self.station.free_lot_capacity, 0)
-
-        finisehd_lot = self.station.processed_lots.pop(left=True)
-        self.assertEqual(finisehd_lot, lot_1)
+        self.assertEqual(self.station.lot_slots["1"].status, LotStatus.READY_FOR_COLLECTION)
         self.assertEqual(self.station.free_lot_capacity, 1)
+        self.assertTrue(self.station.has_ready_for_collection_lots())
+        collected_lots = self.station.retrieve_ready_for_collection_lots()
+        self.assertEqual(len(collected_lots), 1)
+        self.assertEqual(collected_lots[0], lot_2)
+        self.assertEqual(self.station.free_lot_capacity, 2)
+        self.assertIsNone(self.station.lot_slots["1"])
 
     def test_robot_ops_members(self):
         # assert empty members
@@ -215,9 +221,7 @@ class StationTest(unittest.TestCase):
         # assert empty members
         self.assertFalse(self.station.requested_ext_procs)
         self.assertFalse(self.station.queued_procs)
-        self.assertEqual(len(self.station.running_procs_slots), 2)
-        self.assertIsNone(self.station.running_procs_slots["0"])
-        self.assertIsNone(self.station.running_procs_slots["1"])
+        self.assertFalse(self.station.running_procs)
         self.assertFalse(self.station.procs_history)
 
         # construct process
@@ -237,9 +241,10 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.queued_procs),1)
         self.assertEqual(self.station.queued_procs[0].object_id, proc.object_id)
 
-        # add process to running_procs_slots
-        self.station.running_procs_slots["0"] = ext_proc
-        self.assertEqual(self.station.running_procs_slots["0"].object_id, ext_proc.object_id)
+        # add process to running_procs
+        self.station.running_procs.append(ext_proc)
+        self.assertEqual(len(self.station.running_procs), 1)
+        self.assertEqual(self.station.running_procs[0].object_id, ext_proc.object_id)
 
 if __name__ == '__main__':
     unittest.main()

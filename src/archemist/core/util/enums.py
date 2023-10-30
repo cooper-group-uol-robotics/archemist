@@ -44,6 +44,8 @@ class LotStatus(Enum):
     ONBOARDING = auto()
     READY_FOR_COLLECTION = auto()
     IN_WORKFLOW = auto()
+    IN_PROCESS = auto()
+    OFFBOARDING = auto()
     NEED_REMOVAL = auto()
     FINISHED = auto()
 

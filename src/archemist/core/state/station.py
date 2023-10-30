@@ -1,6 +1,6 @@
 from typing import List, Dict, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
-from archemist.core.util.enums import StationState, OpState, OpOutcome
+from archemist.core.util.enums import StationState, OpState, OpOutcome, LotStatus
 from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.state.station_op_result import StationOpResult
@@ -33,8 +33,8 @@ class Station:
         station_model.exp_id = station_dict['id']
         station_model.location = station_dict['location']
         station_model.total_lot_capacity = station_dict['total_lot_capacity']
-        proc_slots_num = station_dict['total_lot_capacity']
-        station_model.running_procs_slots = {str(slot_num): None for slot_num in range(proc_slots_num)}
+        slots_num = station_dict['total_lot_capacity']
+        station_model.lot_slots = {str(slot_num): None for slot_num in range(slots_num)}
         station_model.selected_handler = station_dict['handler']
         if liquids:
             station_model.liquids = [liquid.model for liquid in liquids]
@@ -95,7 +95,12 @@ class Station:
     
     @property
     def free_lot_capacity(self) -> int:
-        return self.total_lot_capacity - len(self.assigned_lots) - len(self.processed_lots)
+        free_lot_capacity = 0
+        for lot in self.lot_slots.values():
+            if not lot:
+                free_lot_capacity += 1
+
+        return free_lot_capacity
     
     ''' Process properties and methods '''
     
@@ -108,10 +113,8 @@ class Station:
         return ListProxy(self._model_proxy.queued_procs, ProcessFactory.create_from_model)
     
     @property
-    def running_procs_slots(self) -> Dict[int, Type[StationProcess]]:
-        # to handle empty slots with None value
-        modified_constructor = lambda model: ProcessFactory.create_from_object_id(model.object_id) if model else None
-        return DictProxy(self._model_proxy.running_procs_slots, modified_constructor)
+    def running_procs(self) -> List[Type[StationProcess]]:
+        return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_from_model)
     
     @property
     def procs_history(self) -> List[Type[StationProcess]]:
@@ -126,26 +129,47 @@ class Station:
     ''' Lots properties and methods '''
 
     @property
-    def assigned_lots(self) -> List[Lot]:
-        return ListProxy(self._model_proxy.assigned_lots, Lot)
+    def lot_slots(self) -> Dict[str, Lot]:
+        # to handle empty slots with None value
+        modified_constructor = lambda model: Lot.from_object_id(model.object_id) if model else None
+        return DictProxy(self._model_proxy.lot_slots, modified_constructor)
 
-    @property
-    def processed_lots(self) -> List[Lot]:
-        return ListProxy(self._model_proxy.processed_lots, Lot)
-
-    def add_lot(self, lot: Lot):
-        if self.free_lot_capacity > 0:
-            lot.add_station_stamp(str(self))
-            self.assigned_lots.append(lot)
-            self._log_station(f'{lot} is added for processing')
-        else:
-            self._log_station(f'Cannot add {lot}, no batch capacity is available')
+    def add_lot(self, added_lot: Lot):
+        lot_added = False
+        for slot, lot in self.lot_slots.items():
+            if lot is None:
+                lot_added = True
+                added_lot.add_station_stamp(str(self))
+                self.lot_slots[slot] = added_lot
+                self._log_station(f'{added_lot} is added for processing at slot {slot}')
+                break
+       
+        if not lot_added:
+            self._log_station(f'Cannot add {added_lot}, no lot capacity is available')
     
     def finish_processing_lot(self, lot: Lot):
         lot.add_station_stamp(str(self))
-        self.assigned_lots.remove(lot)
-        self.processed_lots.append(lot)
+        lot.status = LotStatus.READY_FOR_COLLECTION
         self._log_station(f'processing {lot} is complete')
+
+    def is_lot_onboard(self, lot: Lot):
+        onboard_lots = [lot for lot in self.lot_slots.values() if lot is not None]
+        return lot in onboard_lots
+    
+    def retrieve_ready_for_collection_lots(self) -> List[Lot]:
+        ready_for_collection_lots = []
+        for slot, lot in self.lot_slots.items():
+            if lot and lot.status == LotStatus.READY_FOR_COLLECTION:
+                ready_for_collection_lots.append(lot)
+                self.lot_slots[slot] = None
+        
+        return ready_for_collection_lots
+    
+    def has_ready_for_collection_lots(self) -> bool:
+        for lot in self.lot_slots.values():
+            if lot and lot.status == LotStatus.READY_FOR_COLLECTION:
+                return True
+        return False
         
     ''' Robot ops properties '''
 

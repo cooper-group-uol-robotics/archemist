@@ -6,7 +6,7 @@ from archemist.core.state.station import Station
 from archemist.core.state.robot_op import RobotOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.state.station_op import StationOpDescriptor
 from archemist.core.processing.handler import RobotHandler, StationHandler, StationProcessHandler
-from archemist.core.util.enums import RobotState, StationState, OpState, OpOutcome
+from archemist.core.util.enums import RobotState, StationState, OpState, OpOutcome, LotStatus
 from archemist.core.util.location import Location
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -354,41 +354,41 @@ class HandlerTest(unittest.TestCase):
         station = Station.from_dict(self.station_dict)
         proc_handler = StationProcessHandler(station)
 
-        station_procs_dict = station.running_procs_slots
-        self.assertEqual(len(station_procs_dict), 2)
+        self.assertFalse(station.running_procs)
         self.assertFalse(station.queued_procs)
 
         # add procs to station
         station.add_process(proc_1)
         station.add_process(proc_2)
         self.assertEqual(len(station.queued_procs), 2)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertFalse(station.running_procs)
         
         # test processes assignment
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].object_id, proc_1.object_id)
-        self.assertEqual(station_procs_dict["1"].object_id, proc_2.object_id)
+        self.assertEqual(len(station.running_procs), 2)
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.INACTIVE)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.INACTIVE)
+        self.assertEqual(station.running_procs[0].object_id, proc_1.object_id)
+        self.assertEqual(station.running_procs[1].object_id, proc_2.object_id)
         self.assertEqual(len(station.queued_procs), 0)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "some_state")
-        self.assertEqual(station_procs_dict["1"].m_state, "some_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.RUNNING)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.RUNNING)
+        self.assertEqual(station.running_procs[0].m_state, "some_state")
+        self.assertEqual(station.running_procs[1].m_state, "some_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.RUNNING)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.RUNNING)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["1"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.FINISHED)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[1].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.FINISHED)
 
          # test processes completion
         proc_handler.handle()
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertFalse(station.running_procs)
         self.assertEqual(proc_1.status, ProcessStatus.FINISHED)
         self.assertEqual(proc_2.status, ProcessStatus.FINISHED)
         self.assertEqual(len(station.procs_history), 2)
@@ -398,7 +398,9 @@ class HandlerTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
+        lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
+        lot_2.status = LotStatus.IN_WORKFLOW
         recipe_1_doc = self.recipe_doc
         recipe_1 = Recipe.from_dict(recipe_1_doc)
         lot_1.attach_recipe(recipe_1)
@@ -412,8 +414,7 @@ class HandlerTest(unittest.TestCase):
         station = Station.from_dict(self.station_dict)
         proc_handler = StationProcessHandler(station)
 
-        station_procs_dict = station.running_procs_slots
-        self.assertEqual(len(station_procs_dict), 2)
+        self.assertFalse(station.running_procs)
         self.assertFalse(station.queued_procs)
 
         # add procs to station
@@ -421,27 +422,23 @@ class HandlerTest(unittest.TestCase):
         station.add_lot(lot_2)
        
         self.assertFalse(station.queued_procs)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
-        
+
         # test processes assignment
         proc_handler.handle()
-        self.assertIsNotNone(station_procs_dict["0"])
-        self.assertIsNotNone(station_procs_dict["1"])
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.INACTIVE)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
+        self.assertEqual(len(station.running_procs), 2)
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.INACTIVE)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.INACTIVE)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["1"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.FINISHED)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[1].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.FINISHED)
 
         # test processes completion
         proc_handler.handle()
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertFalse(station.running_procs)
         self.assertEqual(len(station.procs_history), 2)
 
     def test_station_process_handler_mixed(self):
@@ -449,7 +446,9 @@ class HandlerTest(unittest.TestCase):
         batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
         batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_1 = Lot.from_args([batch_1])
+        lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
+        lot_2.status = LotStatus.IN_WORKFLOW
         recipe_1_doc = self.recipe_doc
         recipe_1 = Recipe.from_dict(recipe_1_doc)
         lot_1.attach_recipe(recipe_1)
@@ -462,14 +461,14 @@ class HandlerTest(unittest.TestCase):
         # construct process
         batch_3 = Batch.from_args(3, Location(1, 2, "some_frame"))
         lot_3 = Lot.from_args([batch_3])
+        lot_3.status = LotStatus.IN_WORKFLOW
         proc = TestProcess.from_args(lot_3)
 
         # construct station and its process handler
         station = Station.from_dict(self.station_dict)
         proc_handler = StationProcessHandler(station)
 
-        station_procs_dict = station.running_procs_slots
-        self.assertEqual(len(station_procs_dict), 2)
+        self.assertFalse(station.running_procs)
         self.assertFalse(station.queued_procs)
 
         # add lots and procs to station
@@ -477,16 +476,14 @@ class HandlerTest(unittest.TestCase):
         station.add_process(proc)
        
         self.assertEqual(len(station.queued_procs), 1)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
         
         # test processes assignment
         proc_handler.handle()
         self.assertEqual(len(station.queued_procs), 0)
-        self.assertEqual(station_procs_dict["0"].object_id, proc.object_id)
-        self.assertIsNotNone(station_procs_dict["1"])
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.INACTIVE)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
+        self.assertEqual(len(station.running_procs), 2)
+        self.assertEqual(station.running_procs[0].object_id, proc.object_id)
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.INACTIVE)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.INACTIVE)
 
         # add a lot
         station.add_lot(lot_2)
@@ -494,44 +491,39 @@ class HandlerTest(unittest.TestCase):
         # test processes state advancement
         proc_handler.handle()
         self.assertEqual(len(station.queued_procs), 1)
-        self.assertEqual(station_procs_dict["0"].m_state, "some_state")
-        self.assertEqual(station_procs_dict["1"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.RUNNING)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[0].m_state, "some_state")
+        self.assertEqual(station.running_procs[1].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.RUNNING)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.FINISHED)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.FINISHED)
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[1].m_state, "init_state")
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.INACTIVE)
+        self.assertFalse(station.queued_procs)
+        self.assertEqual(len(station.running_procs), 2)
         self.assertEqual(len(station.procs_history), 1)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertIsNone(station_procs_dict["0"])
         self.assertEqual(proc.status, ProcessStatus.FINISHED)
-        self.assertIsNotNone(station_procs_dict["1"])
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.INACTIVE)
+        self.assertEqual(len(station.running_procs), 1)
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
         self.assertEqual(len(station.procs_history), 2)
-
-        # test processes state advancement
-        proc_handler.handle()
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertEqual(station_procs_dict["1"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.FINISHED)
 
         # test processes completion
         proc_handler.handle()
         self.assertFalse(station.queued_procs)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertFalse(station.running_procs)
         self.assertEqual(len(station.procs_history), 3)
 
         # test again processes completion
         proc_handler.handle()
         self.assertFalse(station.queued_procs)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
+        self.assertFalse(station.running_procs)
         self.assertEqual(len(station.procs_history), 3)
 
     def test_station_process_handler_with_requests(self):
@@ -559,46 +551,43 @@ class HandlerTest(unittest.TestCase):
         self.assertFalse(station._queued_ops)
         proc_handler = StationProcessHandler(station)
 
-        station_procs_dict = station.running_procs_slots
-        self.assertEqual(len(station_procs_dict), 2)
+        self.assertFalse(station.running_procs)
         self.assertFalse(station.queued_procs)
 
         # add procs to station
         station.add_process(proc_1)
         station.add_process(proc_2)
         self.assertEqual(len(station.queued_procs), 2)
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertIsNone(station_procs_dict["1"])
         
         # test processes assignment
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].object_id, proc_1.object_id)
-        self.assertEqual(station_procs_dict["1"].object_id, proc_2.object_id)
+        self.assertEqual(station.running_procs[0].object_id, proc_1.object_id)
+        self.assertEqual(station.running_procs[1].object_id, proc_2.object_id)
         self.assertEqual(len(station.queued_procs), 0)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "prep_state")
-        self.assertEqual(station_procs_dict["1"].m_state, "prep_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.RUNNING)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.RUNNING)
+        self.assertEqual(station.running_procs[0].m_state, "prep_state")
+        self.assertEqual(station.running_procs[1].m_state, "prep_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.RUNNING)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.RUNNING)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "pickup_batch")
-        self.assertEqual(station_procs_dict["1"].m_state, "pickup_batch")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(station.running_procs[0].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
         self.assertEqual(len(station.requested_robot_ops), 2)
         robot_op = station.requested_robot_ops.pop(left=True)
         robot_op.complete_op(None, OpOutcome.SUCCEEDED)
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "run_op")
-        self.assertEqual(station_procs_dict["1"].m_state, "pickup_batch")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.WAITING_ON_STATION_OPS)
-        self.assertEqual(station_procs_dict["1"].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(station.running_procs[0].m_state, "run_op")
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_OPS)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
         self.assertEqual(len(station.requested_robot_ops), 1)
         self.assertEqual(len(station._queued_ops), 1)
         station_op = station._queued_ops.pop()
@@ -606,23 +595,23 @@ class HandlerTest(unittest.TestCase):
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "run_analysis_proc")
-        self.assertEqual(station_procs_dict["1"].m_state, "pickup_batch")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.WAITING_ON_STATION_PROCS)
+        self.assertEqual(station.running_procs[0].m_state, "run_analysis_proc")
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_PROCS)
         self.assertEqual(len(station.requested_ext_procs), 1)
         station_proc = station.requested_ext_procs.pop()
         station_proc._model_proxy.status = ProcessStatus.FINISHED
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station_procs_dict["0"].m_state, "final_state")
-        self.assertEqual(station_procs_dict["0"].status, ProcessStatus.FINISHED)
-        self.assertEqual(station_procs_dict["1"].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertIsNone(station_procs_dict["0"])
-        self.assertEqual(station_procs_dict["1"].m_state, "pickup_batch")
+        self.assertEqual(len(station.running_procs), 1)
+        self.assertEqual(station.running_procs[0].m_state, "pickup_batch")
 
 
 
