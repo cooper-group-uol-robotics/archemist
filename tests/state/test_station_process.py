@@ -91,9 +91,9 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(proc.associated_station, "Station")
         self.assertEqual(proc.status, ProcessStatus.INACTIVE)
         self.assertEqual(proc.m_state, "init_state")
-        self.assertIsNone(proc.processing_slot)
-        proc.processing_slot = 3
-        self.assertEqual(proc.processing_slot, 3)
+        self.assertIsNone(proc.lot_slot)
+        proc.lot_slot = 3
+        self.assertEqual(proc.lot_slot, 3)
 
         # test skip fields
         self.assertFalse(proc.skip_robot_ops)

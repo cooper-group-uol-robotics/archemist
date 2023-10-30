@@ -132,12 +132,12 @@ class StationProcess:
         return self._model_proxy.state
     
     @property
-    def processing_slot(self) -> int:
-        return self._model_proxy.processing_slot
+    def lot_slot(self) -> int:
+        return self._model_proxy.lot_slot
     
-    @processing_slot.setter
-    def processing_slot(self, new_slot: int):
-        self._model_proxy.processing_slot = new_slot
+    @lot_slot.setter
+    def lot_slot(self, new_slot: int):
+        self._model_proxy.lot_slot = new_slot
     
     @property
     def data(self) -> Dict[str, Any]:

@@ -108,7 +108,7 @@ class StationProcessHandler:
                 proc_dict = state_details.station_process
                 station_module_path = self._station.module_path
                 proc = ProcessFactory.create_from_dict(dict(proc_dict), lot, station_module_path)
-                proc.processing_slot = slot
+                proc.lot_slot = slot
                 self._station.add_process(proc)
                 lot.status = LotStatus.IN_PROCESS
 

@@ -40,7 +40,7 @@ class BasicLotOutputProcess(StationProcess):
     def request_place_lot(self):
         req_robot_ops = []
         num_batches = self.lot.num_batches
-        batches_offset = self.processing_slot*num_batches
+        batches_offset = self.lot_slot*num_batches
         
         for index, batch in enumerate(self.lot.batches):
             params_dict = {}

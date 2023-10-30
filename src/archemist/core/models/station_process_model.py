@@ -18,7 +18,7 @@ class StationProcessModel(Document):
     status = fields.EnumField(enum=ProcessStatus, default=ProcessStatus.INACTIVE)
     state = fields.StringField(default="init_state")
     data = fields.DictField(default={})
-    processing_slot = fields.IntField(min_value=0, default=None, null=True)
+    lot_slot = fields.IntField(min_value=0, default=None, null=True)
     skip_robot_ops = fields.BooleanField(default=False)
     skip_station_ops = fields.BooleanField(default=False)
     skip_ext_procs = fields.BooleanField(default=False)
