@@ -25,10 +25,9 @@ class BatchTest(unittest.TestCase):
         # test adding MaterialOpResult
         mock_origin_op = ObjectId()
         material_op_1 = MaterialOpResult.from_args(origin_op=mock_origin_op,
-                                               material_name="water",
-                                               material_id=12,
-                                               amount=1.1,
-                                               unit="mg")
+                                               material_names=["water"],
+                                               amounts=[1.1],
+                                               units=["mg"])
         sample.add_result_op(material_op_1)
         self.assertEqual(len(sample.result_ops), 1)
         self.assertEqual(sample.result_ops[0], material_op_1)
@@ -36,16 +35,16 @@ class BatchTest(unittest.TestCase):
         self.assertDictEqual(dict(sample.materials), {"water": {"amount": 1.1, "unit": "mg"}})
 
         material_op_2 = MaterialOpResult.from_args(origin_op=mock_origin_op,
-                                               material_name="water",
-                                               material_id=12,
-                                               amount=0.9,
-                                               unit="mg")
+                                               material_names=["water", "acid"],
+                                               amounts=[0.9, 2.5],
+                                               units=["mg", "uL"])
         
         sample.add_result_op(material_op_2)
         self.assertEqual(len(sample.result_ops), 2)
         self.assertEqual(sample.result_ops[1], material_op_2)
-        self.assertEqual(len(sample.materials), 1)
-        self.assertDictEqual(dict(sample.materials), {"water": {"amount": 2.0, "unit": "mg"}})
+        self.assertEqual(len(sample.materials), 2)
+        self.assertDictEqual(dict(sample.materials), {"water": {"amount": 2.0, "unit": "mg"},
+                                                      "acid": {"amount": 2.5, "unit": "uL"}})
 
         # test adding ProcessOpResult
         parameters_dict = {"operation": "stir", "speed": 500}
@@ -55,7 +54,7 @@ class BatchTest(unittest.TestCase):
         sample.add_result_op(process_op_result)
         self.assertEqual(len(sample.result_ops), 3)
         self.assertEqual(sample.result_ops[2], process_op_result)
-        self.assertEqual(len(sample.materials), 1)
+        self.assertEqual(len(sample.materials), 2)
         
         
 

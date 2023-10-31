@@ -25,16 +25,14 @@ class OpResultTest(unittest.TestCase):
     def test_material_op_result(self):
         mock_origin_op = ObjectId()
         op_result = MaterialOpResult.from_args(origin_op=mock_origin_op,
-                                               material_name="water",
-                                               material_id=12,
-                                               amount=1.1,
-                                               unit="mg")
+                                               material_names=["water"],
+                                               amounts=[1.1],
+                                               units=["mg"])
         self.assertIsNotNone(op_result)
         self.assertEqual(op_result.origin_op, mock_origin_op)
-        self.assertEqual(op_result.material_name, "water")
-        self.assertEqual(op_result.material_id, 12)
-        self.assertEqual(op_result.amount, 1.1)
-        self.assertEqual(op_result.unit, "mg")
+        self.assertEqual(op_result.material_names[0], "water")
+        self.assertEqual(op_result.amounts[0], 1.1)
+        self.assertEqual(op_result.units[0], "mg")
 
     def test_process_op_result(self):
         mock_origin_op = ObjectId()

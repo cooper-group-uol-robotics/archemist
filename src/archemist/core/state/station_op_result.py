@@ -1,7 +1,7 @@
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.models.op_result_model import OpResultModel, MaterialOpResultModel, ProcessOpResultModel
+from archemist.core.models.op_result_model import OpResultModel, MaterialsOpResultModel, ProcessOpResultModel
 
-from typing import Union, Type, Dict, Any
+from typing import Union, Type, Dict, Any, List
 from bson.objectid import ObjectId
 
 class StationOpResult:
@@ -42,36 +42,37 @@ class StationOpResult:
         return self.object_id == __value.object_id
     
 class MaterialOpResult(StationOpResult):
-    def __init__(self, result_model: Union[MaterialOpResultModel, ModelProxy]):
+    def __init__(self, result_model: Union[MaterialsOpResultModel, ModelProxy]):
         super().__init__(result_model)
 
     @classmethod
-    def from_args(cls, origin_op: ObjectId, material_name: str, material_id: int, amount: float, unit: str):
-        model = MaterialOpResultModel()
+    def from_args(cls, origin_op: ObjectId, material_names: List[str],
+                  amounts: List[float],
+                  units: List[str]):
+        model = MaterialsOpResultModel()
         origin_op = origin_op
         cls._set_model_common_fields(model, origin_op)
-        model.material_name = material_name
-        model.material_id = material_id
-        model.amount = amount
-        model.unit = unit
+        model.material_names = material_names
+        model.amounts = amounts
+        model.units = units
         model.save()
         return cls(model)
     
     @property
-    def material_name(self) -> str:
-        return self._model_proxy.material_name
+    def material_names(self) -> List[str]:
+        return self._model_proxy.material_names
     
     @property
-    def material_id(self) -> int:
-        return self._model_proxy.material_id
+    def material_ids(self) -> List[int]:
+        return self._model_proxy.material_ids
     
     @property
-    def amount(self) -> float:
-        return self._model_proxy.amount
+    def amounts(self) -> List[float]:
+        return self._model_proxy.amounts
     
     @property
-    def unit(self) -> str:
-        return self._model_proxy.unit
+    def units(self) -> List[str]:
+        return self._model_proxy.units
     
 class ProcessOpResult(StationOpResult):
     def __init__(self, result_model: Union[ProcessOpResultModel, ModelProxy]):

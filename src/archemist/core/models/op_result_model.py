@@ -7,11 +7,10 @@ class OpResultModel(Document):
 
     meta = {'collection': 'op_results', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
-class MaterialOpResultModel(OpResultModel):
-    material_name = fields.StringField(required=True)
-    material_id = fields.IntField(required=True)
-    amount = fields.FloatField(min_value=0.0)
-    unit = fields.StringField(required=True)
+class MaterialsOpResultModel(OpResultModel):
+    material_names = fields.ListField(fields.StringField(), required=True)
+    amounts = fields.ListField(fields.FloatField(min_value=0.0), required=True)
+    units = fields.ListField(fields.StringField(choices=["L", "mL", "uL", "g", "mg", "ug"]), required=True)
 
 class ProcessOpResultModel(OpResultModel):
     parameters = fields.DictField(required=True)

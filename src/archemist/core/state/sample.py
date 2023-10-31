@@ -2,6 +2,7 @@ from archemist.core.models.sample_model import SampleModel
 from archemist.core.persistence.object_factory import OpResultFactory
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult
+from archemist.core.util.units import L, mL, uL, g, mg, ug 
 
 from bson.objectid import ObjectId
 from typing import Any, List, Union, Dict, Type
@@ -47,14 +48,17 @@ class Sample:
 
     def add_result_op(self, result_op: Type[StationOpResult]):
         if isinstance(result_op, MaterialOpResult):
-            material_name = result_op.material_name
-            if self.materials.get(material_name, None):
-                new_material_details = self.materials[material_name]
-                new_material_details["amount"] += result_op.amount #TODO handle units
-                self.materials[material_name] = new_material_details
-            else:
-               material_details = {"amount": result_op.amount, "unit": result_op.unit}
-               self.materials[material_name] = material_details
+            for index, material_name in enumerate(result_op.material_names):
+                if self.materials.get(material_name):
+                    material_dict = self.materials[material_name]
+                    current_amount = material_dict["amount"]*eval(material_dict["unit"])
+                    added_amount = result_op.amounts[index]*eval(result_op.units[index])
+                    new_amount = current_amount + added_amount
+                    material_dict["amount"] = new_amount.to_value()
+                    self.materials[material_name] = material_dict
+                else:
+                    material_dict = {"amount": result_op.amounts[index], "unit": result_op.units[index]}
+                    self.materials[material_name] = material_dict
         self.result_ops.append(result_op)
 
     def __eq__(self, other_sample) -> bool:
