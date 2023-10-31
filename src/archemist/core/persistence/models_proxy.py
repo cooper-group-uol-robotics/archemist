@@ -350,7 +350,11 @@ class DictFieldWrapper:
             else:
                 value = item
             values.append(value)
-        return values  
+        return values
+    
+    def keys(self):
+        self._reload()
+        return [key for key in self._dict_instance.keys()]
             
     def _reload(self):
         if self._parent_type == ParentType.DOCUMENT:
