@@ -7,7 +7,7 @@ class MaterialModel(Document):
     expiry_date = fields.DateTimeField()
     mass = fields.FloatField(min_value=0)
     mass_unit = fields.StringField(choices=["g", "mg", "ug"], default="g")
-    details = fields.DictField(default={})
+    details = fields.DictField(null=True)
 
     meta = {'collection': 'materials', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 

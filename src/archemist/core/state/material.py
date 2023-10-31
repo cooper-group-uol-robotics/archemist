@@ -18,7 +18,11 @@ class Material:
         material_model.name = material_dict['name']
         material_model.exp_id = material_dict['id']
         material_model.expiry_date = date.isoformat(material_dict['expiry_date'])
-        material_model.details = material_dict['details']
+        material_model.details = material_dict.get('details')
+
+    @property
+    def object_id(self) -> ObjectId:
+        return self._model_proxy.object_id
 
     @property
     def model(self) -> MaterialModel:
