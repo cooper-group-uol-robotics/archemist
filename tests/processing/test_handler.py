@@ -56,7 +56,7 @@ class TestFullProcess(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
-        station_op = self.create_op("some_op")
+        station_op = self.generate_operation("some_op")
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):

@@ -39,7 +39,7 @@ class TestProcess(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
-        station_op = self.create_op("some_op")
+        station_op = self.generate_operation("some_op")
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):
@@ -137,7 +137,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 0)
         
-        station_op = proc.create_op("some_op")
+        station_op = proc.generate_operation("some_op")
         self.assertIsNotNone(station_op.object_id)
         self.assertIsInstance(station_op, StationOpDescriptor)
         

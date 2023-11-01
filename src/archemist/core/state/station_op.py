@@ -144,7 +144,7 @@ class StationBatchOpDescriptor(StationOpDescriptor):
     def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
-            print("[Warning] Station lot op completed with no results")
+            print("[Warning] Station batch op completed with no results")
         elif len(results) == 1:
             for sample in self.target_batch.samples:
                 sample.add_result_op(results[0])
@@ -173,6 +173,6 @@ class StationSampleOpDescriptor(StationOpDescriptor):
     def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
-            print("[Warning] Station lot op completed with no results")
+            print("[Warning] Station sample op completed with no results")
         else:
             self.target_sample.add_result_op(results[0])

@@ -201,9 +201,11 @@ class StationProcess:
             return True
         return False
 
-    def create_op(self, operation_name: str) -> Type[StationOpDescriptor]:
-        operation_specs = self.operation_specs_map[operation_name]
-        parameters = operation_specs.parameters if operation_specs.parameters else None  
+    def generate_operation(self, operation_name: str, **kwargs) -> Type[StationOpDescriptor]:
+        operation_specs = self.operation_specs_map[operation_name] 
+        parameters = dict(operation_specs.parameters) if operation_specs.parameters else {}
+        if kwargs:
+            parameters.update(kwargs)
         return StationOpFactory.create_from_args(operation_specs.op_type, parameters)
     
     def request_station_op(self, station_op: Type[StationOpDescriptor]):
