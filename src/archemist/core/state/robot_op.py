@@ -126,6 +126,10 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         if loc_dict:
             return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
         
+    @target_location.setter
+    def target_location(self, new_location: Location):
+        self._model_proxy.target_location = new_location.to_dict()
+        
     @property
     def target_batch(self) -> Batch:
         if self._model_proxy.target_batch:
@@ -142,10 +146,9 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
             return Lot.from_object_id(target_batch.parent_lot_id)
 
     def __str__(self) -> str:
-        params = self.params if self.params else None
-        location = f"{self.target_location.get_map_coordinates()}" if self.target_location else ""
-        return f'{self.__class__.__name__} -> name: {self.name} - target:{self.target_robot}\
-              - params: {params} - location: {location}'
+        params = dict(self.params) if self.params else None
+        return f'{self.__class__.__name__} - name: {self.name} - target:{self.target_robot}\
+              - params: {params} - location: {self.target_location}'
     
 class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
     def __init__(self, op_model: Union[CollectBatchOpDescriptorModel, ModelProxy]) -> None:
@@ -265,11 +268,16 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
     @property
     def target_location(self) -> Location:
         loc_dict = self._model_proxy.target_location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        if loc_dict:
+            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
+    
+    @target_location.setter
+    def target_location(self, new_location: Location):
+        self._model_proxy.target_location = new_location.to_dict()
     
     def __str__(self) -> str:
-        params = self.params if self.params else None
-        return f'{self.__class__.__name__} -> name: {self.name} - goal_location: {self.target_location}\
+        params = dict(self.params) if self.params else None
+        return f'{self.__class__.__name__} - name: {self.name} - goal_location: {self.target_location}\
               - params: {params} - target:{self.target_robot}'
     
 class RobotWaitOpDescriptor(RobotOpDescriptor):

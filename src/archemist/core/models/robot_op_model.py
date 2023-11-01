@@ -36,7 +36,7 @@ class RobotMaintenanceOpDescriptorModel(RobotOpDescriptorModel):
 
 class RobotNavOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
-    target_location = fields.DictField(required=True)
+    target_location = fields.DictField(null=True)
     params = fields.DictField(default={})
 
 class RobotWaitOpDescriptorModel(RobotOpDescriptorModel):

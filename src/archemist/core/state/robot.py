@@ -59,7 +59,7 @@ class Robot:
     def location(self) -> Location:
         loc_dict = self._model_proxy.location
         if loc_dict:
-            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
+            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict.get('frame_name', ""))
 
     @location.setter
     def location(self, new_location: Location):
