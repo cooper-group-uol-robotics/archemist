@@ -26,9 +26,9 @@ class PersistenceManagerTest(unittest.TestCase):
         self.assertIsNotNone(wf_state)
         self.assertIsNotNone(out_state)
         
-        self.assertEqual(len(StationsGetter.get_stations()), 2)
+        self.assertEqual(len(StationsGetter.get_stations()), 3)
         self.assertEqual(len(RobotsGetter.get_robots()), 2)
-        self.assertEqual(len(MaterialsGetter.get_solids()), 1)
+        self.assertEqual(len(MaterialsGetter.get_solids()), 2)
         self.assertEqual(len(MaterialsGetter.get_liquids()), 1)
 
         # test constructing workflow from existing database

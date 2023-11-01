@@ -1,7 +1,8 @@
 import unittest
 from mongoengine import connect,errors
-from archemist.core.state.material import Liquid, Material, Solid
-from datetime import date, timedelta
+from archemist.core.state.material import Liquid, Solid
+from datetime import date
+from bson.objectid import ObjectId
 
 
 class MaterialTest(unittest.TestCase):
@@ -18,7 +19,6 @@ class MaterialTest(unittest.TestCase):
     def test_liquid(self):
         liquid_dict = {
             'name': 'water',
-            'id': 1254,
             'amount': 400,
             'unit': 'mL',
             'density': 997,
@@ -31,7 +31,10 @@ class MaterialTest(unittest.TestCase):
         # construct liquid
         t_liquid = Liquid.from_dict(liquid_dict)
         self.assertEqual(t_liquid.name, 'water')
-        self.assertEqual(t_liquid.id, 1254)
+        self.assertIsNone(t_liquid.belongs_to)
+        owner = ObjectId()
+        t_liquid.belongs_to = owner
+        self.assertEqual(t_liquid.belongs_to, owner)
         self.assertEqual(t_liquid.density, 997)
         self.assertEqual(t_liquid.density_unit, "kg/m3")
         self.assertEqual(t_liquid.volume, 400)
@@ -54,7 +57,6 @@ class MaterialTest(unittest.TestCase):
     def test_solid(self):
         solid_dict = {
             'name': 'sodium_chloride',
-            'id': 133,
             'amount': 10000,
             'unit': 'ug',
             'expiry_date': date.fromisoformat('2025-02-11'),
@@ -63,7 +65,10 @@ class MaterialTest(unittest.TestCase):
 
         t_solid = Solid.from_dict(solid_dict)
         self.assertEqual(t_solid.name, 'sodium_chloride')
-        self.assertEqual(t_solid.id, 133)
+        self.assertIsNone(t_solid.belongs_to)
+        owner = ObjectId()
+        t_solid.belongs_to = owner
+        self.assertEqual(t_solid.belongs_to, owner)
         self.assertEqual(t_solid.mass, 10000)
         self.assertEqual(t_solid.mass_unit, "ug")
         self.assertEqual(t_solid.expiry_date, date.fromisoformat('2025-02-11'))

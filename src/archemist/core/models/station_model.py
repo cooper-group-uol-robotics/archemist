@@ -18,8 +18,8 @@ class StationModel(Document):
     selected_handler = fields.StringField(required=True)
 
     ''' materials '''
-    liquids = fields.ListField(fields.ReferenceField(LiquidMaterialModel), default=[])
-    solids = fields.ListField(fields.ReferenceField(SolidMaterialModel), default=[])
+    liquids_dict = fields.DictField(default={})
+    solids_dict = fields.DictField(default={})
     
     ''' batch capacity '''
     total_lot_capacity = fields.IntField(min_value=1, default=1)

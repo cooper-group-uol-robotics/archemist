@@ -3,7 +3,7 @@ from mongoengine import Document, fields
 class MaterialModel(Document):
     _type = fields.StringField(required=True)
     name = fields.StringField(required=True)
-    exp_id = fields.IntField(required=True)
+    belongs_to = fields.ObjectIdField(null=True)
     expiry_date = fields.DateTimeField()
     mass = fields.FloatField(min_value=0)
     mass_unit = fields.StringField(choices=["g", "mg", "ug"], default="g")

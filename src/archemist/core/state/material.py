@@ -16,7 +16,6 @@ class Material:
     @staticmethod
     def _set_model_common_fields(material_dict: dict, material_model: MaterialModel):
         material_model.name = material_dict['name']
-        material_model.exp_id = material_dict['id']
         material_model.expiry_date = date.isoformat(material_dict['expiry_date'])
         material_model.details = material_dict.get('details')
 
@@ -31,10 +30,14 @@ class Material:
     @property
     def name(self) -> str:
         return self._model_proxy.name
-
+    
     @property
-    def id(self) -> int:
-        return self._model_proxy.exp_id
+    def belongs_to(self) -> ObjectId:
+        return self._model_proxy.belongs_to
+    
+    @belongs_to.setter
+    def belongs_to(self, new_owner: ObjectId):
+        self._model_proxy.belongs_to = new_owner
 
     @property
     def expiry_date(self) -> date:

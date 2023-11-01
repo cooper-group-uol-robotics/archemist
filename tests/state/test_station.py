@@ -22,34 +22,30 @@ class StationTest(unittest.TestCase):
             'id': 23,
             'location': {'node_id': 1, 'graph_id': 7},
             'handler': 'SimStationOpHandler',
-            'total_lot_capacity': 2
+            'total_lot_capacity': 2,
+            'materials': {
+                'liquids': [
+                    {
+                    'name': 'water',
+                    'amount': 400,
+                    'unit': 'mL',
+                    'density': 997,
+                    'density_unit': 'kg/m3',
+                    'expiry_date': date.fromisoformat('2025-02-11'),
+                    'details': {'pump_id': 'pUmP1'}
+                    }],
+                'solids': [
+                    {
+                    'name': 'sodium_chloride',
+                    'amount': 10000,
+                    'unit': 'ug',
+                    'expiry_date': date.fromisoformat('2025-02-11'),
+                    'details': {'dispense_src': 'quantos', 'cartridge_id': 123}
+                    }]
+            }
         }
 
-        liquid_dict = {
-            'name': 'water',
-            'id': 1254,
-            'amount': 400,
-            'unit': 'mL',
-            'density': 997,
-            'density_unit': 'kg/m3',
-            'expiry_date': date.fromisoformat('2025-02-11'),
-            'details': {
-                'pump_id': 'pUmP1'
-                }
-        }
-        water = Liquid.from_dict(liquid_dict)
-
-        solid_dict = {
-            'name': 'sodium_chloride',
-            'id': 133,
-            'amount': 10000,
-            'unit': 'ug',
-            'expiry_date': date.fromisoformat('2025-02-11'),
-            'details': {'dispense_src': 'quantos', 'cartridge_id': 123}
-        }
-        salt = Solid.from_dict(solid_dict)
-
-        self.station: Station = Station.from_dict(station_dict=station_dict, liquids=[water], solids=[salt])
+        self.station: Station = Station.from_dict(station_dict=station_dict)
 
     def  tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
@@ -69,13 +65,16 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.location, Location(1,7,''))
     
     def test_material_members(self):
-        liquids = self.station.liquids
+        liquids = self.station.liquids_dict
         self.assertEqual(len(liquids), 1)
-        self.assertEqual(liquids[0].id, 1254)
+        self.assertEqual(liquids["water"].volume, 400)
+        self.assertEqual(liquids["water"].belongs_to, self.station.object_id)
 
-        solids = self.station.solids
+        solids = self.station.solids_dict
         self.assertEqual(len(solids), 1)
-        self.assertEqual(solids[0].id, 133)
+        self.assertEqual(solids["sodium_chloride"].mass, 10000)
+        self.assertEqual(solids["sodium_chloride"].belongs_to, self.station.object_id)
+
 
     def test_lot_members(self):
         # assert empty members

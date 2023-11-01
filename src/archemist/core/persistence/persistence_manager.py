@@ -27,22 +27,9 @@ class PersistenceManager:
             for robot_dict in config_dict['robots']:
                 RobotFactory.create_from_dict(robot_dict)
 
-        liquids = []
-        solids = []
-        
-        if 'materials' in config_dict:
-            if 'liquids' in config_dict['materials']:
-                for liquid_dict in config_dict['materials']['liquids']:
-                    liquids.append(Liquid.from_dict(liquid_dict))
-
-            
-            if 'solids' in config_dict['materials']:
-                for solid_dict in config_dict['materials']['solids']:
-                    solids.append(Solid.from_dict(solid_dict))
-
         if 'stations' in config_dict:
             for station_dict in config_dict['stations']:
-                StationFactory.create_from_dict(station_dict, liquids, solids)
+                StationFactory.create_from_dict(station_dict)
 
         input_state = InputState.from_dict(config_dict['workflow_input'])
         workflow_state = WorkflowState.from_args(config_dict['general']['name'])

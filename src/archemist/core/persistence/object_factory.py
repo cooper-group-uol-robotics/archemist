@@ -91,17 +91,17 @@ class RobotOpFactory:
 
 class StationFactory:
     @staticmethod
-    def create_from_dict(station_dict: Dict, liquids: List[Liquid] = None, solids: List[Solid] = None) -> Type[Station]:
+    def create_from_dict(station_dict: Dict) -> Type[Station]:
         if station_dict['type'] == "Station":
             cls = _import_class_from_module('Station', 'archemist.core.state.station')
-            return cls.from_dict(station_dict, liquids, solids)
+            return cls.from_dict(station_dict)
         else:
             pkg = importlib.import_module('archemist.stations')
             for module_itr in pkgutil.iter_modules(path=pkg.__path__,prefix=f'{pkg.__name__}.'):
                 state_module = f'{module_itr.name}.state'
                 cls = _import_class_from_module(station_dict['type'], state_module)
                 if cls:
-                    return cls.from_dict(station_dict, liquids, solids)
+                    return cls.from_dict(station_dict)
        
         raise NameError(f"Station type {station_dict['type']} is not defined")
 

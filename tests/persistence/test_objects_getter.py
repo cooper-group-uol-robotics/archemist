@@ -28,7 +28,6 @@ class ObjectsGetterTest(unittest.TestCase):
         # construct materials
         liquid_dict = {
             'name': 'water',
-            'id': 1254,
             'amount': 400,
             'unit': 'mL',
             'density': 997,
@@ -41,7 +40,6 @@ class ObjectsGetterTest(unittest.TestCase):
 
         solid_dict = {
             'name': 'sodium_chloride',
-            'id': 133,
             'amount': 10000,
             'unit': 'ug',
             'expiry_date': date.fromisoformat('2025-02-11'),
@@ -184,11 +182,11 @@ class ObjectsGetterTest(unittest.TestCase):
     def test_materials_getter(self):
         liquids = MaterialsGetter.get_liquids()
         self.assertEqual(len(liquids), 1)
-        self.assertEqual(liquids[0].id, 1254)
+        self.assertEqual(liquids[0].name, "water")
 
         solids = MaterialsGetter.get_solids()
         self.assertEqual(len(solids), 1)
-        self.assertEqual(solids[0].id, 133)
+        self.assertEqual(solids[0].name, "sodium_chloride")
 
     def test_stations_getter(self):
         # test getting all stations

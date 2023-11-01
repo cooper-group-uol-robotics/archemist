@@ -21,26 +21,6 @@ workflow_output:
     args: 
       batch_mode: true
 
-materials:
-  liquids:
-    - name: water
-      id: 1
-      amount: 5000
-      unit: mL
-      density: 1000
-      density_unit: kg/m3
-      details: 
-        source: pump_1
-      expiry_date: 31/03/2023
-  solids:
-    - name: salt
-      id: 1
-      amount: 500
-      unit: mg
-      details:
-        catridge_id: 123
-      expiry_date: 31/03/2023
-
 robots:
   - type: Robot
     id: 1
@@ -63,6 +43,23 @@ stations:
     total_lot_capacity: 2
     handler: GenericStationHandler
     properties: Null
+    materials:
+      liquids:
+        - name: water
+          amount: 5000
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details: 
+            source: pump_1
+          expiry_date: 31/03/2023
+      solids:
+        - name: salt
+          amount: 500
+          unit: mg
+          details:
+            catridge_id: 123
+          expiry_date: 31/03/2023
   - type: Station
     id: 12
     location:
@@ -70,8 +67,24 @@ stations:
       graph_id: 1
     total_lot_capacity: 2
     handler: GenericStationHandler
+    materials: Null
     properties:
-      used_liquids:
-        - water
-        - dye_A
-        - dye_B
+      used_racks:
+        - rack_A
+        - rack_B
+  - type: Station
+    id: 13
+    location:
+      node_id: 29
+      graph_id: 1
+    total_lot_capacity: 2
+    handler: GenericStationHandler
+    properties: Null
+    materials:
+      solids:
+        - name: salt
+          amount: 500
+          unit: mg
+          details:
+            catridge_id: 123
+          expiry_date: 31/03/2023

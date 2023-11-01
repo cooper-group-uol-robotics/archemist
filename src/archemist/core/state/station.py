@@ -18,16 +18,24 @@ class Station:
             self._model_proxy = station_model
         else:
             self._model_proxy = ModelProxy(station_model)
+        
+        if self.liquids_dict:
+            for liquid in self.liquids_dict.values():
+                liquid.belongs_to = self.object_id
+        
+        if self.solids_dict:
+            for solid in self.solids_dict.values():
+                solid.belongs_to = self.object_id
 
     @classmethod
-    def from_dict(cls, station_dict: dict, liquids: List[Liquid] = None, solids: List[Solid] = None):
+    def from_dict(cls, station_dict: dict):
         model = StationModel()
-        cls._set_model_common_fields(model, station_dict, liquids, solids)
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
     @classmethod
-    def _set_model_common_fields(cls, station_model: StationModel, station_dict: dict, liquids: List[Liquid], solids: List[Solid]):
+    def _set_model_common_fields(cls, station_model: StationModel, station_dict: dict):
         station_model._type = station_dict['type']
         station_model._module = cls.__module__
         station_model.exp_id = station_dict['id']
@@ -36,10 +44,22 @@ class Station:
         slots_num = station_dict['total_lot_capacity']
         station_model.lot_slots = {str(slot_num): None for slot_num in range(slots_num)}
         station_model.selected_handler = station_dict['handler']
-        if liquids:
-            station_model.liquids = [liquid.model for liquid in liquids]
-        if solids:
-            station_model.solids = [solid.model for solid in solids]
+
+        materials_dict = station_dict.get('materials', {})
+        if materials_dict:
+            if 'liquids' in materials_dict:
+                for liquid_dict in materials_dict['liquids']:
+                    # construct liquid
+                    liquid = Liquid.from_dict(liquid_dict)
+                    # add material to liquids_dict
+                    station_model.liquids_dict[liquid.name] = liquid.object_id
+            
+            if 'solids' in materials_dict:
+                for solid_dict in materials_dict['solids']:
+                    # construct solid
+                    solid = Solid.from_dict(solid_dict)
+                    # add material to liquids_dict
+                    station_model.solids_dict[solid.name] = solid.object_id
 
     ''' General properties and methods'''
 
@@ -78,14 +98,14 @@ class Station:
 
     ''' materials '''
     @property
-    def liquids(self) -> List[Liquid]:
-        if self._model_proxy.liquids:
-            return ListProxy(self._model_proxy.liquids, Liquid)
+    def liquids_dict(self) -> Dict[str, Liquid]:
+        if self._model_proxy.liquids_dict:
+            return DictProxy(self._model_proxy.liquids_dict, Liquid.from_object_id)
     
     @property
-    def solids(self) -> List[Solid]:
-        if self._model_proxy.solids:
-            return ListProxy(self._model_proxy.solids, Solid)
+    def solids_dict(self) -> Dict[str, Solid]:
+        if self._model_proxy.solids_dict:
+            return DictProxy(self._model_proxy.solids_dict, Solid.from_object_id)
     
     ''' lot capacity '''
 

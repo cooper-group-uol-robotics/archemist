@@ -12,32 +12,6 @@ class WorkflowSchemas:
                 'name': Str(),
             }
         ),
-        'materials': NullNone() | Map(
-            {
-                Optional('liquids'): NullNone() | Seq(Map(
-                    {
-                        'name': Str(),
-                        'id': Int(),
-                        'amount': Float(),
-                        'unit': Str(),
-                        'density': Float(),
-                        'density_unit': Str(),
-                        'details':  NullNone() | MapPattern(Str(), Any()),
-                        'expiry_date': Datetime()
-                    }
-                )),
-                Optional('solids'): NullNone() | Seq(Map(
-                    {
-                        'name': Str(),
-                        'id': Int(),
-                        'amount': Float(),
-                        'unit': Str(),
-                        'expiry_date': Datetime(),
-                        'details':  NullNone() | MapPattern(Str(), Any())
-                    }
-                ))
-            }
-        ),
         'robots': NullNone() | Seq(Map(
             {
                 'type': Str(),
@@ -55,7 +29,30 @@ class WorkflowSchemas:
                 'location': Map({'node_id': Int(), 'graph_id': Int()}),
                 'total_lot_capacity': Int(),
                 'handler': Str(),
-                'properties': NullNone() | MapPattern(Str(), Any())
+                'properties': NullNone() | MapPattern(Str(), Any()),
+                'materials': NullNone() | Map(
+                {
+                    Optional('liquids'): Seq(Map(
+                        {
+                            'name': Str(),
+                            'amount': Float(),
+                            'unit': Str(),
+                            'density': Float(),
+                            'density_unit': Str(),
+                            'details':  NullNone() | MapPattern(Str(), Any()),
+                            'expiry_date': Datetime()
+                        }
+                    )),
+                    Optional('solids'): Seq(Map(
+                        {
+                            'name': Str(),
+                            'amount': Float(),
+                            'unit': Str(),
+                            'expiry_date': Datetime(),
+                            'details':  NullNone() | MapPattern(Str(), Any())
+                        }
+                    ))
+                })
             }
         )),
         'workflow_input': Map(
