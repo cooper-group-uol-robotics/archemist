@@ -139,10 +139,9 @@ class StationProcessHandler:
                 for robot_op in proc.req_robot_ops:
                     if isinstance(robot_op, RobotTaskOpDescriptor) or \
                         isinstance(robot_op, CollectBatchOpDescriptor) or\
-                        isinstance(robot_op, DropBatchOpDescriptor):
+                        isinstance(robot_op, DropBatchOpDescriptor) or\
+                        (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
                         
-                        robot_op.target_location = self._station.location
-                    elif isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None:
                         robot_op.target_location = self._station.location
                         
                     self._station.add_req_robot_op(robot_op)

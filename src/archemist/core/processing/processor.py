@@ -3,7 +3,10 @@ from archemist.core.persistence.object_factory import ProcessFactory
 from archemist.core.state.state import InputState, WorkflowState, OutputState
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
-from archemist.core.state.robot_op import RobotOpDescriptor
+from archemist.core.state.robot_op import (RobotOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           RobotTaskOpDescriptor,
+                                           RobotNavOpDescriptor)
 from archemist.core.state.lot import Lot, LotStatus
 from archemist.core.util.enums import ProcessStatus
 from typing import List, Type, Dict
@@ -74,6 +77,10 @@ class InputProcessor:
                         if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                             for robot_op in proc.req_robot_ops:
                                 robot_op.requested_by = self._state.object_id
+                                if isinstance(robot_op, CollectBatchOpDescriptor) or\
+                                   isinstance(robot_op, RobotTaskOpDescriptor) or \
+                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
+                                    robot_op.target_location = self._state.location
                                 self._state.requested_robot_ops.append(robot_op)
                             proc.switch_to_waiting()
                     else:
@@ -132,6 +139,10 @@ class OutputProcessor:
                         proc.tick()
                         if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                             for robot_op in proc.req_robot_ops:
+                                if isinstance(robot_op, CollectBatchOpDescriptor) or\
+                                   isinstance(robot_op, RobotTaskOpDescriptor) or \
+                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
+                                    robot_op.target_location = self._state.location
                                 robot_op.requested_by = self._state.object_id
                                 self._state.requested_robot_ops.append(robot_op)
                             proc.switch_to_waiting()
