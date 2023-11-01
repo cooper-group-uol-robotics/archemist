@@ -4,6 +4,7 @@ from archemist.core.models.station_process_model import StationProcessModel
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.models.lot_model import LotModel
 from archemist.core.models.recipe_model import RecipeModel
+from archemist.core.util.location import LocationModel
 
 class WorkflowStateModel(Document):
     _type = fields.StringField(default="WorkflowStateModel")
@@ -17,7 +18,7 @@ class WorkflowStateModel(Document):
 
 class InputStateModel(Document):
     _type = fields.StringField(default="InputStateModel")
-    location = fields.DictField(default={})
+    location = fields.EmbeddedDocumentField(LocationModel)
     samples_per_batch = fields.IntField(min_value=1, default=1)
     batches_per_lot = fields.IntField(min_value=1, default=1)
     total_lot_capacity = fields.IntField(min_value=1, default=1)
@@ -36,7 +37,7 @@ class InputStateModel(Document):
 
 class OutputStateModel(Document):
     _type = fields.StringField(default="OutputStateModel")
-    location = fields.DictField(default={})
+    location = fields.EmbeddedDocumentField(LocationModel)
     total_lot_capacity = fields.IntField(min_value=1, default=1)
     lot_output_process = fields.DictField(null=True)
     lots_need_manual_removal = fields.BooleanField(required=True)

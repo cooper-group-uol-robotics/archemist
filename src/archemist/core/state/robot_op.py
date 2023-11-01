@@ -106,7 +106,8 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
-        model.target_location = target_location.to_dict() if target_location is not None else None
+        if target_location:
+            model.target_location = target_location.model
         model.requested_by = requested_by
         model.target_batch = target_batch.model if target_batch else None
         model.save()
@@ -122,13 +123,14 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
 
     @property
     def target_location(self) -> Location:
-        loc_dict = self._model_proxy.target_location
-        if loc_dict:
-            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
+            return Location(self._model_proxy.target_location)
         
     @target_location.setter
     def target_location(self, new_location: Location):
-        self._model_proxy.target_location = new_location.to_dict()
+        if isinstance(new_location, Location):
+            self._model_proxy.target_location = new_location.model
+        else:
+            raise ValueError
         
     @property
     def target_batch(self) -> Batch:
@@ -166,7 +168,8 @@ class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
-        model.target_location = target_location.to_dict() if target_location is not None else None
+        if target_location:
+            model.target_location = target_location.model
         model.requested_by = requested_by
         model.target_batch = target_batch.model if target_batch else None
         model.save()
@@ -196,7 +199,8 @@ class DropBatchOpDescriptor(RobotTaskOpDescriptor):
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
-        model.target_location = target_location.to_dict() if target_location is not None else None
+        if target_location:
+            model.target_location = target_location.model
         model.requested_by = requested_by
         model.target_batch = target_batch.model if target_batch else None
         model.save()
@@ -251,7 +255,8 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
         model = RobotNavOpDescriptorModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
-        model.target_location = target_location.to_dict() if target_location else None
+        if target_location:
+            model.target_location = target_location.model
         model.params = params
         model.requested_by = requested_by
         model.save()
@@ -267,13 +272,14 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
     
     @property
     def target_location(self) -> Location:
-        loc_dict = self._model_proxy.target_location
-        if loc_dict:
-            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
-    
+            return Location(self._model_proxy.target_location)
+        
     @target_location.setter
     def target_location(self, new_location: Location):
-        self._model_proxy.target_location = new_location.to_dict()
+        if isinstance(new_location, Location):
+            self._model_proxy.target_location = new_location.model
+        else:
+            raise ValueError
     
     def __str__(self) -> str:
         params = dict(self.params) if self.params else None

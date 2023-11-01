@@ -16,7 +16,8 @@ class Batch:
     @classmethod
     def from_args(cls, num_samples: int, location:Location=None):
         model = BatchModel()
-        model.location = location.to_dict() if location else {}
+        if location:
+            model.location = location.model
         model.save()
         samples = []
         for _ in range(num_samples):
@@ -48,13 +49,12 @@ class Batch:
 
     @property
     def location(self) -> Location:
-        loc_dict = self._model_proxy.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict['frame_name'])
+        return Location(self._model_proxy.location)
 
     @location.setter
-    def location(self, location):
-        if isinstance(location, Location):
-            self._model_proxy.location = location.to_dict()
+    def location(self, new_location: Location):
+        if isinstance(new_location, Location):
+            self._model_proxy.location = new_location.model
         else:
             raise ValueError
         

@@ -34,7 +34,7 @@ class WorkflowManagerTest(unittest.TestCase):
         self._recipes_path = Path.joinpath(Path.cwd(), "tests/processing/resources")
 
         self.input_dict = {
-            "location":  {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "InputSite"},
             "samples_per_batch": 3,
             "batches_per_lot": 1,
             "total_lot_capacity": 2,
@@ -45,7 +45,7 @@ class WorkflowManagerTest(unittest.TestCase):
         }
 
         self.output_dict = {
-            "location":  {'node_id': 12, 'graph_id': 7},
+            "location": {"coordinates": [12, 7], "descriptor": "OutputSite"},
             "total_lot_capacity": 2,
             "lot_output_process": None,
             "lots_need_manual_removal": True
@@ -62,7 +62,7 @@ class WorkflowManagerTest(unittest.TestCase):
         station_1_dict = {
             'type': 'Station',
             'id': 1,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "Station1"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }
@@ -71,7 +71,7 @@ class WorkflowManagerTest(unittest.TestCase):
         station_2_dict = {
             'type': 'Station',
             'id': 2,
-            'location': {'node_id': 2, 'graph_id': 7},
+            "location": {"coordinates": [2, 7], "descriptor": "Station1"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }

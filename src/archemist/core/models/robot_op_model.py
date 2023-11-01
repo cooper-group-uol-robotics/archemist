@@ -1,6 +1,7 @@
 from mongoengine import Document, fields
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.util.enums import OpOutcome
+from archemist.core.util.location import LocationModel
 
 class RobotOpDescriptorModel(Document):
     _type = fields.StringField(required=True)
@@ -21,7 +22,7 @@ class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
     params = fields.DictField(default={})
     target_batch = fields.ReferenceField(BatchModel, null=True)
-    target_location = fields.DictField()
+    target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
 
 class CollectBatchOpDescriptorModel(RobotTaskOpDescriptorModel):
     target_onboard_slot = fields.IntField(null=True)
@@ -36,7 +37,7 @@ class RobotMaintenanceOpDescriptorModel(RobotOpDescriptorModel):
 
 class RobotNavOpDescriptorModel(RobotOpDescriptorModel):
     name = fields.StringField(required=True)
-    target_location = fields.DictField(null=True)
+    target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
     params = fields.DictField(default={})
 
 class RobotWaitOpDescriptorModel(RobotOpDescriptorModel):

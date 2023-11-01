@@ -60,9 +60,9 @@ class RobotOpTest(unittest.TestCase):
     def test_robot_task(self):
         # construct op
         requested_by = ObjectId.from_datetime(datetime.now())
-        batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        batch = Batch.from_args(2)
         lot = Lot.from_args([batch])
-        task_loc = Location(1,3,'table_frame')
+        task_loc = Location.from_args(coordinates=(1,3), descriptor="ChemspeedStation")
         params_dict = {"rack_index": 1, "calibrate": False}
         robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
@@ -76,16 +76,25 @@ class RobotOpTest(unittest.TestCase):
         for key, val in params_dict.items():
             self.assertEqual(robot_op.params[key], val)
 
-        self.assertTrue(robot_op.target_location == task_loc)
+        self.assertEqual(robot_op.target_location, task_loc)
         self.assertEqual(robot_op.target_batch, batch)
         self.assertEqual(robot_op.related_lot, lot)
+
+        # test op with unspecified location
+        no_location_robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot",
+                                                   params_dict,
+                                                   requested_by=requested_by,
+                                                   target_batch=batch)
+        self.assertTrue(no_location_robot_op.target_location.is_unspecified())
+        no_location_robot_op.target_location = task_loc
+        self.assertEqual(no_location_robot_op.target_location, task_loc)
 
     def test_collect_batch_task(self):
         # construct op
         requested_by = ObjectId.from_datetime(datetime.now())
-        batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        batch = Batch.from_args(2)
         lot = Lot.from_args([batch])
-        task_loc = Location(1,3,'table_frame')
+        task_loc = Location.from_args(coordinates=(2,3), descriptor="InputSite")
         params_dict = {"rack_index": 1, "calibrate": False}
         robot_op = CollectBatchOpDescriptor.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
@@ -109,9 +118,9 @@ class RobotOpTest(unittest.TestCase):
     def test_drop_batch_task(self):
         # construct op
         requested_by = ObjectId.from_datetime(datetime.now())
-        batch = Batch.from_args(2, Location(1,3,'table_frame'))
+        batch = Batch.from_args(2)
         lot = Lot.from_args([batch])
-        task_loc = Location(1,3,'table_frame')
+        task_loc = Location.from_args(coordinates=(2,3), descriptor="OutputSite")
         params_dict = {"rack_index": 1, "calibrate": False}
         robot_op = DropBatchOpDescriptor.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
@@ -132,12 +141,12 @@ class RobotOpTest(unittest.TestCase):
 
     def test_robot_nav_task(self):
         # construct op
-        target_loc = Location(1,3,'')
+        target_loc = Location.from_args(coordinates=(2,3), descriptor="InputSite")
         params_dict =  {"fine_localisation": True}
         robot_op = RobotNavOpDescriptor.from_args("test_nav_task", "MobileRobot",target_loc, params_dict)
         self.assertIsNotNone(robot_op.object_id)
         self.assertEqual(robot_op.name, "test_nav_task")
-        self.assertEqual(robot_op.target_location, target_loc)
+        self.assertEqual(robot_op.target_location, target_loc)````
         for key, val in params_dict.items():
             self.assertEqual(robot_op.params[key], val)
         self.assertEqual(robot_op._model_proxy._type, "RobotNavOpDescriptor")

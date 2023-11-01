@@ -1,10 +1,9 @@
 from mongoengine import Document, fields
 from archemist.core.util.enums import StationState, OpState
-from archemist.core.models.lot_model import LotModel
 from archemist.core.models.station_op_model import StationOpDescriptorModel
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 from archemist.core.models.station_process_model import StationProcessModel
-from archemist.core.models.material_model import LiquidMaterialModel, SolidMaterialModel
+from archemist.core.util.location import LocationModel
 
 class StationModel(Document):
     ''' internal '''
@@ -14,7 +13,7 @@ class StationModel(Document):
     ''' general '''
     exp_id = fields.IntField(required=True)
     state = fields.EnumField(StationState, default=StationState.INACTIVE)
-    location = fields.DictField()
+    location = fields.EmbeddedDocumentField(LocationModel)
     selected_handler = fields.StringField(required=True)
 
     ''' materials '''

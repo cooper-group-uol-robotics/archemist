@@ -159,7 +159,7 @@ class ProcessorTest(unittest.TestCase):
         self.station_1_dict = {
             'type': 'Station',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "Station1"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }
@@ -167,7 +167,7 @@ class ProcessorTest(unittest.TestCase):
         self.station_2_dict = {
             'type': 'Station',
             'id': 32,
-            'location': {'node_id': 2, 'graph_id': 7},
+            "location": {"coordinates": [2, 7], "descriptor": "Station2"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }
@@ -188,7 +188,7 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(station.free_lot_capacity, 1)
 
         input_dict = {
-            "location":  {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "InputSite"},
             "samples_per_batch": 3,
             "batches_per_lot": 1,
             "total_lot_capacity": 2,
@@ -272,7 +272,7 @@ class ProcessorTest(unittest.TestCase):
 
     def test_output_processor(self):
         output_dict = {
-            "location":  {'node_id': 12, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "OutputSite"},
             "total_lot_capacity": 2,
             "lot_output_process": None,
             "lots_need_manual_removal": True

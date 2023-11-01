@@ -20,7 +20,7 @@ class StationTest(unittest.TestCase):
         station_dict = {
             'type': 'Station',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
+            'location': {'coordinates': [1,2], 'descriptor': "Station"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2,
             'materials': {
@@ -62,7 +62,7 @@ class StationTest(unittest.TestCase):
         self.assertEqual(self.station.total_lot_capacity, 2)
         self.assertEqual(self.station.module_path, "archemist.core.state.station")
         self.assertEqual(self.station.selected_handler, "SimStationOpHandler")
-        self.assertEqual(self.station.location, Location(1,7,''))
+        self.assertEqual(self.station.location, Location.from_dict({'coordinates': [1,2], 'descriptor': "Station"}))
     
     def test_material_members(self):
         liquids = self.station.liquids_dict
@@ -82,9 +82,9 @@ class StationTest(unittest.TestCase):
         self.assertIsNone(self.station.lot_slots["1"])
 
         # lots creation
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3)
         lot_1 = Lot.from_args([batch_1])
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_2 = Batch.from_args(3)
         lot_2 = Lot.from_args([batch_2])
         
 
@@ -224,7 +224,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.procs_history)
 
         # construct process
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3)
         lot = Lot.from_args([batch_1])
         proc = StationProcess.from_args(lot)
 

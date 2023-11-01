@@ -17,7 +17,7 @@ class WorkflowSchemas:
                 'type': Str(),
                 'id': Int(),
                 'handler': Str(),
-                Optional('location'): Map({'node_id': Int(), 'graph_id': Int()}),
+                Optional('location'): Map({'coordinates': Seq(Int()), 'descriptor': Str()}),
                 Optional('total_lot_capacity'): Int(),
                 Optional('onboard_capacity'): Int(),
             }
@@ -26,7 +26,7 @@ class WorkflowSchemas:
             {
                 'type': Str(),
                 'id': Int(),
-                'location': Map({'node_id': Int(), 'graph_id': Int()}),
+                'location': Map({'coordinates': Seq(Int()), 'descriptor': Str()}),
                 'total_lot_capacity': Int(),
                 'handler': Str(),
                 'properties': NullNone() | MapPattern(Str(), Any()),
@@ -57,7 +57,7 @@ class WorkflowSchemas:
         )),
         'workflow_input': Map(
             {
-            'location': Map({'node_id': Int(), 'graph_id': Int()}),
+            'location': Map({'coordinates': Seq(Int()), 'descriptor': Str()}),
             'samples_per_batch': Int(),
             'batches_per_lot': Int(),
             'total_lot_capacity': Int(),
@@ -68,7 +68,7 @@ class WorkflowSchemas:
             }),    
         'workflow_output': Map(
             {
-            'location': Map({'node_id': Int(), 'graph_id': Int()}),
+            'location': Map({'coordinates': Seq(Int()), 'descriptor': Str()}),
             'total_lot_capacity': Int(),
             'lot_output_process': NullNone() | Map({
                 'type': Str(),

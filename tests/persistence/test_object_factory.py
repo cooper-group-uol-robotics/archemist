@@ -24,7 +24,7 @@ class ObjectFactoryTest(unittest.TestCase):
         station_dict = {
             'type': 'Station',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
+            'location': {'coordinates': [1,7], 'descriptor': "Station"},
             'batch_capacity': 2,
             'handler': 'GenericStationHandler',
             'total_lot_capacity': 2,
@@ -98,7 +98,7 @@ class ObjectFactoryTest(unittest.TestCase):
     def test_robot_factory(self):
         robot_dict = {
             "type": "Robot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
+            "location": {'coordinates': [1,7], 'descriptor': "Station"},
             "id": 187,
             "batch_capacity":2,
             "handler": "GenericRobotHandler"
@@ -163,7 +163,7 @@ class ObjectFactoryTest(unittest.TestCase):
         # general station process
         proc_dict = {"type": "StationProcess"}
         # construct from dict
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot = Lot.from_args([batch_1])
         proc_from_args = ProcessFactory.create_from_dict(proc_dict,lot)
         self.assertIsNotNone(proc_from_args)

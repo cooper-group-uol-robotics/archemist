@@ -57,7 +57,7 @@ class InputState:
     @classmethod
     def from_dict(cls, state_dict: dict={}):
         model = InputStateModel()
-        model.location = state_dict['location']
+        model.location = Location.from_dict(state_dict['location']).model
         model.samples_per_batch = state_dict['samples_per_batch']
         model.batches_per_lot = state_dict['batches_per_lot']
         model.total_lot_capacity = proc_slots_num = state_dict['total_lot_capacity']
@@ -74,8 +74,7 @@ class InputState:
     
     @property
     def location(self) -> Location:
-        loc_dict = self._model_proxy.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        return Location(self._model_proxy.location)
     
     @property
     def samples_per_batch(self) -> int:
@@ -142,7 +141,7 @@ class OutputState:
     @classmethod
     def from_dict(cls, state_dict: dict={}):
         model = OutputStateModel()
-        model.location = state_dict['location']
+        model.location = Location.from_dict(state_dict['location']).model
         model.total_lot_capacity = proc_slots_num = state_dict['total_lot_capacity']
         model.lot_output_process = state_dict["lot_output_process"]
         model.lots_need_manual_removal = state_dict["lots_need_manual_removal"]
@@ -158,8 +157,7 @@ class OutputState:
     
     @property
     def location(self) -> Location:
-        loc_dict = self._model_proxy.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        return Location(self._model_proxy.location)
     
     @property
     def total_lot_capacity(self) -> int:

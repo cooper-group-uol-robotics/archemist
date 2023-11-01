@@ -16,11 +16,12 @@ class BatchTest(unittest.TestCase):
 
     def test_batch_general_fields(self):
         # test object_id and location
-        batch = Batch.from_args(2,Location(1,3,'table_frame'))
+        batch = Batch.from_args(2)
         self.assertIsNotNone(batch.object_id)
-        self.assertEqual(batch.location, Location(1,3,'table_frame'))
-        batch.location = Location(1,3,'chair_frame')
-        self.assertEqual(batch.location, Location(1,3,'chair_frame'))
+        self.assertEqual(batch.location, Location.from_args())
+        new_loc = Location.from_args(coordinates=(1,3), descriptor="InputSite")
+        batch.location = Location.from_args(coordinates=(1,3), descriptor="InputSite")
+        self.assertEqual(batch.location, new_loc)
         self.assertIsNone(batch.parent_lot_id)
         lot_id = ObjectId()
         batch.parent_lot_id = lot_id

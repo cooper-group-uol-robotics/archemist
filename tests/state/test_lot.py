@@ -72,8 +72,8 @@ class LotTest(unittest.TestCase):
 
     def test_lot(self):
         # test construction
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot = Lot.from_args([batch_1, batch_2])
         self.assertIsNotNone(lot.object_id)
         self.assertEqual(lot.status, LotStatus.CREATED)

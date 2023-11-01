@@ -22,7 +22,6 @@ class RobotTest(unittest.TestCase):
     def test_robot(self):
         robot_dict = {
             "type": "Robot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
             "id": 187,
             "handler": "SimRobotOpHandler"
         }
@@ -32,8 +31,8 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.id, 187)
         self.assertEqual(robot.selected_handler, "SimRobotOpHandler")
         self.assertEqual(robot.module_path, "archemist.core.state.robot")
-        self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
-        t_loc = Location(node_id=3, graph_id=2, frame_name="b_frame")
+        self.assertEqual(robot.location, Location.from_args(coordinates=(), descriptor="unknown"))
+        t_loc = Location.from_args(coordinates=(1,2), descriptor="InputSite")
         robot.location = t_loc
         self.assertEqual(robot.location, t_loc)
         self.assertIsNone(robot.attending_to)
@@ -45,7 +44,7 @@ class RobotTest(unittest.TestCase):
         # test op operation
         # construct op
         requested_by = ObjectId.from_datetime(datetime.now())
-        task_loc = Location(1,3,'table_frame')
+        task_loc = Location.from_args(coordinates=(1,3), descriptor='input_site')
         params = {"rack_number": 1, "calibrate": False}
         robot_op_1 = RobotTaskOpDescriptor.from_args("test_task1", "Robot",
                                                    params, target_location=task_loc,
@@ -131,7 +130,7 @@ class RobotTest(unittest.TestCase):
     def test_mobile_robot(self):
         robot_dict = {
             "type": "MobileRobot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
+            "location": {"coordinates": [1,2], "descriptor": "InputSite"},
             "id": 187,
             "total_lot_capacity":1,
             "onboard_capacity":2,
@@ -143,7 +142,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.id, 187)
         self.assertEqual(robot.selected_handler, "SimRobotOpHandler")
         self.assertEqual(robot.module_path, "archemist.core.state.robot")
-        self.assertEqual(robot.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
+        self.assertEqual(robot.location, Location.from_args(coordinates=(1,2), descriptor="InputSite"))
         self.assertEqual(robot.operational_mode, MobileRobotMode.OPERATIONAL)
         robot.operational_mode = MobileRobotMode.COOLDOWN
         self.assertEqual(robot.operational_mode, MobileRobotMode.COOLDOWN)
@@ -156,10 +155,10 @@ class RobotTest(unittest.TestCase):
         self.assertFalse(robot.consigned_lots)
 
         # create batches and loading ops
-        batch_1 = Batch.from_args(2, Location(1,3,'table_frame'))
-        batch_2 = Batch.from_args(2, Location(1,3,'table_frame'))
+        batch_1 = Batch.from_args(2, Location.from_args(coordinates=(1,3),descriptor='table_frame'))
+        batch_2 = Batch.from_args(2, Location.from_args(coordinates=(1,3),descriptor='table_frame'))
         lot = Lot.from_args([batch_1, batch_2])
-        task_loc = Location(1,3,'table_frame')
+        task_loc = batch_1.location
         params = {"rack_number": 1, "calibrate": False}
         loading_robot_op_1 = CollectBatchOpDescriptor.from_args("load_batch", "Robot",
                                                    params, target_location=task_loc, target_batch=batch_1)
@@ -181,7 +180,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(robot.onboard_batches_slots["0"], batch_1)
         self.assertEqual(robot.free_batch_capacity, 1)
         self.assertTrue(robot.is_batch_onboard(batch_1))
-        self.assertEqual(batch_1.location, Location(-1, -1, frame_name=f"onboard {robot} at slot: {loading_robot_op_1.target_onboard_slot}"))
+        self.assertEqual(batch_1.location, Location.from_args(descriptor=f"{robot} @ slot:{loading_robot_op_1.target_onboard_slot}"))
 
         robot.add_op(loading_robot_op_2)
         self.assertIsNone(loading_robot_op_2.target_onboard_slot)
@@ -209,7 +208,7 @@ class RobotTest(unittest.TestCase):
         self.assertEqual(len(robot.consigned_lots), 1)
         self.assertIsNone(robot.onboard_batches_slots["0"])
         self.assertFalse(robot.is_batch_onboard(batch_1))
-        self.assertEqual(batch_1.location, Location(node_id=1, graph_id=2, frame_name="a_frame"))
+        self.assertEqual(batch_1.location, task_loc)
         self.assertEqual(robot.free_batch_capacity, 1)
 
         robot.add_op(unloading_robot_op_2)

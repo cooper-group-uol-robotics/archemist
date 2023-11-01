@@ -52,14 +52,14 @@ class ObjectsGetterTest(unittest.TestCase):
         # construct robots
         robot_dict_1 = {
             "type": "Robot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
+            "location": {"coordinates": [1, 2], "descriptor": "a_frame"},
             "id": 187,
             "handler": "SimRobotOpHandler"
         }
 
         robot_dict_2 = {
             "type": "MobileRobot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
+            "location": {"coordinates": [1, 2], "descriptor": "a_frame"},
             "id": 17,
             "total_lot_capacity":1,
             "onboard_capacity": 2,
@@ -73,7 +73,7 @@ class ObjectsGetterTest(unittest.TestCase):
         station_dict_1 = {
             'type': 'Station',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "Station1"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2,
         }
@@ -81,7 +81,7 @@ class ObjectsGetterTest(unittest.TestCase):
         station_dict_2 = {
             'type': 'Station',
             'id': 24,
-            'location': {'node_id': 2, 'graph_id': 7},
+            "location": {"coordinates": [2, 7], "descriptor": "Station2"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2,
         }
@@ -138,8 +138,8 @@ class ObjectsGetterTest(unittest.TestCase):
         recipe_2 = Recipe.from_dict(recipe_doc_2)
 
         # construct batches
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        self.batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        self.batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
 
         # construct lots
         lot_1 = Lot.from_args([batch_1])
@@ -151,7 +151,7 @@ class ObjectsGetterTest(unittest.TestCase):
 
         # construct input state
         input_dict = {
-            "location":  {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "InputSite"},
             "samples_per_batch": 3,
             "batches_per_lot": 1,
             "total_lot_capacity": 2,
@@ -167,7 +167,7 @@ class ObjectsGetterTest(unittest.TestCase):
 
         # construct ouput state
         output_dict = {
-            "location":  {'node_id': 12, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "OutputSite"},
             "total_lot_capacity": 2,
             "lot_output_process": None,
             "lots_need_manual_removal": False

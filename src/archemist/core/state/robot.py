@@ -33,7 +33,7 @@ class Robot:
         robot_model.exp_id = robot_dict['id']
         robot_model.selected_handler = robot_dict['handler']
         if 'location' in robot_dict:
-            robot_model.location = robot_dict['location']
+            robot_model.location = Location.from_dict(robot_dict["location"]).model
 
     @property
     def model(self) -> RobotModel:
@@ -57,15 +57,12 @@ class Robot:
 
     @property
     def location(self) -> Location:
-        loc_dict = self._model_proxy.location
-        if loc_dict:
-            return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name=loc_dict.get('frame_name', ""))
+        return Location(self._model_proxy.location)
 
     @location.setter
     def location(self, new_location: Location):
         if isinstance(new_location, Location):
-            loc_dict = {'node_id':new_location.node_id, 'graph_id':new_location.graph_id, 'frame_name':new_location.frame_name}
-            self._model_proxy.location = loc_dict
+            self._model_proxy.location = new_location.model
         else:
             raise ValueError
 
@@ -242,11 +239,11 @@ class MobileRobot(Robot):
             if isinstance(op, CollectBatchOpDescriptor):
                 slot = str(op.target_onboard_slot)
                 self.onboard_batches_slots[slot] = op.target_batch
-                op.target_batch.location = Location(frame_name=f"onboard {self} at slot: {slot}")
+                op.target_batch.location = Location.from_args(descriptor=f"{self} @ slot:{slot}")
             elif isinstance(op, DropBatchOpDescriptor):
                 slot = str(op.onboard_collection_slot)
                 self.onboard_batches_slots[slot] = None
-                op.target_batch.location = self.location
+                op.target_batch.location = op.target_location
                 all_lot_batches_removed = True
                 for batch in op.related_lot.batches:
                     if self.is_batch_onboard(batch):

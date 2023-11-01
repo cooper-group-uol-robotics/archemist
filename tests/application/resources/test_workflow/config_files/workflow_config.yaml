@@ -3,8 +3,8 @@ general:
 
 workflow_input:
   location:
-    node_id: 25
-    graph_id: 1
+    coordinates: [22, 1]
+    descriptor: InputSite
   samples_per_batch: 3
   batches_per_lot: 1
   total_lot_capacity: 2
@@ -12,8 +12,8 @@ workflow_input:
 
 workflow_output:
   location:
-    node_id: 25
-    graph_id: 1
+    coordinates: [21, 1]
+    descriptor: OutputSite
   total_lot_capacity: 2
   lots_need_manual_removal: True
   lot_output_process: Null
@@ -27,8 +27,8 @@ stations:
   - type: Station
     id: 11
     location:
-      node_id: 25
-      graph_id: 1
+      coordinates: [27, 1]
+      descriptor: Station
     total_lot_capacity: 1
     handler: GenericStationHandler
     properties: Null

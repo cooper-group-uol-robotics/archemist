@@ -140,7 +140,7 @@ class StationProcessHandler:
                     if isinstance(robot_op, RobotTaskOpDescriptor) or \
                         isinstance(robot_op, CollectBatchOpDescriptor) or\
                         isinstance(robot_op, DropBatchOpDescriptor) or\
-                        (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
+                        (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
                         
                         robot_op.target_location = self._station.location
                         

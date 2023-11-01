@@ -23,7 +23,7 @@ class StateTest(unittest.TestCase):
 
     def test_input_state(self):
         input_dict = {
-            "location":  {'node_id': 1, 'graph_id': 7},
+            "location":  {'coordinates': [1, 7], 'descriptor': 'InputSite'},
             "samples_per_batch": 3,
             "batches_per_lot": 1,
             "total_lot_capacity": 2,
@@ -34,7 +34,7 @@ class StateTest(unittest.TestCase):
         }
         input_state = InputState.from_dict(input_dict)
         self.assertIsNotNone(input_state.object_id)
-        self.assertEqual(input_state.location, Location(1,7,''))
+        self.assertEqual(input_state.location, Location.from_dict({'coordinates': [1, 7], 'descriptor': 'InputSite'}))
         self.assertEqual(input_state.samples_per_batch, 3)
         self.assertEqual(input_state.batches_per_lot, 1)
         self.assertEqual(input_state.total_lot_capacity, 2)
@@ -146,7 +146,7 @@ class StateTest(unittest.TestCase):
         self.assertFalse(workflow_state.lots_buffer)
 
         self.assertIsNotNone(workflow_state.object_id)
-        batch = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch = Batch.from_args(3)
         lot = Lot.from_args([batch])
         workflow_state.lots_buffer.append(lot)
         self.assertEqual(len(workflow_state.lots_buffer), 1)
@@ -173,14 +173,14 @@ class StateTest(unittest.TestCase):
 
     def test_output_state(self):
         output_dict = {
-            "location":  {'node_id': 12, 'graph_id': 7},
+            "location":  {'coordinates': [12,7], 'descriptor': 'OutputSite'},
             "total_lot_capacity": 2,
             "lot_output_process": None,
             "lots_need_manual_removal": False
         }
         output_state = OutputState.from_dict(output_dict)
         self.assertIsNotNone(output_state.object_id)
-        self.assertEqual(output_state.location, Location(12,7,''))
+        self.assertEqual(output_state.location, Location.from_dict({'coordinates': [12,7], 'descriptor': 'OutputSite'}))
         self.assertEqual(output_state.total_lot_capacity, 2)
         self.assertEqual(output_state.free_lot_capacity, 2)
         self.assertIsNone(output_state.lot_output_process)
@@ -202,14 +202,14 @@ class StateTest(unittest.TestCase):
         self.assertIsNone(output_state.proc_slots["1"])
 
         # test lot_slots
-        batch_1 = Batch.from_args(3, Location(12, 7, "some_frame"))
+        batch_1 = Batch.from_args(3)
         lot_1 = Lot.from_args([batch_1])
         output_state.lot_slots["0"] = lot_1
         self.assertEqual(output_state.get_lots_num(), 1)
         self.assertEqual(output_state.free_lot_capacity, 1)
         self.assertIsNotNone(output_state.lot_slots["0"])
 
-        batch_2 = Batch.from_args(3, Location(12, 7, "some_frame"))
+        batch_2 = Batch.from_args(3)
         lot_2 = Lot.from_args([batch_2])
         output_state.lot_slots["1"] = lot_2
         self.assertEqual(output_state.get_lots_num(), 2)

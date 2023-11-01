@@ -70,7 +70,7 @@ class HandlerTest(unittest.TestCase):
 
         self.robot_dict = {
             "type": "Robot",
-            "location": {"node_id": 1, "graph_id": 2, "frame_name": "a_frame"},
+            "location": {"coordinates": [1, 2], "descriptor": "station"},
             "id": 187,
             "batch_capacity":2,
             "handler": "SimRobotOpHandler"
@@ -79,7 +79,7 @@ class HandlerTest(unittest.TestCase):
         self.station_dict = {
             'type': 'Station',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 2], "descriptor": "Station"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2,
         }
@@ -341,8 +341,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_procs(self):
         # construct lots
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
         
@@ -395,8 +395,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_lots(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
@@ -443,8 +443,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_mixed(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
@@ -459,7 +459,7 @@ class HandlerTest(unittest.TestCase):
         lot_2.attach_recipe(recipe_2)
 
         # construct process
-        batch_3 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_3 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_3 = Lot.from_args([batch_3])
         lot_3.status = LotStatus.IN_WORKFLOW
         proc = TestProcess.from_args(lot_3)
@@ -528,8 +528,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_requests(self):
         # construct lots
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
         

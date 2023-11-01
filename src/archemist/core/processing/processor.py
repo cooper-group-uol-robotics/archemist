@@ -79,7 +79,7 @@ class InputProcessor:
                                 robot_op.requested_by = self._state.object_id
                                 if isinstance(robot_op, CollectBatchOpDescriptor) or\
                                    isinstance(robot_op, RobotTaskOpDescriptor) or \
-                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
+                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
                                 self._state.requested_robot_ops.append(robot_op)
                             proc.switch_to_waiting()
@@ -141,7 +141,7 @@ class OutputProcessor:
                             for robot_op in proc.req_robot_ops:
                                 if isinstance(robot_op, CollectBatchOpDescriptor) or\
                                    isinstance(robot_op, RobotTaskOpDescriptor) or \
-                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location is None):
+                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
                                 robot_op.requested_by = self._state.object_id
                                 self._state.requested_robot_ops.append(robot_op)

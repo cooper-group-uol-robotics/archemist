@@ -39,12 +39,11 @@ class SchedulerTest(unittest.TestCase):
         }
 
         self.mobile_robot = MobileRobot.from_dict(mobile_robot_dict)
-        self.mobile_robot.location = Location(1, 2, "random")
 
         station_dict_1 = {
             'type': 'Station',
             'id': 1,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [1, 7], "descriptor": "Station1"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }
@@ -53,7 +52,7 @@ class SchedulerTest(unittest.TestCase):
         station_dict_2 = {
             'type': 'Station',
             'id': 2,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [2, 7], "descriptor": "Station2"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 1
         }
@@ -62,7 +61,7 @@ class SchedulerTest(unittest.TestCase):
         station_dict_3 = {
             'type': 'Station',
             'id': 3,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [3, 7], "descriptor": "Station3"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 1
         }
@@ -72,7 +71,7 @@ class SchedulerTest(unittest.TestCase):
         station_dict_4 = {
             'type': 'Station',
             'id': 4,
-            'location': {'node_id': 1, 'graph_id': 7},
+            "location": {"coordinates": [4, 7], "descriptor": "Station4"},
             'handler': 'SimStationOpHandler',
             'total_lot_capacity': 2
         }
@@ -311,14 +310,14 @@ class SchedulerTest(unittest.TestCase):
 
     def test_priority_queue_scheduler_mobile_robot(self):
         # construct recipe and lot
-        batch_1 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_2 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1, batch_2])
         recipe_1 = Recipe.from_dict(self.recipe_doc_1)
         lot_1.attach_recipe(recipe_1)
 
-        batch_3 = Batch.from_args(3, Location(1, 2, "some_frame"))
-        batch_4 = Batch.from_args(3, Location(1, 2, "some_frame"))
+        batch_3 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_4 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
         lot_2 = Lot.from_args([batch_3, batch_4])
         recipe_2 = Recipe.from_dict(self.recipe_doc_2)
         lot_2.attach_recipe(recipe_2)
@@ -383,7 +382,7 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOpDescriptor.from_args("move_to_s2", "MobileRobot",
-                                            Location(1,1), {"fine_local": False},
+                                            Location.from_args(coordinates=(1,1)), {"fine_local": False},
                                             requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
                                             requested_by=self.station_2.object_id)
@@ -584,7 +583,7 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOpDescriptor.from_args("move_to_s2", "MobileRobot",
-                                            Location(1,1), {"fine_local": False},
+                                            Location.from_args(coordinates=(1,1)), {"fine_local": False},
                                             requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOpDescriptor.from_args("MobileRobot", 5,
                                             requested_by=self.station_2.object_id)

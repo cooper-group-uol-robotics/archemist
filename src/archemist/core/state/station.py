@@ -39,7 +39,7 @@ class Station:
         station_model._type = station_dict['type']
         station_model._module = cls.__module__
         station_model.exp_id = station_dict['id']
-        station_model.location = station_dict['location']
+        station_model.location = Location.from_dict(station_dict['location']).model
         station_model.total_lot_capacity = station_dict['total_lot_capacity']
         slots_num = station_dict['total_lot_capacity']
         station_model.lot_slots = {str(slot_num): None for slot_num in range(slots_num)}
@@ -89,8 +89,7 @@ class Station:
 
     @property
     def location(self) -> Location:
-        loc_dict = self._model_proxy.location
-        return Location(node_id=loc_dict['node_id'],graph_id=loc_dict['graph_id'], frame_name='')
+        return Location(self._model_proxy.location)
     
     @property
     def selected_handler(self) -> str:

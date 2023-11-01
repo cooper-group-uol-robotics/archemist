@@ -1,8 +1,8 @@
 from mongoengine import Document, fields
 from archemist.core.models.robot_op_model import RobotOpDescriptorModel
 from archemist.core.models.lot_model import LotModel
-from archemist.core.models.batch_model import BatchModel
 from archemist.core.util.enums import RobotState, OpState, MobileRobotMode
+from archemist.core.util.location import LocationModel
 
 class RobotModel(Document):
     _type = fields.StringField(required=True)
@@ -11,7 +11,7 @@ class RobotModel(Document):
     selected_handler = fields.StringField(required=True)
     state = fields.EnumField(RobotState, default=RobotState.INACTIVE)
     
-    location = fields.DictField()
+    location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
     attending_to = fields.ObjectIdField(null=True)
     
     queued_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
