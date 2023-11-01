@@ -19,7 +19,7 @@ def _import_class_from_module(cls_name: str, module_path: str) -> Any:
     try:
         module = importlib.import_module(module_path)
         return getattr(module, cls_name, None)
-    except ModuleNotFoundError:
+    except (ModuleNotFoundError, ImportError):
         return None
 
 
@@ -189,6 +189,8 @@ class ProcessFactory:
             cls = _import_class_from_module(proc_type, 'archemist.core.state.station_process')
         else:
             if station_module:
+                if station_module.endswith(".state"):
+                    station_module  = station_module[:-6] + ".process"
                 cls = _import_class_from_module(proc_type, station_module)
             else:
                 found = False
