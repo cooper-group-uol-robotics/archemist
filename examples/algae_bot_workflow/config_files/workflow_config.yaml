@@ -24,8 +24,8 @@ workflow_input:
   location:
     coordinates: [21,1]
     descriptor: InputSite
-  samples_per_batch: 3
-  batches_per_lot: 2
+  samples_per_batch: 1
+  batches_per_lot: 1
   total_lot_capacity: 2
   lot_input_process:
     type: BasicLotInputProcess
