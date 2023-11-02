@@ -1,155 +1,105 @@
 import unittest
-import time
-from datetime import timedelta
 
-import mongoengine
+from mongoengine import connect
 
-from archemist.core.util.enums import TimeUnit
-from archemist.core.state.station import StationProcessData
-from archemist.stations.waiting_station.state import WaitingStation, WaitingOpDescriptor
+from archemist.stations.waiting_station.state import WaitingStation, WaitOp
 from archemist.stations.waiting_station.process import WaitingStationProcess
+from archemist.core.state.robot_op import DropBatchOpDescriptor, CollectBatchOpDescriptor
+from archemist.core.state.station_op_result import ProcessOpResult
 from archemist.core.state.batch import Batch
-from archemist.core.state.recipe import Recipe
-from archemist.core.util.enums import StationState
-from archemist.core.util.location import Location
-from utils import ProcessTestingMixin
+from archemist.core.state.lot import Lot
+from archemist.core.util.enums import StationState, ProcessStatus, OpOutcome
+from .testing_utils import test_req_robot_ops
 
-class WaitingStationTest(unittest.TestCase, ProcessTestingMixin):
+class WaitingStationTest(unittest.TestCase):
     def setUp(self):
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
         self.station_doc = {
             'type': 'WaitingStation',
             'id': 23,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
-            {
-                'type': 'WaitingStationSm',
-                'args': {}
-            },
-            'parameters':{}
+            'location': {'coordinates': [1,7], 'descriptor': "WaitingStation"},
+            'total_lot_capacity': 1,
+            'handler': 'WaitingStationHandler',
         }
 
-        self.station = WaitingStation.from_dict(self.station_doc,[],[])
+        self.station = WaitingStation.from_dict(self.station_doc)
 
     def tearDown(self):
-        self.station.model.delete()
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
     
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
+
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
         
         # test station op construction
-        t_op = WaitingOpDescriptor.from_args(duration=12, time_unit="min")
-        self.assertFalse(t_op.has_result)
+        t_op = WaitOp.from_args(target_lot=lot, duration=12, time_unit="minute")
         self.assertEqual(t_op.duration, 12)
-        self.assertEqual(t_op.time_unit, TimeUnit.MINUTES)
+        self.assertEqual(t_op.time_unit, "minute")
 
     def test_waiting_station_process(self):
-        # construct batches
-        WAITING_DURATION = 3
-        
-        recipe_doc = {
-            'general': 
-            {
-                'name': 'waiting_station_test_recipe',
-                'id': 111
-            },
-            'process':
-            [
-                {
-                    'state_name': 'age_samples',
-                    'station':
-                    {
-                        'type': 'WaitingStation',
-                        'id': 23,
-                        'operation':
-                            {
-                                'type': 'WaitingOpDescriptor',
-                                'properties': 
-                                {
-                                    'duration': WAITING_DURATION,
-                                    'time_unit': 'sec'
-                                }
-                            }
-                    },
-                    'transitions':
-                    {
-                        'on_success': 'end_state',
-                        'on_fail': 'end_state'
-                    },
-                },
-            ]
-        }
-
-        batch_1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
-        recipe = Recipe.from_dict(recipe_doc)
-        batch_1.attach_recipe(recipe)
-        batch_2 = Batch.from_arguments(32,2,Location(1,3,'table_frame'))
-        batch_2.attach_recipe(recipe)
-        
-        # add batches to station
-        self.station.add_batch(batch_1)
-        self.station.add_batch(batch_2)
+        # construct batches        
+        batch_1 = Batch.from_args(3, self.station.location)
+        batch_2 = Batch.from_args(3, self.station.location)
+        lot = Lot.from_args([batch_1, batch_2])
+        self.station.add_lot(lot)
 
         # create station process
-        process_data = StationProcessData.from_args([batch_1, batch_2])
-        process = WaitingStationProcess(self.station, process_data)
+        operations = [
+                {
+                    "name": "wait_for",
+                    "op": "WaitOp",
+                    "parameters": {
+                        "duration": 5,
+                        "time_unit": "second"
+                    }
+                }
+            ]
+
+        # create station process
+        process = WaitingStationProcess.from_args(lot=lot,
+                                                  operations=operations)
+        process.lot_slot = 0
 
         # assert initial state
-        self.assertEqual(process.data.status['state'], 'init_state')
-        self.assertEqual(len(process.data.req_robot_ops),0)
-        self.assertEqual(len(process.data.robot_ops_history),0)
-        self.assertEqual(len(process.data.req_station_ops),0)
-        self.assertEqual(len(process.data.station_ops_history),0)
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
 
         # prep_state
-        self.assert_process_transition(process, 'prep_state')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        self.assertEqual(process.data.status['timer_expiry_datetime'], "")
-        self.assertIsNone(process.data.status['stored_op'])
+        process.tick()
+        self.assertEqual(process.status, ProcessStatus.RUNNING)
 
 
-        for i in range(self.station_doc['process_batch_capacity']):
-            # load_batch
-            self.assert_process_transition(process, 'load_batch')
-            robot_op = self.station.get_requested_robot_ops()[0]
-            self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'LoadWaitingStation',
-                                'params':['True', str(i+1)]})
-            self.complete_robot_op(self.station, robot_op)
-
-            # added_batch_update
-            self.assert_process_transition(process, 'added_batch_update')
-            self.assertEqual(process.data.status['batch_index'], i+1)
+        # load_lot
+        process.tick()
+        self.assertEqual(process.m_state, 'load_lot')
+        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
 
         # waiting_process
-        self.assert_process_transition(process, 'waiting_process')
-        for i in range(WAITING_DURATION - 1):
-            self.assert_process_transition(process, 'waiting_process')
-            time.sleep(1)
-        time.sleep(1)
+        process.tick()
+        self.assertEqual(process.m_state, 'waiting_process')
+        wait_op = process.req_station_ops[0]
+        parameters = {"duration": wait_op.duration, "time_unit": wait_op.time_unit}
+        wait_op.complete_op(OpOutcome.SUCCEEDED, [ProcessOpResult.from_args(origin_op=wait_op.object_id, parameters=parameters)])
 
-        for i in range(self.station_doc['process_batch_capacity'], 0, -1):
-            # unload_batch
-            self.assert_process_transition(process, 'unload_batch')
-            robot_op = self.station.get_requested_robot_ops()[0]
-            self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'UnloadWaitingStation',
-                                'params':['False', str(i)]})
-            self.complete_robot_op(self.station, robot_op)
-
-            # removed_batch_update
-            self.assert_process_transition(process, 'removed_batch_update')
-            self.assertEqual(process.data.status['batch_index'], i-1)
+        # unload_lot
+        process.tick()
+        self.assertEqual(process.m_state, 'unload_lot')
+        test_req_robot_ops(self, process, [CollectBatchOpDescriptor]*2)
 
         # final_state
-        self.assertFalse(self.station.has_processed_batch())
-        self.assert_process_transition(process, 'final_state')
-        self.assertTrue(self.station.has_processed_batch())
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

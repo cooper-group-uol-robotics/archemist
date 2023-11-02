@@ -2,155 +2,155 @@
 #
 # general: this section describes the workflow general settings
 #   name: the given workflow name
-#   samples_per_batch: number of samples in a workflow batch
-#   default_batch_input_location: default navigation graph location where a batch is added
-#                                 where node_id stands for the node number in the navigation
-# 
+
 general:
   name: algae_bot_workflow
-  samples_per_batch: 2
-  default_batch_input_location:
-    node_id: 25
-    graph_id: 1
 
-# materials: this section describes the materials used in the workflow
-#   liquids:
-#     name: the liquid name
-#     id: the liquid unique workflow id
-#     amount_stored: the liquid stored amount
-#     unit: the unit representing stored amount, accepted units l, ml, ul
-#     denisty: liquid density in g/l
-#     pump_id: id of the pump responsible for the liquid handling
-#     expiry_date: expiry date of the liquid
-#   solids:
-#     name: the solid name
-#     id: the solid unique workflow id
-#     amount_stored: the solid stored amount
-#     unit: the unit representing stored amount, accepted units g, mg, ug
-#     dispense_src: name of the solid hanlder, accepted value quantos
-#     cartridge_id: id of the catridge where the solid is stored
-#     expiry_date: expiry date of the solid
+# ============ Workflow Input Configuration ============
 #
-# for every solid and liquid used in the workflow, add a new entry and fill its fields as defined
-materials:
-  liquids:
-    - name: water
-      id: 1
-      amount_stored: 5000
-      unit: ml
-      density: 1000 
-      pump_id: chemspeed
-      expiry_date: 31/03/2023
-    - name: dye_A
-      id: 1
-      amount_stored: 500
-      unit: ml
-      density: 1000 
-      pump_id: chemspeed
-      expiry_date: 31/03/2023
-    - name: dye_B
-      id: 1
-      amount_stored: 600
-      unit: ml
-      density: 1000 
-      pump_id: chemspeed
-      expiry_date: 31/03/2023
+# workflow_input: this section describes the workflow lot input settings
+#   location: location of the input site
+#   samples_per_batch: number of samples in a single batch
+#   batches_per_lot: number of batch in a single lot
+#   total_lot_capacity: maximum number of lot that can be stored 
+#                       at the input site
+#   lot_input_process: define the process used to input lots into the workflow
+#     type: the process's class name as defined in archemist.processes.X
+#         note that X stands for the process's given module found in archemist's 
+#         processes module
+#     args: arguments to construct the lot input process if needed
+
+workflow_input:
+  location:
+    coordinates: [21,1]
+    descriptor: InputSite
+  samples_per_batch: 3
+  batches_per_lot: 2
+  total_lot_capacity: 2
+  lot_input_process:
+    type: BasicLotInputProcess
+    args: Null
+
+# ============ Workflow Output Configuration ============
+#
+# workflow_output: this section describes the workflow lot output settings
+#   location: location of the output site
+#   total_lot_capacity: maximum number of lot that can be stored 
+#                       at the output site
+#   lots_need_manual_removal: specify whether the lots need to be manually removed
+#                             from the output site
+#   lot_output_process: define the process used to output lots into the workflow
+#     type: the process's class name as defined in archemist.processes.X
+#         note that X stands for the process's given module found in archemist's 
+#         processes module
+#     args: arguments to construct the lot output process if needed
+
+workflow_output:
+  location:
+    coordinates: [22,1]
+    descriptor: OutputSite
+  total_lot_capacity: 2
+  lots_need_manual_removal: True
+  lot_output_process:
+    type: BasicLotOutputProcess
+    args: Null
 
 # robots: this section describes the robots used in the workflow
 #   type: the robot's class name as defined in archemist.robots.X.state 
 #         note that X stands for the robot's given module found in archemist's robots 
 #         module
 #   id: the robot unique workflow id
-#   batch_capacity: the number of batches the robot can carry/handle at a time
 #   handler: robot handler class name as defined in archemist.robots.X.handler
+#   total_lot_capacity: the max number of lots the robot can carry/handle at a time
+#                       only needed if robot of type MobileRobot
+#   onboard_capacity: the max number of batches the robot can carry/handle at a time
+#                       only needed if robot of type MobileRobot
+#   location: location of the robot if available
 #
 # for every robot used in the workflow, add a new entry and fill its fields as defined
+
 robots:
-  - type: KukaLBRIIWA
+  - type: MobileRobot
     id: 1
-    batch_capacity: 2
-    handler: KmriiwaROSHandler
+    handler: SimRobotOpHandler
+    total_lot_capacity: 1
+    onboard_capacity: 2
 
 # stations: this section describes the stations used in the workflow
 #   type: the station's class name as defined in archemist.stations.X.state
 #         note that X stands for the stations's given module found in archemist's 
 #         stations module
 #   id: the station unique workflow id
-#   location: station's location in the robot navigation graph where node_id stands for the 
-#             node number in the navigation graph whose id is given 
-#   batch_capacity: number of batches the station can handle at a time
+#   location: station's location defined in terms of x,y coordinates and string descriptor 
+#   total_lot_capacity: number of lots the station can handle at a time
 #   handler: station handler class name as defined in archemist.stations.X.handler
-#   parameters: any additional parameters need to be passed to the station when initialized
-#   process_state_machine: state machine describing the station process 
-#   type: the station process state machine class name as defined in archemist.stations.X.process
-#   args: any additional arguments that need to be passed to the state machine constructor
+#   properties: any additional properties need to be passed to the station when initialized
+#   materials: this section describes the materials used in the station
+#     liquids:
+#       name: the liquid name
+#       amount: the liquid stored amount
+#       unit: measurement unit representing stored amount, accepted units L, mL, uL,m3, cm3, mm3
+#       density: liquid density
+#       density_unit: measurement unit representing liquid density
+#       details: all other liquid details such as its source, colour, etc. 
+#       expiry_date: expiry date of the liquid
+#     solids:
+#       name: the solid name
+#       amount: the solid stored amount
+#       unit: the unit representing stored amount, accepted units g, mg, ug, kg
+#       details: all other solid details such as its source, colour, etc.
+#       expiry_date: expiry date of the solid
 #
 # for every station used in the workflow, add a new entry and fill its fields as defined
+
 stations:
-  - type: InputStation
+  - type: ChemSpeedFlexStation
     id: 11
     location:
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 2
-    process_batch_capacity: 2
-    handler: InputStationHandler
-    process_state_machine:
-      type: InputStationProcess
-      args:
-    parameters:
-  - type: ChemSpeedFlexStation
+      coordinates: [25,1]
+      descriptor: ChemSpeedFlexStation
+    total_lot_capacity: 1
+    handler: SimChemSpeedFlexHandler
+    properties: Null
+    materials:
+      liquids:
+        - name: water
+          amount: 5000
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details: Null
+          expiry_date: 31/03/2023
+        - name: dye_A
+          amount: 500
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details: Null
+          expiry_date: 31/03/2023
+        - name: dye_B
+          amount: 600
+          unit: mL
+          density: 1000
+          density_unit: kg/m3 
+          details: Null
+          expiry_date: 31/03/2023
+  - type: LightBoxStation
     id: 12
     location:
-      node_id: 27
-      graph_id: 1
-    batch_capacity: 2
-    process_batch_capacity: 2
-    handler: ChemSpeedFlexROSHandler
-    process_state_machine:
-      type: ChemSpeedCSVProcess
-      args:
-        batch_mode: true
-    parameters:
-      used_liquids:
-        - water
-        - dye_A
-        - dye_B
-  - type: LightBoxStation
-    id: 13
-    location: 
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 2
-    process_batch_capacity: 2
-    handler: LightBoxROSHandler
-    process_state_machine: 
-      type: LightBoxProcess
-      args: 
-        batch_mode: true
-    parameters:
-      rgb_target: 2162120
+      coordinates: [27,1]
+      descriptor: LightBoxStation
+    total_lot_capacity: 1
+    handler: SimLightBoxHandler
+    materials: Null
+    properties:
+      rgb_target_index: 123
   - type: WaitingStation
-    id: 15
-    location: 
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 6
-    process_batch_capacity: 2
-    handler: WaitingStationHandler
-    process_state_machine: 
-      type: WaitingStationProcess
-      args: 
-    parameters:
-  - type: OutputStation
-    id: 14
+    id: 13
     location:
-      node_id: 25
-      graph_id: 1
-    batch_capacity: 2
-    process_batch_capacity: 2
-    handler: OutputStationHandler
-    process_state_machine:
-      type: OutputStationProcess
-      args:
-    parameters:
+      coordinates: [26,1]
+      descriptor: WaitingStationProcess
+    total_lot_capacity: 1
+    handler: WaitingStationHandler
+    properties: Null
+    materials: Null

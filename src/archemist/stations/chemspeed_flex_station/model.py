@@ -1,18 +1,17 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.station_op_model import StationLotOpDescriptorModel
 from mongoengine import fields
-from enum import Enum
+from enum import Enum, auto
 
-class ChemSpeedStatus(Enum):
-    DOORS_OPEN = 0
-    DOORS_CLOSED = 1
-    RUNNING_JOB = 2
-    JOB_COMPLETE = 3
+class ChemSpeedJobStatus(Enum):
+    INVALID = auto()
+    RUNNING_JOB = auto()
+    JOB_COMPLETE = auto()
 
 class ChemSpeedFlexStationModel(StationModel):
-    machine_status = fields.EnumField(ChemSpeedStatus, null=True)
-    liquids_dict = fields.DictField(default={})
+    job_status = fields.EnumField(ChemSpeedJobStatus, default=ChemSpeedJobStatus.INVALID)
+    door_closed = fields.BooleanField(default=True)
 
-class CSCSVJobOpDescriptorModel(StationOpDescriptorModel):
-    dispense_info = fields.DictField(required=True)
-    result_file = fields.StringField()
+class CSLiquidDispenseOpModel(StationLotOpDescriptorModel):
+    dispense_table = fields.DictField(required=True)
+    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")

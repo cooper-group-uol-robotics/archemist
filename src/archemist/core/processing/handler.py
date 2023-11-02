@@ -256,7 +256,7 @@ class SimStationOpHandler(StationOpHandler):
     def is_op_execution_complete(self):
             return True
 
-    def get_op_result(self) -> Tuple[OpOutcome, Dict]:
+    def get_op_result(self) -> Tuple[OpOutcome, List[Type[StationOpResult]]]:
         origin_op = self._station.assigned_op
         return OpOutcome.SUCCEEDED, [StationOpResult.from_args(origin_op=origin_op.object_id)]
     

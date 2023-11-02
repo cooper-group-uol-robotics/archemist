@@ -1,156 +1,163 @@
 import unittest
 
-import mongoengine
+from mongoengine import connect
 
-from archemist.core.state.station import StationState, StationProcessData
+from archemist.core.state.station import StationState
+from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.recipe import Recipe
-from archemist.stations.lightbox_station.state import LightBoxStation, SampleColorOpDescriptor
+from archemist.stations.lightbox_station.state import (LightBoxStation,
+                                                       LBSampleAnalyseRGBOp,
+                                                       LBAnalyseRGBResult,
+                                                       LBSampleAnalyseLABOp,
+                                                       LBAnalyseLABResult)
+from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
+                                           RobotWaitOpDescriptor)
 from archemist.stations.lightbox_station.process import LightBoxProcess
-from archemist.core.util.location import Location
-from utils import ProcessTestingMixin
+from archemist.core.util.enums import OpOutcome, ProcessStatus
+from .testing_utils import test_req_robot_ops, test_req_station_op
 
-class LightBoxStationTest(unittest.TestCase, ProcessTestingMixin):
-    def setUp(self):
-        self.station_doc = {
+class LightBoxStationTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+        station_doc = {
             'type': 'LightBoxStation',
-            'id': 25,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'process_batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_state_machine': 
-            {
-                'type': 'LightBoxProcess',
-                'args': {}
-            },
-            'parameters':{}
+            'id': 23,
+            'location': {'coordinates': [1,7], 'descriptor': "LightBoxStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'properties': {
+                "rgb_target_index": 125,
+                "lab_target_index": 0.5
+            }
         }
+        self.station = LightBoxStation.from_dict(station_doc)
 
-        self.station = LightBoxStation.from_dict(self.station_doc, [], [])
-
-    def tearDown(self):
-        self.station.model.delete()
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
 
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
 
+        # test station specific members
+        self.assertEqual(self.station.rgb_target_index, 125)
+        self.assertEqual(self.station.lab_target_index, 0.5)
+
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
+
+
         # test SampleColorOpDescriptor
-        t_op = SampleColorOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_station_op(True, result_filename='file.test', 
-                                                  red_intensity=128, green_intensity=253, 
-                                                  blue_intensity=11)
-        ret_t_op = self.station.completed_station_ops[str(t_op.uuid)]
-        self.assertTrue(ret_t_op.has_result)
-        self.assertTrue(ret_t_op.was_successful)
-        self.assertEqual(ret_t_op.result_filename, 'file.test')
-        self.assertEqual(ret_t_op.red_intensity, 128)
-        self.assertEqual(ret_t_op.green_intensity, 253)
-        self.assertEqual(ret_t_op.blue_intensity, 11)
+        t_op = LBSampleAnalyseRGBOp.from_args(lot.batches[0].samples[0])
+        self.assertIsNotNone(t_op.object_id)
+
+        # test LBAnalyseRGBResult
+        op_result = LBAnalyseRGBResult.from_args(origin_op=t_op.object_id,
+                                                 r_value=128,
+                                                 g_value=100,
+                                                 b_value=12,
+                                                 color_index=132,
+                                                 target_index=125,
+                                                 result_filename="test123.png")
+        self.assertEqual(op_result.red_intensity, 128)
+        self.assertEqual(op_result.green_intensity, 100)
+        self.assertEqual(op_result.blue_intensity, 12)
+        self.assertEqual(op_result.color_index, 132)
+        self.assertEqual(op_result.color_diff, 7)
+        self.assertEqual(op_result.result_filename, "test123.png")
+
+        # test LBSampleAnalyseLABOp
+        t_op = LBSampleAnalyseLABOp.from_args(lot.batches[0].samples[0])
+        self.assertIsNotNone(t_op.object_id)
+
+        # test LBAnalyseRGBResult
+        op_result = LBAnalyseLABResult.from_args(origin_op=t_op.object_id,
+                                                 l_value=128,
+                                                 a_value=100,
+                                                 b_value=12,
+                                                 color_index=5.0,
+                                                 target_index=3.0,
+                                                 result_filename="test123.png")
+        self.assertEqual(op_result.l_star_value, 128)
+        self.assertEqual(op_result.a_star_value, 100)
+        self.assertEqual(op_result.b_star_value, 12)
+        self.assertEqual(op_result.color_index, 5.0)
+        self.assertEqual(op_result.color_diff, 4.0)
+        self.assertEqual(op_result.result_filename, "test123.png")
     
     def test_lightbox_process(self):
-        # construct batches
-        recipe_doc = {
-            'general': 
-            {
-                'name': 'lightbox_test_recipe',
-                'id': 111
-            },
-            'process':
-            [
-                {
-                    'state_name': 'analyse_samples',
-                    'station':
-                    {
-                        'type': 'LightBoxStation',
-                        'id': 111,
-                        'operation':
-                            {
-                                'type': 'SampleColorOpDescriptor',
-                                'properties': {}
-                            }
-                    },
-                    'transitions':
-                    {
-                        'on_success': 'end_state',
-                        'on_fail': 'end_state'
-                    },
-                },
-            ]
-        }
 
         num_samples = 3
-        batch_1 = Batch.from_arguments(31,num_samples,Location(1,3,'table_frame'))
-        recipe = Recipe.from_dict(recipe_doc)
-        batch_1.attach_recipe(recipe)
-        batch_2 = Batch.from_arguments(32,num_samples,Location(1,3,'table_frame'))
-        batch_2.attach_recipe(recipe)
+        batch_1 = Batch.from_args(num_samples)
+        batch_2 = Batch.from_args(num_samples)
+        lot = Lot.from_args([batch_1, batch_2])
         
         # add batches to station
-        self.station.add_batch(batch_1)
-        self.station.add_batch(batch_2)
+        self.station.add_lot(lot)
 
         # create station process
-        process_data = StationProcessData.from_args([batch_1, batch_2])
-        process = LightBoxProcess(self.station, process_data)
+        operations = [
+                {
+                    "name": "analyse",
+                    "op": "LBSampleAnalyseLABOp",
+                    "parameters": None
+                }
+            ]
+        process = LightBoxProcess.from_args(lot=lot,
+                                            operations=operations)
+        process.lot_slot = 0
 
         # assert initial state
-        self.assertEqual(process.data.status['state'], 'init_state')
-        self.assertEqual(len(process.data.req_robot_ops),0)
-        self.assertEqual(len(process.data.robot_ops_history),0)
-        self.assertEqual(len(process.data.req_station_ops),0)
-        self.assertEqual(len(process.data.station_ops_history),0)
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
 
         # prep_state
-        self.assert_process_transition(process, 'prep_state')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        self.assertEqual(process.data.status['sample_index'], 0)
+        process.tick()
+        self.assertEqual(process.m_state, 'prep_state')
+        self.assertEqual(process.data['batch_index'], 0)
+        self.assertEqual(process.data['sample_index'], 0)
 
-        for i in range(self.station_doc['process_batch_capacity']):
+        for i in range(lot.num_batches):
             for j in range(num_samples):
                 # load_sample
-                self.assert_process_transition(process, 'load_sample')
-                robot_op = self.station.get_requested_robot_ops()[0]
-                self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                        {'name': 'PresentVial',
-                                        'params':['False', str(i+1),str(j+1), 'False']})
-                self.complete_robot_op(self.station, robot_op)
+                process.tick()
+                self.assertEqual(process.m_state, 'load_sample')
+                test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
 
                 # station_process
-                self.assert_process_transition(process, 'station_process')
-                req_station_ops = process.data.req_station_ops
-                station_op = req_station_ops[0]
-                self.assertEqual(len(req_station_ops),1)
-                self.assert_station_op(station_op, 'SampleColorOpDescriptor')
-                self.complete_station_op(self.station)
+                process.tick()
+                self.assertEqual(process.m_state, 'station_process')
+                test_req_station_op(self, process, LBSampleAnalyseLABOp)
 
-                 # unload_sample
-                self.assert_process_transition(process, 'unload_sample')
-                robot_op = self.station.get_requested_robot_ops()[0]
-                self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                        {'name': 'ReturnVial',
-                                        'params':['False', str(i+1),str(j+1), 'False']})
-                self.complete_robot_op(self.station, robot_op)
+                # unload_sample
+                process.tick()
+                self.assertEqual(process.m_state, 'unload_sample')
+                test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
 
                 # update_sample_index
-                self.assert_process_transition(process, 'update_sample_index')
-                self.assertEqual(process.data.status['batch_index'], i)
-                self.assertEqual(process.data.status['sample_index'], j+1)
+                process.tick()
+                self.assertEqual(process.m_state, 'update_sample_index')
+                self.assertEqual(process.data['batch_index'], i)
+                self.assertEqual(process.data['sample_index'], j+1)
             
             # update_batch_index
-            self.assert_process_transition(process, 'update_batch_index')
-            self.assertEqual(process.data.status['batch_index'], i+1)
-            self.assertEqual(process.data.status['sample_index'], 0)
+            process.tick()
+            self.assertEqual(process.m_state, 'update_batch_index')
+            self.assertEqual(process.data['batch_index'], i+1)
+            self.assertEqual(process.data['sample_index'], 0)
 
         # final_state
-        self.assertFalse(self.station.has_processed_batch())
-        self.assert_process_transition(process, 'final_state')
-        self.assertTrue(self.station.has_processed_batch())
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
 
 if __name__ == '__main__':
     mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')

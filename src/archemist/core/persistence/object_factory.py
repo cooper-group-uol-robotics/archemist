@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Type, TYPE_CHECKING
+from typing import Any, Dict, Type, TYPE_CHECKING
 if TYPE_CHECKING:
     from archemist.core.state.material import Liquid, Solid
     from archemist.core.state.robot import Robot, RobotModel
@@ -60,7 +60,12 @@ class RobotFactory:
             robot_module_path = robot.module_path
             handler_module_path = robot_module_path.rsplit('.',1)[0] + '.handler'
             cls = _import_class_from_module(handler_type, handler_module_path)
-        return cls(robot)
+        
+        if cls:
+                return cls(robot)
+        
+        raise NameError(f"Robot op handler type {robot.selected_handler} is not defined or have errors")
+        
     
 class RobotOpFactory:
     @staticmethod
@@ -128,7 +133,11 @@ class StationFactory:
             station_module_path = station.module_path
             handler_module_path = station_module_path.rsplit('.',1)[0] + '.handler'
             cls = _import_class_from_module( handler_type,  handler_module_path)
-        return cls(station)
+
+        if cls:
+            return cls(station)
+
+        raise NameError(f"station op handler type {station.selected_handler} is not defined or have errors")
     
 class StationOpFactory:
     @staticmethod

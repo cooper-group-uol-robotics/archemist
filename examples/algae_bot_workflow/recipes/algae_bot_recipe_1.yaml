@@ -14,90 +14,99 @@
 #
 # process: this section describes the experiment process. The process
 #             is represented using a finite state machine that is composed of
-#             state and their transitions. Currently only sequential process are 
-#             possible. Note that a workflow can have any number of states
-#             and their transitions.
+#             state and their transitions. Note that a workflow can have any 
+#             number of states and their transitions.
 #   state_name: name of the state
 #   station: this section describes the station involved in this state
 #     type: the station's class name as defined in archemist.stations.X.state
 #           note that X stands for the stations's given module found in archemist's 
 #           stations module
 #     id: station unique workflow id
-#     operation: this section describes the operation involved in the state
-#       type: station operation class name as defined in archemist.stations.X.state
+#     process: this section describes the station process involved in the state
+#       type: station process class name as defined in archemist.stations.X.process
 #             note that X stands for the stations's given module found in archemist's 
 #             stations module
-#       properties: operation properties
+#       operations: a list that describe key station ops used in the process
+#         name: name of the op that is going to be used as a key inside the process to retrieve
+#               the operation parameters
+#         op: class name of op to be executed as defined in archemist.stations.X.state
+#               note that X stands for the stations's given module found in archemist's 
+#               stations module
+#         parameters: op parameters
+#       args: any extra arguments needed to construct the process 
 #   transitions: this section describes current state transitions
 #     on_success: the new state the workflow will transition to in case the current state
 #                 is executed successfully
 #     on_success: the new state the workflow will transition to in case the current state
-#                 execution fails
+#                 execution fails. Use default the failed_state to indicate the recipe has
+#                 completely failed
 # note that the process is considered complete when it reaches the end_state so
-# make sure your process teminates with the end_state
+# make sure your process terminates with the end_state
+
 general:
   name: algae_bot_recipe
   id: 199
-process:
-  - state_name: pickup
-    station:
-      type: InputStation
-      id: 11
-      operation:
-        type: InputStationPickupOp
-    transitions:
-      on_success: dispense_liquid
-      on_fail: end_state
-  - state_name: dispense_liquid
+steps:
+  - state_name: dispense_liquids
     station:
       type: ChemSpeedFlexStation
-      id: 12
-      operation:
-        type: CSCSVJobOpDescriptor
-        properties:
-          dispense_info:
-            water: [11,14,17,20,23,26]
-            dye_A: [0.12,0.15,0.18,0.21,0.24,0.27]
-            dye_B: [0.13,0.16,0.19,0.22,0.25,0.28]
+      id: 11
+      process:
+        type: ChemSpeedFlexProcess
+        operations:
+          - name: run_job
+            op: CSLiquidDispenseOp
+            parameters:
+              dispense_unit: mL
+              dispense_table:
+                water: [10.0, 10.0, 15.0, 15.0, 20.0, 20.0]
+                dye_A: [0.12,0.15,0.18,0.21,0.24,0.27]
+                dye_B: [0.13,0.16,0.19,0.22,0.25,0.28]
+        args: Null
     transitions:
-      on_success: analyse
-      on_fail: end_state
-  - state_name: analyse
+      on_success: pre_reaction_image_samples
+      on_fail: failed_state
+  - state_name: pre_reaction_image_samples
     station:
       type: LightBoxStation
-      id: 13
-      operation:
-        type: SampleColorRGBOpDescriptor
+      id: 12
+      process:
+        type: LightBoxProcess
+        operations:
+          - name: analyse
+            op: LBSampleAnalyseRGBOp
+            parameters: Null
+        args: Null
     transitions:
-      on_success: wait
-      on_fail: end_state
-  - state_name: wait
+      on_success: wait_for_reaction_state
+      on_fail: failed_state
+  - state_name: wait_for_reaction_state
     station:
       type: WaitingStation
-      id: 15
-      operation:
-        type: WaitingOpDescriptor
-        properties:
-          duration: 3
-          time_unit: sec
+      id: 13
+      process:
+        type: WaitingStationProcess
+        operations:
+          - name: wait_for
+            op: WaitOp
+            parameters:
+              duration: 3
+              time_unit: second
+        args: Null
     transitions:
-      on_success: analyse_again
-      on_fail: end_state
-  - state_name: analyse_again
+      on_success: post_reaction_image_samples
+      on_fail: failed_state
+  - state_name: post_reaction_image_samples
     station:
       type: LightBoxStation
-      id: 13
-      operation:
-        type: SampleColorRGBOpDescriptor
-    transitions:
-      on_success: dispose
-      on_fail: end_state
-  - state_name: dispose
-    station:
-      type: OutputStation
-      id: 14
-      operation:
-        type: OutputStationPlaceOp
+      id: 12
+      process:
+        type: LightBoxProcess
+        operations:
+          - name: analyse
+            op: LBSampleAnalyseRGBOp
+            parameters: Null
+        args: Null
     transitions:
       on_success: end_state
-      on_fail: end_state
+      on_fail: failed_state

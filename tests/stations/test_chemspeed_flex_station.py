@@ -1,290 +1,227 @@
 import unittest
-from typing import List
 from datetime import datetime
 
-import mongoengine
+from mongoengine import connect
 
 from archemist.core.state.material import Liquid
-from archemist.core.state.station import StationProcessData
 from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStation, 
-                                                             ChemSpeedStatus,
-                                                             CSOpenDoorOpDescriptor,
-                                                             CSCloseDoorOpDescriptor,
-                                                             CSCSVJobOpDescriptor, 
-                                                             CSProcessingOpDescriptor)
-from archemist.stations.chemspeed_flex_station.process import ChemSpeedCSVProcess
+                                                             ChemSpeedJobStatus,
+                                                             CSOpenDoorOp,
+                                                             CSCloseDoorOp,
+                                                             CSLiquidDispenseOp, 
+                                                             CSRunJobOp)
+from archemist.core.state.robot_op import (RobotNavOpDescriptor,
+                                           RobotWaitOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor)
+from archemist.core.state.station_op_result import MaterialOpResult
+from archemist.stations.chemspeed_flex_station.process import ChemSpeedFlexProcess
+from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.recipe import Recipe
-from archemist.core.util.enums import StationState
-from archemist.core.util.location import Location
-from utils import ProcessTestingMixin
+from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
+from .testing_utils import test_req_robot_ops, test_req_station_op
 
-class ChemspeedFlexStationTest(unittest.TestCase, ProcessTestingMixin):
-    def setUp(self):
-        self.station_doc = {
+class ChemspeedFlexStationTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+        station_doc = {
             'type': 'ChemSpeedFlexStation',
             'id': 22,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
+            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'materials':
             {
-                'type': 'ChemSpeedCSVProcess',
-                'args': {}
-            },
-            'parameters':
-            {
-                'used_liquids': ['water']
+                'liquids':
+                [{
+                    'name': 'water',
+                    'amount': 400,
+                    'unit': 'mL',
+                    'density': 997,
+                    'density_unit': "kg/m3",
+                    "details": None,
+                    'expiry_date': datetime.fromisoformat('2025-02-11')
+                }]
             }
         }
-        liquid_dict = {
-            'name': 'water',
-            'id': 1235,
-            'amount_stored': 400,
-            'unit': 'ml',
-            'density': 997,
-            'pump_id': 'chemspeed',
-            'expiry_date': datetime.fromisoformat('2025-02-11')
-        }
-        liquids_list = []
-        liquids_list.append(Liquid.from_dict(liquid_dict))
 
-        self.station = ChemSpeedFlexStation.from_dict(self.station_doc,liquids_list,[])
+        self.station = ChemSpeedFlexStation.from_dict(station_doc)
 
-    def tearDown(self):
-        self.station.model.delete()
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
 
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
 
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
+
         # test station specific members
-        self.assertIsNone(self.station.status)
-        self.assertEqual(self.station.used_liquids_names, ['water'])
-        liq = self.station.get_liquid('water')
+        self.assertEqual(self.station.job_status, ChemSpeedJobStatus.INVALID)
+        self.assertTrue(self.station.door_closed)
+        self.assertEqual(len(self.station.liquids_dict), 1)
+        liquid = self.station.liquids_dict['water']
+        self.assertIsNotNone(liquid)
+        self.assertEqual(liquid.volume, 400)
+
         
         # test CSOpenDoorOpDescriptor
-        t_op = CSOpenDoorOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        t_op = CSOpenDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_OPEN)
-        self.assertIsNotNone(self.station.completed_station_ops.get(str(t_op.uuid)))
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(self.station.door_closed)
 
         # test CSCloseDoorOpDescriptor
-        t_op = CSCloseDoorOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        t_op = CSCloseDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_CLOSED)
-        self.assertIsNotNone(self.station.completed_station_ops.get(str(t_op.uuid)))
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.door_closed)
 
         # test CSProcessingOpDescriptor
-        t_op = CSProcessingOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_CLOSED)
+        t_op = CSRunJobOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.assertEqual(self.station.status, ChemSpeedStatus.RUNNING_JOB)
-        self.station.complete_assigned_station_op(True)
-        self.assertEqual(self.station.status, ChemSpeedStatus.JOB_COMPLETE)
-        self.assertIsNotNone(self.station.completed_station_ops.get(str(t_op.uuid)))
+        self.assertEqual(self.station.job_status, ChemSpeedJobStatus.RUNNING_JOB)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertEqual(self.station.job_status, ChemSpeedJobStatus.JOB_COMPLETE)
 
         # test CSProcessingOpDescriptor
-        t_op = CSCSVJobOpDescriptor.from_args(dispense_info={'water':[10,20]})
-        self.assertEqual(t_op.dispense_info, {'water':[10,20]})
-        self.assertEqual(t_op.get_csv_string(),r"10.0\n20.0\n")
-        self.assertFalse(t_op.has_result)
-        self.assertFalse(t_op.result_file)
+        t_op = CSLiquidDispenseOp.from_args(target_lot=lot,
+                                            dispense_table={'water':[10.0,20.0]},
+                                            dispense_unit="mL")
+        self.assertIsNotNone(t_op)
+        self.assertDictEqual(dict(t_op.dispense_table), {'water':[10.0,20.0]})
+        self.assertEqual(t_op.dispense_unit, "mL")
+        self.assertEqual(t_op.to_csv_string(),r"10.0\n20.0\n")
 
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
-        self.assertEqual(self.station.status, ChemSpeedStatus.JOB_COMPLETE)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.assertEqual(self.station.status, ChemSpeedStatus.RUNNING_JOB)
-        self.assertEqual(liq.volume, 0.4)
-        self.station.complete_assigned_station_op(True, result_file="some_file.txt")
-        self.assertEqual(self.station.status, ChemSpeedStatus.JOB_COMPLETE)
-        complete_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertEqual(complete_op.result_file, "some_file.txt")
-        self.assertEqual(liq.volume, 0.37)
+        self.assertEqual(self.station.job_status, ChemSpeedJobStatus.RUNNING_JOB)
+        self.assertEqual(liquid.volume, 400)
+        
+        # create results for operation
+        materials_names = [material_name for material_name in t_op.dispense_table.keys()]
+        samples_qtys = zip(*[qtys for qtys in t_op.dispense_table.values()])
+        dispense_results = []
+        for qty_tuple in samples_qtys:
+            sample_op_result = MaterialOpResult.from_args(origin_op=t_op.object_id,
+                                                            material_names=materials_names,
+                                                            amounts=list(qty_tuple),
+                                                            units=[t_op.dispense_unit]*len(materials_names))
+            dispense_results.append(sample_op_result)
 
-    def test_chemspeed_csv_dispense_process(self):
-        # construct batches
-        recipe_doc = {
-            'general': 
-            {
-                'name': 'chemspeed_test_recipe',
-                'id': 111
-            },
-            'process':
-            [
-                {
-                    'state_name': 'dispense_liquid',
-                    'station':
-                    {
-                        'type': 'ChemSpeedFlexStation',
-                        'id': 23,
-                        'operation':
-                            {
-                                'type': 'CSCSVJobOpDescriptor',
-                                'properties': 
-                                {
-                                    'dispense_info':
-                                    {
-                                        'water': [10,20]
-                                    }
-                                }
-                            }
-                    },
-                    'transitions':
-                    {
-                        'on_success': 'end_state',
-                        'on_fail': 'end_state'
-                    },
-                },
-            ]
-        }
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, dispense_results)
+        self.assertEqual(self.station.job_status, ChemSpeedJobStatus.JOB_COMPLETE)
+        self.assertEqual(liquid.volume, 370.0)
 
-        batch_1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
-        recipe = Recipe.from_dict(recipe_doc)
-        batch_1.attach_recipe(recipe)
-        batch_2 = Batch.from_arguments(32,2,Location(1,3,'table_frame'))
-        batch_2.attach_recipe(recipe)
+    def test_chemspeed_process(self):
+        
+        batch_1 = Batch.from_args(2)
+        batch_2 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1, batch_2])
         
         # add batches to station
-        self.station.add_batch(batch_1)
-        self.station.add_batch(batch_2)
+        self.station.add_lot(lot)
 
         # create station process
-        process_data = StationProcessData.from_args([batch_1, batch_2])
-        process = ChemSpeedCSVProcess(self.station, process_data)
+        operations = [
+                {
+                    "name": "run_job",
+                    "op": "CSLiquidDispenseOp",
+                    "parameters": {
+                        "dispense_table": {"water": [10.0,20.0]},
+                        "dispense_unit": "mL"
+                    }
+                }
+            ]
+        process = ChemSpeedFlexProcess.from_args(lot=lot,
+                                                operations=operations)
+        process.lot_slot = 0
 
         # assert initial state
-        self.assertEqual(process.data.status['state'], 'init_state')
-        self.assertEqual(len(process.data.req_robot_ops),0)
-        self.assertEqual(len(process.data.robot_ops_history),0)
-        self.assertEqual(len(process.data.req_station_ops),0)
-        self.assertEqual(len(process.data.station_ops_history),0)
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
 
         # prep_state
-        self.assert_process_transition(process, 'prep_state')
-        self.assertEqual(process.data.status['batch_index'], 0)
+        process.tick()
+        self.assertEqual(process.status, ProcessStatus.RUNNING)
+        self.assertEqual(process.m_state, 'prep_state')
+        self.assertFalse(process.data['operation_complete'])
 
-        # navigate_to_chemspeed
-        self.assert_process_transition(process, 'navigate_to_chemspeed')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaNAVTask',
-                                     {'target_location':Location(26,1,''),
-                                      'fine_localisation':False})
-        self.complete_robot_op(self.station, robot_op)
+        # navigate_to_chemspeed and wait
+        process.tick()
+        self.assertEqual(process.m_state, 'navigate_to_chemspeed')
+        test_req_robot_ops(self, process, [RobotNavOpDescriptor, RobotWaitOpDescriptor])
 
         # open_chemspeed_door
-        self.assert_process_transition(process, 'open_chemspeed_door')
-        req_station_ops = process.data.req_station_ops
-        station_op = req_station_ops[0]
-        self.assertEqual(len(req_station_ops),1)
-        self.assert_station_op(station_op, 'CSOpenDoorOpDescriptor')
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_OPEN)
+        process.tick()
+        self.assertEqual(process.m_state, 'open_chemspeed_door')
+        test_req_station_op(self, process, CSOpenDoorOp)
 
-        for i in range(self.station_doc['process_batch_capacity']):
-            # load_batch
-            self.assert_process_transition(process, 'load_batch')
-            robot_op = self.station.get_requested_robot_ops()[0]
-            self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'LoadChemSpeed',
-                                'params':['True', str(i+1)]})
-            self.complete_robot_op(self.station, robot_op)
-
-            # added_batch_update
-            self.assert_process_transition(process, 'added_batch_update')
-            self.assertEqual(process.data.status['batch_index'], i+1)
+        # load_lot
+        process.tick()
+        self.assertEqual(process.m_state, 'load_lot')
+        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
+        
 
         # close_chemspeed_door
-        self.assert_process_transition(process, 'close_chemspeed_door')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'CSCloseDoorOpDescriptor')
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_CLOSED)
+        process.tick()
+        self.assertEqual(process.m_state, 'close_chemspeed_door')
+        test_req_station_op(self, process, CSCloseDoorOp)
 
         # retreat_from_chemspeed
-        self.assert_process_transition(process, 'retreat_from_chemspeed')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaNAVTask',
-                                     {'target_location':Location(26,1,''),
-                                      'fine_localisation':False})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'retreat_from_chemspeed')
+        test_req_robot_ops(self, process, [RobotNavOpDescriptor])
 
         # chemspeed_process
-        self.assert_process_transition(process, 'chemspeed_process')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'CSCSVJobOpDescriptor', 
-                          {'dispense_info': {'water': [10,20,10,20]}})
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, ChemSpeedStatus.JOB_COMPLETE)
+        process.tick()
+        self.assertEqual(process.m_state, 'chemspeed_process')
+        test_req_station_op(self, process, CSLiquidDispenseOp)
 
         # navigate_to_chemspeed
-        self.assert_process_transition(process, 'navigate_to_chemspeed')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaNAVTask',
-                                     {'target_location':Location(26,1,''),
-                                      'fine_localisation':False})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'navigate_to_chemspeed')
+        test_req_robot_ops(self, process, [RobotNavOpDescriptor, RobotWaitOpDescriptor])
 
         # open_chemspeed_door
-        self.assert_process_transition(process, 'open_chemspeed_door')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'CSOpenDoorOpDescriptor')
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_OPEN)
+        process.tick()
+        self.assertEqual(process.m_state, 'open_chemspeed_door')
+        test_req_station_op(self, process, CSOpenDoorOp)
 
-        for i in range(self.station_doc['process_batch_capacity'], 0, -1):
-            # unload_batch
-            self.assert_process_transition(process, 'unload_batch')
-            robot_op = self.station.get_requested_robot_ops()[0]
-            self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'UnloadChemSpeed',
-                                'params':['False', str(i)]})
-            self.complete_robot_op(self.station, robot_op)
-
-            # removed_batch_update
-            self.assert_process_transition(process, 'removed_batch_update')
-            self.assertEqual(process.data.status['batch_index'], i-1)
+        # unload_lot
+        process.tick()
+        self.assertEqual(process.m_state, 'unload_lot')
+        test_req_robot_ops(self, process, [CollectBatchOpDescriptor]*2)
 
         # close_chemspeed_door
-        self.assert_process_transition(process, 'close_chemspeed_door')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'CSCloseDoorOpDescriptor')
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, ChemSpeedStatus.DOORS_CLOSED)
+        process.tick()
+        self.assertEqual(process.m_state, 'close_chemspeed_door')
+        test_req_station_op(self, process, CSCloseDoorOp)
 
         # retreat_from_chemspeed
-        self.assert_process_transition(process, 'retreat_from_chemspeed')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaNAVTask',
-                                     {'target_location':Location(26,1,''),
-                                      'fine_localisation':False})
-        self.complete_robot_op(self.station, robot_op)
-
+        process.tick()
+        self.assertEqual(process.m_state, 'retreat_from_chemspeed')
+        test_req_robot_ops(self, process, [RobotNavOpDescriptor])
 
         # final_state
-        self.assertFalse(self.station.has_processed_batch())
-        self.assert_process_transition(process, 'final_state')
-        self.assertTrue(self.station.has_processed_batch())
-
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
+        
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

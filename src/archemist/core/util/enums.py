@@ -53,8 +53,3 @@ class WorkflowManagerStatus(Enum):
     INVALID = auto()
     RUNNING = auto()
     PAUSED = auto()
-
-class TimeUnit(Enum):
-    SECONDS = auto()
-    MINUTES = auto()
-    HOURS = auto()

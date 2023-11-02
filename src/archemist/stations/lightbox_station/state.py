@@ -1,154 +1,164 @@
-from .model import LightBoxStationModel, SampleColorOpRGBDescriptorModel, SampleColorLABOpDescriptorModel
+from bson.objectid import ObjectId
+from archemist.core.state.sample import Sample
+from archemist.core.models.station_op_model import StationSampleOpDescriptorModel
+from archemist.core.state.station_op_result import StationOpResult
+from .model import (LightBoxStationModel,
+                    LBAnalyseRGBResultModel,
+                    LBAnalyseLABResultModel)
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.station_op import StationSampleOpDescriptor
 from archemist.core.state.material import Liquid,Solid
-from typing import Dict, List
-from datetime import datetime
+from typing import List, Union
 import math
 
 
 ''' ==== Station Description ==== '''
 class LightBoxStation(Station):
-    def __init__(self, station_model: LightBoxStationModel) -> None:
-        self._model = station_model
+    def __init__(self, station_model: Union[LightBoxStationModel,ModelProxy]) -> None:
+        super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: dict):
         model = LightBoxStationModel()
-        cls._set_model_common_fields(station_dict,model)
-        if "rgb_target" in station_dict["parameters"]:
-            model.rgb_target = int(station_dict["parameters"]["rgb_target"])
-        if "lab_target" in station_dict["parameters"]:
-            model.lab_target = float(station_dict["parameters"]["lab_target"])
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict)
+        if "rgb_target_index" in station_dict["properties"]:
+            model.rgb_target_index = int(station_dict["properties"]["rgb_target_index"])
+        if "lab_target_index" in station_dict["properties"]:
+            model.lab_target_index = float(station_dict["properties"]["lab_target_index"])
         model.save()
         return cls(model)
     
     @property
-    def rgb_target(self) -> int:
-        return self._model.rgb_target
+    def rgb_target_index(self) -> int:
+        return self._model_proxy.rgb_target_index
     
     @property
-    def lab_target(self) -> float:
-        return self._model.lab_target
-    
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        current_op = self.get_assigned_station_op()
-        if kwargs.get("color_index") is not None:
-            if isinstance(current_op, SampleColorRGBOpDescriptor):
-                diff = abs(kwargs["color_index"] - self.rgb_target)
-            elif isinstance(current_op, SampleColorLABOpDescriptor):
-                diff = math.sqrt(kwargs["color_index"]**2 - self.lab_target**2)
-            super().complete_assigned_station_op(success, target_diff=diff, **kwargs)
-        else:
-            super().complete_assigned_station_op(success, **kwargs)
+    def lab_target_index(self) -> float:
+        return self._model_proxy.lab_target_index
 
 ''' ==== Station Operation Descriptors ==== '''
-class SampleColorRGBOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: SampleColorOpRGBDescriptorModel):
-        self._model = op_model
+class LBSampleAnalyseRGBOp(StationSampleOpDescriptor):
+    def __init__(self, op_model: Union[StationSampleOpDescriptorModel,ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = SampleColorOpRGBDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls, target_sample: Sample):
+        model = StationSampleOpDescriptorModel()
+        model.target_sample = target_sample.model
+        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
+        model.save()
         return cls(model)
+    
+class LBAnalyseRGBResult(StationOpResult):
+    def __init__(self, result_model: Union[LBAnalyseRGBResultModel, ModelProxy]):
+        super().__init__(result_model)
+
+    @classmethod
+    def from_args(cls,
+                  origin_op: ObjectId,
+                  r_value: int,
+                  g_value: int,
+                  b_value: int,
+                  color_index: int,
+                  target_index: int,
+                  result_filename: str):
+        model = LBAnalyseRGBResultModel()
+        cls._set_model_common_fields(model, origin_op)
+        model.red_intensity = r_value
+        model.green_intensity = g_value
+        model.blue_intensity = b_value
+        model.color_index = color_index
+        model.color_diff = abs(target_index - color_index)
+        model.result_filename = result_filename
+        model.save()
+        return cls(model)
+
 
     @property
     def result_filename(self) -> str:
-        return self._model.result_filename
+        return self._model_proxy.result_filename
 
     @property
     def red_intensity(self) -> int:
-        return self._model.red_intensity
+        return self._model_proxy.red_intensity
 
     @property
     def green_intensity(self) -> int:
-        return self._model.green_intensity
+        return self._model_proxy.green_intensity
 
     @property
     def blue_intensity(self) -> int:
-        return self._model.blue_intensity
+        return self._model_proxy.blue_intensity
     
     @property
     def color_index(self) -> int:
-        return self._model.color_index
+        return self._model_proxy.color_index
     
     @property
-    def target_diff(self) -> int:
-        return self._model.target_diff
+    def color_diff(self) -> int:
+        return self._model_proxy.color_diff
 
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-        if 'result_filename' in kwargs:
-            self._model.result_filename = kwargs['result_filename']
-        else:
-            print('missing result_file!!')
-        if all(karg in kwargs for karg in ['red_intensity','green_intensity','blue_intensity', 'color_index', 'target_diff']):
-            self._model.red_intensity = kwargs['red_intensity']
-            self._model.green_intensity = kwargs['green_intensity']
-            self._model.blue_intensity = kwargs['blue_intensity']
-            self._model.color_index = kwargs['color_index']
-            self._model.target_diff = kwargs['target_diff']
-        else:
-            print('missing one or all color intensity values. adding defaults')
-
-class SampleColorLABOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: SampleColorLABOpDescriptorModel):
-        self._model = op_model
+class LBSampleAnalyseLABOp(StationSampleOpDescriptor):
+    def __init__(self, op_model: Union[StationSampleOpDescriptorModel,ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = SampleColorLABOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls, target_sample: Sample):
+        model = StationSampleOpDescriptorModel()
+        model.target_sample = target_sample.model
+        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
+        model.save()
         return cls(model)
+
+class LBAnalyseLABResult(StationOpResult):
+    def __init__(self, result_model: Union[LBAnalyseLABResultModel, ModelProxy]):
+        super().__init__(result_model)
+
+    @classmethod
+    def from_args(cls,
+                  origin_op: ObjectId,
+                  l_value: float,
+                  a_value: float,
+                  b_value: float,
+                  color_index: float,
+                  target_index: float,
+                  result_filename: str):
+        model = LBAnalyseLABResultModel()
+        cls._set_model_common_fields(model, origin_op)
+        model.l_star_value = l_value
+        model.a_star_value = a_value
+        model.b_star_value = b_value
+        model.color_index = color_index
+        model.color_diff = math.sqrt(color_index**2 - target_index**2)
+        model.result_filename = result_filename
+        model.save()
+        return cls(model)
+
 
     @property
     def result_filename(self) -> str:
-        return self._model.result_filename
+        return self._model_proxy.result_filename
 
     @property
-    def l_value(self) -> float:
-        return self._model.l_value
+    def l_star_value(self) -> float:
+        return self._model_proxy.l_star_value
 
     @property
-    def a_value(self) -> float:
-        return self._model.a_value
+    def a_star_value(self) -> float:
+        return self._model_proxy.a_star_value
 
     @property
-    def b_value(self) -> float:
-        return self._model.b_value
+    def b_star_value(self) -> float:
+        return self._model_proxy.b_star_value
     
     @property
     def color_index(self) -> float:
-        return self._model.color_index
+        return self._model_proxy.color_index
     
     @property
-    def target_diff(self) -> float:
-        return self._model.target_diff
-
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-        if 'result_filename' in kwargs:
-            self._model.result_filename = kwargs['result_filename']
-        else:
-            print('missing result_file!!')
-        if all(karg in kwargs for karg in ['l_value','a_value','b_value', 'color_index', 'target_diff']):
-            self._model.l_value = kwargs['l_value']
-            self._model.a_value = kwargs['a_value']
-            self._model.b_value = kwargs['b_value']
-            self._model.color_index = kwargs['color_index']
-            self._model.target_diff = kwargs['target_diff']
-        else:
-            print('missing one or all color intensity values')
+    def color_diff(self) -> float:
+        return self._model_proxy.color_diff
     
     
 

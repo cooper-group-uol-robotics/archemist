@@ -17,3 +17,7 @@ kg = Unit("kg", registry=reg)
 g = Unit("g", registry=reg)
 mg = Unit("mg", registry=reg)
 ug = Unit("ug", registry=reg)
+
+second = Unit("s", registry=reg)
+minute = Unit("min", registry=reg)
+hour = Unit("hr", registry=reg)

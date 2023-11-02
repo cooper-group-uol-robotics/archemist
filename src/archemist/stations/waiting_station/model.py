@@ -1,13 +1,7 @@
-from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
-from archemist.core.util.enums import TimeUnit
+from archemist.core.models.station_op_model import StationLotOpDescriptorModel
 from mongoengine import fields
-    
 
-class WaitingStationModel(StationModel):
-    current_occupancy = fields.IntField(min_value=0)
-
-class WaitingStationOpDescriptorModel(StationOpDescriptorModel):
+class WaitOpModel(StationLotOpDescriptorModel):
     duration = fields.IntField(min_value=0)
-    time_unit = fields.EnumField(TimeUnit, default=TimeUnit.SECONDS)
+    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
     
