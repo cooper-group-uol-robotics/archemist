@@ -69,7 +69,7 @@ try:
             return self._op_result is not None
 
         def get_op_result(self) -> Tuple[OpOutcome, List[Union[LBAnalyseRGBResult, LBAnalyseLABResult]]]:
-            return OpOutcome.SUCCEEDED, self._op_results
+            return OpOutcome.SUCCEEDED, [self._op_result]
         
         def shut_down(self):
             pass

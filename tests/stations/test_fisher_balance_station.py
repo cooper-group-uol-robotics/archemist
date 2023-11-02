@@ -1,48 +1,57 @@
 import unittest
 
-import mongoengine
+from mongoengine import connect
 
-from archemist.stations.fisher_balance_station.state import FisherWeightingStation, FisherWeightOpDescriptor
+from archemist.stations.fisher_balance_station.state import (FisherWeightingStation,
+                                                            FisherWeighOp,
+                                                            FisherWeighResult)
 from archemist.core.util.enums import StationState
+from archemist.core.state.batch import Batch
+from archemist.core.state.lot import Lot
 
 class FisherBalanceStationTest(unittest.TestCase):
     def setUp(self):
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
         self.station_doc = {
             'type': 'FisherWeightingStation',
             'id': 20,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'process_batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
-            {
-                'type': '',
-                'args': {}
-            },
-            'parameters':{}
+            'location': {'coordinates': [1,7], 'descriptor': "FisherWeightingStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'properties': None,
+            'materials': None
         }
 
-        self.station = FisherWeightingStation.from_dict(self.station_doc,[],[])
+        self.station = FisherWeightingStation.from_dict(self.station_doc)
+
+    def  tearDown(self) -> None:
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
     
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
+
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
         
         # test station op construction
-        t_op = FisherWeightOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        
-        self.station.assign_station_op(t_op)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_station_op(True, weight=1.2)
+        t_op = FisherWeighOp.from_args(target_sample=lot.batches[0].samples[0])
+        self.assertIsNotNone(t_op.object_id)
 
-        ret_t_op = self.station.completed_station_ops[str(t_op.uuid)]
-        self.assertTrue(ret_t_op.has_result)
-        self.assertTrue(ret_t_op.was_successful)
-        self.assertEqual(ret_t_op.weight, 1.2)
+        # test station op result
+        t_result_op = FisherWeighResult.from_args(origin_op=t_op.object_id,
+                                                  reading_value=42.1,
+                                                  unit="mg")
+        self.assertIsNotNone(t_result_op.object_id)
+        self.assertEqual(t_result_op.reading_value, 42.1)
+        self.assertEqual(t_result_op.unit, "mg")
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

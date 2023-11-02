@@ -1,5 +1,6 @@
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.op_result_model import OpResultModel
 from mongoengine import fields
 
-class FisherWeightOpDescriptorModel(StationOpDescriptorModel):
-    weight = fields.FloatField(min_value=0)
+class FisherWeighResultModel(OpResultModel):
+    reading_value = fields.FloatField(min_value=0)
+    unit = fields.StringField(choices=["g", "mg", "ug"], default="g")

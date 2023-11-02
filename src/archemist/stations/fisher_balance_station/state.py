@@ -1,47 +1,60 @@
-from .model import FisherWeightOpDescriptorModel
+from .model import FisherWeighResultModel
 from archemist.core.models.station_model import StationModel
+from archemist.core.models.station_op_model import StationSampleOpDescriptorModel
+from archemist.core.persistence.models_proxy import ModelProxy
+from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Dict
-from archemist.core.state.material import Liquid, Solid
-from datetime import datetime
+from archemist.core.state.station_op import StationSampleOpDescriptor
+from archemist.core.state.sample import Sample
+from typing import Dict, Union, Literal
+from bson.objectid import ObjectId
 
 ''' ==== Station Description ==== '''
 class FisherWeightingStation(Station):
-    def __init__(self, station_model: StationModel) -> None:
-        self._model = station_model
-
+    def __init__(self, station_model: Union[StationModel,ModelProxy]) -> None:
+        super().__init__(station_model)
+    
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = StationModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
 ''' ==== Station Operation Descriptors ==== '''
-class FisherWeightOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: FisherWeightOpDescriptorModel):
-        self._model = op_model
+class FisherWeighOp(StationSampleOpDescriptor):
+    def __init__(self, op_model: StationSampleOpDescriptorModel):
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = FisherWeightOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=FisherWeightingStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls, target_sample: Sample):
+        model = StationSampleOpDescriptorModel()
+        model.target_sample = target_sample.model
+        cls._set_model_common_fields(model, associated_station=FisherWeightingStation.__name__)
+        model.save()
+        return cls(model)
+
+class FisherWeighResult(StationOpResult):
+    def __init__(self, result_model: Union[FisherWeighResultModel, ModelProxy]):
+        super().__init__(result_model)
+
+    @classmethod
+    def from_args(cls,
+                  origin_op: ObjectId,
+                  reading_value: float,
+                  unit: Literal["g", "mg", "ug"]):
+        model = FisherWeighResultModel()
+        cls._set_model_common_fields(model, origin_op)
+        model.reading_value = reading_value
+        model.unit = unit
+        model.save()
         return cls(model)
 
     @property
-    def weight(self) -> float:
-        if self._model.has_result and self._model.was_successful:
-            return self._model.weight
+    def reading_value(self) -> float:
+        return self._model_proxy.reading_value
 
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-        if 'weight' in kwargs:
-            self._model.weight = kwargs['weight']
-        else:
-            pass #print('missing read weight!!')
+    @property
+    def unit(self) -> Literal["g", "mg", "ug"]:
+        return self._model_proxy.unit
+
