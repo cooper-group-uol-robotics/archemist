@@ -1,138 +1,99 @@
-from .model import IKAMode, IkaPlateDigitalModel, IKAOpDescriptorModel
+from .model import IKADigitalPlateMode, IkaDigitalPlateStationModel, IKADigitalPlateOpModel
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.station_op import StationBatchOpDescriptor
+from archemist.core.state.batch import Batch
 from archemist.core.persistence.models_proxy import ModelProxy
-from typing import List, Any, Dict, Union
-from archemist.core.state.material import Liquid, Solid
+from archemist.core.state.station_op_result import ProcessOpResult
+from archemist.core.util.enums import OpOutcome
+from typing import Literal, Dict, Union, List
 
 
 ''' ==== Station Description ==== '''
-class IkaPlateDigital(Station):
-    def __init__(self, station_model: IkaPlateDigitalModel) -> None:
-        self._model = station_model
+class IKADigitalPlateStation(Station):
+    def __init__(self, station_model: Union[IkaDigitalPlateStationModel,ModelProxy]) -> None:
+        super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
-        model = IkaPlateDigitalModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
+    def from_dict(cls, station_dict: Dict):
+        model = IkaDigitalPlateStationModel()
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
     @property
     def current_temperature(self) -> int:
-        self._model.reload('current_temperature')
-        return self._model.current_temperature
+        return self._model_proxy.current_temperature
 
     @current_temperature.setter
     def current_temperature(self, new_temp: int):
-        self._model.update(current_temperature=new_temp)
-
-    @property
-    def target_temperature(self) -> int:
-        self._model.reload('target_temperature')
-        return self._model.target_temperature
-
-    @target_temperature.setter
-    def target_temperature(self, new_temp: int):
-        self._model.update(target_temperature=new_temp)
+        self._model_proxy.current_temperature = new_temp
 
     @property
     def current_stirring_speed(self) -> int:
-        self._model.reload('current_stirring_speed')
-        return self._model.current_stirring_speed
+        return self._model_proxy.current_stirring_speed
 
     @current_stirring_speed.setter
     def current_stirring_speed(self, new_speed: int):
-        self._model.update(current_stirring_speed=new_speed)
-
-    @property
-    def target_stirring_speed(self) -> int:
-        self._model.reload('target_stirring_speed')
-        return self._model.target_stirring_speed
-
-    @target_stirring_speed.setter
-    def target_stirring_speed(self, new_speed: int):
-        self._model.update(target_stirring_speed=new_speed)
-
-    @property
-    def target_duration(self) -> int:
-        self._model.reload('target_duration')
-        return self._model.target_duration
-
-    @target_duration.setter
-    def target_duration(self, new_duration: int):
-        self._model.update(target_duration=new_duration)
+        self._model_proxy.current_stirring_speed = new_speed
 
     @property
     def external_temperature(self) -> int:
-        self._model.reload('external_temperature')
-        return self._model.external_temperature
+        return self._model_proxy.external_temperature
 
     @external_temperature.setter
     def external_temperature(self, new_temp: int):
-        self._model.update(external_temperature=new_temp)
+        self._model_proxy.external_temperature = new_temp
 
     @property
     def viscosity_trend(self) -> float:
-        self._model.reload('viscosity_trend')
-        return self._model.viscosity_trend
+        return self._model_proxy.viscosity_trend
 
     @viscosity_trend.setter
     def viscosity_trend(self, value: float):
-        self._model.update(viscosity_trend=value)
+        self._model_proxy.viscosity_trend = value
 
     @property
-    def mode(self) -> IKAMode:
-        self._model.reload('mode')
-        return self._model.mode
+    def mode(self) -> IKADigitalPlateMode:
+        return self._model_proxy.mode
 
     @mode.setter
-    def mode(self, new_mode: IKAMode):
-        self._model.update(mode=new_mode)
+    def mode(self, new_mode: IKADigitalPlateMode):
+        self._model_proxy.mode = new_mode
 
     def update_assigned_op(self):
         super().update_assigned_op()
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, IKAHeatingStirringOpDescriptor):
-            self.target_temperature = current_op.target_temperature
-            self.target_stirring_speed = current_op.target_stirring_speed
-            self.target_duration = current_op.target_duration
-            self.mode = IKAMode.HEATINGSTIRRING
-        elif isinstance(current_op, IKAHeatingOpDescriptor):
-            self.target_temperature = current_op.target_temperature
-            self.target_duration = current_op.target_duration
-            self.mode = IKAMode.HEATING
-        elif isinstance(current_op, IKAStirringOpDescriptor):
-            self.target_stirring_speed = current_op.target_stirring_speed
-            self.target_duration = current_op.target_duration
-            self.mode = IKAMode.STIRRING
+        current_op = self.assigned_op
+        if isinstance(current_op, IKAHeatStirBatchOp):
+            self.mode = IKADigitalPlateMode.HEATING_STIRRING
+        elif isinstance(current_op, IKAHeatBatchOp):
+            self.mode = IKADigitalPlateMode.HEATING
+        elif isinstance(current_op, IKAStirBatchOp):
+            self.mode = IKADigitalPlateMode.STIRRING
 
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        self._model.update(unset__target_temperature=True)
-        self._model.update(unset__target_stirring_speed=True)
-        self._model.update(unset__target_duration=True)
-        self._model.update(unset__mode=True)
-        super().complete_assigned_station_op(success, **kwargs)
+    def complete_assigned_op(self, outcome: OpOutcome, results: List[ProcessOpResult]):
+        self.mode = None
+        super().complete_assigned_op(outcome, results)
 
 
 ''' ==== Station Operation Descriptors ==== '''
-class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
-        if isinstance(op_model, ModelProxy):
-            self._model_proxy = op_model
-        else:
-            self._model_proxy = ModelProxy(op_model)
+class IKAHeatStirBatchOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = IKAOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
-        model.target_temperature = int(kwargs['temperature'])
-        model.target_stirring_speed = int(kwargs['stirring_speed'])
-        model.target_duration = float(kwargs['duration'])
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls,
+                  target_batch: Batch,
+                  target_temperature: int,
+                  target_stirring_speed: int,
+                  duration: int,
+                  duration_unit: Literal["second", "minute", "hour"]):
+        model = IKADigitalPlateOpModel()
+        model.target_batch = target_batch.model
+        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        model.target_temperature = int(target_temperature)
+        model.target_stirring_speed = int(target_stirring_speed)
+        model.duration = int(duration)
+        model.duration_unit = duration_unit
         model.save()
         return cls(model)
 
@@ -145,24 +106,29 @@ class IKAHeatingStirringOpDescriptor(StationOpDescriptor):
         return self._model_proxy.target_stirring_speed
 
     @property
-    def target_duration(self) -> int:
-        return self._model_proxy.target_duration
+    def duration(self) -> int:
+        return self._model_proxy.duration
 
-class IKAHeatingOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
-        if isinstance(op_model, ModelProxy):
-            self._model_proxy = op_model
-        else:
-            self._model_proxy = ModelProxy(op_model)
+    @property
+    def duration_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.duration_unit
+
+class IKAHeatBatchOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = IKAOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
-        model.target_temperature = int(kwargs['temperature'])
-        model.target_duration = float(kwargs['duration'])
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls,
+                  target_batch: Batch,
+                  target_temperature: int,
+                  duration: int,
+                  duration_unit: Literal["second", "minute", "hour"]):
+        model = IKADigitalPlateOpModel()
+        model.target_batch = target_batch.model
+        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        model.target_temperature = int(target_temperature)
+        model.duration = int(duration)
+        model.duration_unit = duration_unit
         model.save()
         return cls(model)
 
@@ -171,25 +137,30 @@ class IKAHeatingOpDescriptor(StationOpDescriptor):
         return self._model_proxy.target_temperature
 
     @property
-    def target_duration(self) -> int:
-        return self._model_proxy.target_duration
+    def duration(self) -> int:
+        return self._model_proxy.duration
+
+    @property
+    def duration_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.duration_unit
 
 
-class IKAStirringOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: Union[IKAOpDescriptorModel, ModelProxy]) -> None:
-        if isinstance(op_model, ModelProxy):
-            self._model_proxy = op_model
-        else:
-            self._model_proxy = ModelProxy(op_model)
+class IKAStirBatchOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = IKAOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=IkaPlateDigital.__name__, **kwargs)
-        model.target_stirring_speed = int(kwargs['stirring_speed'])
-        model.target_duration = float(kwargs['duration'])
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls,
+                  target_batch: Batch,
+                  target_stirring_speed: int,
+                  duration: int,
+                  duration_unit: Literal["second", "minute", "hour"]):
+        model = IKADigitalPlateOpModel()
+        model.target_batch = target_batch.model
+        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        model.target_stirring_speed = int(target_stirring_speed)
+        model.duration = int(duration)
+        model.duration_unit = duration_unit
         model.save()
         return cls(model)
 
@@ -198,5 +169,9 @@ class IKAStirringOpDescriptor(StationOpDescriptor):
         return self._model_proxy.target_stirring_speed
 
     @property
-    def target_duration(self) -> int:
-        return self._model_proxy.target_duration
+    def duration(self) -> int:
+        return self._model_proxy.duration
+
+    @property
+    def duration_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.duration_unit

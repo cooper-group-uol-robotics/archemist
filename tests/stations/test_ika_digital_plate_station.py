@@ -1,45 +1,43 @@
 import unittest
+from mongoengine import connect
 
-import mongoengine
-
-from archemist.core.state.station import StationProcessData
-from archemist.stations.ika_digital_plate_station.state import (IkaPlateDigital, IKAMode, 
-                                                                IKAStirringOpDescriptor,
-                                                                IKAHeatingOpDescriptor,
-                                                                IKAHeatingStirringOpDescriptor)
-from archemist.stations.ika_digital_plate_station.process import CrystalBotWorkflowProcess
+from archemist.stations.ika_digital_plate_station.state import (IKADigitalPlateStation, IKADigitalPlateMode, 
+                                                                IKAHeatStirBatchOp,
+                                                                IKAStirBatchOp,
+                                                                IKAHeatBatchOp)
+from archemist.stations.ika_digital_plate_station.process import PXRDWorkflowStirringProcess
+from archemist.stations.ika_digital_plate_station.handler import SimIKAPlateDigitalHandler
 from archemist.core.state.batch import Batch
-from archemist.core.state.recipe import Recipe
-from archemist.core.util.enums import StationState
-from archemist.core.util.location import Location
-from utils import ProcessTestingMixin
+from archemist.core.state.lot import Lot
+from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
+from archemist.core.state.robot_op import DropBatchOpDescriptor, RobotTaskOpDescriptor
+from .testing_utils import test_req_station_op, test_req_robot_ops
 
-class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
+class IKADigitalPlateStationTest(unittest.TestCase):
     def setUp(self):
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
         self.station_doc = {
-            'type': 'IkaPlateDigital',
+            'type': 'IKADigitalPlateStation',
             'id': 20,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 1,
-            'process_batch_capacity': 1,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
-            {
-                'type': 'CrystalBotWorkflowProcess',
-                'args': {}
-            },
-            'parameters':{}
+            'location': {'coordinates': [1,7], 'descriptor': "IKADigitalPlateStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'properties': None,
+            'materials': None
         }
 
-        self.station = IkaPlateDigital.from_dict(self.station_doc,[],[])
+        self.station = IKADigitalPlateStation.from_dict(self.station_doc)
 
     def tearDown(self):
-        self.station.model.delete()
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
     
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
         self.assertIsNone(self.station.mode)
         
@@ -47,14 +45,10 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
         self.station.current_temperature = 20
         self.assertEqual(self.station.current_temperature, 20)
         
-        self.assertIsNone(self.station.target_temperature)
-
         self.assertIsNone(self.station.current_stirring_speed)
         self.station.current_stirring_speed = 120
         self.assertEqual(self.station.current_stirring_speed, 120)
-        
-        self.assertIsNone(self.station.target_stirring_speed)
-        self.assertIsNone(self.station.target_duration)
+
         
         self.assertIsNone(self.station.external_temperature)
         self.station.external_temperature = 25
@@ -64,161 +58,147 @@ class IkaPlateDigitalStationTest(unittest.TestCase, ProcessTestingMixin):
         self.station.viscosity_trend = 0.8
         self.assertEqual(self.station.viscosity_trend, 0.8)
 
-        # test IKAStirringOpDescriptor
-        t_op = IKAStirringOpDescriptor.from_args(stirring_speed=500, duration=10)
-        self.assertFalse(t_op.has_result)
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
+
+        # test IKAStirBatchOp
+        t_op = IKAStirBatchOp.from_args(target_batch=batch_1,
+                                        target_stirring_speed=500,
+                                        duration=10,
+                                        duration_unit="minute")
         
-        self.station.assign_station_op(t_op)
+        self.assertEqual(t_op.target_stirring_speed, 500)
+        self.assertEqual(t_op.duration, 10)
+        self.assertEqual(t_op.duration_unit, "minute")
+        
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.mode, IKAMode.STIRRING)
-        self.assertTrue(self.station.target_stirring_speed, 500)
-        self.assertTrue(self.station.target_duration, 10)
-        
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops[str(t_op.uuid)]
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
+        self.assertTrue(self.station.mode, IKADigitalPlateMode.STIRRING)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(self.station.mode)
-        self.assertIsNone(self.station.target_stirring_speed)
-        self.assertIsNone(self.station.target_duration)
-
-        # test IKAHeatingOpDescriptor
-        t_op = IKAHeatingOpDescriptor.from_args(temperature=140, duration=10)
-        self.assertFalse(t_op.has_result)
         
-        self.station.assign_station_op(t_op)
+        # test IKAHeatStirBatchOp
+        t_op = IKAHeatStirBatchOp.from_args(target_batch=batch_1,
+                                        target_temperature=100,
+                                        target_stirring_speed=500,
+                                        duration=10,
+                                        duration_unit="minute")
+        
+        self.assertEqual(t_op.target_stirring_speed, 500)
+        self.assertEqual(t_op.target_temperature, 100)
+        self.assertEqual(t_op.duration, 10)
+        self.assertEqual(t_op.duration_unit, "minute")
+        
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.mode, IKAMode.HEATING)
-        self.assertTrue(self.station.target_temperature, 140)
-        self.assertTrue(self.station.target_duration, 10)
-        
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops[str(t_op.uuid)]
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
+        self.assertTrue(self.station.mode, IKADigitalPlateMode.HEATING_STIRRING)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(self.station.mode)
-        self.assertIsNone(self.station.target_temperature)
-        self.assertIsNone(self.station.target_duration)
 
-        # test IKAHeatingStirringOpDescriptor
-        t_op = IKAHeatingStirringOpDescriptor.from_args(temperature=140, stirring_speed=500, duration=10)
-        self.assertFalse(t_op.has_result)
+        # test IKAHeatBatchOp
+        t_op = IKAHeatBatchOp.from_args(target_batch=batch_1,
+                                        target_temperature=100,
+                                        duration=10,
+                                        duration_unit="minute")
         
-        self.station.assign_station_op(t_op)
+        self.assertEqual(t_op.target_temperature, 100)
+        self.assertEqual(t_op.duration, 10)
+        self.assertEqual(t_op.duration_unit, "minute")
+        
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.mode, IKAMode.HEATINGSTIRRING)
-        self.assertTrue(self.station.target_temperature, 140)
-        self.assertTrue(self.station.target_stirring_speed, 500)
-        self.assertTrue(self.station.target_duration, 10)
-        
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops[str(t_op.uuid)]
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
+        self.assertTrue(self.station.mode, IKADigitalPlateMode.HEATING)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(self.station.mode)
-        self.assertIsNone(self.station.target_stirring_speed)
-        self.assertIsNone(self.station.target_temperature)
-        self.assertIsNone(self.station.target_duration)
 
-    def test_crystal_workflow_process(self):
-        # construct batches
-        recipe_doc = {
-            'general': 
-            {
-                'name': 'ika_plate_test_recipe',
-                'id': 112
-            },
-            'process':
-            [
-                {
-                    'state_name': 'stir_samples',
-                    'station':
-                    {
-                        'type': 'IkaPlateDigital',
-                        'id': 20,
-                        'operation':
-                            {
-                                'type': 'IKAStirringOpDescriptor',
-                                'properties': 
-                                    {
-                                        'stirring_speed': 1200,
-                                        'duration': 10
-                                    }
-                            }
-                    },
-                    'transitions':
-                    {
-                        'on_success': 'end_state',
-                        'on_fail': 'end_state'
-                    },
-                },
-            ]
-        }
+    def test_pxrd_workflow_process(self):
+        batch_1 = Batch.from_args(3)
+        batch_2 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1, batch_2])
 
-        batch_1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
-        recipe = Recipe.from_dict(recipe_doc)
-        batch_1.attach_recipe(recipe)
-        
         # add batches to station
-        self.station.add_batch(batch_1)
+        self.station.add_lot(lot)
 
         # create station process
-        process_data = StationProcessData.from_args([batch_1])
-        process = CrystalBotWorkflowProcess(self.station, process_data)
+        operations = [
+                {
+                    "name": "stir_samples",
+                    "op": "IKAStirBatchOp",
+                    "parameters": {
+                        "target_stirring_speed": 500,
+                        "duration": 5,
+                        "duration_unit": "minute"
+                    }
+                }
+            ]
+        process = PXRDWorkflowStirringProcess.from_args(lot=lot,
+                                            operations=operations)
+        process.lot_slot = 0
 
         # assert initial state
-        self.assertEqual(process.data.status['state'], 'init_state')
-        self.assertEqual(len(process.data.req_robot_ops),0)
-        self.assertEqual(len(process.data.robot_ops_history),0)
-        self.assertEqual(len(process.data.req_station_ops),0)
-        self.assertEqual(len(process.data.station_ops_history),0)
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
 
         # prep_state
-        self.assert_process_transition(process, 'prep_state')
-        self.assertEqual(process.data.status['batch_index'], 0)
+        process.tick()
+        self.assertEqual(process.m_state, 'prep_state')
 
-        # place_8_well_rack
-        self.assert_process_transition(process, 'place_8_well_rack')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                        {'name': 'LoadEightWRackYumiStation',
-                        'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
-
-        # place_pxrd_rack
-        self.assert_process_transition(process, 'place_pxrd_rack')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                        {'name': 'LoadPXRDRackYumiStation',
-                        'params':['False']})
-        self.complete_robot_op(self.station, robot_op)
-
-        # added_batch_update
-        self.assert_process_transition(process, 'added_batch_update')
+        # place_lot
+        process.tick()
+        self.assertEqual(process.m_state, 'place_lot')
+        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
 
         # load_stir_plate
-        self.assert_process_transition(process, 'load_stir_plate')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'YuMiRobotTask',
-                        {'name': 'loadIKAPlate'})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'load_stir_plate')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
 
         # stir
-        self.assert_process_transition(process, 'stir')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'IKAStirringOpDescriptor',
-                               {'target_stirring_speed': 1200,
-                                'target_duration': 10})
-        self.complete_station_op(self.station)
+        process.tick()
+        self.assertEqual(process.m_state, 'stir')
+        test_req_station_op(self, process, IKAStirBatchOp)
 
         # final_state
-        self.assertFalse(self.station.has_processed_batch())
-        self.assert_process_transition(process, 'final_state')
-        self.assertTrue(self.station.has_processed_batch())
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_sim_handler(self):
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimIKAPlateDigitalHandler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct op
+        t_op = IKAHeatStirBatchOp.from_args(target_batch=batch_1,
+                                        target_temperature=100,
+                                        target_stirring_speed=500,
+                                        duration=10,
+                                        duration_unit="minute")
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        # get op 
+        parameters = {}
+        parameters["target_temperature"]  = t_op.target_temperature
+        parameters["target_stirring_speed"]  = t_op.target_stirring_speed
+        parameters["duration"]  = t_op.duration
+        parameters["duration_unit"]  = t_op.duration_unit
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertDictEqual(op_results[0].parameters, parameters)
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()
