@@ -13,6 +13,7 @@ from archemist.stations.lightbox_station.state import (LightBoxStation,
 from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
                                            RobotWaitOpDescriptor)
 from archemist.stations.lightbox_station.process import LightBoxProcess
+from archemist.stations.lightbox_station.handler import SimLightBoxHandler
 from archemist.core.util.enums import OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
@@ -159,6 +160,31 @@ class LightBoxStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'final_state')
         self.assertEqual(process.status, ProcessStatus.FINISHED)
 
+    def test_sim_handler(self):
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimLightBoxHandler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct analyse op
+        t_op = LBSampleAnalyseRGBOp.from_args(target_sample=batch_1.samples[0])
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], LBAnalyseRGBResult))
+        self.assertIsNotNone(op_results[0].result_filename)
+        self.station.complete_assigned_op(outcome, op_results)
+
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()
