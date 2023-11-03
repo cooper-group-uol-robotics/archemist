@@ -1,18 +1,18 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.op_result_model import OpResultModel
 from mongoengine import fields
-from enum import Enum
+from enum import Enum, auto
 
-class PXRDStatus(Enum):
-    DOORS_OPEN = 0
-    DOORS_CLOSED = 1
-    RUNNING_JOB = 2
-    JOB_COMPLETE = 3
+class PXRDJobStatus(Enum):
+    INVALID = auto()
+    RUNNING_JOB = auto()
+    JOB_COMPLETE = auto()
     
 
 class PXRDStationModel(StationModel):
-    machine_status = fields.EnumField(PXRDStatus, null=True)
+    job_status = fields.EnumField(PXRDJobStatus, default=PXRDJobStatus.INVALID)
+    door_closed = fields.BooleanField(default=True)
 
-class PXRDAnalysisOpDescriptorModel(StationOpDescriptorModel):
-    result_file = fields.StringField()
+class PXRDAnalysisResultModel(OpResultModel):
+    result_filename = fields.StringField()
 

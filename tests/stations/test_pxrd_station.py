@@ -2,191 +2,215 @@ import unittest
 from typing import List
 from datetime import datetime
 
-import mongoengine
-
-from archemist.core.state.station import StationProcessData
-from archemist.stations.pxrd_station.state import PXRDStation, PXRDStatus, PXRDAnalysisOpDescriptor
+from mongoengine import connect
+from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
+                                           RobotWaitOpDescriptor,
+                                           CollectBatchOpDescriptor,
+                                           DropBatchOpDescriptor)
+from archemist.stations.pxrd_station.state import (PXRDStation,
+                                                   PXRDJobStatus,
+                                                   PXRDAnalysisOp, 
+                                                   PXRDCloseDoorOp,
+                                                   PXRDOpenDoorOp,
+                                                   PXRDAnalysisResult)
 from archemist.stations.pxrd_station.process import PXRDProcess
+from archemist.stations.pxrd_station.handler import SimPXRDStationHandler
 from archemist.core.state.batch import Batch
-from archemist.core.state.recipe import Recipe
-from archemist.core.util.enums import StationState
-from archemist.core.util.location import Location
-from utils import ProcessTestingMixin
+from archemist.core.state.lot import Lot
 
-class PXRDStationTest(unittest.TestCase, ProcessTestingMixin):
+from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
+from .testing_utils import test_req_robot_ops, test_req_station_op
+
+class PXRDStationTest(unittest.TestCase):
     def setUp(self):
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
         self.station_doc = {
             'type': 'PXRDStation',
             'id': 22,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 1,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 1,
-            'process_state_machine': 
-            {
-                'type': 'PXRDProcess',
-                'args': {}
-            },
-            'parameters': {}
+            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'materials': None,
+            'parameters': None
         }
 
-        self.station = PXRDStation.from_dict(self.station_doc,[],[])
+        self.station = PXRDStation.from_dict(self.station_doc)
 
     def tearDown(self):
-        self.station.model.delete()
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
 
     def test_state(self):
-        # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+         # test station is constructed properly
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
 
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
+
         # test station specific members
-        self.assertIsNone(self.station.status)
-        self.station.status = PXRDStatus.DOORS_OPEN
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_OPEN)
-        self.station.status = PXRDStatus.DOORS_CLOSED
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_CLOSED)
-
+        self.assertEqual(self.station.job_status, PXRDJobStatus.INVALID)
+        self.assertTrue(self.station.door_closed)
         
-        # test PXRDAnalysisOpDescriptor
-        t_op = PXRDAnalysisOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # test PXRDOpenDoorOp
+        t_op = PXRDOpenDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertEqual(self.station.status, PXRDStatus.RUNNING_JOB)
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True, result_file='result.file')
-        self.assertEqual(self.station.status, PXRDStatus.JOB_COMPLETE)
-        complete_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertEqual(complete_op.result_file, "result.file")
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(self.station.door_closed)
 
-        # reset station status in prep for process test
-        self.station.status = None
+        # test PXRDOpenDoorOp
+        t_op = PXRDCloseDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.door_closed)
+
+        # test PXRDAnalysisOp
+        t_op = PXRDAnalysisOp.from_args(target_batch=batch_1)
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.assertEqual(self.station.job_status, PXRDJobStatus.RUNNING_JOB)
+        
+        # test PXRDAnalysisResult
+        t_result = PXRDAnalysisResult.from_args(t_op.object_id, "some_file.xml")
+        self.assertIsNotNone(t_result)
+        self.assertEqual(t_result.result_filename, "some_file.xml")
+
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, [t_result])
+        self.assertEqual(self.station.job_status, PXRDJobStatus.JOB_COMPLETE)
 
     def test_pxrd_process(self):
         # construct batches
-        recipe_doc = {
-            'general': 
-            {
-                'name': 'pxrd_test_recipe',
-                'id': 111
-            },
-            'process':
-            [
-                {
-                    'state_name': 'analyse',
-                    'station':
-                    {
-                        'type': 'PXRDStation',
-                        'id': 22,
-                        'operation':
-                            {
-                                'type': 'PXRDAnalysisOpDescriptor',
-                                'properties': {}
-                            }
-                    },
-                    'transitions':
-                    {
-                        'on_success': 'end_state',
-                        'on_fail': 'end_state'
-                    },
-                },
-            ]
-        }
-
-        batch_1 = Batch.from_arguments(31,2,Location(1,3,'table_frame'))
-        recipe = Recipe.from_dict(recipe_doc)
-        batch_1.attach_recipe(recipe)
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
         
-        # add batches to station
-        self.station.add_batch(batch_1)
+        # add lot to station
+        self.station.add_lot(lot)
 
         # create station process
-        process_data = StationProcessData.from_args([batch_1])
-        process = PXRDProcess(self.station, process_data)
+        operations = [
+                {
+                    "name": "analyse",
+                    "op": "PXRDAnalysisOp",
+                    "parameters": None
+                }
+            ]
+        process = PXRDProcess.from_args(lot=lot, operations=operations)
+        process.lot_slot = 0
 
         # assert initial state
-        self.assertEqual(process.data.status['state'], 'init_state')
-        self.assertEqual(len(process.data.req_robot_ops),0)
-        self.assertEqual(len(process.data.robot_ops_history),0)
-        self.assertEqual(len(process.data.req_station_ops),0)
-        self.assertEqual(len(process.data.station_ops_history),0)
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
 
         # prep_state
-        self.assert_process_transition(process, 'prep_state')
-        self.assertEqual(process.data.status['batch_index'], 0)
-        self.assertFalse(process.data.status['operation_complete'])
+        process.tick()
+        self.assertEqual(process.status, ProcessStatus.RUNNING)
+        self.assertEqual(process.m_state, 'prep_state')
+        self.assertFalse(process.data['batch_analysed'])
 
         # open_pxrd_door
-        self.assert_process_transition(process, 'open_pxrd_door')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'OpenDoors',
-                                'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'open_pxrd_door')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        
+        # open_pxrd_door_update
+        process.tick()
+        self.assertEqual(process.m_state, 'open_pxrd_door_update')
+        test_req_station_op(self, process, PXRDOpenDoorOp)
 
         # load_pxrd
-        self.assert_process_transition(process, 'load_pxrd')
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_OPEN)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                            {'name': 'LoadPXRD',
-                            'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
-
-        # added_batch_update
-        self.assert_process_transition(process, 'added_batch_update')
+        process.tick()
+        self.assertEqual(process.m_state, 'load_pxrd')
+        test_req_robot_ops(self, process, [DropBatchOpDescriptor, RobotWaitOpDescriptor])
 
         # close_pxrd_door
-        self.assert_process_transition(process, 'close_pxrd_door')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'CloseDoors',
-                                'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'close_pxrd_door')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        
+        # close_pxrd_door_update
+        process.tick()
+        self.assertEqual(process.m_state, 'close_pxrd_door_update')
+        test_req_station_op(self, process, PXRDCloseDoorOp)
 
         # pxrd_process
-        self.assert_process_transition(process, 'pxrd_process')
-        station_op = process.data.req_station_ops[0]
-        self.assert_station_op(station_op, 'PXRDAnalysisOpDescriptor')
-        self.complete_station_op(self.station)
-        self.assertEqual(self.station.status, PXRDStatus.JOB_COMPLETE)
+        process.tick()
+        self.assertEqual(process.m_state, 'pxrd_process')
+        test_req_station_op(self, process, PXRDAnalysisOp)
 
-         # open_pxrd_door
-        self.assert_process_transition(process, 'open_pxrd_door')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'OpenDoors',
-                                'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
+        # open_pxrd_door
+        process.tick()
+        self.assertEqual(process.m_state, 'open_pxrd_door')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        
+        # open_pxrd_door_update
+        process.tick()
+        self.assertEqual(process.m_state, 'open_pxrd_door_update')
+        test_req_station_op(self, process, PXRDOpenDoorOp)
 
         # unload_pxrd
-        self.assert_process_transition(process, 'unload_pxrd')
-        self.assertEqual(self.station.status, PXRDStatus.DOORS_OPEN)
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                            {'name': 'UnloadPXRD',
-                            'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
-
-        # removed_batch_update
-        self.assert_process_transition(process, 'removed_batch_update')
+        process.tick()
+        self.assertEqual(process.m_state, 'unload_pxrd')
+        test_req_robot_ops(self, process, [CollectBatchOpDescriptor, RobotWaitOpDescriptor])
 
         # close_pxrd_door
-        self.assert_process_transition(process, 'close_pxrd_door')
-        robot_op = self.station.get_requested_robot_ops()[0]
-        self.assert_robot_op(robot_op, 'KukaLBRTask',
-                                {'name': 'CloseDoors',
-                                'params':['True']})
-        self.complete_robot_op(self.station, robot_op)
+        process.tick()
+        self.assertEqual(process.m_state, 'close_pxrd_door')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        
+        # close_pxrd_door_update
+        process.tick()
+        self.assertEqual(process.m_state, 'close_pxrd_door_update')
+        test_req_station_op(self, process, PXRDCloseDoorOp)
 
         # final_state
-        self.assertFalse(self.station.has_processed_batch())
-        self.assert_process_transition(process, 'final_state')
-        self.assertTrue(self.station.has_processed_batch())
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
 
+    def test_sim_handler(self):
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimPXRDStationHandler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct analyse op
+        t_op = PXRDAnalysisOp.from_args(target_batch=batch_1)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], PXRDAnalysisResult))
+        self.assertIsNotNone(op_results[0].result_filename)
+        self.station.complete_assigned_op(outcome, op_results)
+
+        # construct analyse op
+        t_op = PXRDOpenDoorOp.from_args()
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertIsNone(op_results)
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

@@ -1,67 +1,108 @@
-from .model import PXRDStationModel, PXRDStatus, PXRDAnalysisOpDescriptorModel
+from bson.objectid import ObjectId
+from .model import PXRDStationModel, PXRDJobStatus, PXRDAnalysisResultModel
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
-from archemist.core.state.material import Liquid, Solid
+from archemist.core.state.batch import Batch
+from archemist.core.state.station_op import StationOpDescriptor, StationBatchOpDescriptor
+from archemist.core.models.station_op_model import StationOpDescriptorModel, StationBatchOpDescriptorModel
+from archemist.core.state.station_op_result import StationOpResult
+from archemist.core.util.enums import OpOutcome
+from typing import List, Dict, Union, Type
 from datetime import datetime
 
 ''' ==== Station Description ==== '''
 class PXRDStation(Station):
-    def __init__(self, station_model: PXRDStationModel) -> None:
-        self._model = station_model
+    def __init__(self, station_model: Union[PXRDStationModel, ModelProxy]) -> None:
+        super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = PXRDStationModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
     @property
-    def status(self) -> PXRDStatus:
-        self._model.reload('machine_status')
-        return self._model.machine_status
+    def job_status(self) -> PXRDJobStatus:
+        return self._model_proxy.job_status
 
-    @status.setter
-    def status(self, new_status: PXRDStatus):
-        self._model.update(machine_status=new_status)
+    @job_status.setter
+    def job_status(self, new_status: PXRDJobStatus):
+        self._model_proxy.job_status = new_status
+
+    @property
+    def door_closed(self) -> bool:
+        return self._model_proxy.door_closed
+    
+    @door_closed.setter
+    def door_closed(self, closed: bool):
+        self._model_proxy.door_closed = closed
 
     def update_assigned_op(self):
         super().update_assigned_op()
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, PXRDAnalysisOpDescriptor):
-            self.status = PXRDStatus.RUNNING_JOB
+        current_op = self.assigned_op
+        if isinstance(current_op, PXRDAnalysisOp):
+            self.job_status = PXRDJobStatus.RUNNING_JOB
 
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, PXRDAnalysisOpDescriptor) and success:
-            self.status = PXRDStatus.JOB_COMPLETE
-        super().complete_assigned_station_op(success, **kwargs)
+    def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
+        current_op = self.assigned_op
+        if isinstance(current_op, PXRDOpenDoorOp):
+            self.door_closed = False
+        elif isinstance(current_op, PXRDCloseDoorOp):
+            self.door_closed = True
+        elif isinstance(current_op, PXRDAnalysisOp):
+            self.job_status = PXRDJobStatus.JOB_COMPLETE
+        super().complete_assigned_op(outcome, results)
 
 ''' ==== Station Operation Descriptors ==== '''
-class PXRDAnalysisOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: PXRDAnalysisOpDescriptorModel):
-        self._model = op_model
+
+class PXRDOpenDoorOp(StationOpDescriptor):
+    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+        super().__init__(station_op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = PXRDAnalysisOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
+        model.save()
+        return cls(model)
+
+
+class PXRDCloseDoorOp(StationOpDescriptor):
+    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+        super().__init__(station_op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
+        model.save()
+        return cls(model)
+
+class PXRDAnalysisOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: StationBatchOpDescriptorModel):
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, target_batch: Batch):
+        model = StationBatchOpDescriptorModel()
+        model.target_batch = target_batch.model
+        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
+        model.save()
+        return cls(model)
+    
+class PXRDAnalysisResult(StationOpResult):
+    def __init__(self, result_model: Union[PXRDAnalysisResultModel, ModelProxy]):
+        super().__init__(result_model)
+
+    @classmethod
+    def from_args(cls, origin_op: ObjectId, result_filename: str):
+        model = PXRDAnalysisResultModel()
+        cls._set_model_common_fields(model, origin_op)
+        model.result_filename = result_filename
+        model.save()
         return cls(model)
 
     @property
-    def result_file(self) -> str:
-        if self._model.has_result and self._model.was_successful:
-            return self._model.result_file
-
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-        if 'result_file' in kwargs:
-            self._model.result_file = kwargs['result_file']
-        else:
-            pass #print('missing result_file!!')
+    def result_filename(self) -> str:
+        return self._model_proxy.result_filename
