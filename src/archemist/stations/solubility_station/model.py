@@ -1,12 +1,11 @@
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.op_result_model import OpResultModel
 from mongoengine import fields
 from enum import Enum
 
 class SolubilityState(Enum):
     DISSOLVED = 0
-    # PARTIALLY_DISSOLVED = 1
     UNDISSOLVED = 1
 
-class SolubilityOpDescriptorModel(StationOpDescriptorModel):
+class SolubilityOpResultModel(OpResultModel):
     result_filename = fields.StringField()
-    solubility_state = fields.EnumField(SolubilityState, null=True)
+    solubility_state = fields.EnumField(SolubilityState, required=True)

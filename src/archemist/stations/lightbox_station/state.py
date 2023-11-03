@@ -8,8 +8,7 @@ from .model import (LightBoxStationModel,
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationSampleOpDescriptor
-from archemist.core.state.material import Liquid,Solid
-from typing import List, Union
+from typing import List, Union, Dict
 import math
 
 
@@ -19,7 +18,7 @@ class LightBoxStation(Station):
         super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: dict):
+    def from_dict(cls, station_dict: Dict):
         model = LightBoxStationModel()
         cls._set_model_common_fields(model, station_dict)
         if "rgb_target_index" in station_dict["properties"]:
