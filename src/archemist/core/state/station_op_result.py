@@ -63,10 +63,6 @@ class MaterialOpResult(StationOpResult):
         return self._model_proxy.material_names
     
     @property
-    def material_ids(self) -> List[int]:
-        return self._model_proxy.material_ids
-    
-    @property
     def amounts(self) -> List[float]:
         return self._model_proxy.amounts
     

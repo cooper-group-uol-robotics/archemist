@@ -1,70 +1,117 @@
 import unittest
 from datetime import datetime
 
-import mongoengine
+from mongoengine import connect
 
-from archemist.stations.peristaltic_pumps_station.state import PeristalticLiquidDispensing, PeristalticPumpOpDescriptor
-from archemist.core.state.material import Liquid
-from archemist.core.util.enums import StationState
+from archemist.stations.peristaltic_pumps_station.state import (PeristalticPumpsStation,
+                                                                PPLiquidDispenseOp)
+from archemist.core.util.enums import StationState, OpOutcome
+from archemist.stations.peristaltic_pumps_station.handler import SimPeristalticPumpsStationHandler
+from archemist.core.state.lot import Lot, Batch
+from archemist.core.state.station_op_result import MaterialOpResult
 
 class PeristalticLiquidDispensingTest(unittest.TestCase):
     def setUp(self):
-        self.station_doc = {
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+        station_dict = {
             'type': 'PeristalticLiquidDispensing',
             'id': 20,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'process_batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
+            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'materials':
             {
-                'type': '',
-                'args': {}
+                'liquids':
+                [{
+                    'name': 'water',
+                    'amount': 400,
+                    'unit': 'mL',
+                    'density': 997,
+                    'density_unit': "kg/m3",
+                    "details": None,
+                    'expiry_date': datetime.fromisoformat('2025-02-11')
+                }]
             },
-            'parameters':{
-                'liquid_pump_map': {'water': 'pUmP1'}
+            'properties': {
+                'liquid_pump_map':{'water': 1}
             }
         }
-        liquid_dict = {
-            'name': 'water',
-            'id': 1235,
-            'amount_stored': 400,
-            'unit': 'ml',
-            'density': 997,
-            'pump_id': 'pUmP1',
-            'expiry_date': datetime.fromisoformat('2025-02-11')
-        }
         
-        self.liquids_list = []
-        self.liquids_list.append(Liquid.from_dict(liquid_dict))
-        self.station = PeristalticLiquidDispensing.from_dict(station_dict=self.station_doc, 
-                        liquids=self.liquids_list, solids=[])
+        self.station = PeristalticPumpsStation.from_dict(station_dict)
         
     def tearDown(self):
-        self.station.model.delete()
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
     
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
-        self.assertEqual(self.station.get_liquid(pump_id='pUmP1').name, self.liquids_list[0].name)
-        self.assertEqual(self.station.get_pump_id('water'), 'pUmP1')
 
-        # test PeristalticPumpOpDescriptor
-        t_op = PeristalticPumpOpDescriptor.from_args(liquid_name='water',dispense_volume=100)
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
+
+        # test station specific fields
+        self.assertDictEqual(dict(self.station.liquid_pump_map), {'water': 1})
+
+        # test PPLiquidDispenseOp
+        t_op = PPLiquidDispenseOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            liquid_name='water',
+                                            dispense_volume=100,
+                                            dispense_unit="mL")
+        self.assertIsNotNone(t_op.object_id)
+        self.assertEqual(t_op.liquid_name, "water")
+        self.assertEqual(t_op.dispense_volume, 100)
+        self.assertEqual(t_op.dispense_unit, "mL")
+
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True, actual_dispensed_volume=99)
-        ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-        self.assertEqual(ret_op.actual_dispensed_volume, 99)
-        self.assertEqual(self.liquids_list[0].volume, 0.4-0.099)
+        op_result = MaterialOpResult.from_args(t_op.object_id,
+                                               [t_op.liquid_name],
+                                               [t_op.dispense_volume],
+                                               [t_op.dispense_unit])
+
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, [op_result])
+        self.assertEqual(self.station.liquids_dict["water"].volume, 300)
+        self.assertEqual(self.station.liquids_dict["water"].volume_unit, "mL")
+
+    def test_sim_handler(self):
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimPeristalticPumpsStationHandler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct analyse op
+        t_op = PPLiquidDispenseOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            liquid_name='water',
+                                            dispense_volume=100,
+                                            dispense_unit="mL")
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], MaterialOpResult))
+        self.assertEqual(op_results[0].material_names[0], "water")
+        self.assertEqual(op_results[0].amounts[0], 100)
+        self.assertEqual(op_results[0].units[0], "mL")
+
+        self.station.complete_assigned_op(outcome, op_results)
+        
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()

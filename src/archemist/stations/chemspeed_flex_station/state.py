@@ -6,7 +6,6 @@ from archemist.core.state.lot import Lot
 from archemist.core.state.station_op import StationOpDescriptor, StationLotOpDescriptor
 from archemist.core.state.station_op_result import StationOpResult
 from typing import List, Dict, Type, Union
-from archemist.core.state.material import Liquid, Solid
 from archemist.core.util.enums import OpOutcome
 
 ''' ==== Station Description ==== '''
