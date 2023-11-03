@@ -1,92 +1,162 @@
-from .model import WatersLCMSStationModel, LCMSStatus, LCMSOpModel
+from .model import (WatersLCMSStationModel,
+                    LCMSAnalysisStatus,
+                    LCMSAutoLoaderStatus,
+                    LCMSBayOccupiedOpModel,
+                    LCMSBayFreedOpModel,
+                    LCMSInsertBatchOpModel,
+                    LCMSEjectBatchOpModel,
+                    LCMSAnalysisResultModel)
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
+from archemist.core.state.batch import Batch
 from archemist.core.models.station_op_model import StationOpDescriptorModel
-from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
-from archemist.core.state.material import Liquid, Solid
+from archemist.core.state.station_op_result import StationOpResult
+from archemist.core.state.station_op import StationOpDescriptor, StationBatchOpDescriptor
+from typing import Dict, Union, List, Optional
+from archemist.core.util.enums import OpOutcome
+from bson.objectid import ObjectId
 
 ''' ==== Station Description ==== '''
 class WatersLCMSStation(Station):
-    def __init__(self, station_model: WatersLCMSStationModel) -> None:
-        self._model = station_model
+    def __init__(self, station_model: Union[WatersLCMSStationModel, ModelProxy]) -> None:
+        super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = WatersLCMSStationModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
     @property
-    def status(self) -> LCMSStatus:
-        self._model.reload('machine_status')
-        return self._model.machine_status
+    def analysis_status(self) -> LCMSAnalysisStatus:
+        return self._model_proxy.analysis_status
 
-    @status.setter
-    def status(self, new_status: LCMSStatus):
-        self._model.update(machine_status=new_status)
+    @analysis_status.setter
+    def analysis_status(self, new_status: LCMSAnalysisStatus):
+        self._model_proxy.analysis_status = new_status
+
+    @property
+    def auto_loader_status(self) -> LCMSAutoLoaderStatus:
+        return self._model_proxy.auto_loader_status
+
+    @auto_loader_status.setter
+    def auto_loader_status(self, new_status: LCMSAutoLoaderStatus):
+        self._model_proxy.auto_loader_status = new_status
 
     def update_assigned_op(self):
         super().update_assigned_op()
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, LCMSAnalysisOpDescriptor):
-            self.status = LCMSStatus.RUNNING_ANALYSIS
+        current_op = self.assigned_op
+        if isinstance(current_op, LCMSAnalysisOp):
+            self.analysis_status = LCMSAnalysisStatus.RUNNING_ANALYSIS
 
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, LCMSInsertBatchOpDescriptor):
-            self.status = LCMSStatus.BATCH_LOADED
-        elif isinstance(current_op, LCMSExtractBatchOpDescriptor):
-            self.status = LCMSStatus.BATCH_READY_FOR_COLLECTION
-        elif isinstance(current_op, LCMSAnalysisOpDescriptor): 
-            self.status = LCMSStatus.ANALYSIS_COMPLETE
-        super().complete_assigned_station_op(success, **kwargs)
+    def complete_assigned_op(self, outcome: OpOutcome, results: Optional[List[LCMSAnalysisResultModel]]):
+        current_op = self.assigned_op
+        if isinstance(current_op, LCMSBayOccupiedOp):
+            self.auto_loader_status = LCMSAutoLoaderStatus.BAY_OCCUPIED
+        elif isinstance(current_op, LCMSBayFreedOp):
+            self.auto_loader_status = LCMSAutoLoaderStatus.BAY_FREE
+        elif isinstance(current_op, LCMSInsertBatchOp):
+            self.auto_loader_status = LCMSAutoLoaderStatus.BAY_UNAVAILABLE
+        elif isinstance(current_op, LCMSEjectBatchOp):
+            self.auto_loader_status = LCMSAutoLoaderStatus.BAY_OCCUPIED
+        elif isinstance(current_op, LCMSAnalysisOp):
+            self.analysis_status = LCMSAnalysisStatus.ANALYSIS_COMPLETE
+        super().complete_assigned_op(outcome, results)
 
 
 ''' ==== Station Operation Descriptors ==== '''
-class LCMSInsertBatchOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: LCMSOpModel):
-        self._model = op_model
+class LCMSBayOccupiedOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[LCMSBayOccupiedOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = LCMSOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
-        model.rack = int(kwargs['used_rack_index'])
+    def from_args(cls, bay_index: int):
+        model = LCMSBayOccupiedOpModel()
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.bay_index = bay_index
+        model.save()
         return cls(model)
 
     @property
-    def used_rack_index(self) -> int:
-        return self._model.used_rack_index
+    def bay_index(self) -> int:
+        return self._model_proxy.bay_index
 
-class LCMSExtractBatchOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: LCMSOpModel):
-        self._model = op_model
+class LCMSBayFreedOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[LCMSBayFreedOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = LCMSOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
-        model.rack = kwargs['used_rack_index']
+    def from_args(cls, bay_index: int):
+        model = LCMSBayFreedOpModel()
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.bay_index = bay_index
+        model.save()
         return cls(model)
 
     @property
-    def used_rack_index(self) -> int:
-        return self._model.used_rack_index
+    def bay_index(self) -> int:
+        return self._model_proxy.bay_index
 
-class LCMSAnalysisOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel):
-        self._model = op_model
+class LCMSInsertBatchOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: Union[LCMSInsertBatchOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls, target_batch: Batch, bay_index: int):
+        model = LCMSInsertBatchOpModel()
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.target_batch = target_batch.model
+        model.bay_index = bay_index
+        model.save()
+        return cls(model)
+
+    @property
+    def bay_index(self) -> int:
+        return self._model_proxy.bay_index
+
+class LCMSEjectBatchOp(StationBatchOpDescriptor):
+    def __init__(self, op_model: Union[LCMSEjectBatchOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, target_batch: Batch, bay_index: int):
+        model = LCMSEjectBatchOpModel()
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.target_batch = target_batch.model
+        model.bay_index = bay_index
+        model.save()
+        return cls(model)
+
+    @property
+    def bay_index(self) -> int:
+        return self._model_proxy.bay_index
+
+class LCMSAnalysisOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
         model = StationOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.save()
         return cls(model)
+
+class LCMSAnalysisResult(StationOpResult):
+    def __init__(self, result_model: Union[LCMSAnalysisResultModel, ModelProxy]):
+        super().__init__(result_model)
+
+    @classmethod
+    def from_args(cls,
+                  origin_op: ObjectId,
+                  result_filename: str):
+        model = LCMSAnalysisResultModel()
+        cls._set_model_common_fields(model, origin_op)
+        model.result_filename = result_filename
+        model.save()
+        return cls(model)
+
+    @property
+    def result_filename(self) -> str:
+        return self._model_proxy.result_filename

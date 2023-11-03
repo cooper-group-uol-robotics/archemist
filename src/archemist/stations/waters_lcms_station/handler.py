@@ -1,14 +1,35 @@
-from typing import Tuple, Dict
+from typing import Tuple, List, Optional
 from archemist.core.state.station import Station
-from .state import LCMSInsertBatchOpDescriptor, LCMSExtractBatchOpDescriptor, LCMSAnalysisOpDescriptor
-from archemist.core.processing.handler import StationHandler
+from .state import (LCMSBayOccupiedOp,
+                    LCMSBayFreedOp,
+                    LCMSAnalysisOp,
+                    LCMSAnalysisResult, 
+                    LCMSInsertBatchOp, 
+                    LCMSEjectBatchOp)
+from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
+from archemist.core.util.enums import OpOutcome
 from threading import Thread
 import socket
-import time
 
-class WaterLCMSSocketHandler(StationHandler):
+
+class SimWatersLCMSStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
+
+    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
+            current_op = self._station.assigned_op
+            if isinstance(current_op, LCMSAnalysisOp):
+                result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                      result_filename="file.xml")
+                return OpOutcome.SUCCEEDED, [result]
+            else:
+                return OpOutcome.SUCCEEDED, None
+
+class WaterLCMSSocketHandler(StationOpHandler):
+    def __init__(self, station: Station):
+        super().__init__(station)
+
+    def initialise(self) -> bool:
         self._host = '192.168.1.1'
         self._port = 19990
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -16,34 +37,28 @@ class WaterLCMSSocketHandler(StationHandler):
         self._thread = None
         self._result_received = False
         self._op_result = False
-        
 
-    def run(self):
-        print(f'{self._station}_handler is running')
-        try:
-            while True:
-                self.handle()
-                time.sleep(2)
-        except KeyboardInterrupt:
-            print(f'{self._station}_handler is terminating!!!')
-        finally:
-            self._socket.close()
-
+    def shut_down(self):
+        self._socket.close()
 
     def execute_op(self):
-        current_op = self._station.get_assigned_station_op()
+        current_op = self._station.assigned_op
         self._result_received = False
         self._op_result = False
-        if (isinstance(current_op,LCMSInsertBatchOpDescriptor)):
+        if isinstance(current_op,LCMSInsertBatchOp):
             print(f'Autosampler - inserting rack {current_op.rack}')
             msg = f'InsertRack{current_op.rack}'
             self._socket.sendall(msg.encode('ascii'))
-        elif (isinstance(current_op,LCMSExtractBatchOpDescriptor)):
+        elif isinstance(current_op,LCMSEjectBatchOp):
             print(f'Autosampler - extracting rack {current_op.rack}')
             msg = f'ExtractRack{current_op.rack}'
             self._socket.sendall(msg.encode('ascii'))
-        elif (isinstance(current_op,LCMSAnalysisOpDescriptor)):
+        elif isinstance(current_op,LCMSAnalysisOp):
             self._socket.sendall(b'StartAnalysisRack2')
+        elif isinstance(current_op,LCMSBayOccupiedOp):
+            self._result_received = True
+        elif isinstance(current_op,LCMSBayFreedOp):
+            self._result_received = True
         else:
             print(f'[{self.__class__.__name__}] Unkown operation was received')
         self._thread = Thread(target=self._lcsm_status_update, daemon=True)
@@ -51,8 +66,14 @@ class WaterLCMSSocketHandler(StationHandler):
     def is_op_execution_complete(self) -> bool:
         return self._result_received
 
-    def get_op_result(self) -> Tuple[bool, Dict]:
-       return self._op_result
+    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
+            current_op = self._station.assigned_op
+            if isinstance(current_op, LCMSAnalysisOp):
+                result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                      result_filename="file.xml") #TODO need to receive from LCMS
+                return OpOutcome.SUCCEEDED, [result]
+            else:
+                return OpOutcome.SUCCEEDED, None
 
     def _lcsm_status_update(self):
         msg = self._socket.recv(1024)
