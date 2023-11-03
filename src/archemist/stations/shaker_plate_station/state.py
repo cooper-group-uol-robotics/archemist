@@ -1,55 +1,65 @@
-from .model import ShakerStatus, ShakerPlateStationModel, ShakeOpDescriptorModel
+from .model import ShakerPlateStationModel, ShakerPlateOpModel
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
-from typing import List, Any, Dict
-from archemist.core.state.material import Liquid, Solid
+from archemist.core.state.batch import Batch
+from archemist.core.state.station_op import StationBatchOpDescriptor
+from archemist.core.state.station_op_result import StationOpResult
+from archemist.core.util.enums import OpOutcome
+
+from typing import List, Union, Dict, Type, Literal
 
 class ShakerPlateStation(Station):
-    def __init__(self, station_model: ShakerPlateStationModel) -> None:
-        self._model = station_model
+    def __init__(self, station_model: Union[ShakerPlateStationModel, ModelProxy]) -> None:
+        super().__init__(station_model)
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = ShakerPlateStationModel()
-        cls._set_model_common_fields(station_dict,model)
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
 
     @property
-    def status(self):
-        self._model.reload('machine_status')
-        return self._model.machine_status
+    def is_shaking(self) -> bool:
+        return self._model_proxy.is_shaking
 
-    @status.setter
-    def status(self, new_status: ShakerStatus):
-        self._model.update(machine_status=new_status)
+    @is_shaking.setter
+    def is_shaking(self, shaking: bool):
+        self._model_proxy.is_shaking = shaking
     
     def update_assigned_op(self):
         super().update_assigned_op()
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, ShakeOpDescriptor):
-            self.status = ShakerStatus.SHAKING
+        current_op = self.assigned_op
+        if isinstance(current_op, ShakerPlateOp):
+            self.is_shaking = True
 
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, ShakeOpDescriptor):
-            self.status = ShakerStatus.NOT_SHAKING
-        super().complete_assigned_station_op(success, **kwargs)
+    def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
+        current_op = self.assigned_op
+        if isinstance(current_op, ShakerPlateOp):
+            self.is_shaking = False
+        super().complete_assigned_op(outcome, results)
 
-class ShakeOpDescriptor(StationOpDescriptor):
-    def __init__(self, stationOpModel: ShakeOpDescriptorModel) -> None:
-        self._model = stationOpModel
+class ShakerPlateOp(StationBatchOpDescriptor):
+    def __init__(self, station_op_model: Union[ShakerPlateOpModel, ModelProxy]) -> None:
+        super().__init__(station_op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = ShakeOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=ShakerPlateStation.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
-        model.duration = int(kwargs['duration'])
+    def from_args(cls, 
+                  target_batch: Batch,
+                  duration: int,
+                  time_unit: Literal["second", "minute", "hour"]):
+        model = ShakerPlateOpModel()
+        cls._set_model_common_fields(model, associated_station=ShakerPlateStation.__name__)
+        model.target_batch = target_batch.model
+        model.duration = duration
+        model.time_unit = time_unit
+        model.save()
         return cls(model)
 
     @property
     def duration(self) -> int:
-        return self._model.duration
+        return self._model_proxy.duration
+    
+    @property
+    def time_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.time_unit
