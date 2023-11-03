@@ -13,7 +13,7 @@ from archemist.stations.pxrd_station.state import (PXRDStation,
                                                    PXRDCloseDoorOp,
                                                    PXRDOpenDoorOp,
                                                    PXRDAnalysisResult)
-from archemist.stations.pxrd_station.process import PXRDProcess
+from archemist.stations.pxrd_station.process import PXRDWorkflowAnalysisProcess
 from archemist.stations.pxrd_station.handler import SimPXRDStationHandler
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -44,7 +44,7 @@ class PXRDStationTest(unittest.TestCase):
             self._client[self._db_name][coll].drop()
 
     def test_state(self):
-         # test station is constructed properly
+        # test station is constructed properly
         self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
 
@@ -91,7 +91,8 @@ class PXRDStationTest(unittest.TestCase):
     def test_pxrd_process(self):
         # construct batches
         batch_1 = Batch.from_args(2)
-        lot = Lot.from_args([batch_1])
+        batch_2 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1, batch_2])
         
         # add lot to station
         self.station.add_lot(lot)
@@ -104,7 +105,7 @@ class PXRDStationTest(unittest.TestCase):
                     "parameters": None
                 }
             ]
-        process = PXRDProcess.from_args(lot=lot, operations=operations)
+        process = PXRDWorkflowAnalysisProcess.from_args(lot=lot, operations=operations)
         process.lot_slot = 0
 
         # assert initial state

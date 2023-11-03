@@ -9,7 +9,7 @@ from .state import PXRDAnalysisOp, PXRDOpenDoorOp, PXRDCloseDoorOp
 from archemist.core.util import Location
 from typing import Union
 
-class PXRDProcess(StationProcess):
+class PXRDWorkflowAnalysisProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
 
@@ -48,7 +48,7 @@ class PXRDProcess(StationProcess):
 
     def request_open_pxrd_door(self):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
-        target_batch = self.lot.batches[0]
+        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
         open_door_robot_op = RobotTaskOpDescriptor.from_args(name="OpenDoors", target_robot="MobileRobot",
@@ -63,7 +63,7 @@ class PXRDProcess(StationProcess):
 
     def request_close_pxrd_door(self):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
-        target_batch = self.lot.batches[0]
+        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
         open_door_robot_op = RobotTaskOpDescriptor.from_args(name="CloseDoors", target_robot="MobileRobot",
@@ -77,7 +77,7 @@ class PXRDProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_load_pxrd(self):
-        target_batch = self.lot.batches[0]
+        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
         load_pxrd_robot_op = DropBatchOpDescriptor.from_args(name="LoadPXRD", target_robot="MobileRobot",
@@ -86,7 +86,7 @@ class PXRDProcess(StationProcess):
         self.request_robot_ops([load_pxrd_robot_op, robot_wait_op])
 
     def request_unload_pxrd(self):
-        target_batch = self.lot.batches[0]
+        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
         unload_pxrd_robot_op = CollectBatchOpDescriptor.from_args(name="UnloadPXRD", target_robot="MobileRobot",
@@ -95,7 +95,7 @@ class PXRDProcess(StationProcess):
         self.request_robot_ops([unload_pxrd_robot_op, robot_wait_op])
 
     def request_pxrd_process(self):
-        batch = self.lot.batches[0]
+        batch = self.lot.batches[1]
         current_op = self.generate_operation("analyse", target_batch=batch)
         self.request_station_op(current_op)
         self.data['batch_analysed'] = True
