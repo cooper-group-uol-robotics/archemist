@@ -17,15 +17,15 @@ class SimIKAPlateDigitalHandler(SimStationOpHandler):
             parameters["target_temperature"]  = current_op.target_temperature
             parameters["target_stirring_speed"]  = current_op.target_stirring_speed
             parameters["duration"]  = current_op.duration
-            parameters["duration_unit"]  = current_op.duration_unit
+            parameters["time_unit"]  = current_op.time_unit
         elif isinstance(current_op, IKAStirBatchOp):
             parameters["target_stirring_speed"]  = current_op.target_stirring_speed
             parameters["duration"]  = current_op.duration
-            parameters["duration_unit"]  = current_op.duration_unit
+            parameters["time_unit"]  = current_op.time_unit
         elif isinstance(current_op, IKAHeatBatchOp):
             parameters["target_temperature"]  = current_op.target_temperature
             parameters["duration"]  = current_op.duration
-            parameters["duration_unit"]  = current_op.duration_unit
+            parameters["time_unit"]  = current_op.time_unit
         op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
                                                 parameters=parameters)
         return OpOutcome.SUCCEEDED, [op_result]
@@ -62,12 +62,15 @@ try:
                     self._ika_pub.publish(ika_command= IKACommand.STIRAT, ika_param=current_op.target_stirring_speed)
             else:
                 rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+
+            if current_op.time_unit == "second":
+                total_seconds = current_op.duration,
+            elif current_op.time_unit == "minute":
+                total_seconds = current_op.duration,*60
+            elif current_op.time_unit == "hour":
+                total_seconds = current_op.duration,*60*60
             
-            kwargs = {
-                'duration':current_op.duration,
-                'duration_unit': current_op.duration_unit
-                }
-            self._timer_thread = Thread(target=self._sleep_for_duration,kwargs=kwargs)
+            self._timer_thread = Thread(target=self._sleep_for_duration, args=[total_seconds])
             self._timer_thread.start()
 
 
@@ -84,27 +87,20 @@ try:
                 parameters["target_temperature"]  = current_op.target_temperature
                 parameters["target_stirring_speed"]  = current_op.target_stirring_speed
                 parameters["duration"]  = current_op.duration
-                parameters["duration_unit"]  = current_op.duration_unit
+                parameters["time_unit"]  = current_op.time_unit
             elif isinstance(current_op, IKAStirBatchOp):
                 parameters["target_stirring_speed"]  = current_op.target_stirring_speed
                 parameters["duration"]  = current_op.duration
-                parameters["duration_unit"]  = current_op.duration_unit
+                parameters["time_unit"]  = current_op.time_unit
             elif isinstance(current_op, IKAHeatBatchOp):
                 parameters["target_temperature"]  = current_op.target_temperature
                 parameters["duration"]  = current_op.duration
-                parameters["duration_unit"]  = current_op.duration_unit
+                parameters["time_unit"]  = current_op.time_unit
             op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
                                                   parameters=parameters)
             return OpOutcome.SUCCEEDED, [op_result]
 
-        def _sleep_for_duration(self, **kwargs):
-            if kwargs["duration_unit"] == "second":
-                total_seconds = kwargs['duration']
-            elif kwargs["duration_unit"] == "minute":
-                total_seconds = kwargs['duration']*60
-            elif kwargs["duration_unit"] == "hour":
-                total_seconds = kwargs['duration']*60*60
-            
+        def _sleep_for_duration(self, total_seconds):
             rospy.sleep(total_seconds)
             for i in range(10):
                 self._ika_pub.publish(ika_command= IKACommand.ALLOFF)

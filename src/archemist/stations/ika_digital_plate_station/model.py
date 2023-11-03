@@ -19,4 +19,4 @@ class IKADigitalPlateOpModel(StationBatchOpDescriptorModel):
     target_temperature = fields.IntField(min_value=0, max_value=500, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1500, null=True)
     duration = fields.IntField(null=True)
-    duration_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
+    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")

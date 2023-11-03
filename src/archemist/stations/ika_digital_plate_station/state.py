@@ -86,14 +86,14 @@ class IKAHeatStirBatchOp(StationBatchOpDescriptor):
                   target_temperature: int,
                   target_stirring_speed: int,
                   duration: int,
-                  duration_unit: Literal["second", "minute", "hour"]):
+                  time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
         cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
-        model.duration_unit = duration_unit
+        model.time_unit = time_unit
         model.save()
         return cls(model)
 
@@ -110,8 +110,8 @@ class IKAHeatStirBatchOp(StationBatchOpDescriptor):
         return self._model_proxy.duration
 
     @property
-    def duration_unit(self) -> Literal["second", "minute", "hour"]:
-        return self._model_proxy.duration_unit
+    def time_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.time_unit
 
 class IKAHeatBatchOp(StationBatchOpDescriptor):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
@@ -122,13 +122,13 @@ class IKAHeatBatchOp(StationBatchOpDescriptor):
                   target_batch: Batch,
                   target_temperature: int,
                   duration: int,
-                  duration_unit: Literal["second", "minute", "hour"]):
+                  time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
         cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.duration = int(duration)
-        model.duration_unit = duration_unit
+        model.time_unit = time_unit
         model.save()
         return cls(model)
 
@@ -141,8 +141,8 @@ class IKAHeatBatchOp(StationBatchOpDescriptor):
         return self._model_proxy.duration
 
     @property
-    def duration_unit(self) -> Literal["second", "minute", "hour"]:
-        return self._model_proxy.duration_unit
+    def time_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.time_unit
 
 
 class IKAStirBatchOp(StationBatchOpDescriptor):
@@ -154,13 +154,13 @@ class IKAStirBatchOp(StationBatchOpDescriptor):
                   target_batch: Batch,
                   target_stirring_speed: int,
                   duration: int,
-                  duration_unit: Literal["second", "minute", "hour"]):
+                  time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
         cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
-        model.duration_unit = duration_unit
+        model.time_unit = time_unit
         model.save()
         return cls(model)
 
@@ -173,5 +173,5 @@ class IKAStirBatchOp(StationBatchOpDescriptor):
         return self._model_proxy.duration
 
     @property
-    def duration_unit(self) -> Literal["second", "minute", "hour"]:
-        return self._model_proxy.duration_unit
+    def time_unit(self) -> Literal["second", "minute", "hour"]:
+        return self._model_proxy.time_unit

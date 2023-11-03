@@ -35,7 +35,7 @@ class PXRDWorkflowStirringProcess(StationProcess):
         params_dict["perform_6p_calib"] = True
         robot_op_1 = DropBatchOpDescriptor.from_args(name='LoadEightWRackYumiStation', target_robot="MobileRobot",
                                                        params=params_dict, target_batch=batch_1)
-        # place the 8-well rack
+        # place the pxrd rack
         batch_2 = self.lot.batches[1]
         params_dict["perform_6p_calib"] = False
         robot_op_2 = DropBatchOpDescriptor.from_args(name='LoadPXRDRackYumiStation', target_robot="MobileRobot",

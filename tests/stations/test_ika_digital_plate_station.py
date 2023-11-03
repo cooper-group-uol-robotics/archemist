@@ -67,11 +67,11 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         t_op = IKAStirBatchOp.from_args(target_batch=batch_1,
                                         target_stirring_speed=500,
                                         duration=10,
-                                        duration_unit="minute")
+                                        time_unit="minute")
         
         self.assertEqual(t_op.target_stirring_speed, 500)
         self.assertEqual(t_op.duration, 10)
-        self.assertEqual(t_op.duration_unit, "minute")
+        self.assertEqual(t_op.time_unit, "minute")
         
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
@@ -84,12 +84,12 @@ class IKADigitalPlateStationTest(unittest.TestCase):
                                         target_temperature=100,
                                         target_stirring_speed=500,
                                         duration=10,
-                                        duration_unit="minute")
+                                        time_unit="minute")
         
         self.assertEqual(t_op.target_stirring_speed, 500)
         self.assertEqual(t_op.target_temperature, 100)
         self.assertEqual(t_op.duration, 10)
-        self.assertEqual(t_op.duration_unit, "minute")
+        self.assertEqual(t_op.time_unit, "minute")
         
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
@@ -101,11 +101,11 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         t_op = IKAHeatBatchOp.from_args(target_batch=batch_1,
                                         target_temperature=100,
                                         duration=10,
-                                        duration_unit="minute")
+                                        time_unit="minute")
         
         self.assertEqual(t_op.target_temperature, 100)
         self.assertEqual(t_op.duration, 10)
-        self.assertEqual(t_op.duration_unit, "minute")
+        self.assertEqual(t_op.time_unit, "minute")
         
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
@@ -129,7 +129,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
                     "parameters": {
                         "target_stirring_speed": 500,
                         "duration": 5,
-                        "duration_unit": "minute"
+                        "time_unit": "minute"
                     }
                 }
             ]
@@ -183,7 +183,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
                                         target_temperature=100,
                                         target_stirring_speed=500,
                                         duration=10,
-                                        duration_unit="minute")
+                                        time_unit="minute")
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         
@@ -192,7 +192,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         parameters["target_temperature"]  = t_op.target_temperature
         parameters["target_stirring_speed"]  = t_op.target_stirring_speed
         parameters["duration"]  = t_op.duration
-        parameters["duration_unit"]  = t_op.duration_unit
+        parameters["time_unit"]  = t_op.time_unit
         
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
