@@ -15,7 +15,7 @@ from archemist.core.state.robot_op import (RobotNavOpDescriptor,
                                            CollectBatchOpDescriptor,
                                            DropBatchOpDescriptor)
 from archemist.core.state.station_op_result import MaterialOpResult
-from archemist.stations.chemspeed_flex_station.process import ChemSpeedFlexProcess
+from archemist.stations.chemspeed_flex_station.process import CMFlexLiquidDispenseProcess
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
@@ -139,7 +139,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "run_job",
+                    "name": "dispense_op",
                     "op": "CSLiquidDispenseOp",
                     "parameters": {
                         "dispense_table": {"water": [10.0,20.0]},
@@ -147,7 +147,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
                     }
                 }
             ]
-        process = ChemSpeedFlexProcess.from_args(lot=lot,
+        process = CMFlexLiquidDispenseProcess.from_args(lot=lot,
                                                 operations=operations)
         process.lot_slot = 0
 
@@ -159,7 +159,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.status, ProcessStatus.RUNNING)
         self.assertEqual(process.m_state, 'prep_state')
-        self.assertFalse(process.data['operation_complete'])
+        self.assertFalse(process.data['dispense_finished'])
 
         # navigate_to_chemspeed and wait
         process.tick()

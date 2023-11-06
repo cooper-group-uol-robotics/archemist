@@ -28,9 +28,20 @@ class BasicLotInputProcess(StationProcess):
                   operations: List[Dict[str, Any]] = None,
                   skip_robot_ops: bool=False,
                   skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  skip_ext_procs: bool=False,
+                  target_mobile_robot: str="MobileRobot"
                   ):
-       return super().from_args(lot, operations, skip_robot_ops, skip_station_ops, skip_ext_procs)
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     "Station",
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.data["target_mobile_robot"] = target_mobile_robot
+        model.save()
+        return cls(model)
 
     ''' states callbacks '''
 
@@ -46,7 +57,8 @@ class BasicLotInputProcess(StationProcess):
             params_dict = {}
             params_dict["pick_batch_index"] = batches_offset + index + 1
             params_dict["perform_6p_calib"] = False
-            robot_op = CollectBatchOpDescriptor.from_args(name='PickupInputRack', target_robot="MobileRobot",
+            target_robot = self.data["target_mobile_robot"]
+            robot_op = CollectBatchOpDescriptor.from_args(name='PickupInputRack', target_robot=target_robot,
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         

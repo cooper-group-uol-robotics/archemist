@@ -52,9 +52,9 @@ steps:
       type: ChemSpeedFlexStation
       id: 11
       process:
-        type: ChemSpeedFlexProcess
+        type: CMFlexLiquidDispenseProcess
         operations:
-          - name: run_job
+          - name: dispense_op
             op: CSLiquidDispenseOp
             parameters:
               dispense_unit: mL
@@ -71,9 +71,9 @@ steps:
       type: LightBoxStation
       id: 12
       process:
-        type: LightBoxProcess
+        type: LBSampleAnalysisProcess
         operations:
-          - name: analyse
+          - name: analyse_op
             op: LBSampleAnalyseRGBOp
             parameters: Null
         args: Null
@@ -87,7 +87,7 @@ steps:
       process:
         type: WaitingStationProcess
         operations:
-          - name: wait_for
+          - name: wait_op
             op: WaitOp
             parameters:
               duration: 3
@@ -101,9 +101,9 @@ steps:
       type: LightBoxStation
       id: 12
       process:
-        type: LightBoxProcess
+        type: LBSampleAnalysisProcess
         operations:
-          - name: analyse
+          - name: analyse_op
             op: LBSampleAnalyseRGBOp
             parameters: Null
         args: Null

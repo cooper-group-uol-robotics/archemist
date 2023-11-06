@@ -24,12 +24,13 @@ workflow_input:
   location:
     coordinates: [21,1]
     descriptor: InputSite
-  samples_per_batch: 1
-  batches_per_lot: 1
+  samples_per_batch: 3
+  batches_per_lot: 2
   total_lot_capacity: 2
   lot_input_process:
     type: BasicLotInputProcess
-    args: Null
+    args:
+      target_mobile_robot: KMRIIWARobot
 
 # ============ Workflow Output Configuration ============
 #
@@ -53,7 +54,8 @@ workflow_output:
   lots_need_manual_removal: True
   lot_output_process:
     type: BasicLotOutputProcess
-    args: Null
+    args: 
+      target_mobile_robot: KMRIIWARobot
 
 # robots: this section describes the robots used in the workflow
 #   type: the robot's class name as defined in archemist.robots.X.state 
@@ -70,7 +72,7 @@ workflow_output:
 # for every robot used in the workflow, add a new entry and fill its fields as defined
 
 robots:
-  - type: MobileRobot
+  - type: KMRIIWARobot
     id: 1
     handler: SimRobotOpHandler
     total_lot_capacity: 1

@@ -4,7 +4,7 @@ from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 
-class LightBoxProcess(StationProcess):
+class LBSampleAnalysisProcess(StationProcess):
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
@@ -45,10 +45,10 @@ class LightBoxProcess(StationProcess):
         params_dict["allow_auto_func"] = False
         target_batch = self.lot.batches[self.data['batch_index']]
         robot_task = RobotTaskOpDescriptor.from_args(name='PresentVial',
-                                                     target_robot="MobileRobot",
+                                                     target_robot="KMRIIWARobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)
-        robot_wait_task = RobotWaitOpDescriptor.from_args("MobileRobot", 3)
+        robot_wait_task = RobotWaitOpDescriptor.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, robot_wait_task])
 
     def request_unload_sample_job(self):
@@ -59,10 +59,10 @@ class LightBoxProcess(StationProcess):
         params_dict["allow_auto_func"] = False
         target_batch = self.lot.batches[self.data['batch_index']]
         robot_task = RobotTaskOpDescriptor.from_args(name='ReturnVial',
-                                                     target_robot="MobileRobot",
+                                                     target_robot="KMRIIWARobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)
-        robot_wait_task = RobotWaitOpDescriptor.from_args("MobileRobot", 3)
+        robot_wait_task = RobotWaitOpDescriptor.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, robot_wait_task])
 
     def request_process_data_job(self):
@@ -70,7 +70,7 @@ class LightBoxProcess(StationProcess):
         batch_index = self.data['batch_index']
         sample = self.lot.batches[batch_index].samples[sample_index]
         
-        current_op = self.generate_operation("analyse", target_sample=sample)
+        current_op = self.generate_operation("analyse_op", target_sample=sample)
         self.request_station_op(current_op)
 
     def request_sample_index_update(self):

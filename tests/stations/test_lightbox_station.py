@@ -12,7 +12,7 @@ from archemist.stations.lightbox_station.state import (LightBoxStation,
                                                        LBAnalyseLABResult)
 from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
                                            RobotWaitOpDescriptor)
-from archemist.stations.lightbox_station.process import LightBoxProcess
+from archemist.stations.lightbox_station.process import LBSampleAnalysisProcess
 from archemist.stations.lightbox_station.handler import SimLightBoxHandler
 from archemist.core.util.enums import OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
@@ -107,12 +107,12 @@ class LightBoxStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "analyse",
+                    "name": "analyse_op",
                     "op": "LBSampleAnalyseLABOp",
                     "parameters": None
                 }
             ]
-        process = LightBoxProcess.from_args(lot=lot,
+        process = LBSampleAnalysisProcess.from_args(lot=lot,
                                             operations=operations)
         process.lot_slot = 0
 

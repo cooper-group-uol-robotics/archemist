@@ -56,7 +56,7 @@ class WaitingStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "wait_for",
+                    "name": "wait_op",
                     "op": "WaitOp",
                     "parameters": {
                         "duration": 5,
