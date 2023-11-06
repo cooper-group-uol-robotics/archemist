@@ -1,12 +1,16 @@
-from .state import YuMiRobotTask
 from archemist.core.state.robot import Robot
-import rospy
-from yumi_task_msgs.msg import YuMiTask, TaskStatus
-from archemist.core.processing.handler import RobotHandler
+from archemist.core.processing.handler import RobotOpHandler
+from archemist.core.util.enums import OpOutcome
 
-class YuMiROSHandler(RobotHandler):
+try:
+    import rospy
+    from yumi_task_msgs.msg import YuMiTask, TaskStatus
+
+class YuMiROSHandler(RobotOpHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
+
+    def initialise(self) -> bool:
         rospy.init_node( f'{self._robot}_handler')
         #TODO robot topic can be set from the config file or even be associated with the robot id
         self._yumi_pub = rospy.Publisher('/yumi/task', YuMiTask, queue_size=1)
@@ -15,22 +19,16 @@ class YuMiROSHandler(RobotHandler):
         self._task_complete = False
         self._op_result = False
         self._task_counter = 0
-
-    def run(self):
         try:
             if self._task_counter == 0:
-                latest_task_msg = rospy.wait_for_message('/yumi/status', TaskStatus,timeout=5)
+                latest_task_msg = rospy.wait_for_message('/yumi/status', TaskStatus, timeout=5)
                 if latest_task_msg.cmd_seq > self._task_counter:
                     self._task_counter = latest_task_msg.cmd_seq
                     rospy.loginfo('relaunched handler while driver running. Task message counter updated.')
-            rospy.loginfo(f'{self._robot}_handler is running')
-            while (not rospy.is_shutdown()):
-                self.handle()
-                rospy.sleep(3)
-        except KeyboardInterrupt:
-            rospy.loginfo(f'{self._robot}_handler is terminating!!!')
-
-
+                rospy.loginfo(f'{self._robot}_handler is running')
+            return True 
+        except rospy.ROSException:
+            return False
 
     def _yumi_task_cb(self, msg: TaskStatus):
         if not self._task_complete and msg.task_name == self._yumi_task.task_name and msg.cmd_seq == self._yumi_task.cmd_seq:
@@ -51,7 +49,7 @@ class YuMiROSHandler(RobotHandler):
         return task
 
     def execute_op(self):
-        robot_op = self._robot.get_assigned_op()
+        robot_op = self._robot.assigned_op
         self._yumi_task = self._process_op(robot_op)
         rospy.loginfo('executing ' + self._yumi_task.task_name)
         self._task_complete = False
@@ -61,5 +59,5 @@ class YuMiROSHandler(RobotHandler):
     def is_op_execution_complete(self) -> bool:
         return self._task_complete
 
-    def get_op_result(self) -> bool:
-        return self._op_result
+    def get_op_result(self) -> OpOutcome:
+        return OpOutcome.SUCCEEDED
