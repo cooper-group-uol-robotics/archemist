@@ -221,7 +221,7 @@ class ProcessFactory:
                             break
 
         if cls:
-            return cls.from_args(lot, operations, **args_dict)
+            return cls.from_args(lot=lot, operations=operations, **args_dict)
         else:
             raise NameError(f"StationProcess type {proc_type} is not defined")
         
