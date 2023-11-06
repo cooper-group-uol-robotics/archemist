@@ -1,232 +1,236 @@
-from .model import (QuantosCatridgeModel, QuantosSolidDispenserQS2Model,
-                    QuantosDispenseOpDescriptorModel, MoveCarouselOpDescriptorModel,
-                    QuantosStatus)
+from .model import (QuantosCartridgeModel, QuantosSolidDispenserQS2Model,
+                    QuantosDispenseOpModel, QuantosMoveCarouselOpModel, QuantosLoadCartridgeOpModel)
+from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy, ListProxy
 from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.state.station_op_result import MaterialOpResult
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationOpDescriptor
-from archemist.core.state.material import Solid, Liquid
-from typing import Dict, List
-from archemist.core.exceptions.exception import QuantosCatridgeLoadedError
-from datetime import datetime
+from archemist.core.state.sample import Sample
+from archemist.core.state.station_op import StationOpDescriptor, StationSampleOpDescriptor
+from archemist.core.util.enums import OpOutcome
+from typing import Dict, Any, Type, Union, List, Literal, Optional
 
-class QuantosCatridge:
-    def __init__(self, catridge_model: QuantosCatridgeModel) -> None:
-        self._model = catridge_model
+class QuantosCartridge:
+    def __init__(self, op_specs_model: Union[QuantosCartridgeModel, EmbedModelProxy]):
+        self._model_proxy = op_specs_model
 
     @classmethod
-    def from_args(cls, id: int, solid: Solid, hotel_index: int, remaining_dosages: int):
-        model = QuantosCatridgeModel()
-        model.exp_id = id
-        model.associated_solid = solid.model
-        model.hotel_index = hotel_index
-        model.remaining_dosages = remaining_dosages
+    def from_dict(cls, cartridge_dict: Dict[str, Any]):
+        model = QuantosCartridgeModel()
+        model.associated_solid = cartridge_dict["associated_solid"]
+        model.hotel_index = cartridge_dict["hotel_index"]
+        model.remaining_dosages = cartridge_dict["remaining_dosages"]
         return cls(model)
 
     @property
-    def model(self) -> QuantosCatridgeModel:
-        return self._model
+    def model(self) -> QuantosCartridgeModel:
+        if isinstance(self._model_proxy, EmbedModelProxy):
+            return self._model_proxy.model
+        else:
+            return self._model_proxy
 
     @property
-    def id(self) -> int:
-        return self._model.exp_id
-
-    @property
-    def associated_solid(self) -> Solid:
-        return Solid(self._model.associated_solid)
+    def associated_solid(self) -> str:
+        return self._model_proxy.associated_solid
 
     @property
     def hotel_index(self) -> int:
-        return self._model.hotel_index
+        return self._model_proxy.hotel_index
 
-    @property
-    def consumed(self) -> bool:
-        return self._model.remaining_dosages == 0
+    def is_consumed(self) -> bool:
+        return self._model_proxy.remaining_dosages == 0
 
     @property
     def blocked(self) -> bool:
-        return self._model.blocked
+        return self._model_proxy.blocked
 
     @property
     def remaining_dosages(self) -> int:
-        return self._model.remaining_dosages
+        return self._model_proxy.remaining_dosages
 
-    def dispense(self, dispense_amount: float):
-        self.associated_solid.mass -= dispense_amount
-        self._model.remaining_dosages -= 1
-
+    @remaining_dosages.setter
+    def remaining_dosages(self, new_value: int):
+        self._model_proxy.remaining_dosages = new_value
 
 class QuantosSolidDispenserQS2(Station):
-    def __init__(self, station_model: QuantosSolidDispenserQS2Model) -> None:
-        self._model = station_model
-        self._loaded_catridge_index = None
+    def __init__(self, station_model: Union[QuantosSolidDispenserQS2Model, ModelProxy]) -> None:
+        super().__init__(station_model)
 
     
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = QuantosSolidDispenserQS2Model()
-        cls._set_model_common_fields(station_dict, model)
-        model._module = cls.__module__
-        parameters = station_dict['parameters']
-        for cat in parameters['catridges']:
-            for solid in solids:
-                if solid.cartridge_id is not None and solid.cartridge_id == cat['id']:
-                    catridge = QuantosCatridge.from_args(id=cat['id'], solid=solid, 
-                                   hotel_index=cat['hotel_index'],
-                                   remaining_dosages=cat['remaining_dosages'])
-                    model.catridges.append(catridge.model)
+        cls._set_model_common_fields(model, station_dict)
+        for cartridge_dict in station_dict['properties']['cartridges']:
+            cartridge = QuantosCartridge.from_dict(cartridge_dict)
+            model.cartridges.append(cartridge.model)
         model.save()
         return cls(model)
 
     @property
     def carousel_pos(self) -> int:
-        self._model.reload('carousel_pos')
-        return self._model.carousel_pos
+        return self._model_proxy.carousel_pos
 
     @carousel_pos.setter
     def carousel_pos(self, new_pos: int):
-        self._model.update(carousel_pos=new_pos)
+        self._model_proxy.carousel_pos = new_pos
 
     @property
-    def current_catridge(self) -> QuantosCatridge:
-        self._model.reload('loaded_ctridge_id')
-        loaded_ctridge_id = self._model.loaded_ctridge_id
-        if loaded_ctridge_id is not None:
-            i = 0
-            for catridge_model in self._model.catridges:
-                if catridge_model.exp_id == loaded_ctridge_id:
-                    self._loaded_catridge_index = i
-                    return QuantosCatridge(catridge_model)
-                i += 1
+    def cartridges(self) -> List[QuantosCartridge]:
+        return ListProxy(self._model_proxy.cartridges, QuantosCartridge)
 
     @property
-    def status(self) -> QuantosStatus:
-        self._model.reload('machine_status')
-        return self._model.machine_status
+    def loaded_cartridge(self) -> QuantosCartridge:
+        cartridge_index = self._model_proxy.loaded_cartridge_index
+        if cartridge_index is not None:
+            return self.cartridges[cartridge_index]
 
-    @status.setter
-    def status(self, new_state: QuantosStatus):
-        self._model.update(machine_status=new_state)
+    @property
+    def door_open(self) -> bool:
+        return self._model_proxy.door_open
 
-    def get_cartridge_id(self, solid_name: str):
-        for catridge_model in self._model.catridges:
-            if catridge_model.associated_solid.name == solid_name:
-                return catridge_model.exp_id
+    @door_open.setter
+    def door_open(self, new_state: bool):
+        self._model_proxy.door_open = new_state
 
-    def load_catridge(self, cartridge_id: int):
-        self._model.reload('loaded_ctridge_id')
-        if self._model.loaded_ctridge_id is None:
-            self._model.update(loaded_ctridge_id=cartridge_id)
-        else:
-            raise QuantosCatridgeLoadedError()
-
-    def unload_current_catridge(self):
-        self._model.reload('loaded_ctridge_id')
-        if self._model.loaded_ctridge_id is not None:
-            self._model.update(unset__loaded_ctridge_id=True)
-        else:
-            print('unloading catridge when no catridge is loaded!!!')
-
-    def dispense(self, dispense_amount: float):
-        current_catridge = self.current_catridge
-        if not current_catridge.consumed and not current_catridge.blocked:
-            current_catridge.dispense(dispense_amount)
-            self._model.update(**{f'catridges__{self._loaded_catridge_index}':current_catridge.model})
-            if current_catridge.consumed:
-                self._log_station(f'the catridge {current_catridge.id} does not have any dosages left anymore. Please replace it.')
-        else:
-            self._log_station(f'Current catridge {current_catridge.id} is either consumed or blocked. Cannot Dispense solid!!!')
-
-    def complete_assigned_station_op(self, success: bool, **kwargs):
-        current_op = self.get_assigned_station_op()
-        if isinstance(current_op, QuantosDispenseOpDescriptor):
-            if success and current_op.solid_name == self.current_catridge.associated_solid.name:
-                if 'actual_dispensed_mass' in kwargs:
-                    self.dispense(kwargs['actual_dispensed_mass'])
+    def _dispense(self):
+        loaded_cartridge = self.loaded_cartridge
+        op = self.assigned_op
+        if loaded_cartridge.associated_solid == op.solid_name:
+            if not loaded_cartridge.is_consumed():
+                if not loaded_cartridge.blocked:
+                    solid = self.solids_dict[op.solid_name]
+                    solid.decrease_mass(op.dispense_mass, op.dispense_unit)
+                    loaded_cartridge.remaining_dosages -= 1
                 else:
-                    self.dispense(current_op.dispense_mass)
-        elif isinstance(current_op, OpenDoorOpDescriptor):
-            self.status = QuantosStatus.DOORS_OPEN
-        elif isinstance(current_op, CloseDoorOpDescriptor):
-            self.status = QuantosStatus.DOORS_CLOSED
-        elif isinstance(current_op, MoveCarouselOpDescriptor):
-            self.carousel_pos = current_op.carousel_pos
-        super().complete_assigned_station_op(success, **kwargs)
+                    self._log_station(f'Current cartridge {loaded_cartridge} is blocked. Cannot Dispense solid!!!')
+            else:
+                self._log_station(f'the cartridge {loaded_cartridge} does not have any dosages left. please replace it.')
+        else:
+            self._log_station("dispense operation target is different from the loaded cartridge")
 
+    def add_station_op(self, station_op: type[StationOpDescriptor]):
+        if isinstance(station_op, QuantosLoadCartridgeOp) and self.loaded_cartridge:
+            self._log_station('Quantos station already has a loaded cartridge!!!')
+            self._log_station(f'station_op {station_op} cannot be added')
+        elif isinstance(station_op, QuantosDispenseOp) and not self.loaded_cartridge:
+            self._log_station('Quantos station do not have a loaded cartridge!!!')
+            self._log_station(f'station_op {station_op} cannot be added')
+        else:
+            return super().add_station_op(station_op)
+
+    def complete_assigned_op(self, outcome: OpOutcome, results: Optional[List[MaterialOpResult]]):
+        current_op = self.assigned_op
+        if isinstance(current_op, QuantosLoadCartridgeOp):
+            for index, cartridge in enumerate(self.cartridges):
+                if cartridge.associated_solid == current_op.solid_name:
+                    self._model_proxy.loaded_cartridge_index = index
+                    break
+        elif isinstance(current_op, QuantosUnloadCartridgeOp):
+            self._model_proxy.loaded_cartridge_index = None
+        elif isinstance(current_op, QuantosOpenDoorOp):
+            self.door_open = True
+        elif isinstance(current_op, QuantosCloseDoorOp):
+            self.door_open = False
+        elif isinstance(current_op, QuantosMoveCarouselOp):
+            self.carousel_pos = current_op.target_pos
+        elif isinstance(current_op, QuantosDispenseOp):
+            self._dispense()
+        super().complete_assigned_op(outcome, results)
+            
 ''' ==== Station Operation Descriptors ==== '''
-class OpenDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel):
-        self._model = op_model
+class QuantosOpenDoorOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls):
         model = StationOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.save()
         return cls(model)
 
-class CloseDoorOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: StationOpDescriptorModel):
-        self._model = op_model
+class QuantosCloseDoorOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
+    def from_args(cls):
         model = StationOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.save()
         return cls(model)
 
-class MoveCarouselOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: MoveCarouselOpDescriptorModel):
-        self._model = op_model
+class QuantosLoadCartridgeOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[QuantosLoadCartridgeOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = MoveCarouselOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
-        model.carousel_pos = kwargs['carousel_pos']
+    def from_args(cls, solid_name: str):
+        model = QuantosLoadCartridgeOpModel()
+        model.solid_name = solid_name
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.save()
+        return cls(model)
+    
+    @property
+    def solid_name(self) -> str:
+        return self._model_proxy.solid_name
+
+class QuantosUnloadCartridgeOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpDescriptorModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.save()
+        return cls(model)
+
+class QuantosMoveCarouselOp(StationOpDescriptor):
+    def __init__(self, op_model: Union[QuantosMoveCarouselOpModel, ModelProxy]):
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, target_pos: int):
+        model = QuantosMoveCarouselOpModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.target_pos = target_pos
+        model.save()
         return cls(model)
 
     @property
-    def carousel_pos(self) -> int:
-        return self._model.carousel_pos
+    def target_pos(self) -> int:
+        return self._model_proxy.target_pos
 
-class QuantosDispenseOpDescriptor(StationOpDescriptor):
-    def __init__(self, op_model: QuantosDispenseOpDescriptorModel) -> None:
-        self._model = op_model
+class QuantosDispenseOp(StationSampleOpDescriptor):
+    def __init__(self, op_model: Union[QuantosDispenseOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, **kwargs):
-        model = QuantosDispenseOpDescriptorModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__, **kwargs)
-        model._type = cls.__name__
-        model._module = cls.__module__
-        model.solid_name = kwargs['solid_name']
-        model.dispense_mass = float(kwargs['dispense_mass'])
+    def from_args(cls,
+                  target_sample: Sample,
+                  solid_name: str,
+                  dispense_mass: float,
+                  dispense_unit: Literal["g", "mg", "ug"]):
+        model = QuantosDispenseOpModel()
+        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        model.target_sample = target_sample.model
+        model.solid_name = solid_name
+        model.dispense_mass = float(dispense_mass)
+        model.dispense_unit = dispense_unit
+        model.save()
         return cls(model)
 
     @property
     def solid_name(self) -> str:
-        return self._model.solid_name
+        return self._model_proxy.solid_name
 
     @property
     def dispense_mass(self) -> float:
-        return self._model.dispense_mass
+        return self._model_proxy.dispense_mass
 
     @property
-    def actual_dispensed_mass(self) -> float:
-        if self._model.has_result and self._model.was_successful:
-            return self._model.actual_dispensed_mass
-
-    def complete_op(self, success: bool, **kwargs):
-        self._model.has_result = True
-        self._model.was_successful = success
-        self._model.end_timestamp = datetime.now()
-        if 'actual_dispensed_mass' in kwargs:
-            self._model.actual_dispensed_mass = kwargs['actual_dispensed_mass']
-        else:
-            print('missing actual dispensed mass!!')
+    def dispense_unit(self) -> Literal["g", "mg", "ug"]:
+        return self._model_proxy.dispense_unit
 

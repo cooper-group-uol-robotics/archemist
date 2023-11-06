@@ -1,144 +1,199 @@
 import unittest
-from datetime import datetime
-
-import mongoengine
+from mongoengine import connect
 
 from archemist.stations.quantos_qs2_station.state import (QuantosSolidDispenserQS2,
-                                                          QuantosStatus,
-                                                          QuantosCatridge,
-                                                          OpenDoorOpDescriptor,
-                                                          CloseDoorOpDescriptor,
-                                                          MoveCarouselOpDescriptor,
-                                                          QuantosDispenseOpDescriptor)
-from archemist.core.state.material import Solid
-from archemist.core.util.enums import StationState
+                                                          QuantosCartridge,
+                                                          QuantosOpenDoorOp,
+                                                          QuantosCloseDoorOp,
+                                                          QuantosLoadCartridgeOp,
+                                                          QuantosUnloadCartridgeOp,
+                                                          QuantosMoveCarouselOp,
+                                                          QuantosDispenseOp)
+from archemist.stations.quantos_qs2_station.handler import SimQuantosSolidDispenserQS2Handler
+from archemist.core.state.station_op_result import MaterialOpResult
+from archemist.core.state.lot import Lot, Batch
+from archemist.core.util.enums import StationState, OpOutcome
+from datetime import date
 
 class QuantosSolidDispenserQS2Test(unittest.TestCase):
     def setUp(self):
-        self.station_doc = {
+        self._db_name = 'archemist_test'
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+
+        station_dict = {
             'type': 'QuantosSolidDispenserQS2',
             'id': 20,
-            'location': {'node_id': 1, 'graph_id': 7},
-            'batch_capacity': 2,
-            'process_batch_capacity': 2,
-            'handler': 'GenericStationHandler',
-            'process_batch_capacity': 2,
-            'process_state_machine': 
-            {
-                'type': '',
-                'args': {}
+            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'total_lot_capacity': 1,
+            'handler': 'SimStationOpHandler',
+            'properties': {
+                'cartridges': [{'associated_solid': "NaCl", 'hotel_index': 1, 'remaining_dosages': 100}]
             },
-            'parameters':{
-                'catridges': [{'id': 31, 'hotel_index': 1, 'remaining_dosages': 100}]
+            'materials': {
+                'solids': [{
+                    'name': 'NaCl',
+                    'amount': 100,
+                    'unit': 'mg',
+                    'expiry_date': date.fromisoformat('2025-02-11'),
+                    'details': None
+                }]
             }
         }
-        solid_dict = {
-            'name': 'salt',
-            'id': 1235,
-            'amount_stored': 2,
-            'unit': 'g',
-            'dispense_src': 'quantos',
-            'cartridge_id': 31,
-            'expiry_date': datetime.fromisoformat('2025-02-11')
-        }
         
-        self.solids_list = []
-        self.solids_list.append(Solid.from_dict(solid_dict))
-        self.station = QuantosSolidDispenserQS2.from_dict(station_dict=self.station_doc, 
-                        liquids=[], solids=self.solids_list)
+        self.station = QuantosSolidDispenserQS2.from_dict(station_dict=station_dict)
         
     def tearDown(self):
-        self.station.model.delete()
+        coll_list = self._client[self._db_name].list_collection_names()
+        for coll in coll_list:
+            self._client[self._db_name][coll].drop()
+
+    def test_quantos_cartrdige(self):
+        cartridge_dict = {'associated_solid': "NaCl", 'hotel_index': 1, 'remaining_dosages': 1}
+        cartridge = QuantosCartridge.from_dict(cartridge_dict)
+        self.assertIsNotNone(cartridge)
+        self.assertEqual(cartridge.associated_solid, "NaCl")
+        self.assertEqual(cartridge.hotel_index, 1)
+        self.assertEqual(cartridge.remaining_dosages, 1)
+        self.assertFalse(cartridge.is_consumed())
+        self.assertFalse(cartridge.blocked)
+        cartridge.remaining_dosages -= 1
+        self.assertEqual(cartridge.remaining_dosages, 0)
+        self.assertTrue(cartridge.is_consumed())
     
     def test_state(self):
         # test station is constructed properly
-        self.assertEqual(self.station.id, self.station_doc['id'])
+        self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
         
         # test station specific methods
+        self.assertEqual(len(self.station.solids_dict), 1)
+        self.assertEqual(self.station.solids_dict["NaCl"].mass, 100)
         self.assertEqual(self.station.carousel_pos,1)
         self.station.carousel_pos = 2
         self.assertEqual(self.station.carousel_pos,2)
+        self.assertFalse(self.station.door_open)
+        self.assertEqual(len(self.station.cartridges), 1)
+        self.assertEqual(self.station.cartridges[0].associated_solid, "NaCl")
+        self.assertIsNone(self.station.loaded_cartridge)
 
-        self.assertIsNone(self.station.status)
-        self.station.status = QuantosStatus.DOORS_OPEN
-        self.assertEqual(self.station.status, QuantosStatus.DOORS_OPEN)
-        self.station.status = QuantosStatus.DOORS_CLOSED
-        self.assertEqual(self.station.status, QuantosStatus.DOORS_CLOSED)
+        # construct lot and add it to station
+        batch_1 = Batch.from_args(2)
+        lot = Lot.from_args([batch_1])
+        self.station.add_lot(lot)
 
-        catridge_id = self.station.get_cartridge_id("salt")
-        self.assertEqual(catridge_id, 31)
-        self.assertIsNone(self.station.current_catridge)
-        self.station.load_catridge(31)
-        current_catridge = self.station.current_catridge
-        self.assertTrue(isinstance(current_catridge, QuantosCatridge))
-        self.assertEqual(current_catridge.hotel_index, 1)
-        self.assertEqual(current_catridge.id, 31)
-        self.assertEqual(current_catridge.remaining_dosages, 100)
-        self.assertEqual(current_catridge.associated_solid.name, self.solids_list[0].name)
-        self.assertEqual(current_catridge.associated_solid.mass, 2)
-        self.assertEqual(current_catridge.associated_solid.mass, self.solids_list[0].mass)
-
-        # test OpenDoorOpDescriptor
-        t_op = OpenDoorOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # test QuantosOpenDoorOp
+        t_op = QuantosOpenDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-        self.assertEqual(self.station.status, QuantosStatus.DOORS_OPEN)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.door_open)
 
-        # test CloseDoorOpDescriptor
-        t_op = CloseDoorOpDescriptor.from_args()
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # test QuantosLoadCartridgeOp
+        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
+        self.assertIsNotNone(t_op)
+        self.assertEqual(t_op.solid_name, "NaCl")
+        self.station.add_station_op(t_op)
+        self.assertEqual(len(self.station._queued_ops), 1)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-        self.assertEqual(self.station.status, QuantosStatus.DOORS_CLOSED)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertIsNotNone(self.station.loaded_cartridge)
+        self.assertEqual(self.station.loaded_cartridge.associated_solid, "NaCl")
 
-        # test MoveCarouselOpDescriptor
-        t_op = MoveCarouselOpDescriptor.from_args(carousel_pos=12)
-        self.assertFalse(t_op.has_result)
-        self.assertEqual(t_op.carousel_pos, 12)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # test unsueccessful QuantosLoadCartridgeOp
+        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
+        self.assertEqual(len(self.station._queued_ops), 0)
+
+        # test QuantosCloseDoorOp
+        t_op = QuantosCloseDoorOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True)
-        ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-        self.assertEqual(self.station.carousel_pos, 12)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(self.station.door_open)
 
-        # test QuantosDispenseOpDescriptor
-        t_op = QuantosDispenseOpDescriptor.from_args(solid_name='salt',dispense_mass=1.2)
-        self.assertFalse(t_op.has_result)
-        self.station.assign_station_op(t_op)
-        self.assertFalse(self.station.has_assigned_station_op())
+        # test QuantosMoveCarouselOp
+        t_op = QuantosMoveCarouselOp.from_args(target_pos=5)
+        self.assertIsNotNone(t_op)
+        self.assertEqual(t_op.target_pos, 5)
+        self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        self.assertTrue(self.station.has_assigned_station_op())
-        self.station.complete_assigned_station_op(True, actual_dispensed_mass=1.193)
-        ret_op = self.station.completed_station_ops.get(str(t_op.uuid))
-        self.assertTrue(ret_op.has_result)
-        self.assertTrue(ret_op.was_successful)
-        self.assertEqual(ret_op.actual_dispensed_mass, 1.193)
-        current_catridge = self.station.current_catridge
-        self.assertEqual(current_catridge.remaining_dosages, 99)
-        self.assertEqual(current_catridge.associated_solid.mass, 2 - 1.193)
-        self.assertEqual(current_catridge.associated_solid.mass, self.solids_list[0].mass)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertIsNotNone(self.station.carousel_pos, 5)
 
-        self.station.unload_current_catridge()
-        self.assertIsNone(self.station.current_catridge)
+        # test QuantosDispenseOp
+        t_op = QuantosDispenseOp.from_args(target_sample=batch_1.samples[0],
+                                           solid_name="NaCl",
+                                           dispense_mass=10,
+                                           dispense_unit="mg")
+        self.assertIsNotNone(t_op)
+        self.assertEqual(t_op.solid_name, "NaCl")
+        self.assertEqual(t_op.dispense_mass, 10)
+        self.assertEqual(t_op.dispense_unit, "mg")
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+
+        result = MaterialOpResult.from_args(origin_op=t_op.object_id,
+                                            material_names=["NaCl"],
+                                            amounts=[10],
+                                            units=["mg"])
+
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, [result])
+        self.assertEqual(self.station.solids_dict["NaCl"].mass, 90)
+        self.assertEqual(self.station.loaded_cartridge.remaining_dosages, 99)
+
+        # test QuantosUnloadCartridgeOp
+        t_op = QuantosUnloadCartridgeOp.from_args()
+        self.assertIsNotNone(t_op)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertIsNone(self.station.loaded_cartridge)
+
+    def test_sim_handler(self):
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimQuantosSolidDispenserQS2Handler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # load cartidge
+        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertIsNone(op_results)
+        self.station.complete_assigned_op(outcome, op_results)
+
+        # dispense solid
+        t_op = QuantosDispenseOp.from_args(target_sample=batch_1.samples[0],
+                                           solid_name="NaCl",
+                                           dispense_mass=10,
+                                           dispense_unit="mg")
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], MaterialOpResult))
+        self.assertEqual(op_results[0].material_names[0], "NaCl")
+        self.assertEqual(op_results[0].amounts[0], 10)
+        self.assertEqual(op_results[0].units[0], "mg")
+
+        self.station.complete_assigned_op(outcome, op_results)
+        self.assertIsNone(op_results)
+        self.station.complete_assigned_op(outcome, op_results)
 
 if __name__ == '__main__':
-    mongoengine.connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')
     unittest.main()
