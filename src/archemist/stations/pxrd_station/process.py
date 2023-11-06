@@ -1,13 +1,15 @@
 from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
+from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
                                            DropBatchOpDescriptor,
                                            CollectBatchOpDescriptor,
                                            RobotWaitOpDescriptor)
-from .state import PXRDAnalysisOp, PXRDOpenDoorOp, PXRDCloseDoorOp
+from .state import PXRDOpenDoorOp, PXRDCloseDoorOp
 from archemist.core.util import Location
 from typing import Union
+from typing import List, Dict, Any
 
 class PXRDWorkflowAnalysisProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -42,19 +44,42 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
             {'source':'close_pxrd_door_update','dest':'final_state', 'conditions':['are_req_station_ops_completed','is_batch_analysed']}
         ]
 
+        if self.data["eight_well_rack_first"]:
+            self.pxrd_batch_index = 1
+        else:
+            self.pxrd_batch_index = 0
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  eight_well_rack_first: bool,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     "Station",
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.data["eight_well_rack_first"] = eight_well_rack_first
+        model.save()
+        return cls(model)
+
     ''' states callbacks '''
     def initialise_process_data(self):
         self.data['batch_analysed'] = False
 
     def request_open_pxrd_door(self):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
-        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="OpenDoors", target_robot="MobileRobot",
-                                                   params=params_dict, target_location=door_loc,
-                                                   target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="MobileRobot", timeout=5)
+        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="OpenDoors", target_robot="KMRIIWARobot",
+                                                   params=params_dict, target_location=door_loc)
+        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([open_door_robot_op, robot_wait_op])
 
     def request_open_pxrd_door_update(self):
@@ -63,13 +88,11 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
 
     def request_close_pxrd_door(self):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
-        target_batch = self.lot.batches[1]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="CloseDoors", target_robot="MobileRobot",
-                                                   params=params_dict, target_location=door_loc,
-                                                   target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="MobileRobot", timeout=5)
+        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="CloseDoors", target_robot="KMRIIWARobot",
+                                                   params=params_dict, target_location=door_loc)
+        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([open_door_robot_op, robot_wait_op])
 
     def request_close_pxrd_door_update(self):
@@ -77,26 +100,26 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_load_pxrd(self):
-        target_batch = self.lot.batches[1]
+        target_batch = self.lot.batches[self.pxrd_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        load_pxrd_robot_op = DropBatchOpDescriptor.from_args(name="LoadPXRD", target_robot="MobileRobot",
+        load_pxrd_robot_op = DropBatchOpDescriptor.from_args(name="LoadPXRD", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="MobileRobot", timeout=5)
+        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([load_pxrd_robot_op, robot_wait_op])
 
     def request_unload_pxrd(self):
-        target_batch = self.lot.batches[1]
+        target_batch = self.lot.batches[self.pxrd_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        unload_pxrd_robot_op = CollectBatchOpDescriptor.from_args(name="UnloadPXRD", target_robot="MobileRobot",
+        unload_pxrd_robot_op = CollectBatchOpDescriptor.from_args(name="UnloadPXRD", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="MobileRobot", timeout=5)
+        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([unload_pxrd_robot_op, robot_wait_op])
 
     def request_pxrd_process(self):
-        batch = self.lot.batches[1]
-        current_op = self.generate_operation("analyse", target_batch=batch)
+        batch = self.lot.batches[self.pxrd_batch_index]
+        current_op = self.generate_operation("analyse_op", target_batch=batch)
         self.request_station_op(current_op)
         self.data['batch_analysed'] = True
 

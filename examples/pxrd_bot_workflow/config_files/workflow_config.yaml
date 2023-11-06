@@ -1,0 +1,163 @@
+# ============ Workflow Configuration ============
+#
+# general: this section describes the workflow general settings
+#   name: the given workflow name
+
+general:
+  name: pxrd_bot_workflow
+
+# ============ Workflow Input Configuration ============
+#
+# workflow_input: this section describes the workflow lot input settings
+#   location: location of the input site
+#   samples_per_batch: number of samples in a single batch
+#   batches_per_lot: number of batch in a single lot
+#   total_lot_capacity: maximum number of lot that can be stored 
+#                       at the input site
+#   lot_input_process: define the process used to input lots into the workflow
+#     type: the process's class name as defined in archemist.processes.X
+#         note that X stands for the process's given module found in archemist's 
+#         processes module
+#     args: arguments to construct the lot input process if needed
+
+workflow_input:
+  location:
+    coordinates: [21,1]
+    descriptor: InputSite
+  samples_per_batch: 2
+  batches_per_lot: 2
+  total_lot_capacity: 1
+  lot_input_process:
+    type: BasicLotInputProcess
+    args:
+      target_mobile_robot: KMRIIWARobot
+
+# ============ Workflow Output Configuration ============
+#
+# workflow_output: this section describes the workflow lot output settings
+#   location: location of the output site
+#   total_lot_capacity: maximum number of lot that can be stored 
+#                       at the output site
+#   lots_need_manual_removal: specify whether the lots need to be manually removed
+#                             from the output site
+#   lot_output_process: define the process used to output lots into the workflow
+#     type: the process's class name as defined in archemist.processes.X
+#         note that X stands for the process's given module found in archemist's 
+#         processes module
+#     args: arguments to construct the lot output process if needed
+
+workflow_output:
+  location:
+    coordinates: [22,1]
+    descriptor: OutputSite
+  total_lot_capacity: 1
+  lots_need_manual_removal: True
+  lot_output_process:
+    type: BasicLotOutputProcess
+    args:
+      target_mobile_robot: KMRIIWARobot
+
+# robots: this section describes the robots used in the workflow
+#   type: the robot's class name as defined in archemist.robots.X.state 
+#         note that X stands for the robot's given module found in archemist's robots 
+#         module
+#   id: the robot unique workflow id
+#   handler: robot handler class name as defined in archemist.robots.X.handler
+#   total_lot_capacity: the max number of lots the robot can carry/handle at a time
+#                       only needed if robot of type MobileRobot
+#   onboard_capacity: the max number of batches the robot can carry/handle at a time
+#                       only needed if robot of type MobileRobot
+#   location: location of the robot if available
+#
+# for every robot used in the workflow, add a new entry and fill its fields as defined
+
+robots:
+  - type: KMRIIWARobot
+    id: 1
+    handler: SimRobotOpHandler
+    total_lot_capacity: 1
+    onboard_capacity: 2
+  - type: YuMiRobot
+    id: 2
+    handler: SimRobotOpHandler
+
+# stations: this section describes the stations used in the workflow
+#   type: the station's class name as defined in archemist.stations.X.state
+#         note that X stands for the stations's given module found in archemist's 
+#         stations module
+#   id: the station unique workflow id
+#   location: station's location defined in terms of x,y coordinates and string descriptor 
+#   total_lot_capacity: number of lots the station can handle at a time
+#   handler: station handler class name as defined in archemist.stations.X.handler
+#   properties: any additional properties need to be passed to the station when initialized
+#   materials: this section describes the materials used in the station
+#     liquids:
+#       name: the liquid name
+#       amount: the liquid stored amount
+#       unit: measurement unit representing stored amount, accepted units L, mL, uL,m3, cm3, mm3
+#       density: liquid density
+#       density_unit: measurement unit representing liquid density
+#       details: all other liquid details such as its source, colour, etc. 
+#       expiry_date: expiry date of the liquid
+#     solids:
+#       name: the solid name
+#       amount: the solid stored amount
+#       unit: the unit representing stored amount, accepted units g, mg, ug, kg
+#       details: all other solid details such as its source, colour, etc.
+#       expiry_date: expiry date of the solid
+#
+# for every station used in the workflow, add a new entry and fill its fields as defined
+
+stations:
+  - type: ChemSpeedFlexStation
+    id: 11
+    location:
+      coordinates: [25,1]
+      descriptor: chemspeed_flex
+    total_lot_capacity: 1
+    handler: SimChemSpeedFlexHandler
+    properties: Null
+    materials:
+      liquids:
+        - name: solvent_A
+          amount: 5000
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details: Null
+          expiry_date: 31/03/2023
+        - name: solvent_B
+          amount: 500
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details: Null
+          expiry_date: 31/03/2023
+  - type: IKADigitalPlateStation
+    id: 12
+    location:
+      coordinates: [27,1]
+      descriptor: yumi_table
+    total_lot_capacity: 1
+    handler: SimIKAPlateDigitalHandler
+    materials: Null
+    properties:
+      rgb_target_index: 123
+  - type: ShakerPlateStation
+    id: 13
+    location:
+      coordinates: [27,1]
+      descriptor: yumi_table
+    total_lot_capacity: 1
+    handler: SimShakePlateHandler
+    properties: Null
+    materials: Null
+  - type: PXRDStation
+    id: 14
+    location:
+      coordinates: [18,1]
+      descriptor: panalytical_pxrd
+    total_lot_capacity: 1
+    handler: SimPXRDStationHandler
+    properties: Null
+    materials: Null

@@ -100,12 +100,14 @@ class PXRDStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "analyse",
+                    "name": "analyse_op",
                     "op": "PXRDAnalysisOp",
                     "parameters": None
                 }
             ]
-        process = PXRDWorkflowAnalysisProcess.from_args(lot=lot, operations=operations)
+        process = PXRDWorkflowAnalysisProcess.from_args(lot=lot,
+                                                        eight_well_rack_first=True,
+                                                        operations=operations)
         process.lot_slot = 0
 
         # assert initial state

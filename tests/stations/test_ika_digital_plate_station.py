@@ -124,7 +124,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "stir_samples",
+                    "name": "stir_op",
                     "op": "IKAStirBatchOp",
                     "parameters": {
                         "target_stirring_speed": 500,
@@ -134,6 +134,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
                 }
             ]
         process = PXRDWorkflowStirringProcess.from_args(lot=lot,
+                                            eight_well_rack_first=True,
                                             operations=operations)
         process.lot_slot = 0
 
