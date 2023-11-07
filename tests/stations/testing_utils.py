@@ -28,3 +28,14 @@ def test_req_station_op(test_case: TestCase,
     dummy_results = [StationOpResult.from_args(station_op.object_id)]
     station_op.complete_op(OpOutcome.SUCCEEDED, dummy_results)
 
+def test_req_station_proc(test_case: TestCase,
+                       process: Type[StationProcess],
+                       expected_proc: type
+                       ):
+    test_case.assertEqual(process.status, ProcessStatus.REQUESTING_STATION_PROCS)
+    process.switch_to_waiting()
+    station_proc = process.req_station_procs[0]
+    test_case.assertIsInstance(station_proc, expected_proc)
+    station_proc._model_proxy.status = ProcessStatus.FINISHED
+
+
