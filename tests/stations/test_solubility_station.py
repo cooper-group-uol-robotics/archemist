@@ -7,7 +7,7 @@ from archemist.stations.solubility_station.state import (SolubilityStation,
                                                          CheckSolubilityOp,
                                                          SolubilityState,
                                                          SolubilityOpResult)
-from archemist.stations.solubility_station.process import SolubilityStationProcess
+from archemist.stations.solubility_station.process import SolubilityStationProcess, PandaCheckSolubilityProcess
 from archemist.stations.solubility_station.handler import SimSolubilityStationHandler
 from archemist.core.util.enums import ProcessStatus, OpOutcome, StationState
 from archemist.core.state.robot_op import RobotTaskOpDescriptor
@@ -115,6 +115,44 @@ class SolubilityStationTest(unittest.TestCase):
             self.assertEqual(process.m_state, 'update_batch_index')
             self.assertEqual(process.data['batch_index'], i+1)
             self.assertEqual(process.data['sample_index'], 0)
+
+        # final_state
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_panda_check_solubility_process(self):
+        num_samples = 1
+        batch_1 = Batch.from_args(num_samples)
+        lot = Lot.from_args([batch_1])
+        
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # create station process
+        operations = [
+                {
+                    "name": "check_solubility_op",
+                    "op": "CheckSolubilityOp",
+                    "parameters": None
+                }
+            ]
+        process = PandaCheckSolubilityProcess.from_args(lot=lot,
+                                            operations=operations)
+        process.lot_slot = 0
+
+        # assert initial state
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
+
+        # prep_state
+        process.tick()
+        self.assertEqual(process.m_state, 'prep_state')
+
+        # check_solubility
+        process.tick()
+        self.assertEqual(process.m_state, 'check_solubility')
+        test_req_station_op(self, process, CheckSolubilityOp)
 
         # final_state
         process.tick()

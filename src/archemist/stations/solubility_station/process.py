@@ -1,8 +1,11 @@
 from typing import Union
 from transitions import State
+from .state import SolubilityStation
+from archemist.core.state.lot import Lot
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOpDescriptor
 from archemist.core.state.station_process import StationProcess, StationProcessModel
+from typing import List, Dict, Any
 
 class SolubilityStationProcess(StationProcess):
     
@@ -31,6 +34,24 @@ class SolubilityStationProcess(StationProcess):
             { 'source':'update_batch_index','dest':'load_sample', 'unless':'are_all_batches_processed'},
             { 'source':'update_batch_index','dest':'final_state', 'conditions':'are_all_batches_processed'},
         ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     SolubilityStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
         
     ''' states callbacks '''
 
@@ -84,3 +105,45 @@ class SolubilityStationProcess(StationProcess):
 
     def are_all_batches_processed(self):
         return self.data['batch_index'] == self.lot.num_batches
+
+class PandaCheckSolubilityProcess(StationProcess):
+    def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
+        super().__init__(process_model)
+        
+        ''' States '''
+        self.STATES = [ State(name='init_state'),
+            State(name='prep_state'),
+            State(name='check_solubility', on_enter='request_check_solubility'),
+            State(name='final_state')]
+
+        ''' Transitions '''
+        self.TRANSITIONS = [
+            {'source':'init_state', 'dest': 'prep_state'},
+            {'source':'prep_state','dest':'check_solubility'},
+            {'source':'check_solubility','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+        ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     SolubilityStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
+
+    ''' states callbacks '''
+
+    def request_check_solubility(self):
+        sample = self.lot.batches[0].samples[0]
+        current_op = self.generate_operation("check_solubility_op", target_sample=sample)
+        self.request_station_op(current_op)
