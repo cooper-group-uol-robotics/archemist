@@ -1,12 +1,14 @@
 from transitions import State
+from .state import ChemSpeedFlexStation
 from archemist.core.persistence.models_proxy import ModelProxy
+from archemist.core.state.lot import Lot
 from archemist.core.state.robot_op import (CollectBatchOpDescriptor,
                                            DropBatchOpDescriptor,
                                            RobotNavOpDescriptor,
                                            RobotWaitOpDescriptor)
 from .state import CSCloseDoorOp, CSOpenDoorOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
-from typing import Union
+from typing import Union, List, Dict, Any
 
 class CMFlexLiquidDispenseProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -38,6 +40,24 @@ class CMFlexLiquidDispenseProcess(StationProcess):
             {'source':'unload_lot','dest':'close_chemspeed_door', 'conditions':'are_req_robot_ops_completed'},
             {'source':'retreat_from_chemspeed','dest':'final_state', 'conditions':['are_req_robot_ops_completed','is_dispense_finished']}
         ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     ChemSpeedFlexStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
 
     ''' states callbacks '''
 

@@ -1,8 +1,11 @@
 from typing import Union
 from transitions import State
+from archemist.core.state.lot import Lot
+from .state import LightBoxStation
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOpDescriptor, RobotWaitOpDescriptor
 from archemist.core.state.station_process import StationProcess, StationProcessModel
+from typing import List, Dict, Any
 
 class LBSampleAnalysisProcess(StationProcess):
     
@@ -30,6 +33,24 @@ class LBSampleAnalysisProcess(StationProcess):
             { 'source':'update_batch_index','dest':'load_sample', 'unless':'are_all_batches_processed'},
             { 'source':'update_batch_index','dest':'final_state', 'conditions':'are_all_batches_processed'},
         ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     LightBoxStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
         
     ''' states callbacks '''
 

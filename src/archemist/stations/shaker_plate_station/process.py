@@ -1,6 +1,7 @@
 from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
+from .state import ShakerPlateStation
 from archemist.core.state.robot_op import RobotTaskOpDescriptor, CollectBatchOpDescriptor
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
@@ -49,7 +50,7 @@ class PXRDWorkflowShakingProcess(StationProcess):
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
-                                     "Station",
+                                     ShakerPlateStation.__name__,
                                      lot,
                                      operations,
                                      skip_robot_ops,

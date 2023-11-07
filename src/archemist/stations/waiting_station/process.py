@@ -1,10 +1,11 @@
 
 from transitions import State
 from archemist.core.state.robot_op import DropBatchOpDescriptor, CollectBatchOpDescriptor
-from .state import WaitOp
+from .state import WaitOp, WaitingStation
+from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.persistence.models_proxy import ModelProxy
-from typing import Union
+from typing import Union, List, Dict, Any
 
 class WaitingStationProcess(StationProcess):
     
@@ -27,6 +28,24 @@ class WaitingStationProcess(StationProcess):
             {'source':'waiting_process','dest':'unload_lot', 'conditions':'are_req_station_ops_completed'},
             {'source':'unload_lot','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
         ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     WaitingStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
 
     ''' states callbacks '''
 

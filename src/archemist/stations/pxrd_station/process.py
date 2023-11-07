@@ -6,7 +6,7 @@ from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
                                            DropBatchOpDescriptor,
                                            CollectBatchOpDescriptor,
                                            RobotWaitOpDescriptor)
-from .state import PXRDOpenDoorOp, PXRDCloseDoorOp
+from .state import PXRDOpenDoorOp, PXRDCloseDoorOp, PXRDStation
 from archemist.core.util import Location
 from typing import Union
 from typing import List, Dict, Any
@@ -59,7 +59,7 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
-                                     "Station",
+                                     PXRDStation.__name__,
                                      lot,
                                      operations,
                                      skip_robot_ops,
