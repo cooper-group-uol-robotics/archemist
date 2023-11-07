@@ -1,5 +1,5 @@
 from archemist.core.state.station import Station
-from .state import IKAHeatStirBatchOp, IKAHeatBatchOp, IKAStirBatchOp
+from .state import IKAHeatStirBatchOp, IKAHeatBatchOp, IKAStirBatchOp, IKAStopOp
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from archemist.core.util.enums import OpOutcome
 from archemist.core.state.station_op_result import ProcessOpResult
@@ -26,6 +26,8 @@ class SimIKAPlateDigitalHandler(SimStationOpHandler):
             parameters["target_temperature"]  = current_op.target_temperature
             parameters["duration"]  = current_op.duration
             parameters["time_unit"]  = current_op.time_unit
+        elif isinstance(current_op, IKAStopOp):
+            return OpOutcome.SUCCEEDED, None 
         op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
                                                 parameters=parameters)
         return OpOutcome.SUCCEEDED, [op_result]
@@ -60,18 +62,23 @@ try:
                 for i in range(10):
                     self._ika_pub.publish(ika_command= IKACommand.HEATAT, ika_param=current_op.target_temperature)
                     self._ika_pub.publish(ika_command= IKACommand.STIRAT, ika_param=current_op.target_stirring_speed)
+            elif isinstance(current_op, IKAStopOp):
+                rospy.loginfo("stopping operation")
+                for i in range(10):
+                    self._ika_pub.publish(ika_command= IKACommand.ALLOFF)
             else:
                 rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
-            if current_op.time_unit == "second":
-                total_seconds = current_op.duration,
-            elif current_op.time_unit == "minute":
-                total_seconds = current_op.duration,*60
-            elif current_op.time_unit == "hour":
-                total_seconds = current_op.duration,*60*60
-            
-            self._timer_thread = Thread(target=self._sleep_for_duration, args=[total_seconds])
-            self._timer_thread.start()
+            if current_op.duration > 0:
+                if current_op.time_unit == "second":
+                    total_seconds = current_op.duration,
+                elif current_op.time_unit == "minute":
+                    total_seconds = current_op.duration,*60
+                elif current_op.time_unit == "hour":
+                    total_seconds = current_op.duration,*60*60
+                
+                self._timer_thread = Thread(target=self._sleep_for_duration, args=[total_seconds])
+                self._timer_thread.start()
 
 
         def is_op_execution_complete(self) -> bool:
@@ -96,6 +103,9 @@ try:
                 parameters["target_temperature"]  = current_op.target_temperature
                 parameters["duration"]  = current_op.duration
                 parameters["time_unit"]  = current_op.time_unit
+            elif isinstance(current_op, IKAStopOp):
+                return OpOutcome.SUCCEEDED, None 
+
             op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
                                                   parameters=parameters)
             return OpOutcome.SUCCEEDED, [op_result]

@@ -1,17 +1,20 @@
 import unittest
+from time import sleep
 from mongoengine import connect
+from bson.objectid import ObjectId
 
 from archemist.stations.ika_digital_plate_station.state import (IKADigitalPlateStation, IKADigitalPlateMode, 
                                                                 IKAHeatStirBatchOp,
                                                                 IKAStirBatchOp,
-                                                                IKAHeatBatchOp)
-from archemist.stations.ika_digital_plate_station.process import PXRDWorkflowStirringProcess
+                                                                IKAHeatBatchOp,
+                                                                IKAStopOp)
+from archemist.stations.ika_digital_plate_station.process import PXRDWorkflowStirringProcess, PandaIKASolubilityProcess
 from archemist.stations.ika_digital_plate_station.handler import SimIKAPlateDigitalHandler
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from archemist.core.state.robot_op import DropBatchOpDescriptor, RobotTaskOpDescriptor
-from .testing_utils import test_req_station_op, test_req_robot_ops
+from .testing_utils import test_req_station_op, test_req_robot_ops, test_req_station_proc
 
 class IKADigitalPlateStationTest(unittest.TestCase):
     def setUp(self):
@@ -113,6 +116,29 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(self.station.mode)
 
+        # test IKAHeatBatchOp with no duration
+        t_op = IKAHeatBatchOp.from_args(target_batch=batch_1,
+                                        target_temperature=100,
+                                        duration=-1,
+                                        time_unit=None)
+        
+        self.assertEqual(t_op.target_temperature, 100)
+        self.assertEqual(t_op.duration, -1)
+        
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.assertTrue(self.station.mode, IKADigitalPlateMode.HEATING)
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.mode, IKADigitalPlateMode.HEATING)
+
+        # test IKAStopOp
+        t_op = IKAStopOp.from_args()
+        
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertIsNone(self.station.mode)
+
     def test_pxrd_workflow_process(self):
         batch_1 = Batch.from_args(3)
         batch_2 = Batch.from_args(3)
@@ -160,6 +186,109 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'stir')
         test_req_station_op(self, process, IKAStirBatchOp)
+
+        # final_state
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_panda_solubility_process(self):
+        batch_1 = Batch.from_args(1)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # create station process
+        operations = [
+                {
+                    "name": "stir_heat_op",
+                    "op": "IKAHeatStirBatchOp",
+                    "parameters": {
+                        "target_temperature": 100,
+                        "target_stirring_speed": 500,
+                        "duration": -1,
+                        "time_unit": "second"
+                    }
+                },
+                {
+                    "name": "stop_op",
+                    "op": "IKAStopOp",
+                    "parameters": None
+                }
+            ]
+        process = PandaIKASolubilityProcess.from_args(lot=lot,
+                                            operations=operations)
+        process.lot_slot = 0
+
+        # assert initial state
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
+
+        # prep_state
+        process.tick()
+        self.assertEqual(process.m_state, 'prep_state')
+        self.assertIsNone(process.data['start_time'])
+
+        # load_ika_plate
+        process.tick()
+        self.assertEqual(process.m_state, 'load_ika_plate')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+
+        # start_stirring_heating
+        process.tick()
+        self.assertEqual(process.m_state, 'start_stirring_heating')
+        test_req_station_op(self, process, IKAHeatStirBatchOp)
+
+        # sleep
+        process.tick()
+        self.assertEqual(process.m_state, 'sleep')
+        sleep(2)
+
+        # check_solubility
+        process.tick()
+        self.assertEqual(process.m_state, 'check_solubility')
+        from archemist.stations.solubility_station.process import PandaCheckSolubilityProcess
+        test_req_station_proc(self, process, PandaCheckSolubilityProcess)
+
+        # manually add solubility result to advance state
+        from archemist.stations.solubility_station.state import SolubilityOpResult, SolubilityState
+        solubility_result = SolubilityOpResult.from_args(origin_op=ObjectId(),
+                                                         solubility_state=SolubilityState.UNDISSOLVED,
+                                                         result_filename="some_file.png")
+        batch_1.samples[0].add_result_op(solubility_result)
+
+        # liquid_addition
+        process.tick()
+        self.assertEqual(process.m_state, 'liquid_addition')
+        from archemist.stations.peristaltic_pumps_station.process import PandaPumpSolubilityProcess
+        test_req_station_proc(self, process, PandaPumpSolubilityProcess)
+
+        # sleep
+        process.tick()
+        self.assertEqual(process.m_state, 'sleep')
+        sleep(2)
+
+        # check_solubility
+        process.tick()
+        self.assertEqual(process.m_state, 'check_solubility')
+        test_req_station_proc(self, process, PandaCheckSolubilityProcess)
+
+        # manually add solubility result to advance state
+        solubility_result = SolubilityOpResult.from_args(origin_op=ObjectId(),
+                                                         solubility_state=SolubilityState.DISSOLVED,
+                                                         result_filename="some_file.png")
+        batch_1.samples[0].add_result_op(solubility_result)
+
+        # stop_stirring_heating
+        process.tick()
+        self.assertEqual(process.m_state, 'stop_stirring_heating')
+        test_req_station_op(self, process, IKAStopOp)
+
+        # unload_ika_plate
+        process.tick()
+        self.assertEqual(process.m_state, 'unload_ika_plate')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
 
         # final_state
         process.tick()
