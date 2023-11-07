@@ -5,10 +5,13 @@ from mongoengine import connect
 
 from archemist.stations.peristaltic_pumps_station.state import (PeristalticPumpsStation,
                                                                 PPLiquidDispenseOp)
-from archemist.core.util.enums import StationState, OpOutcome
+from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from archemist.stations.peristaltic_pumps_station.handler import SimPeristalticPumpsStationHandler
+from archemist.stations.peristaltic_pumps_station.process import PandaPumpSolubilityProcess
+from archemist.core.state.robot_op import RobotTaskOpDescriptor
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult
+from .testing_utils import test_req_robot_ops, test_req_station_op
 
 class PeristalticLiquidDispensingTest(unittest.TestCase):
     def setUp(self):
@@ -16,7 +19,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
         station_dict = {
-            'type': 'PeristalticLiquidDispensing',
+            'type': 'PeristalticPumpsStation',
             'id': 20,
             'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
             'total_lot_capacity': 1,
@@ -79,6 +82,59 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, [op_result])
         self.assertEqual(self.station.liquids_dict["water"].volume, 300)
         self.assertEqual(self.station.liquids_dict["water"].volume_unit, "mL")
+
+    def test_solubility_process(self):
+        
+        batch = Batch.from_args(2)
+        lot = Lot.from_args([batch])
+        
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # create station process
+        operations = [
+                {
+                    "name": "dispense_op",
+                    "op": "PPLiquidDispenseOp",
+                    "parameters": {
+                        "liquid_name": "water",
+                        "dispense_volume": 10,
+                        "dispense_unit": "mL"
+                    }
+                }
+            ]
+        process = PandaPumpSolubilityProcess.from_args(lot=lot,
+                                                operations=operations)
+        process.lot_slot = 0
+
+        # assert initial state
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
+
+        # prep_state
+        process.tick()
+        self.assertEqual(process.status, ProcessStatus.RUNNING)
+        self.assertEqual(process.m_state, 'prep_state')
+
+        # move_dispense_head
+        process.tick()
+        self.assertEqual(process.m_state, 'move_dispense_head')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+
+        # dispense_liquid
+        process.tick()
+        self.assertEqual(process.m_state, 'dispense_liquid')
+        test_req_station_op(self, process, PPLiquidDispenseOp)
+
+        # replace_dispense_head
+        process.tick()
+        self.assertEqual(process.m_state, 'replace_dispense_head')
+        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+
+        # final_state
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
 
     def test_sim_handler(self):
         batch_1 = Batch.from_args(3)
