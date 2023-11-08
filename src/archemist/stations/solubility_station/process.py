@@ -3,7 +3,7 @@ from transitions import State
 from .state import SolubilityStation
 from archemist.core.state.lot import Lot
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
 
@@ -64,7 +64,7 @@ class SolubilityStationProcess(StationProcess):
         params_dict["sample_index"] = self.data['sample_index'] + 1
         params_dict["batch_index"] = self.data['batch_index'] + 1
         target_batch = self.lot.batches[self.data['batch_index']]
-        robot_task = RobotTaskOpDescriptor.from_args(name='PresentVial',
+        robot_task = RobotTaskOp.from_args(name='PresentVial',
                                                      target_robot="FixedRobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)
@@ -75,7 +75,7 @@ class SolubilityStationProcess(StationProcess):
         params_dict["sample_index"] = self.data['sample_index'] + 1
         params_dict["batch_index"] = self.data['batch_index'] + 1
         target_batch = self.lot.batches[self.data['batch_index']]
-        robot_task = RobotTaskOpDescriptor.from_args(name='ReturnVial',
+        robot_task = RobotTaskOp.from_args(name='ReturnVial',
                                                      target_robot="FixedRobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)

@@ -4,7 +4,7 @@ from mongoengine import connect
 
 from archemist.stations.waiting_station.state import WaitingStation, WaitOp
 from archemist.stations.waiting_station.process import WaitingStationProcess
-from archemist.core.state.robot_op import DropBatchOpDescriptor, CollectBatchOpDescriptor
+from archemist.core.state.robot_op import DropBatchOp, CollectBatchOp
 from archemist.core.state.station_op_result import ProcessOpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -82,7 +82,7 @@ class WaitingStationTest(unittest.TestCase):
         # load_lot
         process.tick()
         self.assertEqual(process.m_state, 'load_lot')
-        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [DropBatchOp]*2)
 
         # waiting_process
         process.tick()
@@ -94,7 +94,7 @@ class WaitingStationTest(unittest.TestCase):
         # unload_lot
         process.tick()
         self.assertEqual(process.m_state, 'unload_lot')
-        test_req_robot_ops(self, process, [CollectBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [CollectBatchOp]*2)
 
         # final_state
         process.tick()

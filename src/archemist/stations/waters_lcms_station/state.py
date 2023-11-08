@@ -9,9 +9,9 @@ from .model import (WatersLCMSStationModel,
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.batch import Batch
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.state.station_op_result import StationOpResult
-from archemist.core.state.station_op import StationOpDescriptor, StationBatchOpDescriptor
+from archemist.core.state.station_op import StationOp, StationBatchOp
 from typing import Dict, Union, List, Optional
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
@@ -66,7 +66,7 @@ class WatersLCMSStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
-class LCMSBayOccupiedOp(StationOpDescriptor):
+class LCMSBayOccupiedOp(StationOp):
     def __init__(self, op_model: Union[LCMSBayOccupiedOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -82,7 +82,7 @@ class LCMSBayOccupiedOp(StationOpDescriptor):
     def bay_index(self) -> int:
         return self._model_proxy.bay_index
 
-class LCMSBayFreedOp(StationOpDescriptor):
+class LCMSBayFreedOp(StationOp):
     def __init__(self, op_model: Union[LCMSBayFreedOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -98,7 +98,7 @@ class LCMSBayFreedOp(StationOpDescriptor):
     def bay_index(self) -> int:
         return self._model_proxy.bay_index
 
-class LCMSInsertBatchOp(StationBatchOpDescriptor):
+class LCMSInsertBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[LCMSInsertBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -115,7 +115,7 @@ class LCMSInsertBatchOp(StationBatchOpDescriptor):
     def bay_index(self) -> int:
         return self._model_proxy.bay_index
 
-class LCMSEjectBatchOp(StationBatchOpDescriptor):
+class LCMSEjectBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[LCMSEjectBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -132,13 +132,13 @@ class LCMSEjectBatchOp(StationBatchOpDescriptor):
     def bay_index(self) -> int:
         return self._model_proxy.bay_index
 
-class LCMSAnalysisOp(StationOpDescriptor):
-    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+class LCMSAnalysisOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)

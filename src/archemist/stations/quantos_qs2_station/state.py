@@ -1,11 +1,11 @@
 from .model import (QuantosCartridgeModel, QuantosSolidDispenserQS2Model,
                     QuantosDispenseOpModel, QuantosMoveCarouselOpModel, QuantosLoadCartridgeOpModel)
 from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy, ListProxy
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.state.station_op_result import MaterialOpResult
 from archemist.core.state.station import Station
 from archemist.core.state.sample import Sample
-from archemist.core.state.station_op import StationOpDescriptor, StationSampleOpDescriptor
+from archemist.core.state.station_op import StationOp, StationSampleOp
 from archemist.core.util.enums import OpOutcome
 from typing import Dict, Any, Type, Union, List, Literal, Optional
 
@@ -108,7 +108,7 @@ class QuantosSolidDispenserQS2(Station):
         else:
             self._log_station("dispense operation target is different from the loaded cartridge")
 
-    def add_station_op(self, station_op: type[StationOpDescriptor]):
+    def add_station_op(self, station_op: type[StationOp]):
         if isinstance(station_op, QuantosLoadCartridgeOp) and self.loaded_cartridge:
             self._log_station('Quantos station already has a loaded cartridge!!!')
             self._log_station(f'station_op {station_op} cannot be added')
@@ -138,29 +138,29 @@ class QuantosSolidDispenserQS2(Station):
         super().complete_assigned_op(outcome, results)
             
 ''' ==== Station Operation Descriptors ==== '''
-class QuantosOpenDoorOp(StationOpDescriptor):
-    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+class QuantosOpenDoorOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
 
-class QuantosCloseDoorOp(StationOpDescriptor):
-    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+class QuantosCloseDoorOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
 
-class QuantosLoadCartridgeOp(StationOpDescriptor):
+class QuantosLoadCartridgeOp(StationOp):
     def __init__(self, op_model: Union[QuantosLoadCartridgeOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -176,18 +176,18 @@ class QuantosLoadCartridgeOp(StationOpDescriptor):
     def solid_name(self) -> str:
         return self._model_proxy.solid_name
 
-class QuantosUnloadCartridgeOp(StationOpDescriptor):
-    def __init__(self, op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+class QuantosUnloadCartridgeOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
 
-class QuantosMoveCarouselOp(StationOpDescriptor):
+class QuantosMoveCarouselOp(StationOp):
     def __init__(self, op_model: Union[QuantosMoveCarouselOpModel, ModelProxy]):
         super().__init__(op_model)
 
@@ -203,7 +203,7 @@ class QuantosMoveCarouselOp(StationOpDescriptor):
     def target_pos(self) -> int:
         return self._model_proxy.target_pos
 
-class QuantosDispenseOp(StationSampleOpDescriptor):
+class QuantosDispenseOp(StationSampleOp):
     def __init__(self, op_model: Union[QuantosDispenseOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 

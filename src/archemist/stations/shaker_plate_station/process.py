@@ -2,7 +2,7 @@ from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
 from .state import ShakerPlateStation
-from archemist.core.state.robot_op import RobotTaskOpDescriptor, CollectBatchOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp, CollectBatchOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
 
@@ -64,7 +64,7 @@ class PXRDWorkflowShakingProcess(StationProcess):
 
     def request_load_shaker_plate(self):
         batch_1 = self.lot.batches[self.eight_well_batch_index]
-        robot_op = RobotTaskOpDescriptor.from_args(name='invertAndLoadShakerPlate', target_robot="YuMiRobot",
+        robot_op = RobotTaskOp.from_args(name='invertAndLoadShakerPlate', target_robot="YuMiRobot",
                                                    target_batch=batch_1)
         
         self.request_robot_ops([robot_op])
@@ -76,14 +76,14 @@ class PXRDWorkflowShakingProcess(StationProcess):
 
     def request_unload_shaker_plate(self):
         batch_1 = self.lot.batches[self.eight_well_batch_index]
-        robot_op = RobotTaskOpDescriptor.from_args(name='invertAndLoadWellPlate', target_robot="YuMiRobot",
+        robot_op = RobotTaskOp.from_args(name='invertAndLoadWellPlate', target_robot="YuMiRobot",
                                                    target_batch=batch_1)
         
         self.request_robot_ops([robot_op])
 
     def request_unscrew_caps(self):
         batch_1 = self.lot.batches[self.eight_well_batch_index]
-        robot_op = RobotTaskOpDescriptor.from_args(name='unscrewCaps', target_robot="YuMiRobot",
+        robot_op = RobotTaskOp.from_args(name='unscrewCaps', target_robot="YuMiRobot",
                                                    target_batch=batch_1)
         
         self.request_robot_ops([robot_op])
@@ -93,14 +93,14 @@ class PXRDWorkflowShakingProcess(StationProcess):
         params_dict = {}
         batch_1 = self.lot.batches[self.eight_well_batch_index]
         params_dict["perform_6p_calib"] = False
-        robot_op_1 = CollectBatchOpDescriptor.from_args(name='UnloadEightWRackYumiStation', target_robot="KMRIIWARobot",
+        robot_op_1 = CollectBatchOp.from_args(name='UnloadEightWRackYumiStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch_1)
 
         # pickup the pxrd rack
         batch_2 = self.lot.batches[self.pxrd_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = True
-        robot_op_2 = CollectBatchOpDescriptor.from_args(name='UnloadPXRDRackYumiStation', target_robot="KMRIIWARobot",
+        robot_op_2 = CollectBatchOp.from_args(name='UnloadPXRDRackYumiStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch_2)
         
         self.request_robot_ops([robot_op_1, robot_op_2])

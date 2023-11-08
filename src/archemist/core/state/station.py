@@ -2,11 +2,11 @@ from typing import List, Dict, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import StationState, OpState, OpOutcome, LotStatus
 from archemist.core.models.station_model import StationModel
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
-from archemist.core.state.robot import RobotOpDescriptor
+from archemist.core.state.robot import RobotOp
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess
 from archemist.core.persistence.object_factory import StationOpFactory, RobotOpFactory, ProcessFactory
@@ -193,10 +193,10 @@ class Station:
     ''' Robot ops properties '''
 
     @property
-    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def requested_robot_ops(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.requested_robot_ops, RobotOpFactory.create_from_model)
 
-    def add_req_robot_op(self, robot_op: Type[RobotOpDescriptor]):
+    def add_req_robot_op(self, robot_op: Type[RobotOp]):
         robot_op.requested_by = self.object_id
         self.requested_robot_ops.append(robot_op)
 
@@ -204,11 +204,11 @@ class Station:
     ''' Station ops properties and methods '''
 
     @property
-    def _queued_ops(self) -> List[Type[StationOpDescriptor]]:
+    def _queued_ops(self) -> List[Type[StationOp]]:
         return ListProxy(self._model_proxy.queued_ops, StationOpFactory.create_from_model)
 
     @property
-    def assigned_op(self) -> Type[StationOpDescriptor]:
+    def assigned_op(self) -> Type[StationOp]:
         return StationOpFactory.create_from_model(self._model_proxy.assigned_op) \
                if self._model_proxy.assigned_op else None
     
@@ -217,7 +217,7 @@ class Station:
         return self._model_proxy.assigned_op_state
     
     @property
-    def ops_history(self) -> List[Type[StationOpDescriptor]]:
+    def ops_history(self) -> List[Type[StationOp]]:
         return ListProxy(self._model_proxy.ops_history, StationOpFactory.create_from_model)
     
     def update_assigned_op(self):
@@ -226,7 +226,7 @@ class Station:
             self._model_proxy.assigned_op = op.model
             self._model_proxy.assigned_op_state = OpState.ASSIGNED
 
-    def add_station_op(self, station_op: Type[StationOpDescriptor]):
+    def add_station_op(self, station_op: Type[StationOp]):
         if station_op.requested_by is None:
             station_op.requested_by = self.object_id
         self._queued_ops.append(station_op)

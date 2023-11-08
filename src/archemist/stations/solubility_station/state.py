@@ -5,7 +5,7 @@ from archemist.core.models.station_model import StationModel
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.station import Station
 from archemist.core.state.sample import Sample
-from archemist.core.state.station_op import StationSampleOpDescriptor, StationSampleOpDescriptorModel
+from archemist.core.state.station_op import StationSampleOp, StationSampleOpModel
 from typing import Dict, Union
 
 ''' ==== Station Description ==== '''
@@ -21,13 +21,13 @@ class SolubilityStation(Station):
         return cls(model)
 
 ''' ==== Station Operation Descriptors ==== '''
-class CheckSolubilityOp(StationSampleOpDescriptor):
-    def __init__(self, op_model: Union[StationSampleOpDescriptorModel,ModelProxy]) -> None:
+class CheckSolubilityOp(StationSampleOp):
+    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_sample: Sample):
-        model = StationSampleOpDescriptorModel()
+        model = StationSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=SolubilityStation.__name__)
         model.save()

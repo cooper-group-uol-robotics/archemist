@@ -1,7 +1,7 @@
 from mongoengine import Document, fields
 from archemist.core.util.enums import StationState, OpState
-from archemist.core.models.station_op_model import StationOpDescriptorModel
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel
+from archemist.core.models.station_op_model import StationOpModel
+from archemist.core.models.robot_op_model import RobotOpModel
 from archemist.core.models.station_process_model import StationProcessModel
 from archemist.core.util.location import LocationModel
 
@@ -33,12 +33,12 @@ class StationModel(Document):
     lot_slots = fields.DictField(default={})
     
     ''' robot ops '''
-    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
     
     ''' station ops '''
-    queued_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
-    assigned_op = fields.ReferenceField(StationOpDescriptorModel, null=True)
+    queued_ops = fields.ListField(fields.ReferenceField(StationOpModel),default=[])
+    assigned_op = fields.ReferenceField(StationOpModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel),default=[])
+    ops_history = fields.ListField(fields.ReferenceField(StationOpModel),default=[])
 
     meta = {'collection': 'stations', 'db_alias': 'archemist_state', 'allow_inheritance': True}

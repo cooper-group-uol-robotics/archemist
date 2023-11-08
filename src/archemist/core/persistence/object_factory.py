@@ -5,9 +5,9 @@ if TYPE_CHECKING:
     from archemist.core.state.robot import Robot, RobotModel
     from archemist.core.state.station import Station, StationModel
     from archemist.core.state.station_process import StationProcessModel, StationProcess
-    from archemist.core.state.station_op import StationOpDescriptor, StationOpDescriptorModel
-    from archemist.core.state.station_op_result import StationOpResult, OpResultModel
-    from archemist.core.state.robot_op import RobotOpDescriptor, RobotOpDescriptorModel
+    from archemist.core.state.station_op import StationOp, StationOpModel
+    from archemist.core.state.station_op_result import StationOpResult, StationOpResultModel
+    from archemist.core.state.robot_op import RobotOp, RobotOpModel
     from archemist.core.state.lot import Lot
 
 import importlib
@@ -69,10 +69,10 @@ class RobotFactory:
     
 class RobotOpFactory:
     @staticmethod
-    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[RobotOpDescriptor]:
-        if op_type in ["RobotOpDescriptor", "RobotTaskOpDescriptor", "RobotMaintenanceOpDescriptor", \
-            "RobotNavOpDescriptor", "RobotWaitOpDescriptor", "DropBatchOpDescriptor", \
-            "CollectBatchOpDescriptor"]:
+    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[RobotOp]:
+        if op_type in ["RobotOp", "RobotTaskOp", "RobotMaintenanceOp", \
+            "RobotNavOp", "RobotWaitOp", "DropBatchOp", \
+            "CollectBatchOp"]:
             
             cls = _import_class_from_module(op_type, 'archemist.core.state.robot_op')
             params = op_params if op_params is not None else {}
@@ -90,7 +90,7 @@ class RobotOpFactory:
         raise NameError(f"Robot op type {op_type} is not defined")
 
     @staticmethod
-    def create_from_model(op_model: Type[RobotOpDescriptorModel]) -> Type[RobotOpDescriptor]:
+    def create_from_model(op_model: Type[RobotOpModel]) -> Type[RobotOp]:
         cls = _import_class_from_module(op_model._type, op_model._module)
         return cls(op_model)
 
@@ -141,9 +141,9 @@ class StationFactory:
     
 class StationOpFactory:
     @staticmethod
-    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[StationOpDescriptor]:
-        if op_type == "StationOpDescriptor":
-            cls = _import_class_from_module('StationOpDescriptor', 'archemist.core.state.station_op')
+    def create_from_args(op_type: str, op_params: Dict[str, Any] = None) -> Type[StationOp]:
+        if op_type == "StationOp":
+            cls = _import_class_from_module('StationOp', 'archemist.core.state.station_op')
             return cls.from_args()
         else:
             pkg = importlib.import_module('archemist.stations')
@@ -159,27 +159,27 @@ class StationOpFactory:
 
 
     @staticmethod
-    def create_from_model(op_model: Type[StationOpDescriptorModel]) -> Type[StationOpDescriptor]:
+    def create_from_model(op_model: Type[StationOpModel]) -> Type[StationOp]:
         cls = _import_class_from_module(op_model._type, op_model._module)
         return cls(op_model)
     
     @staticmethod
-    def create_from_object_id(object_id: ObjectId) -> Type[StationOpDescriptor]:
-        from archemist.core.state.station_op import StationOpDescriptorModel
-        model = StationOpDescriptorModel.objects.get(id=object_id)
+    def create_from_object_id(object_id: ObjectId) -> Type[StationOp]:
+        from archemist.core.state.station_op import StationOpModel
+        model = StationOpModel.objects.get(id=object_id)
         cls = _import_class_from_module(model._type, model._module)
         return cls(model)
 
 class OpResultFactory:
     @staticmethod
-    def create_from_model(result_model: Type[OpResultModel]) -> Type[StationOpResult]:
+    def create_from_model(result_model: Type[StationOpResultModel]) -> Type[StationOpResult]:
         cls = _import_class_from_module(result_model._type, result_model._module)
         return cls(result_model)
     
     @staticmethod
     def create_from_object_id(object_id: ObjectId) -> Type[StationOpResult]:
-        from archemist.core.state.station_op_result import OpResultModel
-        model = OpResultModel.objects.get(id=object_id)
+        from archemist.core.state.station_op_result import StationOpResultModel
+        model = StationOpResultModel.objects.get(id=object_id)
         cls = _import_class_from_module(model._type, model._module)
         return cls(model)
     

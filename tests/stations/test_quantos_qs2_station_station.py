@@ -192,8 +192,6 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         self.assertEqual(op_results[0].units[0], "mg")
 
         self.station.complete_assigned_op(outcome, op_results)
-        self.assertIsNone(op_results)
-        self.station.complete_assigned_op(outcome, op_results)
 
 if __name__ == '__main__':
     unittest.main()

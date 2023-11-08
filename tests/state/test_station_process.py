@@ -3,8 +3,8 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from mongoengine import connect
 from transitions import State
-from archemist.core.state.robot_op import RobotOpDescriptor
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.robot_op import RobotOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.station_process import StationProcess,ProcessStatus, OperationSpecs
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.location import Location
@@ -35,7 +35,7 @@ class TestProcess(StationProcess):
         self.data['batch_index'] = 0
 
     def request_pickup_batch(self):
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
@@ -60,11 +60,11 @@ class StationProcessTest(unittest.TestCase):
     def test_operation_specs_embed_document(self):
         operation_spec_dict = {
             "name": "some_op",
-            "op": "StationOpDescriptor",
+            "op": "StationOp",
             "parameters": {"stirring_speed": 200, "duration": 10}
         }
         operation_spec = OperationSpecs.from_dict(operation_spec_dict)
-        self.assertEqual(operation_spec.op_type, "StationOpDescriptor")
+        self.assertEqual(operation_spec.op_type, "StationOp")
         self.assertTrue(operation_spec.parameters)
         self.assertDictEqual(operation_spec.parameters, operation_spec_dict["parameters"])
 
@@ -77,7 +77,7 @@ class StationProcessTest(unittest.TestCase):
         operations = [
                 {
                     "name": "some_op",
-                    "op": "StationOpDescriptor",
+                    "op": "StationOp",
                     "parameters": None
                 }
             ]
@@ -116,7 +116,7 @@ class StationProcessTest(unittest.TestCase):
         self.assertEqual(len(proc.req_robot_ops), 0)
         self.assertEqual(len(proc.robot_ops_history), 0)
         
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         proc.request_robot_ops([robot_op])
         self.assertFalse(proc.are_req_robot_ops_completed())
         self.assertEqual(len(proc.req_robot_ops), 1)
@@ -132,14 +132,14 @@ class StationProcessTest(unittest.TestCase):
 
         # test station_op fields
         operation_specs = proc.operation_specs_map["some_op"]
-        self.assertEqual(operation_specs.op_type, "StationOpDescriptor")
+        self.assertEqual(operation_specs.op_type, "StationOp")
         self.assertFalse(operation_specs.parameters)
         self.assertEqual(len(proc.req_station_ops), 0)
         self.assertEqual(len(proc.station_ops_history), 0)
         
         station_op = proc.generate_operation("some_op")
         self.assertIsNotNone(station_op.object_id)
-        self.assertIsInstance(station_op, StationOpDescriptor)
+        self.assertIsInstance(station_op, StationOp)
         
         proc.request_station_op(station_op)
         self.assertFalse(proc.are_req_station_ops_completed())
@@ -180,7 +180,7 @@ class StationProcessTest(unittest.TestCase):
         operations = [
                 {
                     "name": "some_op",
-                    "op": "StationOpDescriptor",
+                    "op": "StationOp",
                     "parameters": {"amount": 100}
                 }
             ]
@@ -254,7 +254,7 @@ class StationProcessTest(unittest.TestCase):
         operations = [
                 {
                     "name": "some_op",
-                    "op": "StationOpDescriptor",
+                    "op": "StationOp",
                     "parameters": None
                 }
             ]

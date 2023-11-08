@@ -1,10 +1,10 @@
-from archemist.core.models.robot_op_model import (RobotOpDescriptorModel,
-                                                  RobotTaskOpDescriptorModel,
-                                                  CollectBatchOpDescriptorModel,
-                                                  DropBatchOpDescriptorModel,
-                                                  RobotNavOpDescriptorModel,
-                                                  RobotWaitOpDescriptorModel,
-                                                  RobotMaintenanceOpDescriptorModel)
+from archemist.core.models.robot_op_model import (RobotOpModel,
+                                                  RobotTaskOpModel,
+                                                  CollectBatchOpModel,
+                                                  DropBatchOpModel,
+                                                  RobotNavOpModel,
+                                                  RobotWaitOpModel,
+                                                  RobotMaintenanceOpModel)
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -15,28 +15,28 @@ from datetime import datetime
 from typing import Union, Dict
 
 
-class RobotOpDescriptor:
-    def __init__(self, op_model: Union[RobotOpDescriptorModel, ModelProxy]):
+class RobotOp:
+    def __init__(self, op_model: Union[RobotOpModel, ModelProxy]):
         if isinstance(op_model, ModelProxy):
             self._model_proxy = op_model
         else:
             self._model_proxy = ModelProxy(op_model)
         
     @classmethod
-    def _set_model_common_fields(cls, op_model: RobotOpDescriptorModel, target_robot: str):
+    def _set_model_common_fields(cls, op_model: RobotOpModel, target_robot: str):
         op_model.target_robot = target_robot
         op_model._type = cls.__name__
         op_model._module = cls.__module__
 
     @classmethod
     def from_args(cls):
-        model = RobotOpDescriptorModel()
+        model = RobotOpModel()
         cls._set_model_common_fields(model, "Robot")
         model.save()
         return cls(model)
 
     @property
-    def model(self) -> RobotOpDescriptorModel:
+    def model(self) -> RobotOpModel:
         return self._model_proxy.model
     
     @property
@@ -90,8 +90,8 @@ class RobotOpDescriptor:
     def __eq__(self, __value: object) -> bool:
         return self.object_id == __value.object_id
 
-class RobotTaskOpDescriptor(RobotOpDescriptor):
-    def __init__(self, op_model: Union[RobotTaskOpDescriptorModel, ModelProxy]) -> None:
+class RobotTaskOp(RobotOp):
+    def __init__(self, op_model: Union[RobotTaskOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -102,7 +102,7 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
                   requested_by: ObjectId()=None,
                   target_batch: Batch=None
                   ):
-        model = RobotTaskOpDescriptorModel()
+        model = RobotTaskOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
@@ -152,8 +152,8 @@ class RobotTaskOpDescriptor(RobotOpDescriptor):
         return f'{self.__class__.__name__} - name: {self.name} - target:{self.target_robot}\
               - params: {params} - location: {self.target_location}'
     
-class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
-    def __init__(self, op_model: Union[CollectBatchOpDescriptorModel, ModelProxy]) -> None:
+class CollectBatchOp(RobotTaskOp):
+    def __init__(self, op_model: Union[CollectBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -164,7 +164,7 @@ class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
                   requested_by: ObjectId()=None,
                   target_batch: Batch=None
                   ):
-        model = CollectBatchOpDescriptorModel()
+        model = CollectBatchOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
@@ -183,8 +183,8 @@ class CollectBatchOpDescriptor(RobotTaskOpDescriptor):
     def target_onboard_slot(self, onboard_slot: int):
         self._model_proxy.target_onboard_slot = onboard_slot
 
-class DropBatchOpDescriptor(RobotTaskOpDescriptor):
-    def __init__(self, op_model: Union[DropBatchOpDescriptorModel, ModelProxy]) -> None:
+class DropBatchOp(RobotTaskOp):
+    def __init__(self, op_model: Union[DropBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -195,7 +195,7 @@ class DropBatchOpDescriptor(RobotTaskOpDescriptor):
                   requested_by: ObjectId()=None,
                   target_batch: Batch=None
                   ):
-        model = DropBatchOpDescriptorModel()
+        model = DropBatchOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.params = params
@@ -214,13 +214,13 @@ class DropBatchOpDescriptor(RobotTaskOpDescriptor):
     def onboard_collection_slot(self, onboard_slot: int):
         self._model_proxy.onboard_collection_slot = onboard_slot
     
-class RobotMaintenanceOpDescriptor(RobotOpDescriptor):
-    def __init__(self, op_model: Union[RobotMaintenanceOpDescriptorModel, ModelProxy]) -> None:
+class RobotMaintenanceOp(RobotOp):
+    def __init__(self, op_model: Union[RobotMaintenanceOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, name: str, target_robot: str, target_robot_id: int, params: Dict={}):
-        model = RobotMaintenanceOpDescriptorModel()
+        model = RobotMaintenanceOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         model.target_robot_id = target_robot_id
@@ -246,13 +246,13 @@ class RobotMaintenanceOpDescriptor(RobotOpDescriptor):
         return f'{self.__class__.__name__} -> name: {self.name}\
               - target:{self.target_robot}_{self.target_robot_id} - params: {params}'
     
-class RobotNavOpDescriptor(RobotOpDescriptor):
-    def __init__(self, op_model: Union[RobotNavOpDescriptorModel, ModelProxy]) -> None:
+class RobotNavOp(RobotOp):
+    def __init__(self, op_model: Union[RobotNavOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, name: str, target_robot: str, target_location: Location, params: Dict={}, requested_by: ObjectId()=None):
-        model = RobotNavOpDescriptorModel()
+        model = RobotNavOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
         if target_location:
@@ -286,13 +286,13 @@ class RobotNavOpDescriptor(RobotOpDescriptor):
         return f'{self.__class__.__name__} - name: {self.name} - goal_location: {self.target_location}\
               - params: {params} - target:{self.target_robot}'
     
-class RobotWaitOpDescriptor(RobotOpDescriptor):
-    def __init__(self, op_model: Union[RobotWaitOpDescriptorModel, ModelProxy]) -> None:
+class RobotWaitOp(RobotOp):
+    def __init__(self, op_model: Union[RobotWaitOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_robot: str, timeout: int, requested_by: ObjectId()=None):
-        model = RobotWaitOpDescriptorModel()
+        model = RobotWaitOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.timeout = timeout
         model.requested_by = requested_by

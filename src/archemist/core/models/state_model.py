@@ -1,5 +1,5 @@
 from mongoengine import Document, fields
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel
+from archemist.core.models.robot_op_model import RobotOpModel
 from archemist.core.models.station_process_model import StationProcessModel
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.models.lot_model import LotModel
@@ -10,7 +10,7 @@ class WorkflowStateModel(Document):
     _type = fields.StringField(default="WorkflowStateModel")
     workflow_name = fields.StringField(required=True)
     
-    robot_ops_queue = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    robot_ops_queue = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
     proc_requests_queue = fields.ListField(fields.ReferenceField(StationProcessModel),default=[])
     lots_buffer = fields.ListField(fields.ReferenceField(LotModel), default=[])
 
@@ -26,7 +26,7 @@ class InputStateModel(Document):
     
     batches_queue = fields.ListField(fields.ReferenceField(BatchModel), default=[])
     recipes_queue = fields.ListField(fields.ReferenceField(RecipeModel), default=[])
-    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
 
     lot_slots = fields.DictField(default={})
     proc_slots = fields.DictField(default={})
@@ -42,7 +42,7 @@ class OutputStateModel(Document):
     lot_output_process = fields.DictField(null=True)
     lots_need_manual_removal = fields.BooleanField(required=True)
 
-    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
     
     lot_slots = fields.DictField(default={})
     proc_slots = fields.DictField(default={})

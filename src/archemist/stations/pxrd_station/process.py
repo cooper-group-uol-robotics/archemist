@@ -2,10 +2,10 @@ from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
-from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
-                                           DropBatchOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           RobotWaitOpDescriptor)
+from archemist.core.state.robot_op import (RobotTaskOp,
+                                           DropBatchOp,
+                                           CollectBatchOp,
+                                           RobotWaitOp)
 from .state import PXRDOpenDoorOp, PXRDCloseDoorOp, PXRDStation
 from archemist.core.util import Location
 from typing import Union
@@ -77,9 +77,9 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="OpenDoors", target_robot="KMRIIWARobot",
+        open_door_robot_op = RobotTaskOp.from_args(name="OpenDoors", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_location=door_loc)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
+        robot_wait_op = RobotWaitOp.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([open_door_robot_op, robot_wait_op])
 
     def request_open_pxrd_door_update(self):
@@ -90,9 +90,9 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
         door_loc = Location.from_args(coordinates=(19, 1), descriptor="PXRDDoorLocation")
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        open_door_robot_op = RobotTaskOpDescriptor.from_args(name="CloseDoors", target_robot="KMRIIWARobot",
+        open_door_robot_op = RobotTaskOp.from_args(name="CloseDoors", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_location=door_loc)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
+        robot_wait_op = RobotWaitOp.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([open_door_robot_op, robot_wait_op])
 
     def request_close_pxrd_door_update(self):
@@ -103,18 +103,18 @@ class PXRDWorkflowAnalysisProcess(StationProcess):
         target_batch = self.lot.batches[self.pxrd_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        load_pxrd_robot_op = DropBatchOpDescriptor.from_args(name="LoadPXRD", target_robot="KMRIIWARobot",
+        load_pxrd_robot_op = DropBatchOp.from_args(name="LoadPXRD", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
+        robot_wait_op = RobotWaitOp.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([load_pxrd_robot_op, robot_wait_op])
 
     def request_unload_pxrd(self):
         target_batch = self.lot.batches[self.pxrd_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = False
-        unload_pxrd_robot_op = CollectBatchOpDescriptor.from_args(name="UnloadPXRD", target_robot="KMRIIWARobot",
+        unload_pxrd_robot_op = CollectBatchOp.from_args(name="UnloadPXRD", target_robot="KMRIIWARobot",
                                                    params=params_dict, target_batch=target_batch)
-        robot_wait_op = RobotWaitOpDescriptor.from_args(target_robot="KMRIIWARobot", timeout=5)
+        robot_wait_op = RobotWaitOp.from_args(target_robot="KMRIIWARobot", timeout=5)
         self.request_robot_ops([unload_pxrd_robot_op, robot_wait_op])
 
     def request_pxrd_process(self):

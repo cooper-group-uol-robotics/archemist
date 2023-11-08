@@ -8,7 +8,7 @@ from archemist.stations.peristaltic_pumps_station.state import (PeristalticPumps
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from archemist.stations.peristaltic_pumps_station.handler import SimPeristalticPumpsStationHandler
 from archemist.stations.peristaltic_pumps_station.process import PandaPumpSolubilityProcess
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult
 from .testing_utils import test_req_robot_ops, test_req_station_op
@@ -119,7 +119,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         # move_dispense_head
         process.tick()
         self.assertEqual(process.m_state, 'move_dispense_head')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # dispense_liquid
         process.tick()
@@ -129,7 +129,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         # replace_dispense_head
         process.tick()
         self.assertEqual(process.m_state, 'replace_dispense_head')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # final_state
         process.tick()

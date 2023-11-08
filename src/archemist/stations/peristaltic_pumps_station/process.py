@@ -2,7 +2,7 @@ from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
 from .state import PeristalticPumpsStation
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
 
@@ -50,7 +50,7 @@ class PandaPumpSolubilityProcess(StationProcess):
     ''' states callbacks '''
 
     def request_move_dispense_head(self):
-        robot_op = RobotTaskOpDescriptor.from_args(name='move_dispense_head', target_robot="PandaRobot")
+        robot_op = RobotTaskOp.from_args(name='move_dispense_head', target_robot="PandaRobot")
         
         self.request_robot_ops([robot_op])
 
@@ -60,5 +60,5 @@ class PandaPumpSolubilityProcess(StationProcess):
         self.request_station_op(current_op)
 
     def request_replace_dispense_head(self):
-        robot_op = RobotTaskOpDescriptor.from_args(name='replace_dispense_head', target_robot="PandaRobot")
+        robot_op = RobotTaskOp.from_args(name='replace_dispense_head', target_robot="PandaRobot")
         self.request_robot_ops([robot_op])

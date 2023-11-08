@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 from archemist.core.util.location import Location
-from archemist.core.state.robot_op import RobotOpDescriptor
+from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.station_process import StationProcess
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
@@ -119,7 +119,7 @@ class StateTest(unittest.TestCase):
         self.assertEqual(len(input_state.recipes_queue), 0)
 
         # test requested_robot_ops
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         input_state.requested_robot_ops.append(robot_op)
         self.assertEqual(len(input_state.requested_robot_ops), 1)
         self.assertIsNotNone(input_state.requested_robot_ops.pop())
@@ -156,7 +156,7 @@ class StateTest(unittest.TestCase):
         # test requested_robot_ops
         self.assertFalse(workflow_state.robot_ops_queue)
         
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         workflow_state.robot_ops_queue.append(robot_op)
         self.assertEqual(len(workflow_state.robot_ops_queue), 1)
         self.assertIsNotNone(workflow_state.robot_ops_queue.pop())
@@ -224,7 +224,7 @@ class StateTest(unittest.TestCase):
         self.assertIsNone(output_state.lot_slots["1"])
 
         # test requested_robot_ops
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         output_state.requested_robot_ops.append(robot_op)
         self.assertEqual(len(output_state.requested_robot_ops), 1)
         self.assertIsNotNone(output_state.requested_robot_ops.pop())

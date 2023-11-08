@@ -1,5 +1,5 @@
-from archemist.core.state.robot_op import RobotOpDescriptor
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.robot_op import RobotOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.persistence.object_factory import RobotFactory, StationFactory
 from mongoengine import Document, EmbeddedDocument
 from typing import Union,List, Iterator, Any, TypeVar
@@ -69,19 +69,19 @@ class OpListAdapter(ListFieldAdapter):
         self._factory_cls = factory_cls
         super().__init__(model, field_name)
 
-    def append(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def append(self, object: Union[RobotOp,StationOp]):
         return super().append(object.model)
 
-    def pop(self) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def pop(self) -> Union[RobotOp,StationOp]:
         return self._factory_cls.create_op_from_model(super().pop())
 
-    def popleft(self) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def popleft(self) -> Union[RobotOp,StationOp]:
         return self._factory_cls.create_op_from_model(super().popleft())
 
-    def extend(self, objects_list: List[Union[RobotOpDescriptor,StationOpDescriptor]]):
+    def extend(self, objects_list: List[Union[RobotOp,StationOp]]):
         return super().extend([object.model for object in objects_list])
 
-    def remove(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def remove(self, object: Union[RobotOp,StationOp]):
         return super().remove(object.model)
 
     def __iter__(self) -> Iterator:
@@ -89,15 +89,15 @@ class OpListAdapter(ListFieldAdapter):
         objects_list = getattr(self._model, self._field_name)
         return iter([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
-    def __next__(self) -> List[Union[RobotOpDescriptor,StationOpDescriptor]]: 
+    def __next__(self) -> List[Union[RobotOp,StationOp]]: 
         self._model.reload(self._field_name)
         objects_list = getattr(self._model, self._field_name)
         return next([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
-    def __getitem__(self, index: int) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def __getitem__(self, index: int) -> Union[RobotOp,StationOp]:
         return self._factory_cls.create_op_from_model(super().__getitem__(index))
 
-    def __setitem__(self, index: int, op: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def __setitem__(self, index: int, op: Union[RobotOp,StationOp]):
         super().__setitem__(index, op.model)
 
 class StateObjListAdapter(ListFieldAdapter):
@@ -111,7 +111,7 @@ class StateObjListAdapter(ListFieldAdapter):
     def pop(self) -> Any:
         return self.state_obj_cls(super().pop())
 
-    def popleft(self) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def popleft(self) -> Union[RobotOp,StationOp]:
         return self.state_obj_cls(super().popleft())
 
     def extend(self, objects_list: List[Any]):
@@ -189,31 +189,31 @@ class EmbedOpListAdapter(EmbedListFieldAdapter):
         self._factory_cls = factory_cls
         super().__init__(model, field_name)
 
-    def append(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def append(self, object: Union[RobotOp,StationOp]):
         return super().append(object.model)
 
-    def pop(self, index: int = -1) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def pop(self, index: int = -1) -> Union[RobotOp,StationOp]:
         return self._factory_cls.create_op_from_model(super().pop(index))
 
 
-    def extend(self, objects_list: List[Union[RobotOpDescriptor,StationOpDescriptor]]):
+    def extend(self, objects_list: List[Union[RobotOp,StationOp]]):
         return super().extend([object.model for object in objects_list])
 
-    def remove(self, object: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def remove(self, object: Union[RobotOp,StationOp]):
         return super().remove(object.model)
 
     def __iter__(self) -> Iterator:
         objects_list = getattr(self._model, self._field_name)
         return iter([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
-    def __next__(self) -> List[Union[RobotOpDescriptor,StationOpDescriptor]]: 
+    def __next__(self) -> List[Union[RobotOp,StationOp]]: 
         objects_list = getattr(self._model, self._field_name)
         return next([self._factory_cls.create_op_from_model(object) for object in objects_list])
 
-    def __getitem__(self, index: int) -> Union[RobotOpDescriptor,StationOpDescriptor]:
+    def __getitem__(self, index: int) -> Union[RobotOp,StationOp]:
         return self._factory_cls.create_op_from_model(super().__getitem__(index))
 
-    def __setitem__(self, index: int, op: Union[RobotOpDescriptor,StationOpDescriptor]):
+    def __setitem__(self, index: int, op: Union[RobotOp,StationOp]):
         super().__setitem__(index, op.model)
 
     

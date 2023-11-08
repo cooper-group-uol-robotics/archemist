@@ -1,6 +1,6 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import (StationOpDescriptorModel,
-                                                    StationSampleOpDescriptorModel)
+from archemist.core.models.station_op_model import (StationOpModel,
+                                                    StationSampleOpModel)
 from mongoengine import EmbeddedDocument, fields
 
 
@@ -16,13 +16,13 @@ class QuantosSolidDispenserQS2Model(StationModel):
     loaded_cartridge_index = fields.IntField(min_value=0, null=True)
     door_open = fields.BooleanField(default=False)
 
-class QuantosDispenseOpModel(StationSampleOpDescriptorModel):
+class QuantosDispenseOpModel(StationSampleOpModel):
     solid_name = fields.StringField(required=True)
     dispense_mass = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["g", "mg", "ug"], default="g")
 
-class QuantosLoadCartridgeOpModel(StationOpDescriptorModel):
+class QuantosLoadCartridgeOpModel(StationOpModel):
     solid_name = fields.StringField(required=True)
 
-class QuantosMoveCarouselOpModel(StationOpDescriptorModel):
+class QuantosMoveCarouselOpModel(StationOpModel):
     target_pos = fields.IntField(min_value=1, max_value=20, default=1)

@@ -10,7 +10,7 @@ steps:
         type: CrystalBotWorkflowProcess
         key_operations:
           stir:
-            type: IKAStirringOpDescriptor
+            type: IKAStirringOp
             properties:
               stirring_speed: 200
               duration: 10

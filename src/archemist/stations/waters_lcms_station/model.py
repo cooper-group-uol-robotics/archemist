@@ -1,7 +1,7 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.op_result_model import OpResultModel
-from archemist.core.models.station_op_model import (StationBatchOpDescriptorModel,
-                                                    StationOpDescriptorModel)
+from archemist.core.models.station_op_result_model import StationOpResultModel
+from archemist.core.models.station_op_model import (StationBatchOpModel,
+                                                    StationOpModel)
 from mongoengine import fields
 from enum import Enum, auto
 
@@ -19,17 +19,17 @@ class WatersLCMSStationModel(StationModel):
     auto_loader_status = fields.EnumField(LCMSAutoLoaderStatus, default=LCMSAutoLoaderStatus.BAY_FREE)
     analysis_status = fields.EnumField(LCMSAnalysisStatus, default=LCMSAnalysisStatus.INVALID)
 
-class LCMSBayOccupiedOpModel(StationOpDescriptorModel):
+class LCMSBayOccupiedOpModel(StationOpModel):
     bay_index = fields.IntField(default=1, min_value=1, max_value=2)
 
-class LCMSBayFreedOpModel(StationOpDescriptorModel):
+class LCMSBayFreedOpModel(StationOpModel):
     bay_index = fields.IntField(default=1, min_value=1, max_value=2)
 
-class LCMSInsertBatchOpModel(StationBatchOpDescriptorModel):
+class LCMSInsertBatchOpModel(StationBatchOpModel):
     bay_index = fields.IntField(default=1, min_value=1, max_value=2)
 
-class LCMSEjectBatchOpModel(StationBatchOpDescriptorModel):
+class LCMSEjectBatchOpModel(StationBatchOpModel):
     bay_index = fields.IntField(default=1, min_value=1, max_value=2)
 
-class LCMSAnalysisResultModel(OpResultModel):
+class LCMSAnalysisResultModel(StationOpResultModel):
     result_filename = fields.StringField(required=True)

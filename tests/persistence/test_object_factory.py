@@ -56,7 +56,7 @@ class ObjectFactoryTest(unittest.TestCase):
 
     def test_station_op_factory(self):
         # test construction from args
-        station_op_from_args = StationOpFactory.create_from_args(op_type="StationOpDescriptor")
+        station_op_from_args = StationOpFactory.create_from_args(op_type="StationOp")
         self.assertIsNotNone(station_op_from_args)
 
         # test construction from model
@@ -131,7 +131,7 @@ class ObjectFactoryTest(unittest.TestCase):
 
     def test_robot_op_factory(self):
         # test construction from args
-        robot_op_from_args = RobotOpFactory.create_from_args("RobotOpDescriptor")
+        robot_op_from_args = RobotOpFactory.create_from_args("RobotOp")
         self.assertIsNotNone(robot_op_from_args)
 
         # test construction from model
@@ -146,7 +146,7 @@ class ObjectFactoryTest(unittest.TestCase):
             "requested_by": random_station_id,
             "params": {"index": 1}
             }
-        robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOpDescriptor", op_params)
+        robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOp", op_params)
         
         self.assertIsNotNone(robot_op_from_args)
         self.assertEqual(len(robot_op_from_args.params), 1)

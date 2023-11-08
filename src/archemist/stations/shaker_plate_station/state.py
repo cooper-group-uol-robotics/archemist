@@ -2,7 +2,7 @@ from .model import ShakerPlateStationModel, ShakerPlateOpModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.batch import Batch
-from archemist.core.state.station_op import StationBatchOpDescriptor
+from archemist.core.state.station_op import StationBatchOp
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 
@@ -39,7 +39,7 @@ class ShakerPlateStation(Station):
             self.is_shaking = False
         super().complete_assigned_op(outcome, results)
 
-class ShakerPlateOp(StationBatchOpDescriptor):
+class ShakerPlateOp(StationBatchOp):
     def __init__(self, station_op_model: Union[ShakerPlateOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 

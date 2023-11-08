@@ -3,10 +3,10 @@ from archemist.core.persistence.object_factory import ProcessFactory
 from archemist.core.state.state import InputState, WorkflowState, OutputState
 from archemist.core.state.batch import Batch
 from archemist.core.state.recipe import Recipe
-from archemist.core.state.robot_op import (RobotOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           RobotTaskOpDescriptor,
-                                           RobotNavOpDescriptor)
+from archemist.core.state.robot_op import (RobotOp,
+                                           CollectBatchOp,
+                                           RobotTaskOp,
+                                           RobotNavOp)
 from archemist.core.state.lot import Lot, LotStatus
 from archemist.core.util.enums import ProcessStatus
 from typing import List, Type, Dict
@@ -17,7 +17,7 @@ class InputProcessor:
         self._state = input_state
 
     @property
-    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def requested_robot_ops(self) -> List[Type[RobotOp]]:
         return self._state.requested_robot_ops
 
     def add_clean_batch(self):
@@ -77,9 +77,9 @@ class InputProcessor:
                         if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                             for robot_op in proc.req_robot_ops:
                                 robot_op.requested_by = self._state.object_id
-                                if isinstance(robot_op, CollectBatchOpDescriptor) or\
-                                   isinstance(robot_op, RobotTaskOpDescriptor) or \
-                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
+                                if isinstance(robot_op, CollectBatchOp) or\
+                                   isinstance(robot_op, RobotTaskOp) or \
+                                   (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
                                 self._state.requested_robot_ops.append(robot_op)
                             proc.switch_to_waiting()
@@ -106,7 +106,7 @@ class OutputProcessor:
         self._state = output_state
 
     @property
-    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def requested_robot_ops(self) -> List[Type[RobotOp]]:
         return self._state.requested_robot_ops
 
     def has_free_lot_capacity(self) -> bool:
@@ -139,9 +139,9 @@ class OutputProcessor:
                         proc.tick()
                         if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                             for robot_op in proc.req_robot_ops:
-                                if isinstance(robot_op, CollectBatchOpDescriptor) or\
-                                   isinstance(robot_op, RobotTaskOpDescriptor) or \
-                                   (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
+                                if isinstance(robot_op, CollectBatchOp) or\
+                                   isinstance(robot_op, RobotTaskOp) or \
+                                   (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
                                 robot_op.requested_by = self._state.object_id
                                 self._state.requested_robot_ops.append(robot_op)
@@ -179,7 +179,7 @@ class WorkflowProcessor:
         self._state = workflow_state
 
     @property
-    def robot_ops_queue(self) -> List[Type[RobotOpDescriptor]]:
+    def robot_ops_queue(self) -> List[Type[RobotOp]]:
         return self._state.robot_ops_queue
 
     def add_ready_for_collection_lots(self, collection_lots: List[Lot]):

@@ -1,6 +1,6 @@
 
 from transitions import State
-from archemist.core.state.robot_op import DropBatchOpDescriptor, CollectBatchOpDescriptor
+from archemist.core.state.robot_op import DropBatchOp, CollectBatchOp
 from .state import WaitOp, WaitingStation
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
@@ -58,7 +58,7 @@ class WaitingStationProcess(StationProcess):
             params_dict = {}
             params_dict["place_batch_index"] = batches_offset + index + 1
             params_dict["perform_6p_calib"] = False
-            robot_op = DropBatchOpDescriptor.from_args(name='LoadWaitingStation', target_robot="KMRIIWARobot",
+            robot_op = DropBatchOp.from_args(name='LoadWaitingStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         
@@ -73,7 +73,7 @@ class WaitingStationProcess(StationProcess):
             params_dict = {}
             params_dict["perform_6p_calib"] = False
             params_dict["pick_batch_index"] = batches_offset + index + 1
-            robot_op = CollectBatchOpDescriptor.from_args(name='UnloadWaitingStation', target_robot="KMRIIWARobot",
+            robot_op = CollectBatchOp.from_args(name='UnloadWaitingStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         

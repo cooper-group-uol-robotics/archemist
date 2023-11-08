@@ -3,8 +3,8 @@ from time import sleep
 from mongoengine import connect
 from archemist.core.state.robot import Robot
 from archemist.core.state.station import Station
-from archemist.core.state.robot_op import RobotOpDescriptor, RobotWaitOpDescriptor
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.robot_op import RobotOp, RobotWaitOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.processing.handler import RobotHandler, StationHandler, StationProcessHandler
 from archemist.core.util.enums import RobotState, StationState, OpState, OpOutcome, LotStatus
 from archemist.core.util.location import Location
@@ -52,7 +52,7 @@ class TestFullProcess(StationProcess):
         self.data['batch_index'] = 0
 
     def request_pickup_batch(self):
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
@@ -118,7 +118,7 @@ class HandlerTest(unittest.TestCase):
         robot_handler.initialise()
         self.assertEqual(robot.state, RobotState.ACTIVE)
 
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         robot.add_op(robot_op)
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
@@ -146,7 +146,7 @@ class HandlerTest(unittest.TestCase):
         robot_handler.initialise()
         self.assertEqual(robot.state, RobotState.ACTIVE)
 
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
         self.assertIsNone(robot.assigned_op)
@@ -182,7 +182,7 @@ class HandlerTest(unittest.TestCase):
         robot_handler.initialise()
         self.assertEqual(robot.state, RobotState.ACTIVE)
 
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
         self.assertIsNone(robot.assigned_op)
@@ -212,7 +212,7 @@ class HandlerTest(unittest.TestCase):
         robot_handler.initialise()
         self.assertEqual(robot.state, RobotState.ACTIVE)
 
-        robot_op = RobotWaitOpDescriptor.from_args("Robot", 3)
+        robot_op = RobotWaitOp.from_args("Robot", 3)
         robot.add_op(robot_op)
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
@@ -253,7 +253,7 @@ class HandlerTest(unittest.TestCase):
         station_handler.initialise()
         self.assertEqual(station.state, StationState.ACTIVE)
 
-        station_op = StationOpDescriptor.from_args()
+        station_op = StationOp.from_args()
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
@@ -280,7 +280,7 @@ class HandlerTest(unittest.TestCase):
         station_handler.initialise()
         self.assertEqual(station.state, StationState.ACTIVE)
 
-        station_op = StationOpDescriptor.from_args()
+        station_op = StationOp.from_args()
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
@@ -317,7 +317,7 @@ class HandlerTest(unittest.TestCase):
         station_handler.initialise()
         self.assertEqual(station.state, StationState.ACTIVE)
 
-        station_op = StationOpDescriptor.from_args()
+        station_op = StationOp.from_args()
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
@@ -537,7 +537,7 @@ class HandlerTest(unittest.TestCase):
         operations = [
                 {
                     "name": "some_op",
-                    "op": "StationOpDescriptor",
+                    "op": "StationOp",
                     "parameters": None
                 }
             ]

@@ -3,10 +3,10 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from mongoengine import connect
 
-from archemist.core.state.station_op import (StationOpDescriptor,
-                                             StationLotOpDescriptor,
-                                             StationBatchOpDescriptor,
-                                             StationSampleOpDescriptor,
+from archemist.core.state.station_op import (StationOp,
+                                             StationLotOp,
+                                             StationBatchOp,
+                                             StationSampleOp,
                                              OpOutcome,
                                              StationOpResult)
 from archemist.core.state.lot import Lot, Batch
@@ -24,7 +24,7 @@ class StationOpTest(unittest.TestCase):
 
     def test_station_op(self):
         # construct op
-        station_op = StationOpDescriptor.from_args()
+        station_op = StationOp.from_args()
         self.assertEqual(station_op.associated_station, "Station")
         self.assertIsNotNone(station_op.object_id)
         self.assertIsNone(station_op.requested_by)
@@ -64,7 +64,7 @@ class StationOpTest(unittest.TestCase):
         batch_2 = Batch.from_args(num_samples)
         lot = Lot.from_args([batch_1, batch_2])
         # test op
-        station_op_1 = StationLotOpDescriptor.from_args(target_lot=lot)
+        station_op_1 = StationLotOp.from_args(target_lot=lot)
         self.assertEqual(station_op_1.target_lot, lot)
 
         # test op complete with a single result
@@ -79,7 +79,7 @@ class StationOpTest(unittest.TestCase):
                 self.assertEqual(sample.result_ops[0], results[0])
 
         # test op complete with result per batch
-        station_op_2 = StationLotOpDescriptor.from_args(target_lot=lot)
+        station_op_2 = StationLotOp.from_args(target_lot=lot)
         results = []
         for _ in range(lot.num_batches):
             results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
@@ -94,7 +94,7 @@ class StationOpTest(unittest.TestCase):
                 self.assertEqual(sample.result_ops[1], results[index])
 
         # test op complete with result per sample
-        station_op_3 = StationLotOpDescriptor.from_args(target_lot=lot)
+        station_op_3 = StationLotOp.from_args(target_lot=lot)
         results = []
         for _ in range(lot.num_batches*num_samples):
             results.append(StationOpResult.from_args(origin_op=station_op_3.object_id))
@@ -114,7 +114,7 @@ class StationOpTest(unittest.TestCase):
         num_samples = 2
         batch = Batch.from_args(num_samples)
         # test op
-        station_op_1 = StationBatchOpDescriptor.from_args(target_batch=batch)
+        station_op_1 = StationBatchOp.from_args(target_batch=batch)
         self.assertEqual(station_op_1.target_batch, batch)
 
         # test op complete with a single result
@@ -128,7 +128,7 @@ class StationOpTest(unittest.TestCase):
             self.assertEqual(sample.result_ops[0], results[0])
 
         # test op complete with result per sample
-        station_op_2 = StationBatchOpDescriptor.from_args(target_batch=batch)
+        station_op_2 = StationBatchOp.from_args(target_batch=batch)
         results = []
         for _ in range(num_samples):
             results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
@@ -144,7 +144,7 @@ class StationOpTest(unittest.TestCase):
     def test_station_sample_op(self):
         sample = Sample.from_args(parent_batch_id=ObjectId())
         # test op
-        station_op = StationSampleOpDescriptor.from_args(target_sample=sample)
+        station_op = StationSampleOp.from_args(target_sample=sample)
         self.assertEqual(station_op.target_sample, sample)
 
         # test op complete with a single result

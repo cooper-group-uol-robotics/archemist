@@ -3,10 +3,10 @@ from typing import List
 from datetime import datetime
 
 from mongoengine import connect
-from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
-                                           RobotWaitOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor)
+from archemist.core.state.robot_op import (RobotTaskOp,
+                                           RobotWaitOp,
+                                           CollectBatchOp,
+                                           DropBatchOp)
 from archemist.stations.pxrd_station.state import (PXRDStation,
                                                    PXRDJobStatus,
                                                    PXRDAnalysisOp, 
@@ -123,7 +123,7 @@ class PXRDStationTest(unittest.TestCase):
         # open_pxrd_door
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
         
         # open_pxrd_door_update
         process.tick()
@@ -133,12 +133,12 @@ class PXRDStationTest(unittest.TestCase):
         # load_pxrd
         process.tick()
         self.assertEqual(process.m_state, 'load_pxrd')
-        test_req_robot_ops(self, process, [DropBatchOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [DropBatchOp, RobotWaitOp])
 
         # close_pxrd_door
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
         
         # close_pxrd_door_update
         process.tick()
@@ -153,7 +153,7 @@ class PXRDStationTest(unittest.TestCase):
         # open_pxrd_door
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
         
         # open_pxrd_door_update
         process.tick()
@@ -163,12 +163,12 @@ class PXRDStationTest(unittest.TestCase):
         # unload_pxrd
         process.tick()
         self.assertEqual(process.m_state, 'unload_pxrd')
-        test_req_robot_ops(self, process, [CollectBatchOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [CollectBatchOp, RobotWaitOp])
 
         # close_pxrd_door
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
         
         # close_pxrd_door_update
         process.tick()

@@ -2,13 +2,13 @@ from bson.objectid import ObjectId
 from archemist.core.persistence.objects_getter import RobotsGetter, LotsGetter, StationsGetter, StateGetter
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot import MobileRobotMode, MobileRobot, FixedRobot
-from archemist.core.state.robot_op import (RobotOpDescriptor,
-                                           RobotTaskOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor,
-                                           RobotMaintenanceOpDescriptor,
-                                           RobotWaitOpDescriptor,
-                                           RobotNavOpDescriptor)
+from archemist.core.state.robot_op import (RobotOp,
+                                           RobotTaskOp,
+                                           CollectBatchOp,
+                                           DropBatchOp,
+                                           RobotMaintenanceOp,
+                                           RobotWaitOp,
+                                           RobotNavOp)
 
 from typing import List, Type
 from abc import ABC, abstractmethod
@@ -18,7 +18,7 @@ class RobotScheduler(ABC):
         pass
     
     @abstractmethod
-    def schedule(self, robot_ops_queue: List[Type[RobotOpDescriptor]]):
+    def schedule(self, robot_ops_queue: List[Type[RobotOp]]):
         pass
 
 class PriorityQueueRobotScheduler(RobotScheduler):
@@ -27,7 +27,7 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         self.robots_schedules = {robot.__class__.__name__: [] for robot in robots}
         super().__init__(*args, **kwargs)
 
-    def schedule(self, robot_ops_queue: List[Type[RobotOpDescriptor]]):
+    def schedule(self, robot_ops_queue: List[Type[RobotOp]]):
        # clear robot schedules
        self.robots_schedules = {robot: [] for robot in self.robots_schedules}
        
@@ -67,17 +67,17 @@ class PriorityQueueRobotScheduler(RobotScheduler):
                     
 
     
-    def _calculate_mobile_robot_priority(self, op: Type[RobotOpDescriptor], robot: Type[MobileRobot]):
+    def _calculate_mobile_robot_priority(self, op: Type[RobotOp], robot: Type[MobileRobot]):
         priority = 0
-        if isinstance(op, RobotMaintenanceOpDescriptor):
+        if isinstance(op, RobotMaintenanceOp):
             priority += 200
         else:
-            if isinstance(op, DropBatchOpDescriptor):
+            if isinstance(op, DropBatchOp):
                 if robot.is_batch_onboard(op.target_batch):
                     priority += 30
                 else:
                     priority -= 100
-            elif isinstance(op, CollectBatchOpDescriptor):
+            elif isinstance(op, CollectBatchOp):
                 if (self.robot_free_slots_num > 0
                     and (op.related_lot in robot.consigned_lots or robot.free_lot_capacity > 0)
                     and self._is_next_station_free(op.target_batch)
@@ -87,11 +87,11 @@ class PriorityQueueRobotScheduler(RobotScheduler):
                     self.robot_free_slots_num -= 1
                 else:
                     priority -= 100
-            elif isinstance(op, RobotTaskOpDescriptor):
+            elif isinstance(op, RobotTaskOp):
                 priority += 10
-            elif isinstance(op, RobotNavOpDescriptor):
+            elif isinstance(op, RobotNavOp):
                 priority += 10
-            elif isinstance(op, RobotWaitOpDescriptor):
+            elif isinstance(op, RobotWaitOp):
                 priority += 5
             
             if robot.attending_to is None:
@@ -101,11 +101,11 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         
         return priority
     
-    def _calculate_fixed_robot_priority(self, op: Type[RobotOpDescriptor], robot: Type[FixedRobot]):
+    def _calculate_fixed_robot_priority(self, op: Type[RobotOp], robot: Type[FixedRobot]):
         priority = 0
-        if isinstance(op, RobotMaintenanceOpDescriptor):
+        if isinstance(op, RobotMaintenanceOp):
             priority += 200
-        elif isinstance(op, RobotWaitOpDescriptor):
+        elif isinstance(op, RobotWaitOp):
             priority += 5
         else:
             priority += 10
@@ -132,8 +132,8 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         
         return is_free
     
-    def _get_lot_and_requester_keys(self, op: Type[RobotOpDescriptor]):
-        if isinstance(op, RobotTaskOpDescriptor) and op.related_lot:
+    def _get_lot_and_requester_keys(self, op: Type[RobotOp]):
+        if isinstance(op, RobotTaskOp) and op.related_lot:
             lot_key = op.related_lot.object_id
         else:
             lot_key = ObjectId(b"no lot      ")

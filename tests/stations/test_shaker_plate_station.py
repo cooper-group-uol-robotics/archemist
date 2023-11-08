@@ -5,7 +5,7 @@ from mongoengine import connect
 from archemist.stations.shaker_plate_station.state import ShakerPlateStation, ShakerPlateOp
 from archemist.stations.shaker_plate_station.process import PXRDWorkflowShakingProcess
 from archemist.stations.shaker_plate_station.handler import SimShakePlateHandler
-from archemist.core.state.robot_op import RobotTaskOpDescriptor, CollectBatchOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp, CollectBatchOp
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
@@ -97,7 +97,7 @@ class ShakerPlateStationTest(unittest.TestCase):
         # load_shaker_plate
         process.tick()
         self.assertEqual(process.m_state, 'load_shaker_plate')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # shake
         process.tick()
@@ -107,17 +107,17 @@ class ShakerPlateStationTest(unittest.TestCase):
         # unload_shaker_plate
         process.tick()
         self.assertEqual(process.m_state, 'unload_shaker_plate')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # unscrew_caps
         process.tick()
         self.assertEqual(process.m_state, 'unscrew_caps')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
         
         # pick_lot
         process.tick()
         self.assertEqual(process.m_state, 'pick_lot')
-        test_req_robot_ops(self, process, [CollectBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [CollectBatchOp]*2)
 
         # final_state
         process.tick()

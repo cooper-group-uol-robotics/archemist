@@ -1,13 +1,13 @@
 from bson.objectid import ObjectId
 from archemist.core.state.sample import Sample
-from archemist.core.models.station_op_model import StationSampleOpDescriptorModel
+from archemist.core.models.station_op_model import StationSampleOpModel
 from archemist.core.state.station_op_result import StationOpResult
 from .model import (LightBoxStationModel,
                     LBAnalyseRGBResultModel,
                     LBAnalyseLABResultModel)
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationSampleOpDescriptor
+from archemist.core.state.station_op import StationSampleOp
 from typing import List, Union, Dict
 import math
 
@@ -37,13 +37,13 @@ class LightBoxStation(Station):
         return self._model_proxy.lab_target_index
 
 ''' ==== Station Operation Descriptors ==== '''
-class LBSampleAnalyseRGBOp(StationSampleOpDescriptor):
-    def __init__(self, op_model: Union[StationSampleOpDescriptorModel,ModelProxy]) -> None:
+class LBSampleAnalyseRGBOp(StationSampleOp):
+    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_sample: Sample):
-        model = StationSampleOpDescriptorModel()
+        model = StationSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
         model.save()
@@ -98,13 +98,13 @@ class LBAnalyseRGBResult(StationOpResult):
     def color_diff(self) -> int:
         return self._model_proxy.color_diff
 
-class LBSampleAnalyseLABOp(StationSampleOpDescriptor):
-    def __init__(self, op_model: Union[StationSampleOpDescriptorModel,ModelProxy]) -> None:
+class LBSampleAnalyseLABOp(StationSampleOp):
+    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_sample: Sample):
-        model = StationSampleOpDescriptorModel()
+        model = StationSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
         model.save()

@@ -2,7 +2,7 @@ from transitions import State
 from archemist.core.state.lot import Lot
 from .state import IKADigitalPlateStation
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.state.robot_op import DropBatchOpDescriptor, RobotTaskOpDescriptor
+from archemist.core.state.robot_op import DropBatchOp, RobotTaskOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, Dict, Any, List
 from datetime import datetime, timedelta
@@ -63,19 +63,19 @@ class PXRDWorkflowStirringProcess(StationProcess):
         batch_1 = self.lot.batches[self.eight_well_batch_index]
         params_dict = {}
         params_dict["perform_6p_calib"] = True
-        robot_op_1 = DropBatchOpDescriptor.from_args(name='LoadEightWRackYumiStation', target_robot="KMRIIWARobot",
+        robot_op_1 = DropBatchOp.from_args(name='LoadEightWRackYumiStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch_1)
         # place the pxrd rack
         batch_2 = self.lot.batches[self.pxrd_batch_index]
         params_dict["perform_6p_calib"] = False
-        robot_op_2 = DropBatchOpDescriptor.from_args(name='LoadPXRDRackYumiStation', target_robot="KMRIIWARobot",
+        robot_op_2 = DropBatchOp.from_args(name='LoadPXRDRackYumiStation', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch_2)
         
         self.request_robot_ops([robot_op_1, robot_op_2])
 
     def request_load_stir_plate(self):
         batch_1 = self.lot.batches[self.eight_well_batch_index]
-        robot_op = RobotTaskOpDescriptor.from_args(name='loadIKAPlate', target_robot="YuMiRobot",
+        robot_op = RobotTaskOp.from_args(name='loadIKAPlate', target_robot="YuMiRobot",
                                                    target_batch=batch_1)
         
         self.request_robot_ops([robot_op])
@@ -140,7 +140,7 @@ class PandaIKASolubilityProcess(StationProcess):
 
     def request_load_ika_plate(self):
         batch = self.lot.batches[0]
-        robot_op = RobotTaskOpDescriptor.from_args(name='load_ika_plate', target_robot="PandaRobot",
+        robot_op = RobotTaskOp.from_args(name='load_ika_plate', target_robot="PandaRobot",
                                                    target_batch=batch)
         
         self.request_robot_ops([robot_op])
@@ -156,7 +156,7 @@ class PandaIKASolubilityProcess(StationProcess):
 
     def request_unload_ika_plate(self):
         batch = self.lot.batches[0]
-        robot_op = RobotTaskOpDescriptor.from_args(name='unload_ika_plate', target_robot="PandaRobot",
+        robot_op = RobotTaskOp.from_args(name='unload_ika_plate', target_robot="PandaRobot",
                                                    target_batch=batch)
         
         self.request_robot_ops([robot_op])

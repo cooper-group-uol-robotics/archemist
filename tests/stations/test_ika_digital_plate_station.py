@@ -13,7 +13,7 @@ from archemist.stations.ika_digital_plate_station.handler import SimIKAPlateDigi
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
-from archemist.core.state.robot_op import DropBatchOpDescriptor, RobotTaskOpDescriptor
+from archemist.core.state.robot_op import DropBatchOp, RobotTaskOp
 from .testing_utils import test_req_station_op, test_req_robot_ops, test_req_station_proc
 
 class IKADigitalPlateStationTest(unittest.TestCase):
@@ -175,12 +175,12 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         # place_lot
         process.tick()
         self.assertEqual(process.m_state, 'place_lot')
-        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [DropBatchOp]*2)
 
         # load_stir_plate
         process.tick()
         self.assertEqual(process.m_state, 'load_stir_plate')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # stir
         process.tick()
@@ -233,7 +233,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         # load_ika_plate
         process.tick()
         self.assertEqual(process.m_state, 'load_ika_plate')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # start_stirring_heating
         process.tick()
@@ -288,7 +288,7 @@ class IKADigitalPlateStationTest(unittest.TestCase):
         # unload_ika_plate
         process.tick()
         self.assertEqual(process.m_state, 'unload_ika_plate')
-        test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # final_state
         process.tick()

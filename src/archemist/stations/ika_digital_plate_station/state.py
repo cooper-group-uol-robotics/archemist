@@ -1,6 +1,6 @@
 from .model import IKADigitalPlateMode, IkaDigitalPlateStationModel, IKADigitalPlateOpModel
 from archemist.core.state.station import Station
-from archemist.core.state.station_op import StationBatchOpDescriptor, StationOpDescriptor, StationOpDescriptorModel
+from archemist.core.state.station_op import StationBatchOp, StationOp, StationOpModel
 from archemist.core.state.batch import Batch
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station_op_result import ProcessOpResult
@@ -80,7 +80,7 @@ class IKADigitalPlateStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
-class IKAHeatStirBatchOp(StationBatchOpDescriptor):
+class IKAHeatStirBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -118,7 +118,7 @@ class IKAHeatStirBatchOp(StationBatchOpDescriptor):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
-class IKAHeatBatchOp(StationBatchOpDescriptor):
+class IKAHeatBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -151,7 +151,7 @@ class IKAHeatBatchOp(StationBatchOpDescriptor):
         return self._model_proxy.time_unit
 
 
-class IKAStirBatchOp(StationBatchOpDescriptor):
+class IKAStirBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
@@ -183,13 +183,13 @@ class IKAStirBatchOp(StationBatchOpDescriptor):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
-class IKAStopOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class IKAStopOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
         model.save()
         return cls(model)

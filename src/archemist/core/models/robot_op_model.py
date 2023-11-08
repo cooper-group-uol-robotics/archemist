@@ -3,7 +3,7 @@ from archemist.core.models.batch_model import BatchModel
 from archemist.core.util.enums import OpOutcome
 from archemist.core.util.location import LocationModel
 
-class RobotOpDescriptorModel(Document):
+class RobotOpModel(Document):
     _type = fields.StringField(required=True)
     _module = fields.StringField(required=True)
     
@@ -18,27 +18,27 @@ class RobotOpDescriptorModel(Document):
 
     meta = {'collection': 'robot_ops', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 
-class RobotTaskOpDescriptorModel(RobotOpDescriptorModel):
+class RobotTaskOpModel(RobotOpModel):
     name = fields.StringField(required=True)
     params = fields.DictField(default={})
     target_batch = fields.ReferenceField(BatchModel, null=True)
     target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
 
-class CollectBatchOpDescriptorModel(RobotTaskOpDescriptorModel):
+class CollectBatchOpModel(RobotTaskOpModel):
     target_onboard_slot = fields.IntField(null=True)
 
-class DropBatchOpDescriptorModel(RobotTaskOpDescriptorModel):
+class DropBatchOpModel(RobotTaskOpModel):
     onboard_collection_slot = fields.IntField(null=True)
 
-class RobotMaintenanceOpDescriptorModel(RobotOpDescriptorModel):
+class RobotMaintenanceOpModel(RobotOpModel):
     target_robot_id = fields.IntField(required=True)
     name = fields.StringField(required=True)
     params = fields.DictField(default={})
 
-class RobotNavOpDescriptorModel(RobotOpDescriptorModel):
+class RobotNavOpModel(RobotOpModel):
     name = fields.StringField(required=True)
     target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
     params = fields.DictField(default={})
 
-class RobotWaitOpDescriptorModel(RobotOpDescriptorModel):
+class RobotWaitOpModel(RobotOpModel):
     timeout = fields.IntField(min_value=0)

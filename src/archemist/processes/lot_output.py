@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 from archemist.core.state.lot import Lot
 from archemist.core.state.station_process import StationProcess, StationProcessModel
-from archemist.core.state.robot_op import DropBatchOpDescriptor
+from archemist.core.state.robot_op import DropBatchOp
 
 class BasicLotOutputProcess(StationProcess):
 
@@ -58,7 +58,7 @@ class BasicLotOutputProcess(StationProcess):
             params_dict = {}
             params_dict["perform_6p_calib"] = False
             params_dict["place_batch_index"] = batches_offset + index + 1
-            robot_op = DropBatchOpDescriptor.from_args(name='PlaceRack', target_robot=target_robot,
+            robot_op = DropBatchOp.from_args(name='PlaceRack', target_robot=target_robot,
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         

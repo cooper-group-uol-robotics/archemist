@@ -3,8 +3,8 @@ from .model import PXRDStationModel, PXRDJobStatus, PXRDAnalysisResultModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.batch import Batch
-from archemist.core.state.station_op import StationOpDescriptor, StationBatchOpDescriptor
-from archemist.core.models.station_op_model import StationOpDescriptorModel, StationBatchOpDescriptorModel
+from archemist.core.state.station_op import StationOp, StationBatchOp
+from archemist.core.models.station_op_model import StationOpModel, StationBatchOpModel
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 from typing import List, Dict, Union, Type
@@ -56,36 +56,36 @@ class PXRDStation(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 
-class PXRDOpenDoorOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class PXRDOpenDoorOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
         model.save()
         return cls(model)
 
 
-class PXRDCloseDoorOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class PXRDCloseDoorOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
         model.save()
         return cls(model)
 
-class PXRDAnalysisOp(StationBatchOpDescriptor):
-    def __init__(self, op_model: StationBatchOpDescriptorModel):
+class PXRDAnalysisOp(StationBatchOp):
+    def __init__(self, op_model: StationBatchOpModel):
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_batch: Batch):
-        model = StationBatchOpDescriptorModel()
+        model = StationBatchOpModel()
         model.target_batch = target_batch.model
         cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
         model.save()

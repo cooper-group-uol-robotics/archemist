@@ -3,7 +3,7 @@ from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.lot import Lot
 from archemist.core.models.station_model import StationModel
-from archemist.core.state.station_op import StationLotOpDescriptor
+from archemist.core.state.station_op import StationLotOp
 from typing import Dict, Union, Literal
 
 
@@ -20,7 +20,7 @@ class WaitingStation(Station):
         return cls(model)   
 
 ''' ==== Station Operation Descriptors ==== '''
-class WaitOp(StationLotOpDescriptor):
+class WaitOp(StationLotOp):
     def __init__(self, station_op_model: Union[WaitOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 

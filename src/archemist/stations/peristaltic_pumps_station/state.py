@@ -2,7 +2,7 @@ from .model import PeristalticPumpsStationModel, PPLiquidDispenseOpModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.sample import Sample
-from archemist.core.state.station_op import StationSampleOpDescriptor
+from archemist.core.state.station_op import StationSampleOp
 from archemist.core.state.station_op_result import StationOpResult
 from typing import Dict, Union, Literal, Type, List
 from archemist.core.util.enums import OpOutcome
@@ -34,7 +34,7 @@ class PeristalticPumpsStation(Station):
     
 
 ''' ==== Station Operation Descriptors ==== '''
-class PPLiquidDispenseOp(StationSampleOpDescriptor):
+class PPLiquidDispenseOp(StationSampleOp):
     def __init__(self, station_op_model: Union[PPLiquidDispenseOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 

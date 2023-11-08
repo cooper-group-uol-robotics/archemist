@@ -3,7 +3,7 @@ from transitions import State
 from archemist.core.state.lot import Lot
 from .state import LightBoxStation
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.state.robot_op import RobotTaskOpDescriptor, RobotWaitOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp, RobotWaitOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
 
@@ -65,11 +65,11 @@ class LBSampleAnalysisProcess(StationProcess):
         params_dict["perform_6p_calib"] = False
         params_dict["allow_auto_func"] = False
         target_batch = self.lot.batches[self.data['batch_index']]
-        robot_task = RobotTaskOpDescriptor.from_args(name='PresentVial',
+        robot_task = RobotTaskOp.from_args(name='PresentVial',
                                                      target_robot="KMRIIWARobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)
-        robot_wait_task = RobotWaitOpDescriptor.from_args("KMRIIWARobot", 3)
+        robot_wait_task = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, robot_wait_task])
 
     def request_unload_sample_job(self):
@@ -79,11 +79,11 @@ class LBSampleAnalysisProcess(StationProcess):
         params_dict["perform_6p_calib"] = False
         params_dict["allow_auto_func"] = False
         target_batch = self.lot.batches[self.data['batch_index']]
-        robot_task = RobotTaskOpDescriptor.from_args(name='ReturnVial',
+        robot_task = RobotTaskOp.from_args(name='ReturnVial',
                                                      target_robot="KMRIIWARobot",
                                                      params=params_dict,
                                                      target_batch=target_batch)
-        robot_wait_task = RobotWaitOpDescriptor.from_args("KMRIIWARobot", 3)
+        robot_wait_task = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, robot_wait_task])
 
     def request_process_data_job(self):

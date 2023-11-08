@@ -1,8 +1,8 @@
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.models.robot_model import RobotModel, MobileRobotModel, MobileRobotMode
-from archemist.core.state.robot_op import (RobotOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor)
+from archemist.core.state.robot_op import (RobotOp,
+                                           CollectBatchOp,
+                                           DropBatchOp)
 from archemist.core.util.enums import RobotState, OpState, OpOutcome
 from archemist.core.util.location import Location
 from archemist.core.state.lot import Lot
@@ -83,7 +83,7 @@ class Robot:
         self._model_proxy.attending_to = new_station
 
     @property
-    def queued_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def queued_ops(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.queued_ops, RobotOpFactory.create_from_model)
 
     @property
@@ -95,7 +95,7 @@ class Robot:
         return self._model_proxy.assigned_op_state
 
     @property
-    def assigned_op(self) -> Type[RobotOpDescriptor]:
+    def assigned_op(self) -> Type[RobotOp]:
         return RobotOpFactory.create_from_model(self._model_proxy.assigned_op) \
                if self._model_proxy.assigned_op else None
     
@@ -107,7 +107,7 @@ class Robot:
             if self.attending_to != op.requested_by:
                 self.attending_to = op.requested_by
 
-    def add_op(self, robot_op: Type[RobotOpDescriptor]):
+    def add_op(self, robot_op: Type[RobotOp]):
         self.queued_ops.append(robot_op)
         self._log_robot(f'({robot_op}) is queued')
         
@@ -213,20 +213,20 @@ class MobileRobot(Robot):
     def update_assigned_op(self):
         super().update_assigned_op()
         op = self.assigned_op
-        if isinstance(op, CollectBatchOpDescriptor):
+        if isinstance(op, CollectBatchOp):
             for slot, batch in self.onboard_batches_slots.items():
                 if not batch:
                     op.target_onboard_slot = int(slot)
                     break
-        elif isinstance(op, DropBatchOpDescriptor):
+        elif isinstance(op, DropBatchOp):
            for slot, batch in self.onboard_batches_slots.items():
                 if batch and batch == op.target_batch:
                     op.onboard_collection_slot = int(slot)
                     break
 
 
-    def add_op(self, robot_op: type[RobotOpDescriptor]):
-        if isinstance(robot_op, CollectBatchOpDescriptor):
+    def add_op(self, robot_op: type[RobotOp]):
+        if isinstance(robot_op, CollectBatchOp):
             if robot_op.related_lot not in self.consigned_lots:
                 self.consigned_lots.append(robot_op.related_lot)
             else:
@@ -236,11 +236,11 @@ class MobileRobot(Robot):
     def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
         op = self.assigned_op
         if op:
-            if isinstance(op, CollectBatchOpDescriptor):
+            if isinstance(op, CollectBatchOp):
                 slot = str(op.target_onboard_slot)
                 self.onboard_batches_slots[slot] = op.target_batch
                 op.target_batch.location = Location.from_args(descriptor=f"{self} @ slot:{slot}")
-            elif isinstance(op, DropBatchOpDescriptor):
+            elif isinstance(op, DropBatchOp):
                 slot = str(op.onboard_collection_slot)
                 self.onboard_batches_slots[slot] = None
                 op.target_batch.location = op.target_location

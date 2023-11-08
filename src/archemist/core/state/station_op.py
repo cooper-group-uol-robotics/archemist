@@ -3,10 +3,10 @@ from typing import Union, Type, List
 from datetime import datetime
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.persistence.object_factory import OpResultFactory
-from archemist.core.models.station_op_model import (StationOpDescriptorModel,
-                                                    StationLotOpDescriptorModel,
-                                                    StationBatchOpDescriptorModel,
-                                                    StationSampleOpDescriptorModel)
+from archemist.core.models.station_op_model import (StationOpModel,
+                                                    StationLotOpModel,
+                                                    StationBatchOpModel,
+                                                    StationSampleOpModel)
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
 from archemist.core.state.sample import Sample
@@ -14,22 +14,22 @@ from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
-class StationOpDescriptor:
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel, ModelProxy]) -> None:
+class StationOp:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         if isinstance(station_op_model, ModelProxy):
             self._model_proxy = station_op_model
         else:
             self._model_proxy = ModelProxy(station_op_model)
 
     @classmethod
-    def _set_model_common_fields(cls, op_model: StationOpDescriptorModel, associated_station: str):
+    def _set_model_common_fields(cls, op_model: StationOpModel, associated_station: str):
         op_model.associated_station = associated_station
         op_model._type = cls.__name__
         op_model._module = cls.__module__
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
         return cls(model)
@@ -90,13 +90,13 @@ class StationOpDescriptor:
     def __eq__(self, __value: object) -> bool:
         return self.object_id == __value.object_id
     
-class StationLotOpDescriptor(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationLotOpDescriptorModel, ModelProxy]):
+class StationLotOp(StationOp):
+    def __init__(self, station_op_model: Union[StationLotOpModel, ModelProxy]):
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls, target_lot: Lot):
-        model = StationLotOpDescriptorModel()
+        model = StationLotOpModel()
         model.target_lot = target_lot.model
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
@@ -125,13 +125,13 @@ class StationLotOpDescriptor(StationOpDescriptor):
                     sample.add_result_op(results[index])
                     index += 1  
     
-class StationBatchOpDescriptor(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationBatchOpDescriptorModel, ModelProxy]):
+class StationBatchOp(StationOp):
+    def __init__(self, station_op_model: Union[StationBatchOpModel, ModelProxy]):
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls, target_batch: Batch):
-        model = StationBatchOpDescriptorModel()
+        model = StationBatchOpModel()
         model.target_batch = target_batch.model
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
@@ -154,13 +154,13 @@ class StationBatchOpDescriptor(StationOpDescriptor):
                 sample.add_result_op(results[index])
                 index += 1
     
-class StationSampleOpDescriptor(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationSampleOpDescriptorModel, ModelProxy]):
+class StationSampleOp(StationOp):
+    def __init__(self, station_op_model: Union[StationSampleOpModel, ModelProxy]):
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls, target_sample: Sample):
-        model = StationSampleOpDescriptorModel()
+        model = StationSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()

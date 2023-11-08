@@ -2,10 +2,10 @@ from transitions import State
 from .state import ChemSpeedFlexStation
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
-from archemist.core.state.robot_op import (CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor,
-                                           RobotNavOpDescriptor,
-                                           RobotWaitOpDescriptor)
+from archemist.core.state.robot_op import (CollectBatchOp,
+                                           DropBatchOp,
+                                           RobotNavOp,
+                                           RobotWaitOp)
 from .state import CSCloseDoorOp, CSOpenDoorOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
@@ -81,7 +81,7 @@ class CMFlexLiquidDispenseProcess(StationProcess):
             params_dict = {}
             params_dict["place_batch_index"] = batches_offset + index + 1
             params_dict["perform_6p_calib"] = False
-            robot_op = DropBatchOpDescriptor.from_args(name='LoadChemSpeed', target_robot="KMRIIWARobot",
+            robot_op = DropBatchOp.from_args(name='LoadChemSpeed', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         
@@ -96,22 +96,22 @@ class CMFlexLiquidDispenseProcess(StationProcess):
             params_dict = {}
             params_dict["perform_6p_calib"] = False
             params_dict["pick_batch_index"] = batches_offset + index + 1
-            robot_op = CollectBatchOpDescriptor.from_args(name='UnloadChemSpeed', target_robot="KMRIIWARobot",
+            robot_op = CollectBatchOp.from_args(name='UnloadChemSpeed', target_robot="KMRIIWARobot",
                                                        params=params_dict, target_batch=batch)
             req_robot_ops.append(robot_op)
         
         self.request_robot_ops(req_robot_ops)
 
     def request_navigate_to_chemspeed(self):
-        nav_to_station = RobotNavOpDescriptor.from_args(name="nav_to_chemspeed",
+        nav_to_station = RobotNavOp.from_args(name="nav_to_chemspeed",
                                                         target_robot="KMRIIWARobot",
                                                         target_location=None)
-        wait_for_next_op = RobotWaitOpDescriptor.from_args("KMRIIWARobot", 3)
+        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
 
         self.request_robot_ops([nav_to_station, wait_for_next_op])
 
     def request_retreat_from_chemspeed(self):
-        nav_away = RobotNavOpDescriptor.from_args(name="retreat_from_chemspeed",
+        nav_away = RobotNavOp.from_args(name="retreat_from_chemspeed",
                                                         target_robot="KMRIIWARobot",
                                                         target_location=None)
 

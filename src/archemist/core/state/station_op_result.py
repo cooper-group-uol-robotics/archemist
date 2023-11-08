@@ -1,18 +1,18 @@
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.models.op_result_model import OpResultModel, MaterialsOpResultModel, ProcessOpResultModel
+from archemist.core.models.station_op_result_model import StationOpResultModel, MaterialsOpResultModel, ProcessOpResultModel
 
 from typing import Union, Type, Dict, Any, List
 from bson.objectid import ObjectId
 
 class StationOpResult:
-    def __init__(self, result_model: Union[Type[OpResultModel], ModelProxy]):
+    def __init__(self, result_model: Union[Type[StationOpResultModel], ModelProxy]):
         if isinstance(result_model, ModelProxy):
             self._model_proxy = result_model
         else:
             self._model_proxy = ModelProxy(result_model)
 
     @classmethod
-    def _set_model_common_fields(cls, result_model: OpResultModel, origin_op_id: ObjectId):
+    def _set_model_common_fields(cls, result_model: StationOpResultModel, origin_op_id: ObjectId):
         result_model._type = cls.__name__
         result_model._module = cls.__module__
         result_model.origin_op = origin_op_id
@@ -20,14 +20,14 @@ class StationOpResult:
 
     @classmethod
     def from_args(cls, origin_op: ObjectId):
-        model = OpResultModel()
+        model = StationOpResultModel()
         origin_op = origin_op#kwargs.get("origin_op")
         cls._set_model_common_fields(model, origin_op)
         model.save()
         return cls(model)
 
     @property
-    def model(self) -> Type[OpResultModel]:
+    def model(self) -> Type[StationOpResultModel]:
         return self._model_proxy.model
     
     @property

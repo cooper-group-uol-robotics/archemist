@@ -1,8 +1,8 @@
 import unittest
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp
 from mongoengine import connect
 from archemist.core.state.station import Station, StationState, OpState, OpOutcome
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -127,8 +127,8 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.requested_robot_ops)
 
         # op creation
-        robot_op1 = RobotTaskOpDescriptor.from_args('test_task1', "Robot", params={'calibrate': False, 'index': 1})
-        robot_op2 = RobotTaskOpDescriptor.from_args('test_task2', "Robot", params={'calibrate': False, 'index': 1})
+        robot_op1 = RobotTaskOp.from_args('test_task1', "Robot", params={'calibrate': False, 'index': 1})
+        robot_op2 = RobotTaskOp.from_args('test_task2', "Robot", params={'calibrate': False, 'index': 1})
         
         # op assignment
         self.station.add_req_robot_op(robot_op1)
@@ -154,8 +154,8 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.ops_history)
 
         # op creation
-        station_op_1 = StationOpDescriptor.from_args()
-        station_op_2 = StationOpDescriptor.from_args()
+        station_op_1 = StationOp.from_args()
+        station_op_2 = StationOp.from_args()
 
         # op assignment
         self.station.add_station_op(station_op_1)

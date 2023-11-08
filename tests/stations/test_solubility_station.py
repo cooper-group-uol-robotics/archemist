@@ -10,7 +10,7 @@ from archemist.stations.solubility_station.state import (SolubilityStation,
 from archemist.stations.solubility_station.process import SolubilityStationProcess, PandaCheckSolubilityProcess
 from archemist.stations.solubility_station.handler import SimSolubilityStationHandler
 from archemist.core.util.enums import ProcessStatus, OpOutcome, StationState
-from archemist.core.state.robot_op import RobotTaskOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
 class SolubilityStationTest(unittest.TestCase):
@@ -92,7 +92,7 @@ class SolubilityStationTest(unittest.TestCase):
                 # load_sample
                 process.tick()
                 self.assertEqual(process.m_state, 'load_sample')
-                test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+                test_req_robot_ops(self, process, [RobotTaskOp])
 
                 # station_process
                 process.tick()
@@ -102,7 +102,7 @@ class SolubilityStationTest(unittest.TestCase):
                 # unload_sample
                 process.tick()
                 self.assertEqual(process.m_state, 'unload_sample')
-                test_req_robot_ops(self, process, [RobotTaskOpDescriptor])
+                test_req_robot_ops(self, process, [RobotTaskOp])
 
                 # update_sample_index
                 process.tick()

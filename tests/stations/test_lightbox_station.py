@@ -10,8 +10,8 @@ from archemist.stations.lightbox_station.state import (LightBoxStation,
                                                        LBAnalyseRGBResult,
                                                        LBSampleAnalyseLABOp,
                                                        LBAnalyseLABResult)
-from archemist.core.state.robot_op import (RobotTaskOpDescriptor,
-                                           RobotWaitOpDescriptor)
+from archemist.core.state.robot_op import (RobotTaskOp,
+                                           RobotWaitOp)
 from archemist.stations.lightbox_station.process import LBSampleAnalysisProcess
 from archemist.stations.lightbox_station.handler import SimLightBoxHandler
 from archemist.core.util.enums import OpOutcome, ProcessStatus
@@ -56,7 +56,7 @@ class LightBoxStationTest(unittest.TestCase):
         self.station.add_lot(lot)
 
 
-        # test SampleColorOpDescriptor
+        # test SampleColorOp
         t_op = LBSampleAnalyseRGBOp.from_args(lot.batches[0].samples[0])
         self.assertIsNotNone(t_op.object_id)
 
@@ -131,7 +131,7 @@ class LightBoxStationTest(unittest.TestCase):
                 # load_sample
                 process.tick()
                 self.assertEqual(process.m_state, 'load_sample')
-                test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+                test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
 
                 # station_process
                 process.tick()
@@ -141,7 +141,7 @@ class LightBoxStationTest(unittest.TestCase):
                 # unload_sample
                 process.tick()
                 self.assertEqual(process.m_state, 'unload_sample')
-                test_req_robot_ops(self, process, [RobotTaskOpDescriptor, RobotWaitOpDescriptor])
+                test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
 
                 # update_sample_index
                 process.tick()

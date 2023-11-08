@@ -4,7 +4,7 @@ from transitions import State
 
 from archemist.core.state.station import Station
 from archemist.core.state.station_process import StationProcess
-from archemist.core.state.robot_op import RobotOpDescriptor
+from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.state.recipe import Recipe
@@ -32,7 +32,7 @@ class TestProcess1(StationProcess):
         self.data['batch_index'] = 0
 
     def request_pickup_batch(self):
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
     def request_to_run_op(self):
@@ -60,7 +60,7 @@ class TestProcess2(StationProcess):
         ]
 
     def request_pickup_batch(self):
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
     def request_analysis_proc(self):
@@ -152,7 +152,7 @@ class ProcessorTest(unittest.TestCase):
 
         self.operations = [{
             "name": "some_op",
-            "op": "StationOpDescriptor",
+            "op": "StationOp",
             "parameters": {"stirring_speed": 200, "duration": 10}
         }]
 
@@ -202,7 +202,7 @@ class ProcessorTest(unittest.TestCase):
 
         # test requested_robot_ops
         self.assertFalse(input_processor.requested_robot_ops)
-        input_processor.requested_robot_ops.append(RobotOpDescriptor.from_args())
+        input_processor.requested_robot_ops.append(RobotOp.from_args())
         self.assertEqual(len(input_processor.requested_robot_ops), 1)
 
         # test adding clean batches
@@ -286,7 +286,7 @@ class ProcessorTest(unittest.TestCase):
 
         # test requested_robot_ops
         self.assertFalse(output_processor.requested_robot_ops)
-        output_processor.requested_robot_ops.append(RobotOpDescriptor.from_args())
+        output_processor.requested_robot_ops.append(RobotOp.from_args())
         self.assertEqual(len(output_processor.requested_robot_ops), 1)
 
         # create lots

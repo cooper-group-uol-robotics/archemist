@@ -1,6 +1,6 @@
 from archemist.core.persistence.yaml_handler import YamlHandler
 from archemist.core.state.state import InputState, WorkflowState, OutputState
-from archemist.core.processing.scheduler import RobotScheduler, RobotOpDescriptor
+from archemist.core.processing.scheduler import RobotScheduler, RobotOp
 from archemist.core.processing.processor import InputProcessor, WorkflowProcessor, OutputProcessor
 from archemist.core.persistence.recipe_files_watchdog import RecipeFilesWatchdog
 from archemist.core.util.enums import WorkflowManagerStatus
@@ -60,7 +60,7 @@ class WorkflowManager:
     def remove_all_lots(self):
         return self._output_processor.remove_all_lots()
     
-    def queue_robot_op(self, robot_op: Type[RobotOpDescriptor]):
+    def queue_robot_op(self, robot_op: Type[RobotOp]):
         self._workflow_processor.robot_ops_queue.append(robot_op)
 
     def _process(self):

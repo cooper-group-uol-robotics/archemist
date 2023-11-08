@@ -1,5 +1,5 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.station_op_model import StationBatchOpDescriptorModel
+from archemist.core.models.station_op_model import StationBatchOpModel
 from mongoengine import fields
 from enum import Enum
 
@@ -15,7 +15,7 @@ class IkaDigitalPlateStationModel(StationModel):
     external_temperature = fields.IntField(min_value=0, max_value=500, null=True)
     viscosity_trend = fields.FloatField(null=True)
 
-class IKADigitalPlateOpModel(StationBatchOpDescriptorModel):
+class IKADigitalPlateOpModel(StationBatchOpModel):
     target_temperature = fields.IntField(min_value=0, max_value=500, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1500, null=True)
     duration = fields.IntField(required=True)

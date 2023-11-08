@@ -5,13 +5,13 @@ from mongoengine import connect
 
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import (RobotOpDescriptor,
-                                           RobotTaskOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor,
+from archemist.core.state.robot_op import (RobotOp,
+                                           RobotTaskOp,
+                                           CollectBatchOp,
+                                           DropBatchOp,
                                            OpOutcome,
-                                           RobotNavOpDescriptor,
-                                           RobotWaitOpDescriptor)
+                                           RobotNavOp,
+                                           RobotWaitOp)
 from archemist.core.util.location import Location
 
 class RobotOpTest(unittest.TestCase):
@@ -26,7 +26,7 @@ class RobotOpTest(unittest.TestCase):
 
     def test_robot_op(self):
         # construct op
-        robot_op = RobotOpDescriptor.from_args()
+        robot_op = RobotOp.from_args()
         self.assertIsNotNone(robot_op.object_id)
         self.assertIsNone(robot_op.requested_by)
         self.assertIsNone(robot_op.executed_by)
@@ -64,11 +64,11 @@ class RobotOpTest(unittest.TestCase):
         lot = Lot.from_args([batch])
         task_loc = Location.from_args(coordinates=(1,3), descriptor="ChemspeedStation")
         params_dict = {"rack_index": 1, "calibrate": False}
-        robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot",
+        robot_op = RobotTaskOp.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
                                                    requested_by=requested_by,
                                                    target_batch=batch)
-        self.assertEqual(robot_op._model_proxy._type, "RobotTaskOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._type, "RobotTaskOp")
         self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
         self.assertEqual(robot_op.name, "test_task")
         self.assertEqual(robot_op.target_robot, "TestRobot")
@@ -81,7 +81,7 @@ class RobotOpTest(unittest.TestCase):
         self.assertEqual(robot_op.related_lot, lot)
 
         # test op with unspecified location
-        no_location_robot_op = RobotTaskOpDescriptor.from_args("test_task", "TestRobot",
+        no_location_robot_op = RobotTaskOp.from_args("test_task", "TestRobot",
                                                    params_dict,
                                                    requested_by=requested_by,
                                                    target_batch=batch)
@@ -96,11 +96,11 @@ class RobotOpTest(unittest.TestCase):
         lot = Lot.from_args([batch])
         task_loc = Location.from_args(coordinates=(2,3), descriptor="InputSite")
         params_dict = {"rack_index": 1, "calibrate": False}
-        robot_op = CollectBatchOpDescriptor.from_args("test_task", "TestRobot",
+        robot_op = CollectBatchOp.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
                                                    requested_by=requested_by,
                                                    target_batch=batch)
-        self.assertEqual(robot_op._model_proxy._type, "CollectBatchOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._type, "CollectBatchOp")
         self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
         self.assertEqual(robot_op.name, "test_task")
         self.assertEqual(robot_op.target_robot, "TestRobot")
@@ -122,7 +122,7 @@ class RobotOpTest(unittest.TestCase):
         lot = Lot.from_args([batch])
         task_loc = Location.from_args(coordinates=(2,3), descriptor="OutputSite")
         params_dict = {"rack_index": 1, "calibrate": False}
-        robot_op = DropBatchOpDescriptor.from_args("test_task", "TestRobot",
+        robot_op = DropBatchOp.from_args("test_task", "TestRobot",
                                                    params_dict, target_location=task_loc,
                                                    requested_by=requested_by,
                                                    target_batch=batch)
@@ -143,17 +143,17 @@ class RobotOpTest(unittest.TestCase):
         # construct op
         target_loc = Location.from_args(coordinates=(2,3), descriptor="InputSite")
         params_dict =  {"fine_localisation": True}
-        robot_op = RobotNavOpDescriptor.from_args("test_nav_task", "MobileRobot",target_loc, params_dict)
+        robot_op = RobotNavOp.from_args("test_nav_task", "MobileRobot",target_loc, params_dict)
         self.assertIsNotNone(robot_op.object_id)
         self.assertEqual(robot_op.name, "test_nav_task")
-        self.assertEqual(robot_op.target_location, target_loc)````
+        self.assertEqual(robot_op.target_location, target_loc)
         for key, val in params_dict.items():
             self.assertEqual(robot_op.params[key], val)
-        self.assertEqual(robot_op._model_proxy._type, "RobotNavOpDescriptor")
+        self.assertEqual(robot_op._model_proxy._type, "RobotNavOp")
         self.assertEqual(robot_op._model_proxy._module, "archemist.core.state.robot_op")
 
     def test_robot_wait_op(self):
-        wait_op = RobotWaitOpDescriptor.from_args(target_robot="Robot", timeout=10)
+        wait_op = RobotWaitOp.from_args(target_robot="Robot", timeout=10)
         self.assertIsNotNone(wait_op.object_id)
         self.assertEqual(wait_op.timeout, 10)
 

@@ -23,7 +23,7 @@ class RecipeTest(unittest.TestCase):
                             "operations": [
                                 {
                                     "name": "stir",
-                                    "op": "IKAStirringOpDescriptor",
+                                    "op": "IKAStirringOp",
                                     "parameters": {
                                         "stirring_speed": [200, 300]
                                     },
@@ -47,7 +47,7 @@ class RecipeTest(unittest.TestCase):
                             "operations": [
                                 {
                                     "name": "weigh",
-                                    "op": "FisherWeightOpDescriptor",
+                                    "op": "FisherWeightOp",
                                     "parameters": {"some_param": 123},
                                 },
                             ],
@@ -85,7 +85,7 @@ class RecipeTest(unittest.TestCase):
         operation_1= [
                         {
                             "name": "stir",
-                            "op": "IKAStirringOpDescriptor",
+                            "op": "IKAStirringOp",
                             "parameters": {
                                 "stirring_speed": [200, 300]
                             },
@@ -112,7 +112,7 @@ class RecipeTest(unittest.TestCase):
         operation_2 =[
                         {
                             "name": "weigh",
-                            "op": "FisherWeightOpDescriptor",
+                            "op": "FisherWeightOp",
                             "parameters": {"some_param": 123},
                         },
                     ]

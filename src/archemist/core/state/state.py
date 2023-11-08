@@ -1,7 +1,7 @@
 from typing import Dict, List, Union, Type
 from bson.objectid import ObjectId
 
-from archemist.core.state.robot_op import RobotOpDescriptor
+from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.state.recipe import Recipe
@@ -39,7 +39,7 @@ class WorkflowState:
         return ListProxy(self._model_proxy.lots_buffer, Lot)
         
     @property
-    def robot_ops_queue(self) -> List[Type[RobotOpDescriptor]]:
+    def robot_ops_queue(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.robot_ops_queue, RobotOpFactory.create_from_model)
         
     @property
@@ -101,7 +101,7 @@ class InputState:
         return ListProxy(self._model_proxy.recipes_queue, Recipe)
     
     @property
-    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def requested_robot_ops(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.requested_robot_ops, RobotOpFactory.create_from_model)
     
     @property
@@ -176,7 +176,7 @@ class OutputState:
         return self._model_proxy.lots_need_manual_removal
     
     @property
-    def requested_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def requested_robot_ops(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.requested_robot_ops, RobotOpFactory.create_from_model)
     
     @property

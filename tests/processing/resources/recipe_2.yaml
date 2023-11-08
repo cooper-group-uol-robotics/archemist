@@ -10,7 +10,7 @@ steps:
         type: StationProcess
         operations:
           - name: some_op
-            op: StationOpDescriptor
+            op: StationOp
             parameters: Null
         args: Null
     transitions:
@@ -24,7 +24,7 @@ steps:
         type: StationProcess
         operations:
           - name: some_op
-            op: StationOpDescriptor
+            op: StationOp
             parameters: Null
         args: Null
     transitions:

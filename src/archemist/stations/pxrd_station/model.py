@@ -1,5 +1,5 @@
 from archemist.core.models.station_model import StationModel
-from archemist.core.models.op_result_model import OpResultModel
+from archemist.core.models.station_op_result_model import StationOpResultModel
 from mongoengine import fields
 from enum import Enum, auto
 
@@ -13,6 +13,6 @@ class PXRDStationModel(StationModel):
     job_status = fields.EnumField(PXRDJobStatus, default=PXRDJobStatus.INVALID)
     door_closed = fields.BooleanField(default=True)
 
-class PXRDAnalysisResultModel(OpResultModel):
+class PXRDAnalysisResultModel(StationOpResultModel):
     result_filename = fields.StringField()
 

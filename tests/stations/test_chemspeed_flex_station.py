@@ -10,10 +10,10 @@ from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStatio
                                                              CSCloseDoorOp,
                                                              CSLiquidDispenseOp, 
                                                              CSRunJobOp)
-from archemist.core.state.robot_op import (RobotNavOpDescriptor,
-                                           RobotWaitOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor)
+from archemist.core.state.robot_op import (RobotNavOp,
+                                           RobotWaitOp,
+                                           CollectBatchOp,
+                                           DropBatchOp)
 from archemist.core.state.station_op_result import MaterialOpResult
 from archemist.stations.chemspeed_flex_station.process import CMFlexLiquidDispenseProcess
 from archemist.core.state.lot import Lot
@@ -73,7 +73,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.assertEqual(liquid.volume, 400)
 
         
-        # test CSOpenDoorOpDescriptor
+        # test CSOpenDoorOp
         t_op = CSOpenDoorOp.from_args()
         self.assertIsNotNone(t_op)
         self.station.add_station_op(t_op)
@@ -81,7 +81,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertFalse(self.station.door_closed)
 
-        # test CSCloseDoorOpDescriptor
+        # test CSCloseDoorOp
         t_op = CSCloseDoorOp.from_args()
         self.assertIsNotNone(t_op)
         self.station.add_station_op(t_op)
@@ -89,7 +89,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertTrue(self.station.door_closed)
 
-        # test CSProcessingOpDescriptor
+        # test CSProcessingOp
         t_op = CSRunJobOp.from_args()
         self.assertIsNotNone(t_op)
         self.station.add_station_op(t_op)
@@ -98,7 +98,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertEqual(self.station.job_status, ChemSpeedJobStatus.JOB_COMPLETE)
 
-        # test CSProcessingOpDescriptor
+        # test CSProcessingOp
         t_op = CSLiquidDispenseOp.from_args(target_lot=lot,
                                             dispense_table={'water':[10.0,20.0]},
                                             dispense_unit="mL")
@@ -164,7 +164,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # navigate_to_chemspeed and wait
         process.tick()
         self.assertEqual(process.m_state, 'navigate_to_chemspeed')
-        test_req_robot_ops(self, process, [RobotNavOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotNavOp, RobotWaitOp])
 
         # open_chemspeed_door
         process.tick()
@@ -174,7 +174,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # load_lot
         process.tick()
         self.assertEqual(process.m_state, 'load_lot')
-        test_req_robot_ops(self, process, [DropBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [DropBatchOp]*2)
         
 
         # close_chemspeed_door
@@ -185,7 +185,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # retreat_from_chemspeed
         process.tick()
         self.assertEqual(process.m_state, 'retreat_from_chemspeed')
-        test_req_robot_ops(self, process, [RobotNavOpDescriptor])
+        test_req_robot_ops(self, process, [RobotNavOp])
 
         # chemspeed_process
         process.tick()
@@ -195,7 +195,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # navigate_to_chemspeed
         process.tick()
         self.assertEqual(process.m_state, 'navigate_to_chemspeed')
-        test_req_robot_ops(self, process, [RobotNavOpDescriptor, RobotWaitOpDescriptor])
+        test_req_robot_ops(self, process, [RobotNavOp, RobotWaitOp])
 
         # open_chemspeed_door
         process.tick()
@@ -205,7 +205,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # unload_lot
         process.tick()
         self.assertEqual(process.m_state, 'unload_lot')
-        test_req_robot_ops(self, process, [CollectBatchOpDescriptor]*2)
+        test_req_robot_ops(self, process, [CollectBatchOp]*2)
 
         # close_chemspeed_door
         process.tick()
@@ -215,7 +215,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         # retreat_from_chemspeed
         process.tick()
         self.assertEqual(process.m_state, 'retreat_from_chemspeed')
-        test_req_robot_ops(self, process, [RobotNavOpDescriptor])
+        test_req_robot_ops(self, process, [RobotNavOp])
 
         # final_state
         process.tick()

@@ -1,5 +1,5 @@
 from mongoengine import Document, fields
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel
+from archemist.core.models.robot_op_model import RobotOpModel
 from archemist.core.models.lot_model import LotModel
 from archemist.core.util.enums import RobotState, OpState, MobileRobotMode
 from archemist.core.util.location import LocationModel
@@ -14,10 +14,10 @@ class RobotModel(Document):
     location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
     attending_to = fields.ObjectIdField(null=True)
     
-    queued_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
-    assigned_op = fields.ReferenceField(RobotOpDescriptorModel, null=True)
+    queued_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
+    assigned_op = fields.ReferenceField(RobotOpModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)
-    ops_history = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel), default=[])
+    ops_history = fields.ListField(fields.ReferenceField(RobotOpModel), default=[])
 
     meta = {'collection': 'robots', 'db_alias': 'archemist_state', 'allow_inheritance': True}
 

@@ -4,7 +4,7 @@ import unittest
 from archemist.core.state.robot import Robot, MobileRobot, RobotState, MobileRobotMode, OpState, OpOutcome
 from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
-from archemist.core.state.robot_op import RobotTaskOpDescriptor, CollectBatchOpDescriptor, DropBatchOpDescriptor
+from archemist.core.state.robot_op import RobotTaskOp, CollectBatchOp, DropBatchOp
 from archemist.core.util.location import Location
 from mongoengine import connect
 
@@ -46,10 +46,10 @@ class RobotTest(unittest.TestCase):
         requested_by = ObjectId.from_datetime(datetime.now())
         task_loc = Location.from_args(coordinates=(1,3), descriptor='input_site')
         params = {"rack_number": 1, "calibrate": False}
-        robot_op_1 = RobotTaskOpDescriptor.from_args("test_task1", "Robot",
+        robot_op_1 = RobotTaskOp.from_args("test_task1", "Robot",
                                                    params, target_location=task_loc,
                                                    requested_by=requested_by)
-        robot_op_2 = RobotTaskOpDescriptor.from_args("test_task2", "Robot",
+        robot_op_2 = RobotTaskOp.from_args("test_task2", "Robot",
                                                    params, target_location=task_loc,
                                                    requested_by=requested_by)
         # assign op
@@ -160,9 +160,9 @@ class RobotTest(unittest.TestCase):
         lot = Lot.from_args([batch_1, batch_2])
         task_loc = batch_1.location
         params = {"rack_number": 1, "calibrate": False}
-        loading_robot_op_1 = CollectBatchOpDescriptor.from_args("load_batch", "Robot",
+        loading_robot_op_1 = CollectBatchOp.from_args("load_batch", "Robot",
                                                    params, target_location=task_loc, target_batch=batch_1)
-        loading_robot_op_2 = CollectBatchOpDescriptor.from_args("load_batch", "Robot",
+        loading_robot_op_2 = CollectBatchOp.from_args("load_batch", "Robot",
                                                    params, target_location=task_loc, target_batch=batch_2)
 
         # test loading batches
@@ -193,9 +193,9 @@ class RobotTest(unittest.TestCase):
         self.assertTrue(robot.is_batch_onboard(batch_2))
 
         # create unloading ops
-        unloading_robot_op_1 = DropBatchOpDescriptor.from_args("unload_batch","Robot",
+        unloading_robot_op_1 = DropBatchOp.from_args("unload_batch","Robot",
                                                    params, target_location=task_loc, target_batch=batch_1)
-        unloading_robot_op_2 = DropBatchOpDescriptor.from_args("unload_batch", "Robot",
+        unloading_robot_op_2 = DropBatchOp.from_args("unload_batch", "Robot",
                                                    params, target_location=task_loc, target_batch=batch_2)
 
         # test unloading batches

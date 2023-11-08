@@ -1,9 +1,9 @@
 from archemist.core.persistence.models_proxy import ModelProxy, DictProxy
 from .model import ChemSpeedJobStatus, ChemSpeedFlexStationModel, CSLiquidDispenseOpModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.state.station import Station
 from archemist.core.state.lot import Lot
-from archemist.core.state.station_op import StationOpDescriptor, StationLotOpDescriptor
+from archemist.core.state.station_op import StationOp, StationLotOp
 from archemist.core.state.station_op_result import StationOpResult
 from typing import List, Dict, Type, Union
 from archemist.core.util.enums import OpOutcome
@@ -62,41 +62,41 @@ class ChemSpeedFlexStation(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 
-class CSOpenDoorOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class CSOpenDoorOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
 
-class CSCloseDoorOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class CSCloseDoorOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
-class CSRunJobOp(StationOpDescriptor):
-    def __init__(self, station_op_model: Union[StationOpDescriptorModel,ModelProxy]) -> None:
+class CSRunJobOp(StationOp):
+    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
-        model = StationOpDescriptorModel()
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
-class CSLiquidDispenseOp(StationLotOpDescriptor):
+class CSLiquidDispenseOp(StationLotOp):
     def __init__(self, station_op_model: Union[CSLiquidDispenseOpModel,ModelProxy]) -> None:
         super().__init__(station_op_model)
 

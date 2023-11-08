@@ -1,7 +1,7 @@
 from mongoengine import Document, EmbeddedDocument, fields
 from archemist.core.models.lot_model import LotModel
-from archemist.core.models.robot_op_model import RobotOpDescriptorModel
-from archemist.core.models.station_op_model import StationOpDescriptorModel
+from archemist.core.models.robot_op_model import RobotOpModel
+from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.util.enums import ProcessStatus
 
 class OperationSpecsModel(EmbeddedDocument):
@@ -27,13 +27,13 @@ class StationProcessModel(Document):
     lot = fields.ReferenceField(LotModel)
 
     ''' robot ops '''
-    req_robot_ops = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
-    robot_ops_history = fields.ListField(fields.ReferenceField(RobotOpDescriptorModel),default=[])
+    req_robot_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
+    robot_ops_history = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
     
     '''station ops'''
     operation_specs_map = fields.MapField(field=fields.EmbeddedDocumentField(OperationSpecsModel), default={})
-    req_station_ops = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
-    station_ops_history = fields.ListField(fields.ReferenceField(StationOpDescriptorModel), default=[])
+    req_station_ops = fields.ListField(fields.ReferenceField(StationOpModel), default=[])
+    station_ops_history = fields.ListField(fields.ReferenceField(StationOpModel), default=[])
 
     '''station processes'''
     req_station_procs = fields.ListField(fields.ReferenceField("self"), default=[])

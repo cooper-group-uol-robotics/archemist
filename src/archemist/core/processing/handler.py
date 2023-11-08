@@ -1,11 +1,11 @@
 from time import sleep
 from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
-from archemist.core.state.robot_op import (RobotWaitOpDescriptor,
-                                           RobotTaskOpDescriptor,
-                                           CollectBatchOpDescriptor,
-                                           DropBatchOpDescriptor,
-                                           RobotNavOpDescriptor)
+from archemist.core.state.robot_op import (RobotWaitOp,
+                                           RobotTaskOp,
+                                           CollectBatchOp,
+                                           DropBatchOp,
+                                           RobotNavOp)
 from archemist.core.state.station import Station, OpState, LotStatus
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
@@ -82,13 +82,13 @@ class RobotOpHandler(OpHandler):
 
     def _begin_execution(self):
         self._robot.set_assigned_op_to_execute()
-        if isinstance(self._robot.assigned_op, RobotWaitOpDescriptor):
+        if isinstance(self._robot.assigned_op, RobotWaitOp):
             self._robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
         else:
             self.execute_op()
 
     def _check_op_execution(self):
-        if isinstance(self._robot.assigned_op, RobotWaitOpDescriptor):
+        if isinstance(self._robot.assigned_op, RobotWaitOp):
              op = self._robot.assigned_op
              if (datetime.now() - op.start_timestamp) >= timedelta(seconds=op.timeout):
                 self._robot.clear_assigned_op()
@@ -137,10 +137,10 @@ class StationProcessHandler:
         for proc in self._station.running_procs:
             if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                 for robot_op in proc.req_robot_ops:
-                    if isinstance(robot_op, RobotTaskOpDescriptor) or \
-                        isinstance(robot_op, CollectBatchOpDescriptor) or\
-                        isinstance(robot_op, DropBatchOpDescriptor) or\
-                        (isinstance(robot_op, RobotNavOpDescriptor) and robot_op.target_location.is_unspecified()):
+                    if isinstance(robot_op, RobotTaskOp) or \
+                        isinstance(robot_op, CollectBatchOp) or\
+                        isinstance(robot_op, DropBatchOp) or\
+                        (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
                         
                         robot_op.target_location = self._station.location
                         

@@ -5,8 +5,8 @@ from typing import Dict, List, Any, Union, Type
 from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy,ListProxy, DictProxy
 from archemist.core.persistence.object_factory import RobotOpFactory, StationOpFactory, ProcessFactory
 from archemist.core.models.station_process_model import StationProcessModel, OperationSpecsModel
-from archemist.core.state.robot_op import RobotOpDescriptor
-from archemist.core.state.station_op import StationOpDescriptor
+from archemist.core.state.robot_op import RobotOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import ProcessStatus, OpOutcome
 
@@ -148,11 +148,11 @@ class StationProcess:
         return Lot(self._model_proxy.lot)
     
     @property
-    def req_robot_ops(self) -> List[Type[RobotOpDescriptor]]:
+    def req_robot_ops(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.req_robot_ops, RobotOpFactory.create_from_model)
     
     @property
-    def robot_ops_history(self) -> List[Type[RobotOpDescriptor]]:
+    def robot_ops_history(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.robot_ops_history, RobotOpFactory.create_from_model)
     
     @property
@@ -160,11 +160,11 @@ class StationProcess:
         return DictProxy(self._model_proxy.operation_specs_map, OperationSpecs)
     
     @property
-    def req_station_ops(self) -> List[Type[StationOpDescriptor]]:
+    def req_station_ops(self) -> List[Type[StationOp]]:
         return ListProxy(self._model_proxy.req_station_ops, StationOpFactory.create_from_model)
     
     @property
-    def station_ops_history(self) -> List[Type[StationOpDescriptor]]:
+    def station_ops_history(self) -> List[Type[StationOp]]:
         return ListProxy(self._model_proxy.station_ops_history, StationOpFactory.create_from_model)
     
     @property
@@ -184,7 +184,7 @@ class StationProcess:
         if self.m_state == "final_state":
             self._model_proxy.status = ProcessStatus.FINISHED
     
-    def request_robot_ops(self, robot_ops: List[Type[RobotOpDescriptor]]):
+    def request_robot_ops(self, robot_ops: List[Type[RobotOp]]):
         if not self.skip_robot_ops:
             for robot_op in robot_ops:
                 self.req_robot_ops.append(robot_op)
@@ -201,14 +201,14 @@ class StationProcess:
             return True
         return False
 
-    def generate_operation(self, operation_name: str, **kwargs) -> Type[StationOpDescriptor]:
+    def generate_operation(self, operation_name: str, **kwargs) -> Type[StationOp]:
         operation_specs = self.operation_specs_map[operation_name] 
         parameters = dict(operation_specs.parameters) if operation_specs.parameters else {}
         if kwargs:
             parameters.update(kwargs)
         return StationOpFactory.create_from_args(operation_specs.op_type, parameters)
     
-    def request_station_op(self, station_op: Type[StationOpDescriptor]):
+    def request_station_op(self, station_op: Type[StationOp]):
         if not self.skip_station_ops:
             self.req_station_ops.append(station_op)
             self._model_proxy.status = ProcessStatus.REQUESTING_STATION_OPS
