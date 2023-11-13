@@ -67,19 +67,15 @@ class WeighingSM(StationProcessFSM):
     def request_open_door(self):
         # self._station.assign_station_op(BalanceOpenDoorOpDescriptor.from_args())
         print('Door Operation is not enabled')
-        
 
     def request_close_door(self):
          time.sleep(270)
         # self._station.assign_station_op(BalanceCloseDoorOpDescriptor.from_args())
          print('Door Operation is not enabled')
 
-
     def request_disable_auto_functions(self):
         # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
-        
         pass
-        
 
     def request_enable_auto_functions(self):
         #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
