@@ -19,16 +19,24 @@ class WeighingSM(StationProcessFSM):
             self._status['operation_complete'] = False
 
         ''' States '''
-        states = [State(name='init_state'), 
-            State(name='open_balance_door', on_enter=['request_open_door']),
+        states = [
+            State(name='init_state'), 
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
-            State(name='load_sample', on_enter=['request_load_sample_job']),
-            State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
-            State(name='unload_sample', on_enter=['request_unload_sample_job']),
-            State(name='station_process', on_enter=['request_process_data_job']),
-            State(name='close_balance_door', on_enter=['request_close_door']), 
-            State(name='final_state', on_enter='finalize_batch_processing')]
+            State(name='open_fh_door_vertical', on_enter=['request_open_fh_door_vertical']),
+            State(name='tare', on_enter=['request_tare']),
+            State(name='open_balance_door', on_enter=['request_open_balance_door']),
+            State(name='load_funnel', on_enter=['request_load_funnel_job']),
+            State(name='close_balance_door', on_enter=['request_load_funnel_job']),
+            State(name='weigh', on_enter=['request_weigh']),
+            State(name='remove_funnel', on_enter=['request_remove_funnel_job']),
+            State(name='close_fh_door_vertical', on_enter=['request_close_fh_door_vertical']),
+            # State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
+            # State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
+            # State(name='unload_sample', on_enter=['request_unload_sample_job']),
+            # State(name='station_process', on_enter=['request_process_data_job']),
+            # State(name='close_balance_door', on_enter=['request_close_door']), 
+            # State(name='final_state', on_enter='finalize_batch_processing')
+        ]
             
         ''' Transitions '''
         transitions = [
