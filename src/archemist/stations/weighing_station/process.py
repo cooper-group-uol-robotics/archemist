@@ -49,7 +49,7 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
             State(name='update_close_balance_door', on_enter=['request_close_balance_door_update']),
 
             State(name='weigh', on_enter=['request_weigh']),
-            #TODO do weigh and tare need an update state?
+            #TODO do weigh and tare need an update state? Where WeighOp is called?  Why are these seperated?
 
             State(name='unload_funnel', on_enter=['request_unload_funnel']),
             State(name='update_unload_funnel', on_enter=['request_unload_funnel_update']),
@@ -164,7 +164,7 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
 
     def request_weigh(self):
         batch = self.lot.batches[0]
-        current_op = self.generate_operation("weigh_op", target_sample=batch.samples[0])
+        current_op = self.generate_operation("weigh_op", target_sample=batch.samples[0]) 
         self.request_station_op(current_op)
 
     def request_unload_funnel(self):
