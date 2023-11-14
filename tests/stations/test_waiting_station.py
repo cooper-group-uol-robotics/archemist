@@ -78,7 +78,6 @@ class WaitingStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.status, ProcessStatus.RUNNING)
 
-
         # load_lot
         process.tick()
         self.assertEqual(process.m_state, 'load_lot')

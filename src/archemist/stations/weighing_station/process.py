@@ -14,17 +14,17 @@ from .state import (
     WeighingOp,
     WeighResult
 )
-from archemist.core.state.robot_op import RobotTaskOp
+from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from archemist.core.processing.station_process_fsm import StationProcessFSM
+from archemist.core.processing.station_process_fsm import StationProcess 
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.util import Location
 from archemist.core.state.lot import Lot
 import time
 
-class WeighingSM(StationProcessFSM):
+class WeighingStationProcess(StationProcess): #TODO StationProcess or StationProcessFSM ?
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
@@ -35,7 +35,7 @@ class WeighingSM(StationProcessFSM):
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
 
             State(name='open_fh_door_vertical', on_enter=['request_open_fh_door_vertical']),
-            State(name='update_open_fh_door_vertical', on_enter=['request_open_fh_door_vertical_update']),
+            State(name='update_open_fh_door_vertical', on_enter=['request_open_fh_door_vertical_update']), #TODO need all these update states?
 
             State(name='tare', on_enter=['request_tare']),
 
@@ -107,7 +107,7 @@ class WeighingSM(StationProcessFSM):
                                      operations,
                                      skip_robot_ops,
                                      skip_station_ops,
-                                     skip_ext_procs)
+                                     skip_ext_procs) #TODO these args correct?
         model.save()
         return cls(model)
     
@@ -115,9 +115,10 @@ class WeighingSM(StationProcessFSM):
 
     def request_navigate_to_weighing(self):
         # TODO check KUKA command name
-        robot_task = RobotTaskOp.from_args(name="NavToWeighing",
+        robot_task = RobotNavOp.from_args(name="NavToWeighing",
                                            target_robot="KMRIIWARobot")
-        self.request_robot_ops([robot_task])
+        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3) #TODO this wait op is correct or no?
+        self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_open_fh_door_vertical(self):
         batch = self.lot.batches[0]
