@@ -1,118 +1,186 @@
-from typing import Dict
+from typing import Dict, Union, List, Any
 from transitions import State
+from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from .state import WeighingStation, SampleWeighingOpDescriptor, BalanceCloseDoorOpDescriptor, BalanceOpenDoorOpDescriptor
+from .state import (
+    WeighingStation, 
+    WeighingVOpenDoorOp, 
+    WeighingVCloseDoorOp, 
+    BalanceOpenDoorOp, 
+    BalanceCloseDoorOp,
+    LoadFunnelOp,
+    UnloadFunnelOp,
+    TareOp,
+    WeighingOp,
+    WeighResult
+)
+from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from archemist.core.processing.station_process_fsm import StationProcessFSM
+from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.persistence.object_factory import StationFactory
 from archemist.core.util import Location
+from archemist.core.state.lot import Lot
 import time
 
 class WeighingSM(StationProcessFSM):
     
-    def __init__(self, station: Station, params_dict: Dict):
-        super().__init__(station, params_dict)
-        if 'loaded_samples' not in self._status.keys():
-            self._status['loaded_samples'] = 0
-        if 'operation_complete' not in self._status.keys():
-            self._status['operation_complete'] = False
+    def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
+        super().__init__(process_model)
 
         ''' States '''
-        states = [
+        self.STATES = [
             State(name='init_state'), 
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
+
             State(name='open_fh_door_vertical', on_enter=['request_open_fh_door_vertical']),
+            State(name='update_open_fh_door_vertical', on_enter=['request_open_fh_door_vertical_update']),
+
             State(name='tare', on_enter=['request_tare']),
+
             State(name='open_balance_door', on_enter=['request_open_balance_door']),
-            State(name='load_funnel', on_enter=['request_load_funnel_job']),
-            State(name='close_balance_door', on_enter=['request_load_funnel_job']),
+            State(name='update_open_balance_door', on_enter=['request_open_balance_door_update']),
+
+            State(name='load_funnel', on_enter=['request_load_funnel']),
+            State(name='update_load_funnel', on_enter=['request_load_funnel_update']),
+
+            State(name='close_balance_door', on_enter=['request_close_balance_door']),
+            State(name='update_close_balance_door', on_enter=['request_close_balance_door_update']),
+
             State(name='weigh', on_enter=['request_weigh']),
-            State(name='remove_funnel', on_enter=['request_remove_funnel_job']),
+            #TODO do weigh and tare need an update state?
+
+            State(name='unload_funnel', on_enter=['request_unload_funnel']),
+            State(name='update_unload_funnel', on_enter=['request_unload_funnel_update']),
+
             State(name='close_fh_door_vertical', on_enter=['request_close_fh_door_vertical']),
-            # State(name='disable_auto_functions', on_enter=['request_disable_auto_functions']),
-            # State(name='enable_auto_functions', on_enter=['request_enable_auto_functions']),
-            # State(name='unload_sample', on_enter=['request_unload_sample_job']),
-            # State(name='station_process', on_enter=['request_process_data_job']),
-            # State(name='close_balance_door', on_enter=['request_close_door']), 
-            # State(name='final_state', on_enter='finalize_batch_processing')
+            State(name='update_close_fh_door_vertical', on_enter=['request_close_fh_door_vertical_update']),
+
+            State(name='final_state')
         ]
             
         ''' Transitions '''
-        transitions = [
-            {'trigger':self._trigger_function,'source':'init_state','dest':'disable_auto_functions', 'conditions':'all_batches_assigned'},
-            {'trigger':self._trigger_function, 'source':'disable_auto_functions','dest':'navigate_to_weighing_station', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'navigate_to_weighing_station','dest':'open_balance_door', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'load_sample', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'load_sample','dest':'close_balance_door', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'station_process', 'unless':'is_station_operation_complete', 'conditions':'is_station_job_ready'},
-            {'trigger':self._trigger_function, 'source':'station_process','dest':'open_balance_door', 'conditions':'is_station_job_ready','before':'process_sample'}, 
-            {'trigger':self._trigger_function, 'source':'open_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']}, 
-            # {'trigger':self._trigger_function, 'source':'unload_sample','dest':'close_balance_door', 'conditions':['is_station_job_ready','is_funnel_unloaded']},
-            # {'trigger':self._trigger_function, 'source':'close_balance_door','dest':'enable_auto_functions', 'conditions':['is_station_job_ready','is_station_operation_complete']},
-            {'trigger':self._trigger_function, 'source':'enable_auto_functions','dest':'final_state', 'conditions':['is_station_job_ready','is_station_operation_complete']}
+        self.TRANSITIONS = [
+            {'source':'init_state','dest':'navigate_to_weighing_station'},
+            { 'source':'navigate_to_weighing_station','dest':'open_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
+
+            { 'source':'open_fh_door_vertical','dest':'update_open_fh_door_vertical', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'update_open_fh_door_vertical','dest':'tare'},
+
+            { 'source':'tare','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'},
+
+            { 'source':'open_balance_door','dest':'update_open_balance_door', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'update_open_balance_door','dest':'load_funnel'},
+
+            { 'source':'load_funnel','dest':'update_load_funnel', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'update_load_funnel','dest':'close_balance_door'},
+
+            { 'source':'close_balance_door','dest':'update_close_balance_door', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'update_close_balance_door','dest':'weigh'},
+
+            { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
+
+            { 'source':'open_balance_door','dest':'update_open_balance_door', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'update_open_balance_door','dest':'unload_funnel'},
+
+            { 'source':'unload_funnel','dest':'update_unload_funnel', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'update_unload_funnel','dest':'close_fh_door_vertical'},
+
+            { 'source':'close_fh_door_vertical','dest':'update_close_fh_door_vertical', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'update_close_fh_door_vertical','dest':'final_state'}
+
         ]
 
-        self.init_state_machine(states=states, transitions=transitions)
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  liquids_list: List[str],
+                  operations: List[Dict[str, Any]] = None,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     WeighingStation.__name__,
+                                     lot,
+                                     operations,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.save()
+        return cls(model)
     
-    def is_station_operation_complete(self):
-        return self._status['operation_complete']
-
-    def is_funnel_loaded(self):
-        return True
-    
-    def is_funnel_unloaded(self):
-        return True
-    
-    def request_open_door(self):
-        # self._station.assign_station_op(BalanceOpenDoorOpDescriptor.from_args())
-        print('Door Operation is not enabled')
-
-    def request_close_door(self):
-         time.sleep(270)
-        # self._station.assign_station_op(BalanceCloseDoorOpDescriptor.from_args())
-         print('Door Operation is not enabled')
-
-    def request_disable_auto_functions(self):
-        # self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('DiableAutoFunctions',[False]))
-        pass
-
-    def request_enable_auto_functions(self):
-        #self._station.request_robot_op(KukaLBRMaintenanceTask.from_args('EnableAutoFunctions',[False]))
-        pass
+    ''' States callbacks. '''
 
     def request_navigate_to_weighing(self):
-        #self._station.request_robot_op(KukaNAVTask.from_args(Location(26,1,''), False)) #TODO get this property from the config
-        time.sleep(3)
-        print('Robot is already in the location')
+        # TODO check KUKA command name
+        robot_task = RobotTaskOp.from_args(name="NavToWeighing",
+                                           target_robot="KMRIIWARobot")
+        self.request_robot_ops([robot_task])
 
-    def request_load_sample_job(self):
-        # robot_job = KukaLBRTask.from_args(name='LoadWeighingStation',params=[True,self._status['batch_index']+1], 
-        #                                     type=RobotTaskType.MANIPULATION, location=self._station.location)
-        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        # self._station.request_robot_op(robot_job,current_batch_id)
-        time.sleep(10)
+    def request_open_fh_door_vertical(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("open_v_door_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
 
-    def request_unload_sample_job(self):
-        # robot_job = KukaLBRTask.from_args(name='UnloadWeighingStation',params=[False,self._status['batch_index']+1],
-        #                         type=RobotTaskType.MANIPULATION, location=self._station.location)
-        # current_batch_id = self._station.assigned_batches[self._status['batch_index']].id
-        # self._station.request_robot_op(robot_job,current_batch_id)
-        time.sleep(3)
+    def request_open_fh_door_vertical_update(self):
+        station_op = WeighingVOpenDoorOp.from_args()
+        self.request_station_op(station_op)
 
-    def finalize_batch_processing(self):
-        self._station.process_assigned_batches()
-        self._status['operation_complete'] = False
-        self.to_init_state()
-        
-    def request_process_data_job(self):
-        op = SampleWeighingOpDescriptor.from_args()
-        self._station.assign_station_op(op)
-        self._status['operation_complete'] = True
+    def request_tare(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("tare_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
 
-    def process_sample(self):
-        last_operation_op = self._station.station_op_history[-1]
-        self._station.assigned_batches[self._status['batch_index']].add_station_op_to_current_sample(last_operation_op)
-        self._station.assigned_batches[self._status['batch_index']].process_current_sample()
+    def request_open_balance_door(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("open_balance_door_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
 
+    def request_open_balance_door_update(self):
+        station_op = BalanceOpenDoorOp.from_args()
+        self.request_station_op(station_op)
 
+    def request_load_funnel(self):
+        # TODO check KUKA command name
+        robot_task = RobotTaskOp.from_args(name="LoadFunnel",
+                                           target_robot="KMRIIWARobot")
+        self.request_robot_ops([robot_task])
+
+    def request_load_funnel_update(self):
+        station_op = LoadFunnelOp.from_args()
+        self.request_station_op(station_op)
+
+    def request_close_balance_door(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("close_balance_door_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
+
+    def request_close_balance_door_update(self):
+        station_op = BalanceCloseDoorOp.from_args()
+        self.request_station_op(station_op)
+
+    def request_weigh(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("weigh_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
+
+    def request_unload_funnel(self):
+        # TODO check KUKA command name
+        robot_task = RobotTaskOp.from_args(name="UnloadFunnel",
+                                           target_robot="KMRIIWARobot")
+        self.request_robot_ops([robot_task])
+
+    def request_unload_funnel_update(self):
+        station_op = UnloadFunnelOp.from_args()
+        self.request_station_op(station_op)
+
+    def request_close_fh_door_vertical(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("close_v_door_op", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
+
+    def request_close_fh_door_vertical_update(self):
+        station_op = WeighingVCloseDoorOp.from_args()
+        self.request_station_op(station_op)

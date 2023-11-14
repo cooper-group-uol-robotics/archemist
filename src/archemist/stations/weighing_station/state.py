@@ -40,6 +40,14 @@ class WeighingStation(Station):
     def vertical_doors_open(self, new_state: bool):
         self._model_proxy.vertical_doors_open = new_state
 
+    @property
+    def funnel_loaded(self) -> bool:
+        return self._model_proxy.funnel_loaded
+
+    @funnel_loaded.setter
+    def funnel_loaded(self, new_state: bool):
+        self._model_proxy.funnel_loaded = new_state
+
     def update_assigned_op(self):
         super().update_assigned_op()
         current_op = self.assigned_op
@@ -61,6 +69,7 @@ class WeighingVOpenDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        model.vertical_doors_open = True
         model.save()
         return cls(model)
     
@@ -72,6 +81,7 @@ class WeighingVCloseDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        model.vertical_doors_open = False
         model.save()
         return cls(model)
 
@@ -83,6 +93,7 @@ class BalanceOpenDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        balance_doors_open = True
         model.save()
         return cls(model)
 
@@ -94,6 +105,31 @@ class BalanceCloseDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        balance_doors_open = False
+        model.save()
+        return cls(model)
+    
+class LoadFunnelOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, cartridge_index: int):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        model.funnel_loaded = True
+        model.save()
+        return cls(model)
+    
+class UnloadFunnelOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, cartridge_index: int):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        model.funnel_loaded = False
         model.save()
         return cls(model)
     
