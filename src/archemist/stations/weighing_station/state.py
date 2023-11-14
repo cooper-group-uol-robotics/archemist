@@ -6,8 +6,7 @@ from archemist.core.models.station_op_model import StationSampleOpModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOp, StationSampleOp, StationOpModel
 from archemist.core.state.station_op_result import StationOpResult
-from archemist.core.state.material import Liquid,Solid
-from archemist.core.state.sample import 
+from archemist.core.state.sample import Sample
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
@@ -18,7 +17,7 @@ class WeighingStation(Station):
         self._model = weighing_station_model
 
     @classmethod
-    def from_dict(cls, station_dict: Dict, liquids: List[Liquid], solids: List[Solid]):
+    def from_dict(cls, station_dict: Dict):
         model = WeighingStationModel()
         cls._set_model_common_fields(model, station_dict)
         model.save()
