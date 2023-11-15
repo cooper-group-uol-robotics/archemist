@@ -1,13 +1,12 @@
 from typing import Tuple, List, Optional
 from archemist.core.state.station import Station
-from .state import (LCMSBayOccupiedOp,
-                    LCMSBayFreedOp,
-                    LCMSAnalysisOp,
+from .state import (LCMSAnalysisOp,
                     LCMSAnalysisResult, 
-                    LCMSInsertBatchOp, 
-                    LCMSEjectBatchOp)
+                    LCMSInsertRackOp, 
+                    LCMSEjectRackOp)
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from archemist.core.util.enums import OpOutcome
+from random import random
 from threading import Thread
 import socket
 
@@ -20,6 +19,7 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
             current_op = self._station.assigned_op
             if isinstance(current_op, LCMSAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                      concentration=random(),
                                                       result_filename="file.xml")
                 return OpOutcome.SUCCEEDED, [result]
             else:
@@ -45,20 +45,16 @@ class WaterLCMSSocketHandler(StationOpHandler):
         current_op = self._station.assigned_op
         self._result_received = False
         self._op_result = False
-        if isinstance(current_op,LCMSInsertBatchOp):
+        if isinstance(current_op,LCMSInsertRackOp):
             print(f'Autosampler - inserting rack {current_op.rack}')
             msg = f'InsertRack{current_op.rack}'
             self._socket.sendall(msg.encode('ascii'))
-        elif isinstance(current_op,LCMSEjectBatchOp):
+        elif isinstance(current_op,LCMSEjectRackOp):
             print(f'Autosampler - extracting rack {current_op.rack}')
             msg = f'ExtractRack{current_op.rack}'
             self._socket.sendall(msg.encode('ascii'))
         elif isinstance(current_op,LCMSAnalysisOp):
             self._socket.sendall(b'StartAnalysisRack2')
-        elif isinstance(current_op,LCMSBayOccupiedOp):
-            self._result_received = True
-        elif isinstance(current_op,LCMSBayFreedOp):
-            self._result_received = True
         else:
             print(f'[{self.__class__.__name__}] Unkown operation was received')
         self._thread = Thread(target=self._lcsm_status_update, daemon=True)
@@ -70,6 +66,7 @@ class WaterLCMSSocketHandler(StationOpHandler):
             current_op = self._station.assigned_op
             if isinstance(current_op, LCMSAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                      concentration=0.5,
                                                       result_filename="file.xml") #TODO need to receive from LCMS
                 return OpOutcome.SUCCEEDED, [result]
             else:
