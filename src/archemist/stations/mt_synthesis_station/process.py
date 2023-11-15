@@ -6,8 +6,8 @@ from .state import (MTSynthesisStation,
                     MTSynthLoadCartridgeOp,
                     MTSynthUnloadCartridgeOp,
                     MTSynthStopReactionOp,
-                    MTSynthHOpenDoorOp,
-                    MTSynthHCloseDoorOp)
+                    MTSynthOpenWindowOp,
+                    MTSynthCloseWindowOp)
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
 
@@ -119,7 +119,7 @@ class CMFlexLiquidDispenseProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     def request_open_sash_update(self):
-        station_op = MTSynthHOpenDoorOp.from_args()
+        station_op = MTSynthOpenWindowOp.from_args()
         self.request_station_op(station_op)
 
     def request_load_solid_cartridge(self):
@@ -161,7 +161,7 @@ class CMFlexLiquidDispenseProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     def request_close_sash_update(self):
-        station_op = MTSynthHCloseDoorOp.from_args()
+        station_op = MTSynthCloseWindowOp.from_args()
         self.request_station_op(station_op)
 
     def request_sample_reaction(self):
