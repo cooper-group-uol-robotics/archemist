@@ -32,69 +32,37 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
         ''' States '''
         self.STATES = [
             State(name='init_state'), 
+            State(name='prep_state'),
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
-
             State(name='open_fh_door_vertical', on_enter=['request_open_fh_door_vertical']),
-            State(name='update_open_fh_door_vertical', on_enter=['request_open_fh_door_vertical_update']), #TODO need all these update states?
-
             State(name='tare', on_enter=['request_tare']),
-
             State(name='open_balance_door', on_enter=['request_open_balance_door']),
-            State(name='update_open_balance_door', on_enter=['request_open_balance_door_update']),
-
             State(name='load_funnel', on_enter=['request_load_funnel']),
-            State(name='update_load_funnel', on_enter=['request_load_funnel_update']),
-
             State(name='close_balance_door', on_enter=['request_close_balance_door']),
-            State(name='update_close_balance_door', on_enter=['request_close_balance_door_update']),
-
             State(name='weigh', on_enter=['request_weigh']),
-            #TODO do weigh and tare need an update state? Where WeighOp is called?  Why are these seperated?
-
             State(name='unload_funnel', on_enter=['request_unload_funnel']),
-            State(name='update_unload_funnel', on_enter=['request_unload_funnel_update']),
-
             State(name='close_fh_door_vertical', on_enter=['request_close_fh_door_vertical']),
-            State(name='update_close_fh_door_vertical', on_enter=['request_close_fh_door_vertical_update']),
-
             State(name='final_state')
         ]
             
         ''' Transitions '''
         self.TRANSITIONS = [
-            {'source':'init_state','dest':'navigate_to_weighing_station'},
+            { 'source':'init_state','dest':'prep_state'},
+            { 'source':'prep_state','dest':'navigate_to_weighing_station'},
             { 'source':'navigate_to_weighing_station','dest':'open_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
-
-            { 'source':'open_fh_door_vertical','dest':'update_open_fh_door_vertical', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'update_open_fh_door_vertical','dest':'tare'},
-
+            { 'source':'open_fh_door_vertical','dest':'tare', 'conditions':'are_req_station_ops_completed'},
             { 'source':'tare','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'},
-
-            { 'source':'open_balance_door','dest':'update_open_balance_door', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'update_open_balance_door','dest':'load_funnel'},
-
-            { 'source':'load_funnel','dest':'update_load_funnel', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'update_load_funnel','dest':'close_balance_door'},
-
-            { 'source':'close_balance_door','dest':'update_close_balance_door', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'update_close_balance_door','dest':'weigh'},
-
+            { 'source':'open_balance_door','dest':'load_funnel', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'load_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'close_balance_door','dest':'weigh', 'conditions':'are_req_station_ops_completed'},
             { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
-
-            { 'source':'open_balance_door','dest':'update_open_balance_door', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'update_open_balance_door','dest':'unload_funnel'},
-
-            { 'source':'unload_funnel','dest':'update_unload_funnel', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'update_unload_funnel','dest':'close_fh_door_vertical'},
-
-            { 'source':'close_fh_door_vertical','dest':'update_close_fh_door_vertical', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'update_close_fh_door_vertical','dest':'final_state'}
-
+            { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'unload_funnel','dest':'close_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'close_fh_door_vertical','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
 
     @classmethod
     def from_args(cls, lot: Lot,
-                  liquids_list: List[str],
                   operations: List[Dict[str, Any]] = None,
                   skip_robot_ops: bool=False,
                   skip_station_ops: bool=False,
@@ -107,7 +75,7 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
                                      operations,
                                      skip_robot_ops,
                                      skip_station_ops,
-                                     skip_ext_procs) #TODO these args correct?
+                                     skip_ext_procs)
         model.save()
         return cls(model)
     
@@ -121,25 +89,14 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
         self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_open_fh_door_vertical(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("open_v_door_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
-
-    def request_open_fh_door_vertical_update(self):
         station_op = WeighingVOpenDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_tare(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("tare_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
+        station_op = TareOp.from_args()
+        self.request_station_op(station_op)
 
     def request_open_balance_door(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("open_balance_door_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
-
-    def request_open_balance_door_update(self):
         station_op = BalanceOpenDoorOp.from_args()
         self.request_station_op(station_op)
 
@@ -149,23 +106,14 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
                                            target_robot="KMRIIWARobot")
         self.request_robot_ops([robot_task])
 
-    def request_load_funnel_update(self):
-        station_op = LoadFunnelOp.from_args()
-        self.request_station_op(station_op)
-
     def request_close_balance_door(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("close_balance_door_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
-
-    def request_close_balance_door_update(self):
         station_op = BalanceCloseDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_weigh(self):
         batch = self.lot.batches[0]
-        current_op = self.generate_operation("weigh_op", target_sample=batch.samples[0]) 
-        self.request_station_op(current_op)
+        station_op = WeighingOp.from_args(target_sample=batch.samples[0])
+        self.request_station_op(station_op)
 
     def request_unload_funnel(self):
         # TODO check KUKA command name
@@ -173,15 +121,6 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
                                            target_robot="KMRIIWARobot")
         self.request_robot_ops([robot_task])
 
-    def request_unload_funnel_update(self):
-        station_op = UnloadFunnelOp.from_args()
-        self.request_station_op(station_op)
-
     def request_close_fh_door_vertical(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("close_v_door_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
-
-    def request_close_fh_door_vertical_update(self):
         station_op = WeighingVCloseDoorOp.from_args()
         self.request_station_op(station_op)

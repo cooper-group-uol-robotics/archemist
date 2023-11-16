@@ -39,23 +39,14 @@ class WeighingStation(Station):
     def vertical_doors_open(self, new_state: bool):
         self._model_proxy.vertical_doors_open = new_state
 
-    @property
-    def funnel_loaded(self) -> bool:
-        return self._model_proxy.funnel_loaded
-
-    @funnel_loaded.setter
-    def funnel_loaded(self, new_state: bool):
-        self._model_proxy.funnel_loaded = new_state
-
-    def update_assigned_op(self):
-        super().update_assigned_op()
-        current_op = self.assigned_op
-        # TODO maybe more needed in here?
-
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op
+        if isinstance(current_op, WeighingVOpenDoorOp):
+            self.vertical_doors_open = True
+            
         super().complete_assigned_op(outcome, results)
-        # TODO maybe more needed in here?
+
+        # TODO add code to change model fields
 
 
 ''' ==== Station Operation Descriptors ==== '''
@@ -68,7 +59,6 @@ class WeighingVOpenDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        model.vertical_doors_open = True
         model.save()
         return cls(model)
     
@@ -80,7 +70,6 @@ class WeighingVCloseDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        model.vertical_doors_open = False
         model.save()
         return cls(model)
 
@@ -92,7 +81,6 @@ class BalanceOpenDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        balance_doors_open = True
         model.save()
         return cls(model)
 
@@ -104,31 +92,6 @@ class BalanceCloseDoorOp(StationOp):
     def from_args(cls):
         model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        balance_doors_open = False
-        model.save()
-        return cls(model)
-    
-class LoadFunnelOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls, cartridge_index: int):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        model.funnel_loaded = True
-        model.save()
-        return cls(model)
-    
-class UnloadFunnelOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls, cartridge_index: int):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        model.funnel_loaded = False
         model.save()
         return cls(model)
     
@@ -144,7 +107,7 @@ class TareOp(StationOp):
         return cls(model)
     
 class WeighingOp(StationSampleOp):
-    def __init__(self, op_model: StationSampleOpModel):
+    def __init__(self, op_model: StationSampleOpModel): #TODO union with proxy
         super().__init__(op_model)
 
     @classmethod
@@ -155,7 +118,7 @@ class WeighingOp(StationSampleOp):
         model.save()
         return cls(model)
 
-class WeighResult(StationOpResult):
+class WeighResult(StationOpResult): #TODO all names need to be less general
     def __init__(self, result_model: Union[WeighResultModel, ModelProxy]): #TODO need this model
         super().__init__(result_model)
 
@@ -163,11 +126,10 @@ class WeighResult(StationOpResult):
     def from_args(cls,
                   origin_op: ObjectId,
                   reading_value: float,
-                  unit: Literal["g"]):
+                  ):
         model = WeighResultModel()
         cls._set_model_common_fields(model, origin_op)
         model.reading_value = reading_value
-        model.unit = unit
         model.save()
         return cls(model)
 

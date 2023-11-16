@@ -50,7 +50,6 @@ class WeighingStationTest(unittest.TestCase):
 
         self.assertFalse(station.balance_doors_open)
         self.assertFalse(station.vertical_doors_open)
-        self.assertFalse(station.funnel_loaded)
 
         # construct lot and add it to station
         batch = Batch.from_args(1)
@@ -60,6 +59,10 @@ class WeighingStationTest(unittest.TestCase):
         # test WeighingVOpenDoorOp
         t_op = WeighingVOpenDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(station.vertical_doors_open)
 
         # test WeighingVCloseDoorOp
         t_op = WeighingVCloseDoorOp.from_args()
@@ -71,14 +74,6 @@ class WeighingStationTest(unittest.TestCase):
 
         # test BalanceCloseDoorOp
         t_op = BalanceCloseDoorOp.from_args()
-        self.assertIsNotNone(t_op.object_id)
-    
-        # test LoadFunnelOp
-        t_op = LoadFunnelOp.from_args()
-        self.assertIsNotNone(t_op.object_id)
-
-        # test UnloadFunnelOp
-        t_op = UnloadFunnelOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test TareOp
@@ -92,9 +87,7 @@ class WeighingStationTest(unittest.TestCase):
         # test WeighingOpResult
         t_result_op = WeighResult.from_args(
             origin_op=t_op.object_id,
-            reading_value=42.1,
-            unit="g"
-        )
+            reading_value=42.1)
         self.assertIsNotNone(t_result_op.object_id)
         self.assertEqual(t_result_op.reading_value, 42.1)
         self.assertEqual(t_result_op.unit, "g")
@@ -208,3 +201,4 @@ if __name__ == '__main__':
 
 
 
+# add handler tests
