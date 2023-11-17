@@ -7,9 +7,9 @@ from .model import (MTSynthesisStationModel,
                     MTSynthDispenseSolidOpModel,
                     MTSynthDispenseLiquidOpModel,
                     MTSynthReactAndWaitOpModel,
-                    MTSynthFilterDrainOpModel,
-                    MTSynthFilterVacuumOpModel,
-                    MTSyntReactAndSampleOpModel)
+                    MTSyntReactAndSampleOpModel,
+                    MTSynthAddWashLiquidOpModel,
+                    MTSynthDryOpModel)
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOp, StationSampleOp, StationOpModel
 from archemist.core.state.sample import Sample
@@ -99,23 +99,6 @@ class MTSynthesisStation(Station):
     def optimax_valve_open(self, new_state: bool):
         self._model_proxy.optimax_valve_open = new_state
 
-
-    @property
-    def filter_drain_open(self) -> bool:
-        return self._model_proxy.filter_drain_open
-
-    @filter_drain_open.setter
-    def filter_drain_open(self, new_state: bool):
-        self._model_proxy.filter_drain_open = new_state
-
-    @property
-    def vacuum_active(self) -> bool:
-        return self._model_proxy.vacuum_active
-
-    @vacuum_active.setter
-    def vacuum_active(self, new_state: bool):
-        self._model_proxy.vacuum_active = new_state
-
     @property
     def num_sampling_vials(self) -> int:
         return self._model_proxy.num_sampling_vials
@@ -174,7 +157,7 @@ class MTSynthesisStation(Station):
                 self.loaded_cartridge.depleted = True
             else:
                 self._log_station(f'the cartridge {self.loaded_cartridge} is depleted. please replace it.')
-        elif isinstance(op, MTSynthDispenseLiquidOp):
+        elif isinstance(op, MTSynthDispenseLiquidOp) or isinstance(op, MTSynthAddWashLiquidOp):
             liquid = self.liquids_dict[op.liquid_name]
             liquid.decrease_volume(op.dispense_volume, op.dispense_unit)
         elif isinstance(op, MTSynthReactAndWaitOp) or isinstance(op, MTSynthStopReactionOp):
@@ -185,13 +168,6 @@ class MTSynthesisStation(Station):
             self.optimax_valve_open = True
         elif isinstance(op, MTSynthCloseReactionValveOp):
             self.optimax_valve_open = False
-        elif isinstance(op, MTSynthFilterDrainOp):
-            self.filter_drain_open = True
-        elif isinstance(op, MTSynthFilterVacuumOp):
-            self.vacuum_active = True
-        elif isinstance(op, MTSynthFilterStopOp):
-            self.vacuum_active = False
-            self.filter_drain_open = False
         super().complete_assigned_op(outcome, results)
 
 
@@ -313,6 +289,36 @@ class MTSynthDispenseLiquidOp(StationSampleOp):
     def dispense_unit(self) -> Literal["L", "mL", "uL"]:
         return self._model_proxy.dispense_unit
 
+class MTSynthAddWashLiquidOp(StationOp):
+    def __init__(self, station_op_model: Union[MTSynthAddWashLiquidOpModel, ModelProxy]) -> None:
+        super().__init__(station_op_model)
+
+
+    @classmethod
+    def from_args(cls,
+                  liquid_name: str, 
+                  dispense_volume: float,
+                  dispense_unit: Literal["L", "mL", "uL"]):
+        model = MTSynthAddWashLiquidOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.liquid_name = liquid_name
+        model.dispense_volume = dispense_volume
+        model.dispense_unit = dispense_unit
+        model.save()
+        return cls(model)
+
+    @property
+    def liquid_name(self) -> str:
+        return self._model_proxy.liquid_name
+
+    @property
+    def dispense_volume(self) -> float:
+        return self._model_proxy.dispense_volume
+
+    @property
+    def dispense_unit(self) -> Literal["L", "mL", "uL"]:
+        return self._model_proxy.dispense_unit
+
 ''' OPTIMAX OPERATIONS '''
 class MTSynthReactAndWaitOp(StationSampleOp):
     def __init__(self, op_model: Union[MTSynthReactAndWaitOpModel, ModelProxy]) -> None:
@@ -324,7 +330,7 @@ class MTSynthReactAndWaitOp(StationSampleOp):
                   target_temperature: int,
                   target_stirring_speed: int,
                   wait_duration: int,
-                  time_unit: Literal["second", "minute", "hour"]):
+                  time_unit: Literal["second", "minute", "hour"]=None):
         model = MTSynthReactAndWaitOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
@@ -411,17 +417,27 @@ class MTSynthCloseReactionValveOp(StationOp):
         return cls(model)
 
 ''' FILTRATION OPERATIONS '''
-class MTSynthFilterDrainOp(StationOp):
-    def __init__(self, op_model: Union[MTSynthFilterDrainOpModel, ModelProxy]) -> None:
+class MTSynthFilterOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls,
-                  duration: int,
-                  time_unit: Literal["second", "minute", "hour"]):
-        model = MTSynthFilterDrainOpModel()
+    def from_args(cls):
+        model = StationOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.duration = int(duration)
+        model.save()
+        return cls(model)
+
+class MTSynthDryOp(StationOp):
+    def __init__(self, op_model: Union[MTSynthDryOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, duration: int,
+                  time_unit: Literal["second", "minute", "hour"]):
+        model = MTSynthDryOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.duration = duration
         model.time_unit = time_unit
         model.save()
         return cls(model)
@@ -434,30 +450,7 @@ class MTSynthFilterDrainOp(StationOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
-class MTSynthFilterVacuumOp(StationOp):
-    def __init__(self, op_model: Union[MTSynthFilterDrainOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls,
-                  duration: int,
-                  time_unit: Literal["second", "minute", "hour"]):
-        model = MTSynthFilterVacuumOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.duration = int(duration)
-        model.time_unit = time_unit
-        model.save()
-        return cls(model)
-
-    @property
-    def duration(self) -> int:
-        return self._model_proxy.duration
-
-    @property
-    def time_unit(self) -> Literal["second", "minute", "hour"]:
-        return self._model_proxy.time_unit
-
-class MTSynthFilterStopOp(StationOp):
+class MTSynthDrainOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 

@@ -24,8 +24,6 @@ class MTSynthesisStationModel(StationModel):
    
     window_open = fields.BooleanField(default=False)
     optimax_valve_open = fields.BooleanField(default=False)
-    filter_drain_open = fields.BooleanField(default=False)
-    vacuum_active = fields.BooleanField(default=False)
 
     num_sampling_vials = fields.IntField(min_value=0, required=True)
 
@@ -45,6 +43,11 @@ class MTSynthDispenseLiquidOpModel(StationSampleOpModel):
     dispense_volume = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
 
+class MTSynthAddWashLiquidOpModel(StationOpModel):
+    liquid_name = fields.StringField(required=True)
+    dispense_volume = fields.FloatField(min_value=0, required=True)
+    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
+
 class MTSynthReactAndWaitOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
@@ -55,10 +58,6 @@ class MTSyntReactAndSampleOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
 
-class MTSynthFilterDrainOpModel(StationOpModel):
-    duration = fields.IntField(min_value=0, required=True)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
-
-class MTSynthFilterVacuumOpModel(StationOpModel):
-    duration = fields.IntField(min_value=0, required=True)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
+class MTSynthDryOpModel(StationSampleOpModel):
+    duration = fields.IntField(required=True)
+    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="minute")
