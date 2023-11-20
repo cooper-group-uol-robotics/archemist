@@ -1,6 +1,6 @@
 from typing import Dict, Union, Any, List, Literal, Type
 from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy, ListProxy
-from .model import WeighResultModel, WeighingStationModel
+from .model import ApcWeighResultModel, ApcWeighingStationModel
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationSampleOpModel
 from archemist.core.state.station import Station
@@ -12,13 +12,13 @@ from bson.objectid import ObjectId
 
 
 ''' ==== Station Description ==== '''
-class WeighingStation(Station):
-    def __init__(self, weighing_station_model: Union[WeighingStationModel, ModelProxy]) -> None:
+class ApcWeighingStation(Station):
+    def __init__(self, weighing_station_model: Union[ApcWeighingStationModel, ModelProxy]) -> None:
         self._model = weighing_station_model
 
     @classmethod
     def from_dict(cls, station_dict: Dict):
-        model = WeighingStationModel()
+        model = ApcWeighingStationModel()
         cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
@@ -41,85 +41,89 @@ class WeighingStation(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op
-        if isinstance(current_op, WeighingVOpenDoorOp):
+        if isinstance(current_op, ApcWeighingVOpenDoorOp):
             self.vertical_doors_open = True
-            
+        elif isinstance(current_op, ApcWeighingVCloseDoorOp):
+            self.vertical_doors_open = False
+        elif isinstance(current_op, ApcBalanceOpenDoorOp):
+            self.balance_doors_open = True
+        elif isinstance(current_op, ApcBalanceCloseDoorOp):
+            self.balance_doors_open = False
         super().complete_assigned_op(outcome, results)
 
-        # TODO add code to change model fields
 
 
 ''' ==== Station Operation Descriptors ==== '''
 
-class WeighingVOpenDoorOp(StationOp):
+class ApcWeighingVOpenDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
         model.save()
         return cls(model)
     
-class WeighingVCloseDoorOp(StationOp):
+class ApcWeighingVCloseDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class BalanceOpenDoorOp(StationOp):
+class ApcBalanceOpenDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class BalanceCloseDoorOp(StationOp):
+class ApcBalanceCloseDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
-        model.save()
-        return cls(model)
-    
-class TareOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
         model.save()
         return cls(model)
     
-class WeighingOp(StationSampleOp):
-    def __init__(self, op_model: StationSampleOpModel): #TODO union with proxy
+class ApcTareOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        model.save()
+        return cls(model)
+    
+class ApcWeighingOp(StationSampleOp):
+    def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]):
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=WeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class WeighResult(StationOpResult): #TODO all names need to be less general
-    def __init__(self, result_model: Union[WeighResultModel, ModelProxy]): #TODO need this model
+class ApcWeighResult(StationOpResult):
+    def __init__(self, result_model: Union[ApcWeighResultModel, ModelProxy]): #TODO need this model
         super().__init__(result_model)
 
     @classmethod
@@ -127,7 +131,7 @@ class WeighResult(StationOpResult): #TODO all names need to be less general
                   origin_op: ObjectId,
                   reading_value: float,
                   ):
-        model = WeighResultModel()
+        model = ApcWeighResultModel()
         cls._set_model_common_fields(model, origin_op)
         model.reading_value = reading_value
         model.save()

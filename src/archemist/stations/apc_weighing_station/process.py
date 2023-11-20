@@ -1,30 +1,22 @@
 from typing import Dict, Union, List, Any
 from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
-from archemist.core.state.station import Station
 from .state import (
-    WeighingStation, 
-    WeighingVOpenDoorOp, 
-    WeighingVCloseDoorOp, 
-    BalanceOpenDoorOp, 
-    BalanceCloseDoorOp,
-    LoadFunnelOp,
-    UnloadFunnelOp,
-    TareOp,
-    WeighingOp,
-    WeighResult
+    ApcWeighingVOpenDoorOp, 
+    ApcWeighingVCloseDoorOp, 
+    ApcBalanceOpenDoorOp, 
+    ApcBalanceCloseDoorOp,
+    ApcTareOp,
+    ApcWeighingOp,
 )
 from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
 from archemist.core.state.robot import RobotTaskType
 from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
-from archemist.core.processing.station_process_fsm import StationProcess 
 from archemist.core.state.station_process import StationProcess, StationProcessModel
-from archemist.core.persistence.object_factory import StationFactory
-from archemist.core.util import Location
 from archemist.core.state.lot import Lot
 import time
 
-class WeighingStationProcess(StationProcess): #TODO StationProcess or StationProcessFSM ?
+class ApcWeighingStationProcess(StationProcess):
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
@@ -85,19 +77,19 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
         # TODO check KUKA command name
         robot_task = RobotNavOp.from_args(name="NavToWeighing",
                                            target_robot="KMRIIWARobot")
-        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3) #TODO this wait op is correct or no?
+        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_open_fh_door_vertical(self):
-        station_op = WeighingVOpenDoorOp.from_args()
+        station_op = ApcWeighingVOpenDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_tare(self):
-        station_op = TareOp.from_args()
+        station_op = ApcTareOp.from_args()
         self.request_station_op(station_op)
 
     def request_open_balance_door(self):
-        station_op = BalanceOpenDoorOp.from_args()
+        station_op = ApcBalanceOpenDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_load_funnel(self):
@@ -107,12 +99,12 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
         self.request_robot_ops([robot_task])
 
     def request_close_balance_door(self):
-        station_op = BalanceCloseDoorOp.from_args()
+        station_op = ApcBalanceCloseDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_weigh(self):
         batch = self.lot.batches[0]
-        station_op = WeighingOp.from_args(target_sample=batch.samples[0])
+        station_op = ApcWeighingOp.from_args(target_sample=batch.samples[0])
         self.request_station_op(station_op)
 
     def request_unload_funnel(self):
@@ -122,5 +114,5 @@ class WeighingStationProcess(StationProcess): #TODO StationProcess or StationPro
         self.request_robot_ops([robot_task])
 
     def request_close_fh_door_vertical(self):
-        station_op = WeighingVCloseDoorOp.from_args()
+        station_op = ApcWeighingVCloseDoorOp.from_args()
         self.request_station_op(station_op)

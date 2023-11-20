@@ -1,34 +1,31 @@
 import rospy
-import time
-from typing import Dict, Tuple, List, Union, Optional
+from typing import Dict, Tuple, List, Optional
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
-from archemist.core.state.station import Station
 from roslabware_msgs.msg import KernPCB2500Cmd, KernPCB2500Reading, KernDoorCmd, KernDoorStatus, sashDoorCmd, sashDoorStatus
 from .state import (
-    WeighingStation, 
-    WeighingVOpenDoorOp, 
-    WeighingVCloseDoorOp, 
-    BalanceOpenDoorOp, 
-    BalanceCloseDoorOp,
-    LoadFunnelOp,
-    UnloadFunnelOp,
-    TareOp,
-    WeighingOp,
-    WeighResult
+    ApcWeighingStation, 
+    ApcWeighingVOpenDoorOp, 
+    ApcWeighingVCloseDoorOp, 
+    ApcBalanceOpenDoorOp, 
+    ApcBalanceCloseDoorOp,
+    ApcTareOp,
+    ApcWeighingOp,
+    ApcWeighResult
 )
 from archemist.core.util.enums import OpOutcome
 import random
 
-class SimWeighingStationHandler(SimStationOpHandler):
-    def __init__(self, station: WeighingStation):
+class SimApcWeighingStationHandler(SimStationOpHandler):
+    def __init__(self, station: ApcWeighingStation):
         super().__init__(station)
 
-    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[WeighResult]]]:
+    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[ApcWeighResult]]]:
         current_op = self._station.assigned_op
-        if isinstance(current_op, WeighingOp):  
-            result = WeighResult.from_args(
+        if isinstance(current_op, ApcWeighingOp):  
+            result = ApcWeighResult.from_args(
                 origin_op=current_op.object_id,
-                reading_value=random.random()*100)
+                reading_value=random.random()*100
+            )
             return OpOutcome.SUCCEEDED, [result]
         else:
             return OpOutcome.SUCCEEDED, None
@@ -38,10 +35,10 @@ try:
     import rospy
     from roslabware_msgs.msg import KernPCB2500Cmd, KernPCB2500Reading
     from roslabware_msgs.msg import KernDoorCmd, KernDoorStatus 
-    from roslabware_msgs.msg import sashDoorCmd, sashDoorStatus #TODO is this right?  Maybe don't need to import at the top of file
+    from roslabware_msgs.msg import sashDoorCmd, sashDoorStatus
 
-    class WeighingStationROSHandler(StationOpHandler):
-        def __init__(self, station:WeighingStation):
+    class ApcWeighingStationHandler(StationOpHandler):
+        def __init__(self, station:ApcWeighingStation):
             super().__init__(station)
 
         def initialise(self) -> bool:
@@ -52,53 +49,43 @@ try:
             rospy.Subscriber("kern_PCB2500_Readings", KernPCB2500Reading, self.weight_callback)
             rospy.Subscriber("kern_Door_Status", KernDoorStatus, self.door_callback)
             rospy.Subscriber("sash_door_Status", sashDoorStatus, self.sash_callback)
-            self._target_balance_door_status = None #TODO is this needed?
-            self._target_sash_door_status = None #TODO is this needed?
+            self._target_balance_door_status = None
+            self._target_sash_door_status = None
             self._received_mass = False
             self._op_results = {}
             rospy.sleep(2)
             return True
-        
-        # TODO Satheesh had this whole run method - needed?
-        # def run(self):
-        #     rospy.loginfo(f'{self._station}_handler is running')
-        #     try:
-        #         while not rospy.is_shutdown():
-        #             self.handle()
-        #             rospy.sleep(2)
-        #     except KeyboardInterrupt:
-        #         rospy.loginfo(f'{self._station}_handler is terminating!')
 
         def execute_op(self):
             current_op = self._station.assigned_op
             self._command_executed = False
-            if isinstance(current_op, WeighingOp):
+            if isinstance(current_op, ApcWeighingOp):
                 self.read_weight = None
                 rospy.loginfo('Reading stable weight.')
                 for i in range(10):
                     self._pub_balance.publish(kern_command=KernPCB2500Cmd.GET_MASS_STABLE)
-            elif isinstance(current_op, TareOp):
+            elif isinstance(current_op, ApcTareOp):
                 rospy.loginfo('Taring balance.')
                 for i in range(10):
                     self._pub_balance.publish(kern_command=KernPCB2500Cmd.TARE_BALANCE)
-            elif isinstance(current_op, WeighingVOpenDoorOp):
-                self._target_sash_door_status = "Door_Open" #TODO check this message is correct
+            elif isinstance(current_op, ApcWeighingVOpenDoorOp):
+                self._target_sash_door_status = "door_open"
                 rospy.loginfo('Opening vertical door.')
                 for i in range(10):
                     self._pub_sash.publish(sash_door_command=sashDoorCmd.OPEN_DOOR)
-            elif isinstance(current_op, WeighingVCloseDoorOp):
+            elif isinstance(current_op, ApcWeighingVCloseDoorOp):
                 rospy.loginfo('Closing vertical door.')
-                self._target_sash_door_status = "Door_Closed" #TODO check this message is correct
+                self._target_sash_door_status = "door_closed"
                 for i in range(10):
                     self._pub_sash.publish(sash_door_command=sashDoorCmd.CLOSE_DOOR) 
-            elif isinstance(current_op, BalanceOpenDoorOp):
+            elif isinstance(current_op, ApcBalanceOpenDoorOp):
                 rospy.loginfo('Opening balance door.')
-                self._target_balance_door_status = "Door_Open"
+                self._target_balance_door_status = "door_open"
                 for i in range(10):
                     self._pub_door.publish(kern_door_command=KernDoorCmd.OPEN_DOOR)
-            elif isinstance(current_op, BalanceCloseDoorOp):
+            elif isinstance(current_op, ApcBalanceCloseDoorOp):
                 rospy.loginfo('Closing balance door.')
-                self._target_balance_door_status = "Door_Closed"
+                self._target_balance_door_status = "door_closed"
                 for i in range(10):
                     self._pub_door.publish(kern_door_command=KernDoorCmd.CLOSE_DOOR)
             else:
@@ -107,10 +94,10 @@ try:
         def is_op_execution_complete(self) -> bool: #TODO not sure what this is doing
             return self._command_executed
 
-        def get_op_result(self) -> Tuple[OpOutcome, Optional[List[WeighResult]]]:
+        def get_op_result(self) -> Tuple[OpOutcome, Optional[List[ApcWeighResult]]]:
             current_op = self._station.assigned_op
-            if isinstance(current_op, WeighingOp):  
-                result = WeighResult.from_args(
+            if isinstance(current_op, ApcWeighingOp):  
+                result = ApcWeighResult.from_args(
                     origin_op=current_op.object_id,
                     reading_value=self.read_weight)
                 return OpOutcome.SUCCEEDED, [result]

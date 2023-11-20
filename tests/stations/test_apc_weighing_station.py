@@ -1,19 +1,18 @@
 import unittest
 
 from mongoengine import connect
-from archemist.stations.weighing_station.state import (
-    WeighingStation, 
-    WeighingVOpenDoorOp, 
-    WeighingVCloseDoorOp, 
-    BalanceOpenDoorOp, 
-    BalanceCloseDoorOp,
-    LoadFunnelOp,
-    UnloadFunnelOp,
-    TareOp,
-    WeighingOp,
-    WeighResult
+from archemist.stations.apc_weighing_station.state import (
+    ApcWeighingStation, 
+    ApcWeighingVOpenDoorOp, 
+    ApcWeighingVCloseDoorOp, 
+    ApcBalanceOpenDoorOp, 
+    ApcBalanceCloseDoorOp,
+    ApcTareOp,
+    ApcWeighingOp,
+    ApcWeighResult
 )
-from archemist.stations.weighing_station.process import WeighingStationProcess
+from archemist.stations.apc_weighing_station.process import ApcWeighingStationProcess
+from archemist.stations.apc_weighing_station.handler import SimApcWeighingStationHandler
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import StationState, ProcessStatus, OpOutcome
@@ -22,6 +21,7 @@ from .testing_utils import test_req_robot_ops, test_req_station_op
 
 
 class WeighingStationTest(unittest.TestCase):
+
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
@@ -36,16 +36,16 @@ class WeighingStationTest(unittest.TestCase):
             'materials': None
         }
 
-        self.station = WeighingStation.from_dict(self.station_doc)
+        self.station = ApcWeighingStation.from_dict(self.station_doc)
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
 
-    def test_station_state(self):
+    def test_state(self):
         
-        station = WeighingStation.from_dict(self.station_doc)
+        station = ApcWeighingStation.from_dict(self.station_doc)
         self.assertIsNotNone(station)
 
         self.assertFalse(station.balance_doors_open)
@@ -57,7 +57,7 @@ class WeighingStationTest(unittest.TestCase):
         station.add_lot(lot)
 
         # test WeighingVOpenDoorOp
-        t_op = WeighingVOpenDoorOp.from_args()
+        t_op = ApcWeighingVOpenDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
         station.add_station_op(t_op)
         station.update_assigned_op()
@@ -65,34 +65,34 @@ class WeighingStationTest(unittest.TestCase):
         self.assertTrue(station.vertical_doors_open)
 
         # test WeighingVCloseDoorOp
-        t_op = WeighingVCloseDoorOp.from_args()
+        t_op = ApcWeighingVCloseDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test BalanceOpenDoorOp
-        t_op = BalanceOpenDoorOp.from_args()
+        t_op = ApcBalanceOpenDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test BalanceCloseDoorOp
-        t_op = BalanceCloseDoorOp.from_args()
+        t_op = ApcBalanceCloseDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test TareOp
-        t_op = TareOp.from_args()
+        t_op = ApcTareOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test WeighingOp
-        t_op = WeighingOp.from_args()
+        t_op = ApcWeighingOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test WeighingOpResult
-        t_result_op = WeighResult.from_args(
+        t_result_op = ApcWeighResult.from_args(
             origin_op=t_op.object_id,
             reading_value=42.1)
         self.assertIsNotNone(t_result_op.object_id)
         self.assertEqual(t_result_op.reading_value, 42.1)
         self.assertEqual(t_result_op.unit, "g")
 
-    def test_station_process(self):
+    def test_process(self):
 
         # construct batches
         batch = Batch.from_args(1)
@@ -109,7 +109,7 @@ class WeighingStationTest(unittest.TestCase):
                     "parameters": {}
                 }
             ]
-        process = WeighingStationProcess.from_args()
+        process = ApcWeighingStationProcess.from_args()
         process.lot_slot = 0
 
         # assert initial state
@@ -118,6 +118,7 @@ class WeighingStationTest(unittest.TestCase):
 
         # prep_state
         process.tick()
+        self.assertEqual(process.m_state, 'prep_state')
         self.assertEqual(process.status, ProcessStatus.RUNNING)
 
         # navigate_to_weighing_station
@@ -128,71 +129,70 @@ class WeighingStationTest(unittest.TestCase):
         # open_fh_door_vertical
         process.tick()
         self.assertEqual(process.m_state, 'open_fh_door_vertical')
-        test_req_station_op(self, process, WeighingVOpenDoorOp)
-
-        # update_open_fh_door_vertical
-        process.tick()
-        self.assertEqual(process.m_state, 'update_open_fh_door_vertical')
+        test_req_station_op(self, process, ApcWeighingVOpenDoorOp)
 
         # tare
         process.tick()
         self.assertEqual(process.m_state, 'tare')
-        test_req_station_op(self, process, TareOp)
+        test_req_station_op(self, process, ApcTareOp)
 
         # open_balance_door
         process.tick()
         self.assertEqual(process.m_state, 'open_balance_door')
-        test_req_station_op(self, process, BalanceOpenDoorOp)
-
-        # update_open_balance_door
-        process.tick()
-        self.assertEqual(process.m_state, 'update_open_balance_door')
+        test_req_station_op(self, process, ApcBalanceOpenDoorOp)
 
         # load_funnel
         process.tick()
         self.assertEqual(process.m_state, 'load_funnel')
         test_req_robot_ops(self, process, [RobotTaskOp])
 
-        # update_load_funnel
-        process.tick()
-        self.assertEqual(process.m_state, 'update_load_funnel')
-
         # close_balance_door
         process.tick()
         self.assertEqual(process.m_state, 'close_balance_door')
-        test_req_station_op(self, process, BalanceCloseDoorOp)
-
-        # update_close_balance_door
-        process.tick()
-        self.assertEqual(process.m_state, 'update_close_balance_door')
+        test_req_station_op(self, process, ApcBalanceCloseDoorOp)
 
         # weigh
         process.tick()
         self.assertEqual(process.m_state, 'weigh')
-        test_req_station_op(self, process, WeighingOp)
+        test_req_station_op(self, process, ApcWeighingOp)
 
         # unload_funnel
         process.tick()
         self.assertEqual(process.m_state, 'unload_funnel')
         test_req_robot_ops(self, process, [RobotTaskOp])
 
-        # update_unload_funnel
-        process.tick()
-        self.assertEqual(process.m_state, 'update_unload_funnel')
-
         # close_fh_door_vertical
         process.tick()
         self.assertEqual(process.m_state, 'close_fh_door_vertical')
-        test_req_station_op(self, process, WeighingVCloseDoorOp)
-
-        # update_close_fh_door_vertical
-        process.tick()
-        self.assertEqual(process.m_state, 'update_close_fh_door_vertical')
+        test_req_station_op(self, process, ApcWeighingVCloseDoorOp)
 
         # final_state
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
         self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_sim_handler(self): 
+        batch_1 = Batch.from_args(3)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        self.station.add_lot(lot)
+
+        # construct handler
+        handler = SimApcWeighingStationHandler(self.station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct weigh result op
+        current_op = ApcWeighingOp.from_args(target_sample=batch_1.samples[0])
+        t_op = ApcWeighResult.from_args(origin_op=current_op.object_id, reading_value=6.0)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertIsInstance(op_results, ApcWeighResult)
 
 
 if __name__ == '__main__':
@@ -201,4 +201,4 @@ if __name__ == '__main__':
 
 
 
-# add handler tests
+# TODO add handler tests
