@@ -22,16 +22,16 @@ from .testing_utils import test_req_robot_ops, test_req_station_op
 
 class WeighingStationTest(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self -> None):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
         self.station_doc = {
             'type': 'WeighingStation',
-            'id': 26,
+            'id': 35,
             'location': {'coordinates': [1,7], 'descriptor': "WeighingStation"},
             'total_lot_capacity': 1,
-            'handler': 'SimStationOpHandler',
+            'handler': 'Op',
             'properties': None,
             'materials': None
         }
@@ -197,8 +197,3 @@ class WeighingStationTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
-
-# TODO add handler tests
