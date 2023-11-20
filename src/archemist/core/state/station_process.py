@@ -1,12 +1,16 @@
 from __future__ import annotations
 from bson.objectid import ObjectId
 from transitions import Machine, State
-from typing import Dict, List, Any, Union, Type
+from typing import Dict, List, Any, Union, Type, TYPE_CHECKING
+if TYPE_CHECKING:
+    from archemist.core.state.station import Station
+    from archemist.core.state.robot_op import RobotOp
+    from archemist.core.state.station_op import StationOp
+
 from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy,ListProxy, DictProxy
 from archemist.core.persistence.object_factory import RobotOpFactory, StationOpFactory, ProcessFactory
+from archemist.core.persistence.objects_getter import StationsGetter
 from archemist.core.models.station_process_model import StationProcessModel, OperationSpecsModel
-from archemist.core.state.robot_op import RobotOp
-from archemist.core.state.station_op import StationOp
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import ProcessStatus, OpOutcome
 
@@ -106,6 +110,14 @@ class StationProcess:
     @requested_by.setter
     def requested_by(self, station_id: ObjectId):
         self._model_proxy.requested_by = station_id
+
+    @property
+    def assigned_to(self) -> ObjectId:
+        return self._model_proxy.assigned_to
+    
+    @assigned_to.setter
+    def assigned_to(self, station_id: ObjectId):
+        self._model_proxy.assigned_to = station_id
 
     @property
     def associated_station(self) -> str:
@@ -247,6 +259,9 @@ class StationProcess:
             self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_OPS
         elif self.status == ProcessStatus.REQUESTING_STATION_PROCS:
             self._model_proxy.status = ProcessStatus.WAITING_ON_STATION_PROCS
+
+    def get_assigned_station(self) -> Type[Station]:
+        return StationsGetter.get_station(self.assigned_to)
     
     def _construct_state_machine(self) -> Machine:
         states = self.STATES if self.STATES else [State(name="init_state"), State(name="final_state")]

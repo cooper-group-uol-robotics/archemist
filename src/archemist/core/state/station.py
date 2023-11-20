@@ -1,14 +1,17 @@
-from typing import List, Dict, Union, Type
+from __future__ import annotations
+from typing import List, Dict, Union, Type, TYPE_CHECKING
+if TYPE_CHECKING:
+    from archemist.core.state.station_process import StationProcess
+    from archemist.core.state.robot import RobotOp
+    from archemist.core.state.station_op import StationOp
+    from archemist.core.state.station_op_result import StationOpResult
+
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import StationState, OpState, OpOutcome, LotStatus
 from archemist.core.models.station_model import StationModel
-from archemist.core.state.station_op import StationOp
-from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.state.material import Liquid,Solid
 from archemist.core.util.location import Location
-from archemist.core.state.robot import RobotOp
 from archemist.core.state.lot import Lot
-from archemist.core.state.station_process import StationProcess
 from archemist.core.persistence.object_factory import StationOpFactory, RobotOpFactory, ProcessFactory
 from bson.objectid import ObjectId
 
@@ -140,6 +143,7 @@ class Station:
         return ListProxy(self._model_proxy.procs_history, ProcessFactory.create_from_model)
     
     def request_external_process(self, ext_proc: Type[StationProcess]):
+        ext_proc.requested_by = self.object_id
         self.requested_ext_procs.append(ext_proc)
 
     def add_process(self, proc: Type[StationProcess]):

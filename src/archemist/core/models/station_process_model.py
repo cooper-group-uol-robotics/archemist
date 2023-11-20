@@ -14,6 +14,7 @@ class StationProcessModel(Document):
     _module = fields.StringField(required=True)
     ''' general '''
     requested_by = fields.ObjectIdField(null=True) # station that requested the process
+    assigned_to = fields.ObjectIdField(null=True) # station that will be running the process
     associated_station = fields.StringField(required=True) # station associated with the process
     status = fields.EnumField(enum=ProcessStatus, default=ProcessStatus.INACTIVE)
     state = fields.StringField(default="init_state")

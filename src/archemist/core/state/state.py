@@ -1,16 +1,19 @@
-from typing import Dict, List, Union, Type
-from bson.objectid import ObjectId
+from __future__ import annotations
+from typing import Dict, List, Union, Type, TYPE_CHECKING
+if TYPE_CHECKING:
+    from archemist.core.state.station_process import StationProcess
+    from archemist.core.state.robot_op import RobotOp
 
-from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.state.recipe import Recipe
-from archemist.core.state.station_process import StationProcess
 from archemist.core.persistence.object_factory import RobotOpFactory, ProcessFactory
 from archemist.core.models.state_model import WorkflowStateModel, InputStateModel, OutputStateModel
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import LotStatus
 from archemist.core.util.location import Location
+
+from bson.objectid import ObjectId
 
 class WorkflowState:
     def __init__(self, state_model: Union[WorkflowStateModel, ModelProxy]):
