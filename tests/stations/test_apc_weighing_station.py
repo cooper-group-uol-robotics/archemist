@@ -20,18 +20,18 @@ from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
 
-class WeighingStationTest(unittest.TestCase):
+class APCWeighingStationTest(unittest.TestCase):
 
     def setUp(self -> None):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
         self.station_doc = {
-            'type': 'WeighingStation',
+            'type': 'ApcWeighingStation',
             'id': 35,
-            'location': {'coordinates': [1,7], 'descriptor': "WeighingStation"},
+            'location': {'coordinates': [1,7], 'descriptor': "ApcWeighingStation"},
             'total_lot_capacity': 1,
-            'handler': 'Op',
+            'handler': 'SimStationOpHandler',
             'properties': None,
             'materials': None
         }
