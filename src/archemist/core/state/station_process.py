@@ -59,6 +59,7 @@ class StationProcess:
                                  associated_station: str,
                                  lot: Lot,
                                  operations: List[Dict[str, Any]],
+                                 is_subprocess: bool,
                                  skip_robot_ops: bool,
                                  skip_station_ops: bool,
                                  skip_ext_procs: bool
@@ -67,6 +68,7 @@ class StationProcess:
         proc_model._module = cls.__module__
         proc_model.lot = lot.model
         proc_model.associated_station = associated_station
+        proc_model.is_subprocess = is_subprocess
         proc_model.skip_robot_ops = skip_robot_ops
         proc_model.skip_station_ops = skip_station_ops
         proc_model.skip_ext_procs =  skip_ext_procs
@@ -80,6 +82,7 @@ class StationProcess:
     @classmethod
     def from_args(cls, lot: Lot,
                   operations: List[Dict[str, Any]] = None,
+                  is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
                   skip_station_ops: bool=False,
                   skip_ext_procs: bool=False
@@ -89,6 +92,7 @@ class StationProcess:
                                      "Station",
                                      lot,
                                      operations,
+                                     is_subprocess,
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
@@ -122,6 +126,10 @@ class StationProcess:
     @property
     def associated_station(self) -> str:
         return self._model_proxy.associated_station
+    
+    @property
+    def is_subprocess(self) -> bool:
+        return self._model_proxy.is_subprocess
     
     @property
     def skip_robot_ops(self) -> bool:

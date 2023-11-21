@@ -121,9 +121,10 @@ class StationProcessHandler:
                 proc.tick()
             else:
                 self._station.running_procs.remove(proc)
-                lot = proc.lot
-                if self._station.is_lot_onboard(lot):
-                    self._station.finish_processing_lot(lot)
+                if not proc.is_subprocess:
+                    lot = proc.lot
+                    if self._station.is_lot_onboard(lot):
+                        self._station.finish_processing_lot(lot)
                 self._station.procs_history.append(proc)
 
         # handle queued procs
@@ -155,7 +156,10 @@ class StationProcessHandler:
             
             if proc.status == ProcessStatus.REQUESTING_STATION_PROCS:
                 for req_station_proc in proc.req_station_procs:
-                    self._station.request_external_process(req_station_proc)
+                    if req_station_proc.associated_station != self._station.__class__.__name__:
+                        self._station.request_external_process(req_station_proc)
+                    else:
+                        self._station.add_process(req_station_proc)
                 proc.switch_to_waiting()
 
     def handle(self):

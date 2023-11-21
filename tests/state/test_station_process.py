@@ -43,7 +43,7 @@ class TestProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_analysis_proc(self):
-        station_proc = StationProcess.from_args(self.lot, {})
+        station_proc = StationProcess.from_args(self.lot, is_subprocess=True)
         self.request_station_process(station_proc)
 
 class StationProcessTest(unittest.TestCase):
@@ -85,6 +85,7 @@ class StationProcessTest(unittest.TestCase):
         proc = StationProcess.from_args(lot, operations)
         self.assertIsNotNone(proc.object_id)
         self.assertIsNone(proc.requested_by)
+        self.assertFalse(proc.is_subprocess)
         dummy_object_id = ObjectId.from_datetime(datetime.now())
         proc.requested_by = dummy_object_id
         self.assertEqual(proc.requested_by, dummy_object_id)
@@ -241,6 +242,7 @@ class StationProcessTest(unittest.TestCase):
 
         # transition to final_state
         station_proc = proc.req_station_procs[0]
+        self.assertTrue(station_proc.is_subprocess)
         station_proc._model_proxy.status = ProcessStatus.FINISHED
         proc.tick()
         self.assertEqual(proc.status, ProcessStatus.FINISHED)

@@ -598,8 +598,8 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(station.running_procs[0].m_state, "run_analysis_proc")
         self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
         self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_PROCS)
-        self.assertEqual(len(station.requested_ext_procs), 1)
-        station_proc = station.requested_ext_procs.pop()
+        self.assertEqual(len(station.queued_procs), 1) # added to queued procs directly since it is internal proc
+        station_proc = station.queued_procs.pop()
         station_proc._model_proxy.status = ProcessStatus.FINISHED
 
         # test processes state advancement

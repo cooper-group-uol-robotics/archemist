@@ -1,9 +1,11 @@
+from typing import Any, Dict, List, Type, Union
 import unittest
 from mongoengine import connect
 from transitions import State
+from archemist.core.models.station_model import StationModel
 
 from archemist.core.state.station import Station
-from archemist.core.state.station_process import StationProcess
+from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
@@ -27,21 +29,12 @@ class TestProcess1(StationProcess):
             {'source':'pickup_batch','dest':'final_state', 'conditions':'are_req_robot_ops_completed'},
         ]
 
-
     def initialise_process_data(self):
         self.data['batch_index'] = 0
 
     def request_pickup_batch(self):
         robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
-
-    def request_to_run_op(self):
-        station_op = self.generate_operation("some_op")
-        self.request_station_op(station_op)
-
-    def request_analysis_proc(self):
-        station_proc = StationProcess.from_args(self.lot, {})
-        self.request_station_process(station_proc)
 
 class TestProcess2(StationProcess):
 
@@ -64,8 +57,19 @@ class TestProcess2(StationProcess):
         self.request_robot_ops([robot_op])
 
     def request_analysis_proc(self):
-        station_proc = StationProcess.from_args(self.lot, {})
+        station_proc = StationProcess.from_args(self.lot, is_subprocess=True)
         self.request_station_process(station_proc)
+
+class SomeStation(Station):
+    def __init__(self, station_model) -> None:
+        super().__init__(station_model)
+
+    @classmethod
+    def from_dict(cls, station_dict):
+        model = StationModel()
+        cls._set_model_common_fields(model, station_dict)
+        model.save()
+        return cls(model)
 
 class ProcessorTest(unittest.TestCase):
 
@@ -362,7 +366,7 @@ class ProcessorTest(unittest.TestCase):
         # create stations and their proc handlers
         station_1 = Station.from_dict(self.station_1_dict)
         station_1_proc_handler = StationProcessHandler(station_1)
-        station_2 = Station.from_dict(self.station_2_dict)
+        station_2 = SomeStation.from_dict(self.station_2_dict)
         station_2_proc_handler = StationProcessHandler(station_2)
 
         # create workflow processor

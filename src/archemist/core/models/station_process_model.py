@@ -20,6 +20,7 @@ class StationProcessModel(Document):
     state = fields.StringField(default="init_state")
     data = fields.DictField(default={})
     lot_slot = fields.IntField(min_value=0, default=None, null=True)
+    is_subprocess = fields.BooleanField(default=False)
     skip_robot_ops = fields.BooleanField(default=False)
     skip_station_ops = fields.BooleanField(default=False)
     skip_ext_procs = fields.BooleanField(default=False)
