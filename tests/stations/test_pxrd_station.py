@@ -19,7 +19,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
-from .testing_utils import test_req_robot_ops, test_req_station_op
+from testing_utils import test_req_robot_ops, test_req_station_op
 
 class PXRDStationTest(unittest.TestCase):
     def setUp(self):
