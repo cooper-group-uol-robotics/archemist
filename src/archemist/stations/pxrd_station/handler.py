@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, List
 from archemist.core.state.station import Station
-from .state import PXRDAnalysisOp, PXRDCloseDoorOp, PXRDOpenDoorOp, PXRDAnalysisResult
+from .state import PXRDAnalysisOp, PXRDAnalysisResult
 from archemist.core.processing.handler import StationHandler, SimStationOpHandler
 from archemist.core.util.enums import OpOutcome
 from random import randint
@@ -47,8 +47,6 @@ try:
                 for i in range(10):
                     self.pub_pxrd.publish(PXRD_commands=PxrdCommand.EXECUTE)
                 self._desired_pxrd_status =  PxrdStatus.EXECUTION_DONE
-            elif isinstance(current_op, PXRDOpenDoorOp) or isinstance(current_op, PXRDCloseDoorOp):
-                self._desired_pxrd_status = self._current_pxrd_status
             
         def is_op_execution_complete(self):
             if self._desired_pxrd_status == self._current_pxrd_status:

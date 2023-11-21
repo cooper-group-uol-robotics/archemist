@@ -5,8 +5,6 @@ from archemist.stations.quantos_qs2_station.state import (QuantosSolidDispenserQ
                                                           QuantosCartridge,
                                                           QuantosOpenDoorOp,
                                                           QuantosCloseDoorOp,
-                                                          QuantosLoadCartridgeOp,
-                                                          QuantosUnloadCartridgeOp,
                                                           QuantosMoveCarouselOp,
                                                           QuantosDispenseOp)
 from archemist.stations.quantos_qs2_station.handler import SimQuantosSolidDispenserQS2Handler
@@ -89,22 +87,10 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertTrue(self.station.door_open)
 
-        # test QuantosLoadCartridgeOp
-        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
-        self.assertIsNotNone(t_op)
-        self.assertEqual(t_op.solid_name, "NaCl")
-        self.station.add_station_op(t_op)
-        self.assertEqual(len(self.station._queued_ops), 1)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        # test loading cartridge
+        self.station.load_cartridge("NaCl")
         self.assertIsNotNone(self.station.loaded_cartridge)
         self.assertEqual(self.station.loaded_cartridge.associated_solid, "NaCl")
-
-        # test unsueccessful QuantosLoadCartridgeOp
-        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
-        self.assertIsNotNone(t_op)
-        self.station.add_station_op(t_op)
-        self.assertEqual(len(self.station._queued_ops), 0)
 
         # test QuantosCloseDoorOp
         t_op = QuantosCloseDoorOp.from_args()
@@ -144,12 +130,8 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         self.assertEqual(self.station.solids_dict["NaCl"].mass, 90)
         self.assertEqual(self.station.loaded_cartridge.remaining_dosages, 99)
 
-        # test QuantosUnloadCartridgeOp
-        t_op = QuantosUnloadCartridgeOp.from_args()
-        self.assertIsNotNone(t_op)
-        self.station.add_station_op(t_op)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        # test unload cartridge
+        self.station.unload_cartridge()
         self.assertIsNone(self.station.loaded_cartridge)
 
     def test_sim_handler(self):
@@ -166,13 +148,7 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         self.assertTrue(handler.initialise())
 
         # load cartidge
-        t_op = QuantosLoadCartridgeOp.from_args("NaCl")
-        self.station.add_station_op(t_op)
-        self.station.update_assigned_op()
-        outcome, op_results = handler.get_op_result()
-        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
-        self.assertIsNone(op_results)
-        self.station.complete_assigned_op(outcome, op_results)
+        self.station.load_cartridge("NaCl")
 
         # dispense solid
         t_op = QuantosDispenseOp.from_args(target_sample=batch_1.samples[0],

@@ -1,5 +1,5 @@
 from .model import (QuantosCartridgeModel, QuantosSolidDispenserQS2Model,
-                    QuantosDispenseOpModel, QuantosMoveCarouselOpModel, QuantosLoadCartridgeOpModel)
+                    QuantosDispenseOpModel, QuantosMoveCarouselOpModel)
 from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy, ListProxy
 from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.state.station_op_result import MaterialOpResult
@@ -108,11 +108,17 @@ class QuantosSolidDispenserQS2(Station):
         else:
             self._log_station("dispense operation target is different from the loaded cartridge")
 
+    def load_cartridge(self, solid_name: str):
+        for index, cartridge in enumerate(self.cartridges):
+            if cartridge.associated_solid == solid_name:
+                self._model_proxy.loaded_cartridge_index = index
+                break
+
+    def unload_cartridge(self):
+        self._model_proxy.loaded_cartridge_index = None
+
     def add_station_op(self, station_op: type[StationOp]):
-        if isinstance(station_op, QuantosLoadCartridgeOp) and self.loaded_cartridge:
-            self._log_station('Quantos station already has a loaded cartridge!!!')
-            self._log_station(f'station_op {station_op} cannot be added')
-        elif isinstance(station_op, QuantosDispenseOp) and not self.loaded_cartridge:
+        if isinstance(station_op, QuantosDispenseOp) and not self.loaded_cartridge:
             self._log_station('Quantos station do not have a loaded cartridge!!!')
             self._log_station(f'station_op {station_op} cannot be added')
         else:
@@ -120,14 +126,7 @@ class QuantosSolidDispenserQS2(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: Optional[List[MaterialOpResult]]):
         current_op = self.assigned_op
-        if isinstance(current_op, QuantosLoadCartridgeOp):
-            for index, cartridge in enumerate(self.cartridges):
-                if cartridge.associated_solid == current_op.solid_name:
-                    self._model_proxy.loaded_cartridge_index = index
-                    break
-        elif isinstance(current_op, QuantosUnloadCartridgeOp):
-            self._model_proxy.loaded_cartridge_index = None
-        elif isinstance(current_op, QuantosOpenDoorOp):
+        if isinstance(current_op, QuantosOpenDoorOp):
             self.door_open = True
         elif isinstance(current_op, QuantosCloseDoorOp):
             self.door_open = False
@@ -150,33 +149,6 @@ class QuantosOpenDoorOp(StationOp):
         return cls(model)
 
 class QuantosCloseDoorOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
-        model.save()
-        return cls(model)
-
-class QuantosLoadCartridgeOp(StationOp):
-    def __init__(self, op_model: Union[QuantosLoadCartridgeOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls, solid_name: str):
-        model = QuantosLoadCartridgeOpModel()
-        model.solid_name = solid_name
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
-        model.save()
-        return cls(model)
-    
-    @property
-    def solid_name(self) -> str:
-        return self._model_proxy.solid_name
-
-class QuantosUnloadCartridgeOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 

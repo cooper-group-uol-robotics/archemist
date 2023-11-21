@@ -44,6 +44,7 @@ class PXRDWorkflowShakingProcess(StationProcess):
     def from_args(cls, lot: Lot,
                   eight_well_rack_first: bool,
                   operations: List[Dict[str, Any]] = None,
+                  is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
                   skip_station_ops: bool=False,
                   skip_ext_procs: bool=False
@@ -53,6 +54,7 @@ class PXRDWorkflowShakingProcess(StationProcess):
                                      ShakerPlateStation.__name__,
                                      lot,
                                      operations,
+                                     is_subprocess,
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)

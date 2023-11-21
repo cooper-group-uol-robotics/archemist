@@ -10,8 +10,6 @@ from archemist.core.state.robot_op import (RobotTaskOp,
 from archemist.stations.pxrd_station.state import (PXRDStation,
                                                    PXRDJobStatus,
                                                    PXRDAnalysisOp, 
-                                                   PXRDCloseDoorOp,
-                                                   PXRDOpenDoorOp,
                                                    PXRDAnalysisResult)
 from archemist.stations.pxrd_station.process import PXRDWorkflowAnalysisProcess
 from archemist.stations.pxrd_station.handler import SimPXRDStationHandler
@@ -19,6 +17,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
+from archemist.core.util.location import Location
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
 class PXRDStationTest(unittest.TestCase):
@@ -33,7 +32,9 @@ class PXRDStationTest(unittest.TestCase):
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials': None,
-            'parameters': None
+            'properties': {
+                'doors_location': {'coordinates': [1,6], 'descriptor': "ChemSpeedFlexDoors"},
+            }
         }
 
         self.station = PXRDStation.from_dict(self.station_doc)
@@ -47,6 +48,7 @@ class PXRDStationTest(unittest.TestCase):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
+        self.assertEqual(self.station.doors_location, Location.from_dict({'coordinates': [1,6], 'descriptor': "ChemSpeedFlexDoors"}))
 
         # construct lot and add it to station
         batch_1 = Batch.from_args(2)
@@ -56,22 +58,8 @@ class PXRDStationTest(unittest.TestCase):
         # test station specific members
         self.assertEqual(self.station.job_status, PXRDJobStatus.INVALID)
         self.assertTrue(self.station.door_closed)
-        
-        # test PXRDOpenDoorOp
-        t_op = PXRDOpenDoorOp.from_args()
-        self.assertIsNotNone(t_op)
-        self.station.add_station_op(t_op)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.station.door_closed = False
         self.assertFalse(self.station.door_closed)
-
-        # test PXRDOpenDoorOp
-        t_op = PXRDCloseDoorOp.from_args()
-        self.assertIsNotNone(t_op)
-        self.station.add_station_op(t_op)
-        self.station.update_assigned_op()
-        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertTrue(self.station.door_closed)
 
         # test PXRDAnalysisOp
         t_op = PXRDAnalysisOp.from_args(target_batch=batch_1)
@@ -109,7 +97,7 @@ class PXRDStationTest(unittest.TestCase):
                                                         eight_well_rack_first=True,
                                                         operations=operations)
         process.lot_slot = 0
-
+        process.assigned_to = self.station.object_id
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
         self.assertEqual(process.status, ProcessStatus.INACTIVE)
@@ -128,7 +116,7 @@ class PXRDStationTest(unittest.TestCase):
         # open_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door_update')
-        test_req_station_op(self, process, PXRDOpenDoorOp)
+        self.assertFalse(self.station.door_closed)
 
         # load_pxrd
         process.tick()
@@ -143,7 +131,7 @@ class PXRDStationTest(unittest.TestCase):
         # close_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door_update')
-        test_req_station_op(self, process, PXRDCloseDoorOp)
+        self.assertTrue(self.station.door_closed)
 
         # pxrd_process
         process.tick()
@@ -158,7 +146,7 @@ class PXRDStationTest(unittest.TestCase):
         # open_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door_update')
-        test_req_station_op(self, process, PXRDOpenDoorOp)
+        self.assertFalse(self.station.door_closed)
 
         # unload_pxrd
         process.tick()
@@ -173,7 +161,7 @@ class PXRDStationTest(unittest.TestCase):
         # close_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door_update')
-        test_req_station_op(self, process, PXRDCloseDoorOp)
+        self.assertTrue(self.station.door_closed)
 
         # final_state
         process.tick()
@@ -205,15 +193,6 @@ class PXRDStationTest(unittest.TestCase):
         self.assertTrue(isinstance(op_results[0], PXRDAnalysisResult))
         self.assertIsNotNone(op_results[0].result_filename)
         self.station.complete_assigned_op(outcome, op_results)
-
-        # construct analyse op
-        t_op = PXRDOpenDoorOp.from_args()
-        self.station.add_station_op(t_op)
-        self.station.update_assigned_op()
-        
-        outcome, op_results = handler.get_op_result()
-        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
-        self.assertIsNone(op_results)
 
 if __name__ == '__main__':
     unittest.main()

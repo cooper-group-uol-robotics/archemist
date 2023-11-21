@@ -21,8 +21,5 @@ class QuantosDispenseOpModel(StationSampleOpModel):
     dispense_mass = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["g", "mg", "ug"], default="g")
 
-class QuantosLoadCartridgeOpModel(StationOpModel):
-    solid_name = fields.StringField(required=True)
-
 class QuantosMoveCarouselOpModel(StationOpModel):
     target_pos = fields.IntField(min_value=1, max_value=20, default=1)

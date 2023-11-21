@@ -3,12 +3,12 @@ from .model import PXRDStationModel, PXRDJobStatus, PXRDAnalysisResultModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.batch import Batch
-from archemist.core.state.station_op import StationOp, StationBatchOp
-from archemist.core.models.station_op_model import StationOpModel, StationBatchOpModel
+from archemist.core.state.station_op import StationBatchOp
+from archemist.core.models.station_op_model import StationBatchOpModel
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
+from archemist.core.util.location import Location
 from typing import List, Dict, Union, Type
-from datetime import datetime
 
 ''' ==== Station Description ==== '''
 class PXRDStation(Station):
@@ -19,6 +19,7 @@ class PXRDStation(Station):
     def from_dict(cls, station_dict: Dict):
         model = PXRDStationModel()
         cls._set_model_common_fields(model, station_dict)
+        model.doors_location = Location.from_dict(station_dict['properties']['doors_location']).model
         model.save()
         return cls(model)
 
@@ -37,6 +38,10 @@ class PXRDStation(Station):
     @door_closed.setter
     def door_closed(self, closed: bool):
         self._model_proxy.door_closed = closed
+    
+    @property
+    def doors_location(self) -> Location:
+        return Location(self._model_proxy.doors_location)
 
     def update_assigned_op(self):
         super().update_assigned_op()
@@ -46,38 +51,11 @@ class PXRDStation(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op
-        if isinstance(current_op, PXRDOpenDoorOp):
-            self.door_closed = False
-        elif isinstance(current_op, PXRDCloseDoorOp):
-            self.door_closed = True
-        elif isinstance(current_op, PXRDAnalysisOp):
+        if isinstance(current_op, PXRDAnalysisOp):
             self.job_status = PXRDJobStatus.JOB_COMPLETE
         super().complete_assigned_op(outcome, results)
 
 ''' ==== Station Operation Descriptors ==== '''
-
-class PXRDOpenDoorOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
-        super().__init__(station_op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
-        model.save()
-        return cls(model)
-
-
-class PXRDCloseDoorOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
-        super().__init__(station_op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
-        model.save()
-        return cls(model)
 
 class PXRDAnalysisOp(StationBatchOp):
     def __init__(self, op_model: StationBatchOpModel):

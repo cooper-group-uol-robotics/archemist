@@ -4,9 +4,7 @@ from archemist.core.state.station import Station
 from .state import (QuantosOpenDoorOp,
                     QuantosCloseDoorOp,
                     QuantosMoveCarouselOp,
-                    QuantosDispenseOp,
-                    QuantosLoadCartridgeOp,
-                    QuantosUnloadCartridgeOp)
+                    QuantosDispenseOp)
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from archemist.core.state.station_op_result import MaterialOpResult
 from archemist.core.util.enums import OpOutcome
@@ -66,8 +64,6 @@ try:
                 self._quantos_pub.publish(quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=False)
             elif isinstance(current_op, QuantosMoveCarouselOp):
                 self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=current_op.target_pos)
-            elif isinstance(current_op, QuantosLoadCartridgeOp) or isinstance(current_op, QuantosUnloadCartridgeOp):
-                 self._received_results = True
             else:
                 rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
