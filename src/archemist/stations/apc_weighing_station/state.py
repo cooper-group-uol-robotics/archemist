@@ -14,7 +14,7 @@ from bson.objectid import ObjectId
 ''' ==== Station Description ==== '''
 class ApcWeighingStation(Station):
     def __init__(self, weighing_station_model: Union[ApcWeighingStationModel, ModelProxy]) -> None:
-        self._model = weighing_station_model
+        super().__init__(weighing_station_model)
 
     @classmethod
     def from_dict(cls, station_dict: Dict):
@@ -49,6 +49,10 @@ class ApcWeighingStation(Station):
             self.balance_doors_open = True
         elif isinstance(current_op, ApcBalanceCloseDoorOp):
             self.balance_doors_open = False
+        elif isinstance(current_op, ApcWeighingOp):
+            self.is_weighing_complete = True
+        elif isinstance(current_op, ApcWeighingVCloseDoorOp):
+            self.is_weighing_complete = False # TODO to reset the variable after the process... needed?
         super().complete_assigned_op(outcome, results)
 
 

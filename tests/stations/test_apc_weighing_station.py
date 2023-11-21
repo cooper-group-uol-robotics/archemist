@@ -17,14 +17,17 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import StationState, ProcessStatus, OpOutcome
 from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
-from .testing_utils import test_req_robot_ops, test_req_station_op
+from testing_utils import test_req_robot_ops, test_req_station_op
 
 
 class APCWeighingStationTest(unittest.TestCase):
 
-    def setUp(self -> None):
+    def setUp(self) -> None:
         self._db_name = 'archemist_test'
-        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+        self._client = connect(
+            db=self._db_name, alias='archemist_state', host='mongodb://localhost:27017',
+            uuidrepresentation='standard'
+        )
 
         self.station_doc = {
             'type': 'ApcWeighingStation',
@@ -45,43 +48,55 @@ class APCWeighingStationTest(unittest.TestCase):
 
     def test_state(self):
         
-        station = ApcWeighingStation.from_dict(self.station_doc)
-        self.assertIsNotNone(station)
+        # test station is constructed properly
+        self.assertIsNotNone(self.station)
 
-        self.assertFalse(station.balance_doors_open)
-        self.assertFalse(station.vertical_doors_open)
+        self.assertFalse(self.station.balance_doors_open)
+        self.assertFalse(self.station.vertical_doors_open)
 
         # construct lot and add it to station
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        station.add_lot(lot)
+        self.station.add_lot(lot)
 
         # test WeighingVOpenDoorOp
         t_op = ApcWeighingVOpenDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
-        station.add_station_op(t_op)
-        station.update_assigned_op()
-        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertTrue(station.vertical_doors_open)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.vertical_doors_open)
 
         # test WeighingVCloseDoorOp
         t_op = ApcWeighingVCloseDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(self.station.vertical_doors_open)
 
         # test BalanceOpenDoorOp
         t_op = ApcBalanceOpenDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertTrue(self.station.balance_doors_open)
 
         # test BalanceCloseDoorOp
         t_op = ApcBalanceCloseDoorOp.from_args()
         self.assertIsNotNone(t_op.object_id)
+        self.station.add_station_op(t_op)
+        self.station.update_assigned_op()
+        self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(self.station.balance_doors_open)
 
         # test TareOp
         t_op = ApcTareOp.from_args()
         self.assertIsNotNone(t_op.object_id)
 
         # test WeighingOp
-        t_op = ApcWeighingOp.from_args()
+        t_op = ApcWeighingOp.from_args(target_sample=batch.samples[0])
         self.assertIsNotNone(t_op.object_id)
 
         # test WeighingOpResult
@@ -102,14 +117,7 @@ class APCWeighingStationTest(unittest.TestCase):
         self.station.add_lot(lot)
 
         # create station process
-        operations = [
-                {
-                    "name": "weigh_op",
-                    "op": "WeighOp",
-                    "parameters": {}
-                }
-            ]
-        process = ApcWeighingStationProcess.from_args()
+        process = ApcWeighingStationProcess.from_args(lot=lot)
         process.lot_slot = 0
 
         # assert initial state
@@ -120,6 +128,7 @@ class APCWeighingStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'prep_state')
         self.assertEqual(process.status, ProcessStatus.RUNNING)
+        self.assertFalse(process.data['is_weighing_complete'])
 
         # navigate_to_weighing_station
         process.tick()
@@ -144,7 +153,7 @@ class APCWeighingStationTest(unittest.TestCase):
         # load_funnel
         process.tick()
         self.assertEqual(process.m_state, 'load_funnel')
-        test_req_robot_ops(self, process, [RobotTaskOp])
+        test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
 
         # close_balance_door
         process.tick()
@@ -155,6 +164,12 @@ class APCWeighingStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'weigh')
         test_req_station_op(self, process, ApcWeighingOp)
+        self.assertTrue(process.data['is_weighing_complete'])
+
+        # open_balance_door
+        process.tick()
+        self.assertEqual(process.m_state, 'open_balance_door')
+        test_req_station_op(self, process, ApcBalanceOpenDoorOp)
 
         # unload_funnel
         process.tick()
@@ -172,8 +187,8 @@ class APCWeighingStationTest(unittest.TestCase):
         self.assertEqual(process.status, ProcessStatus.FINISHED)
 
     def test_sim_handler(self): 
-        batch_1 = Batch.from_args(3)
-        lot = Lot.from_args([batch_1])
+        batch = Batch.from_args(1)
+        lot = Lot.from_args([batch])
 
         # add batches to station
         self.station.add_lot(lot)
@@ -185,14 +200,14 @@ class APCWeighingStationTest(unittest.TestCase):
         self.assertTrue(handler.initialise())
 
         # construct weigh result op
-        current_op = ApcWeighingOp.from_args(target_sample=batch_1.samples[0])
-        t_op = ApcWeighResult.from_args(origin_op=current_op.object_id, reading_value=6.0)
+        t_op = ApcWeighingOp.from_args(target_sample=batch.samples[0])
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
-        self.assertIsInstance(op_results, ApcWeighResult)
+        self.assertIsInstance(op_results[0], ApcWeighResult)
+        self.assertEqual(op_results[0].reading_value, 42)
 
 
 if __name__ == '__main__':

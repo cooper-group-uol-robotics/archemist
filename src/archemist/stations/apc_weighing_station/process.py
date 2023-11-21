@@ -8,13 +8,12 @@ from .state import (
     ApcBalanceCloseDoorOp,
     ApcTareOp,
     ApcWeighingOp,
+    ApcWeighingStation
 )
 from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
-from archemist.core.state.robot import RobotTaskType
-from archemist.robots.kmriiwa_robot.state import KukaLBRTask, KukaLBRMaintenanceTask, KukaNAVTask
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.state.lot import Lot
-import time
+from archemist.core.util import Location
 
 class ApcWeighingStationProcess(StationProcess):
     
@@ -24,7 +23,7 @@ class ApcWeighingStationProcess(StationProcess):
         ''' States '''
         self.STATES = [
             State(name='init_state'), 
-            State(name='prep_state'),
+            State(name='prep_state', on_enter=['initialise_process_data']),
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
             State(name='open_fh_door_vertical', on_enter=['request_open_fh_door_vertical']),
             State(name='tare', on_enter=['request_tare']),
@@ -44,11 +43,11 @@ class ApcWeighingStationProcess(StationProcess):
             { 'source':'navigate_to_weighing_station','dest':'open_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'open_fh_door_vertical','dest':'tare', 'conditions':'are_req_station_ops_completed'},
             { 'source':'tare','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'open_balance_door','dest':'load_funnel', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'open_balance_door','dest':'load_funnel', 'unless':'is_weighing_complete', 'conditions':'are_req_station_ops_completed'},
             { 'source':'load_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'close_balance_door','dest':'weigh', 'conditions':'are_req_station_ops_completed'},
             { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
-            { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
             { 'source':'unload_funnel','dest':'close_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'close_fh_door_vertical','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
@@ -62,7 +61,7 @@ class ApcWeighingStationProcess(StationProcess):
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
-                                     WeighingStation.__name__,
+                                     ApcWeighingStation.__name__,
                                      lot,
                                      operations,
                                      skip_robot_ops,
@@ -73,10 +72,19 @@ class ApcWeighingStationProcess(StationProcess):
     
     ''' States callbacks. '''
 
+    def initialise_process_data(self):
+        self.data['is_weighing_complete'] = False
+
     def request_navigate_to_weighing(self):
-        # TODO check KUKA command name
-        robot_task = RobotNavOp.from_args(name="NavToWeighing",
-                                           target_robot="KMRIIWARobot")
+        weighing_loc = Location.from_args(
+            coordinates=(19, 1), # TODO check coordinates
+            descriptor="APCWeighingLocation" # TODO check location name
+        ) 
+        robot_task = RobotNavOp.from_args(
+            name="NavToWeighing", # TODO check KUKA command name
+            target_robot="KMRIIWARobot",
+            target_location=weighing_loc
+        )
         wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, wait_for_next_op])
 
@@ -94,9 +102,12 @@ class ApcWeighingStationProcess(StationProcess):
 
     def request_load_funnel(self):
         # TODO check KUKA command name
-        robot_task = RobotTaskOp.from_args(name="LoadFunnel",
-                                           target_robot="KMRIIWARobot")
-        self.request_robot_ops([robot_task])
+        robot_task = RobotTaskOp.from_args(
+            name="LoadFunnel",
+            target_robot="KMRIIWARobot"
+        )
+        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
+        self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_close_balance_door(self):
         station_op = ApcBalanceCloseDoorOp.from_args()
@@ -106,6 +117,7 @@ class ApcWeighingStationProcess(StationProcess):
         batch = self.lot.batches[0]
         station_op = ApcWeighingOp.from_args(target_sample=batch.samples[0])
         self.request_station_op(station_op)
+        self.data['is_weighing_complete'] = True
 
     def request_unload_funnel(self):
         # TODO check KUKA command name
@@ -116,3 +128,8 @@ class ApcWeighingStationProcess(StationProcess):
     def request_close_fh_door_vertical(self):
         station_op = ApcWeighingVCloseDoorOp.from_args()
         self.request_station_op(station_op)
+
+    ''' Transition callbacks. '''
+
+    def is_weighing_complete(self):
+        return self.data['is_weighing_complete']

@@ -1,7 +1,6 @@
 import rospy
 from typing import Dict, Tuple, List, Optional
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
-from roslabware_msgs.msg import KernPCB2500Cmd, KernPCB2500Reading, KernDoorCmd, KernDoorStatus, sashDoorCmd, sashDoorStatus
 from .state import (
     ApcWeighingStation, 
     ApcWeighingVOpenDoorOp, 
@@ -24,11 +23,9 @@ class SimApcWeighingStationHandler(SimStationOpHandler):
         if isinstance(current_op, ApcWeighingOp):  
             result = ApcWeighResult.from_args(
                 origin_op=current_op.object_id,
-                reading_value=random.random()*100
+                reading_value=42
             )
             return OpOutcome.SUCCEEDED, [result]
-        else:
-            return OpOutcome.SUCCEEDED, None
     
 
 try:  

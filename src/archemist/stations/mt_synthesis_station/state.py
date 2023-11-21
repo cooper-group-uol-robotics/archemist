@@ -273,7 +273,8 @@ class MTSynthDispenseLiquidOp(StationSampleOp):
                   target_sample: Sample,
                   liquid_name: str, 
                   dispense_volume: float,
-                  dispense_unit: Literal["L", "mL", "uL"])
+                  dispense_unit: Literal["L", "mL", "uL"]
+        ):
         model = MTSynthLiquidDispenseOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_sample = target_sample.model
