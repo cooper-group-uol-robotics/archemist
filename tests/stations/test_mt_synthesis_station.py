@@ -6,11 +6,7 @@ from time import sleep
 
 from archemist.stations.mt_synthesis_station.state import (MTSynthesisStation,
                                                            SynthesisCartridge,
-                                                           MTSynthOpenWindowOp,
-                                                           MTSynthCloseWindowOp,
-                                                           MTSynthLoadCartridgeOp,
                                                            MTSynthDispenseSolidOp,
-                                                           MTSynthUnloadCartridgeOp,
                                                            MTSynthDispenseLiquidOp,
                                                            MTSynthAddWashLiquidOp,
                                                            MTSynthReactAndSampleOp,
@@ -22,7 +18,7 @@ from archemist.stations.mt_synthesis_station.state import (MTSynthesisStation,
                                                            MTSynthDrainOp,
                                                            OptiMaxMode,
                                                            MTSynthReactAndWaitOp)
-from archemist.stations.mt_synthesis_station.process import MTAPCSynthProcess, MTAPCFilterProcess
+from archemist.stations.mt_synthesis_station.process import MTAPCSynthProcess, MTAPCCleanProcess, MTAPCFilterProcess
 from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.util.enums import StationState
 from archemist.core.state.batch import Batch
@@ -44,8 +40,8 @@ class MTSynthesisStationTest(unittest.TestCase):
             'handler': 'SimStationOpHandler',
             'properties': {
                 'cartridges': [
-                    {'associated_solid': "NaCl", 'hotel_index': 0},
-                    {'associated_solid': "NaCl", 'hotel_index': 1}
+                    {'associated_solid': "NaCl", 'hotel_index': 1},
+                    {'associated_solid': "NaCl", 'hotel_index': 2}
                     ],
                 'num_sampling_vials': 12
             },
@@ -109,6 +105,8 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         self.assertIsNone(station.loaded_cartridge)
         self.assertFalse(station.window_open)
+        station.window_open = True
+        self.assertTrue(station.window_open)
         self.assertFalse(station.optimax_valve_open)
         self.assertEqual(station.num_sampling_vials, 12)
         self.assertIsNone(station.set_reaction_temperature)
@@ -119,26 +117,9 @@ class MTSynthesisStationTest(unittest.TestCase):
         lot = Lot.from_args([batch])
         station.add_lot(lot)
 
-        # test MTSynthOpenWindowOp
-        t_op = MTSynthOpenWindowOp.from_args()
-        station.add_station_op(t_op)
-        station.update_assigned_op()
-        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertTrue(station.window_open)
-
-        # test MTSynthCloseWindowOp
-        t_op = MTSynthCloseWindowOp.from_args()
-        station.add_station_op(t_op)
-        station.update_assigned_op()
-        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertFalse(station.window_open)
-
-        # test MTSynthLoadCartridgeOp
-        t_op = MTSynthLoadCartridgeOp.from_args(cartridge_index=0)
-        station.add_station_op(t_op)
-        station.update_assigned_op()
-        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertEqual(station.loaded_cartridge.hotel_index, 0)
+        # test load cartridge
+        station.load_cartridge(0)
+        self.assertEqual(station.loaded_cartridge.hotel_index, 1)
         self.assertFalse(station.loaded_cartridge.depleted)
 
         # test MTSynthDispenseSolidOp
@@ -152,11 +133,8 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(station.solids_dict["NaCl"].mass, 85)
         self.assertTrue(station.loaded_cartridge.depleted)
 
-        # test MTSynthUnloadCartridgeOp 
-        t_op = MTSynthUnloadCartridgeOp.from_args()
-        station.add_station_op(t_op)
-        station.update_assigned_op()
-        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        # test unload_cartridge 
+        station.unload_cartridge()
         self.assertIsNone(station.loaded_cartridge)
 
         # test MTSynthDispenseLiquidOp
@@ -366,17 +344,20 @@ class MTSynthesisStationTest(unittest.TestCase):
                     }
                 }
             ]
-        cycles_to_discharge = 3
-        cycles_to_clean=3
+
         process = MTAPCSynthProcess.from_args(lot=lot,
                                               num_liquids=2,
-                                              drain_duration=2,
-                                              min_concentration=0.8,
-                                              cycles_to_discharge=cycles_to_discharge,
-                                              cycles_to_clean=cycles_to_clean,
+                                              target_product_concentration=0.8,
+                                              wash_volume_ml=20,
+                                              filteration_drain_duration_sec=2,
+                                              dry_duration_min=5,
+                                              target_purity_concentration=0.01,
+                                              cleaning_drain_duration_sec=2,
+                                              cycles_to_discharge=3,
+                                              cycles_to_clean=3,
                                               operations=operations)
         process.lot_slot = 0
-
+        process.assigned_to = station.object_id
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
         self.assertEqual(process.status, ProcessStatus.INACTIVE)
@@ -415,7 +396,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # update_open_sash
         process.tick()
         self.assertEqual(process.m_state, 'update_open_sash')
-        test_req_station_op(self, process, MTSynthOpenWindowOp)
+        self.assertTrue(station.window_open)
 
         # load_solid_cartridge
         process.tick()
@@ -425,7 +406,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # update_loading_cartridge
         process.tick()
         self.assertEqual(process.m_state, 'update_loading_cartridge')
-        test_req_station_op(self, process, MTSynthLoadCartridgeOp)
+        self.assertIsNotNone(station.loaded_cartridge)
 
         # operate_solid_cartridge
         process.tick()
@@ -445,7 +426,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # update_unloading_cartridge
         process.tick()
         self.assertEqual(process.m_state, 'update_unloading_cartridge')
-        test_req_station_op(self, process, MTSynthUnloadCartridgeOp)
+        self.assertIsNone(station.loaded_cartridge)
 
         # close_sash
         process.tick()
@@ -455,7 +436,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # update_close_sash
         process.tick()
         self.assertEqual(process.m_state, 'update_close_sash')
-        test_req_station_op(self, process, MTSynthCloseWindowOp)
+        self.assertFalse(station.window_open)
 
         # sample_reaction
         process.tick()
@@ -514,6 +495,53 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'stop_reaction')
         test_req_station_op(self, process, MTSynthStopReactionOp)
 
+        # filteration_process
+        process.tick()
+        self.assertEqual(process.m_state, 'filteration_process')
+        test_req_station_proc(self, process, MTAPCFilterProcess)
+
+        # test queue_cleaning_process
+        process.tick()
+        self.assertEqual(process.m_state, 'queue_cleaning_process')
+        test_req_station_proc(self, process, MTAPCCleanProcess)
+        
+        # final_state
+        process.tick()
+        self.assertEqual(process.m_state, 'final_state')
+        self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_filteration_process(self):
+
+        # construct station
+        station = MTSynthesisStation.from_dict(self.station_doc)
+        
+        batch = Batch.from_args(1)
+        lot = Lot.from_args([batch])
+        
+        # add batches to station
+        station.add_lot(lot)
+
+        # create station process
+        cycles_to_discharge = 3
+        cycles_to_clean = 3
+        process = MTAPCFilterProcess.from_args(lot=lot,
+                                              wash_volume_ml=20,
+                                              filteration_drain_duration_sec=2,
+                                              dry_duration_min=5,
+                                              cycles_to_discharge=cycles_to_discharge,
+                                              cycles_to_clean=cycles_to_clean)
+        process.lot_slot = 0
+        process.assigned_to = station.object_id
+        # assert initial state
+        self.assertEqual(process.m_state, 'init_state')
+        self.assertEqual(process.status, ProcessStatus.INACTIVE)
+
+        # prep_state
+        process.tick()
+        self.assertEqual(process.status, ProcessStatus.RUNNING)
+        self.assertEqual(process.m_state, 'prep_state')
+        self.assertEqual(process.data['num_discharge_cycles'], 0)
+
         # open_drain_valve
         process.tick()
         self.assertEqual(process.m_state, 'open_drain_valve')
@@ -537,13 +565,14 @@ class MTSynthesisStationTest(unittest.TestCase):
         # increment_discharge_cycle
         process.tick()
         self.assertEqual(process.m_state, 'increment_discharge_cycle')
+        self.assertEqual(process.data['num_discharge_cycles'], 1)
 
         # filter_product
         process.tick()
         self.assertEqual(process.m_state, 'filter_product')
         test_req_station_op(self, process, MTSynthFilterOp)
 
-        for _ in range(cycles_to_discharge - 1):
+        for i in range(1, cycles_to_discharge):
             # open_drain_valve
             process.tick()
             self.assertEqual(process.m_state, 'open_drain_valve')
@@ -563,13 +592,14 @@ class MTSynthesisStationTest(unittest.TestCase):
             # increment_discharge_cycle
             process.tick()
             self.assertEqual(process.m_state, 'increment_discharge_cycle')
+            self.assertEqual(process.data['num_discharge_cycles'], i+1)
 
             # filter_product
             process.tick()
             self.assertEqual(process.m_state, 'filter_product')
             test_req_station_op(self, process, MTSynthFilterOp)
 
-        for _ in range(cycles_to_clean):
+        for i in range(cycles_to_discharge, cycles_to_clean + cycles_to_discharge):
             # test add_wash_liquid 
             process.tick()
             self.assertEqual(process.m_state, 'add_wash_liquid')
@@ -594,6 +624,7 @@ class MTSynthesisStationTest(unittest.TestCase):
             # increment_discharge_cycle
             process.tick()
             self.assertEqual(process.m_state, 'increment_discharge_cycle')
+            self.assertEqual(process.data['num_discharge_cycles'], i+1)
 
             # filter_product
             process.tick()
@@ -622,10 +653,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.add_lot(lot)
 
         # create station process
-        process = MTAPCFilterProcess.from_args(lot=lot,
-                                              drain_duration=2,
-                                              max_concentration=0.1)
+        process = MTAPCCleanProcess.from_args(lot=lot,
+                                              target_purity_concentration=0.01,
+                                              cleaning_drain_duration_sec=2)
         process.lot_slot = 0
+        process.assigned_to = station.object_id
 
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
@@ -738,7 +770,7 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # manually add lcms analysis result to advance state
         solubility_result = LCMSAnalysisResult.from_args(origin_op=ObjectId(),
-                                                         concentration=0.05,
+                                                         concentration=0.005,
                                                          result_filename="some_file.xml")
         batch.samples[0].add_result_op(solubility_result)
         

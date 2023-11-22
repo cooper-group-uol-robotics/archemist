@@ -66,7 +66,7 @@ class StationProcess:
                                  ):
         proc_model._type = cls.__name__
         proc_model._module = cls.__module__
-        proc_model.lot = lot.model
+        proc_model.lot = lot.model if lot is not None else None
         proc_model.associated_station = associated_station
         proc_model.is_subprocess = is_subprocess
         proc_model.skip_robot_ops = skip_robot_ops

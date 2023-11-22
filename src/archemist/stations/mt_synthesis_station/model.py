@@ -30,9 +30,6 @@ class MTSynthesisStationModel(StationModel):
     set_reaction_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     set_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
 
-class MTSynthLoadCartridgeOpModel(StationOpModel):
-    cartridge_index = fields.IntField(required=True)
-
 class MTSynthDispenseSolidOpModel(StationSampleOpModel):
     solid_name = fields.StringField(required=True)
     dispense_mass = fields.FloatField(min_value=0, required=True)

@@ -3,7 +3,6 @@ from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy,
 from .model import (MTSynthesisStationModel,
                     SynthesisCartridgeModel,
                     OptiMaxMode,
-                    MTSynthLoadCartridgeOpModel,
                     MTSynthDispenseSolidOpModel,
                     MTSynthDispenseLiquidOpModel,
                     MTSynthReactAndWaitOpModel,
@@ -142,21 +141,10 @@ class MTSynthesisStation(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         op = self.assigned_op
-        if isinstance(op, MTSynthOpenWindowOp):
-            self.window_open = True
-        elif isinstance(op, MTSynthCloseWindowOp):
-            self.window_open = False
-        elif isinstance(op, MTSynthLoadCartridgeOp):
-            self._model_proxy.loaded_cartridge_index = op.cartridge_index
-        elif isinstance(op, MTSynthUnloadCartridgeOp):
-            self._model_proxy.loaded_cartridge_index = None
-        elif isinstance(op, MTSynthDispenseSolidOp):
-            if not self.loaded_cartridge.depleted:
-                solid = self.solids_dict[op.solid_name]
-                solid.decrease_mass(op.dispense_mass, op.dispense_unit)
-                self.loaded_cartridge.depleted = True
-            else:
-                self._log_station(f'the cartridge {self.loaded_cartridge} is depleted. please replace it.')
+        if isinstance(op, MTSynthDispenseSolidOp):
+            solid = self.solids_dict[op.solid_name]
+            solid.decrease_mass(op.dispense_mass, op.dispense_unit)
+            self.loaded_cartridge.depleted = True
         elif isinstance(op, MTSynthDispenseLiquidOp) or isinstance(op, MTSynthAddWashLiquidOp):
             liquid = self.liquids_dict[op.liquid_name]
             liquid.decrease_volume(op.dispense_volume, op.dispense_unit)
@@ -170,59 +158,16 @@ class MTSynthesisStation(Station):
             self.optimax_valve_open = False
         super().complete_assigned_op(outcome, results)
 
+    def load_cartridge(self, cartridge_index: int):
+        self._model_proxy.loaded_cartridge_index = cartridge_index
+
+    def unload_cartridge(self):
+        self._model_proxy.loaded_cartridge_index = None
+
 
 
 ''' ==== Station Operation Descriptors ==== '''
-''' DOOR OPERATIONS '''
-class MTSynthOpenWindowOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.save()
-        return cls(model)
-
-class MTSynthCloseWindowOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.save()
-        return cls(model)
-
 ''' SOLID ADDITION OPERATIONS '''
-class MTSynthLoadCartridgeOp(StationOp):
-    def __init__(self, op_model: Union[MTSynthLoadCartridgeOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls, cartridge_index: int):
-        model = MTSynthLoadCartridgeOpModel()
-        model.cartridge_index = cartridge_index
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.save()
-        return cls(model)
-    
-    @property
-    def cartridge_index(self) -> int:
-        return self._model_proxy.cartridge_index
-
-class MTSynthUnloadCartridgeOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.save()
-        return cls(model)
 
 class MTSynthDispenseSolidOp(StationSampleOp):
     def __init__(self, op_model: Union[MTSynthDispenseSolidOpModel, ModelProxy]) -> None:
