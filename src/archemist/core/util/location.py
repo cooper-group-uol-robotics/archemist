@@ -28,7 +28,7 @@ class Location:
         coordinates = location_dict.get("coordinates")
         if coordinates:
             coordinates_dict = {"type": "Point",
-                                "coordinates": [coordinates[0], coordinates[1]]}
+                                "coordinates": [int(coordinates[0]), int(coordinates[1])]}
         else:
             coordinates_dict = None
         model.coordinates = coordinates_dict

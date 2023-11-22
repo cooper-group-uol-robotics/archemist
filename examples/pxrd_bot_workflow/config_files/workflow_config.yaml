@@ -159,5 +159,8 @@ stations:
       descriptor: panalytical_pxrd
     total_lot_capacity: 1
     handler: SimPXRDStationHandler
-    properties: Null
+    properties:
+      doors_location:
+        coordinates: [17,1]
+        descriptor: panalytical_pxrd_doors
     materials: Null

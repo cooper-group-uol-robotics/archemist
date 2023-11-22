@@ -59,8 +59,8 @@ steps:
             parameters:
               dispense_unit: mL
               dispense_table:
-                solvent_A: [10.0, 10.0]
-                solvent_B: [5.0, 6.7]
+                solvent_A: [10.0, 10.0, 0.0, 0.0]
+                solvent_B: [5.0, 6.7, 0.0, 0.0]
         args: Null
     transitions:
       on_success: grind_samples
