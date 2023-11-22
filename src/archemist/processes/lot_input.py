@@ -26,6 +26,7 @@ class BasicLotInputProcess(StationProcess):
     @classmethod
     def from_args(cls, lot: Lot,
                   operations: List[Dict[str, Any]] = None,
+                  is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
                   skip_station_ops: bool=False,
                   skip_ext_procs: bool=False,
@@ -36,6 +37,7 @@ class BasicLotInputProcess(StationProcess):
                                      "Station",
                                      lot,
                                      operations,
+                                     is_subprocess,
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
