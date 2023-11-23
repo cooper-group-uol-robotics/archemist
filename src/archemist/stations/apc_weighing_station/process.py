@@ -2,20 +2,20 @@ from typing import Dict, Union, List, Any
 from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from .state import (
-    ApcWeighingVOpenDoorOp, 
-    ApcWeighingVCloseDoorOp, 
-    ApcBalanceOpenDoorOp, 
-    ApcBalanceCloseDoorOp,
-    ApcTareOp,
-    ApcWeighingOp,
-    ApcWeighingStation
+    APCWeighingOpenVDoorOp, 
+    APCWeighingCloseVDoorOp, 
+    APCOpenBalanceDoorOp, 
+    APCCloseBalanceDoorOp,
+    APCTareOp,
+    APCWeighingOp,
+    APCWeighingStation
 )
 from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from archemist.core.state.lot import Lot
 from archemist.core.util import Location
 
-class ApcWeighingStationProcess(StationProcess):
+class APCWeighingProcess(StationProcess):
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
@@ -61,7 +61,7 @@ class ApcWeighingStationProcess(StationProcess):
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
-                                     ApcWeighingStation.__name__,
+                                     APCWeighingStation.__name__,
                                      lot,
                                      operations,
                                      skip_robot_ops,
@@ -76,32 +76,27 @@ class ApcWeighingStationProcess(StationProcess):
         self.data['is_weighing_complete'] = False
 
     def request_navigate_to_weighing(self):
-        weighing_loc = Location.from_args(
-            coordinates=(19, 1), # TODO check coordinates
-            descriptor="APCWeighingLocation" # TODO check location name
-        ) 
         robot_task = RobotNavOp.from_args(
-            name="NavToWeighing", # TODO check KUKA command name
+            name="NavToWeighing",
             target_robot="KMRIIWARobot",
-            target_location=weighing_loc
+            target_location=None
         )
         wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_open_fh_door_vertical(self):
-        station_op = ApcWeighingVOpenDoorOp.from_args()
+        station_op = APCWeighingOpenVDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_tare(self):
-        station_op = ApcTareOp.from_args()
+        station_op = APCTareOp.from_args()
         self.request_station_op(station_op)
 
     def request_open_balance_door(self):
-        station_op = ApcBalanceOpenDoorOp.from_args()
+        station_op = APCOpenBalanceDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_load_funnel(self):
-        # TODO check KUKA command name
         robot_task = RobotTaskOp.from_args(
             name="LoadFunnel",
             target_robot="KMRIIWARobot"
@@ -110,23 +105,23 @@ class ApcWeighingStationProcess(StationProcess):
         self.request_robot_ops([robot_task, wait_for_next_op])
 
     def request_close_balance_door(self):
-        station_op = ApcBalanceCloseDoorOp.from_args()
+        station_op = APCCloseBalanceDoorOp.from_args()
         self.request_station_op(station_op)
 
     def request_weigh(self):
         batch = self.lot.batches[0]
-        station_op = ApcWeighingOp.from_args(target_sample=batch.samples[0])
+        station_op = APCWeighingOp.from_args(target_sample=batch.samples[0])
         self.request_station_op(station_op)
         self.data['is_weighing_complete'] = True
 
     def request_unload_funnel(self):
-        # TODO check KUKA command name
+        # TODO add parameter for funnel index?
         robot_task = RobotTaskOp.from_args(name="UnloadFunnel",
                                            target_robot="KMRIIWARobot")
         self.request_robot_ops([robot_task])
 
     def request_close_fh_door_vertical(self):
-        station_op = ApcWeighingVCloseDoorOp.from_args()
+        station_op = APCWeighingCloseVDoorOp.from_args()
         self.request_station_op(station_op)
 
     ''' Transition callbacks. '''

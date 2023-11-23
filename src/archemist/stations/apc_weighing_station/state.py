@@ -1,7 +1,6 @@
-from typing import Dict, Union, Any, List, Literal, Type
-from archemist.core.persistence.models_proxy import ModelProxy, EmbedModelProxy, ListProxy
-from .model import ApcWeighResultModel, ApcWeighingStationModel
-from archemist.core.models.station_model import StationModel
+from typing import Dict, Union, List, Literal, Type
+from archemist.core.persistence.models_proxy import ModelProxy
+from .model import APCWeighResultModel, APCWeighingStationModel
 from archemist.core.models.station_op_model import StationSampleOpModel
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOp, StationSampleOp, StationOpModel
@@ -12,13 +11,13 @@ from bson.objectid import ObjectId
 
 
 ''' ==== Station Description ==== '''
-class ApcWeighingStation(Station):
-    def __init__(self, weighing_station_model: Union[ApcWeighingStationModel, ModelProxy]) -> None:
+class APCWeighingStation(Station):
+    def __init__(self, weighing_station_model: Union[APCWeighingStationModel, ModelProxy]) -> None:
         super().__init__(weighing_station_model)
 
     @classmethod
     def from_dict(cls, station_dict: Dict):
-        model = ApcWeighingStationModel()
+        model = APCWeighingStationModel()
         cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
@@ -41,80 +40,76 @@ class ApcWeighingStation(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op
-        if isinstance(current_op, ApcWeighingVOpenDoorOp):
+        if isinstance(current_op, APCWeighingOpenVDoorOp):
             self.vertical_doors_open = True
-        elif isinstance(current_op, ApcWeighingVCloseDoorOp):
+        elif isinstance(current_op, APCWeighingCloseVDoorOp):
             self.vertical_doors_open = False
-        elif isinstance(current_op, ApcBalanceOpenDoorOp):
+        elif isinstance(current_op, APCOpenBalanceDoorOp):
             self.balance_doors_open = True
-        elif isinstance(current_op, ApcBalanceCloseDoorOp):
+        elif isinstance(current_op, APCCloseBalanceDoorOp):
             self.balance_doors_open = False
-        elif isinstance(current_op, ApcWeighingOp):
-            self.is_weighing_complete = True
-        elif isinstance(current_op, ApcWeighingVCloseDoorOp):
-            self.is_weighing_complete = False # TODO to reset the variable after the process... needed?
         super().complete_assigned_op(outcome, results)
 
 
 
 ''' ==== Station Operation Descriptors ==== '''
 
-class ApcWeighingVOpenDoorOp(StationOp):
+class APCWeighingOpenVDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
     
-class ApcWeighingVCloseDoorOp(StationOp):
+class APCWeighingCloseVDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class ApcBalanceOpenDoorOp(StationOp):
+class APCOpenBalanceDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class ApcBalanceCloseDoorOp(StationOp):
+class APCCloseBalanceDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
-        model.save()
-        return cls(model)
-    
-class ApcTareOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
     
-class ApcWeighingOp(StationSampleOp):
+class APCTareOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
+        model.save()
+        return cls(model)
+    
+class APCWeighingOp(StationSampleOp):
     def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]):
         super().__init__(op_model)
 
@@ -122,12 +117,12 @@ class ApcWeighingOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=ApcWeighingStation.__name__)
+        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
 
-class ApcWeighResult(StationOpResult):
-    def __init__(self, result_model: Union[ApcWeighResultModel, ModelProxy]): #TODO need this model
+class APCWeighResult(StationOpResult):
+    def __init__(self, result_model: Union[APCWeighResultModel, ModelProxy]):
         super().__init__(result_model)
 
     @classmethod
@@ -135,7 +130,7 @@ class ApcWeighResult(StationOpResult):
                   origin_op: ObjectId,
                   reading_value: float,
                   ):
-        model = ApcWeighResultModel()
+        model = APCWeighResultModel()
         cls._set_model_common_fields(model, origin_op)
         model.reading_value = reading_value
         model.save()
