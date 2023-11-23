@@ -4,17 +4,14 @@ from archemist.core.state.lot import Lot
 from archemist.core.state.robot_op import (RobotTaskOp)
 from .state import (MTSynthesisStation,
                     MTSynthStopReactionOp,
-                    MTSynthOpenReactionValveOp,
-                    MTSynthCloseReactionValveOp,
+                    MTSynthTimedOpenReactionValveOp,
                     MTSynthFilterOp,
                     MTSynthAddWashLiquidOp,
-                    MTSynthDryOp,
                     MTSynthReactAndWaitOp,
                     MTSynthReactAndSampleOp,
                     MTSynthDrainOp)
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
-from datetime import datetime, timedelta
 
 class MTAPCSynthProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -89,15 +86,10 @@ class MTAPCSynthProcess(StationProcess):
 
     @classmethod
     def from_args(cls, lot: Lot,
-                  num_liquids: int,
                   target_product_concentration: float,
-                  wash_volume_ml: int,
-                  filteration_drain_duration_sec: int,
-                  dry_duration_min: int,
                   target_purity_concentration: float,
-                  cleaning_drain_duration_sec: int,
-                  cycles_to_discharge: int,
-                  cycles_to_clean: int,
+                  num_discharge_cycles: int,
+                  num_wash_cycles: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -113,15 +105,10 @@ class MTAPCSynthProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["num_liquids"] = num_liquids
         model.data["target_product_concentration"] = target_product_concentration
-        model.data["wash_volume_ml"] = wash_volume_ml
-        model.data["filteration_drain_duration_sec"] = filteration_drain_duration_sec
-        model.data["dry_duration_min"] = dry_duration_min
         model.data["target_purity_concentration"] = target_purity_concentration
-        model.data["cleaning_drain_duration_sec"] = cleaning_drain_duration_sec
-        model.data["cycles_to_discharge"] = cycles_to_discharge
-        model.data["cycles_to_clean"] = cycles_to_clean
+        model.data["num_discharge_cycles"] = num_discharge_cycles
+        model.data["num_wash_cycles"] = num_wash_cycles
         model.save()
         return cls(model)
 
@@ -129,6 +116,10 @@ class MTAPCSynthProcess(StationProcess):
 
     def initialise_process_data(self):
         self.data['liquid_index'] = 0
+        num_liquids = 0
+        for op_names, _ in self.operation_specs_map.items():
+            num_liquids += 1 if "add_liquid" in op_names else 0
+        self.data['num_liquids'] = num_liquids
 
     def request_adding_liquid(self):
         batch = self.lot.batches[0]
@@ -198,8 +189,13 @@ class MTAPCSynthProcess(StationProcess):
 
     def request_sample_reaction(self):
         batch = self.lot.batches[0]
-        current_op = self.generate_operation("sample_op", target_sample=batch.samples[0])
-        self.request_station_op(current_op)
+        reaction_operation = self.operation_specs_map["reaction_op"]
+        reaction_temperature = reaction_operation.parameters["target_temperature"]
+        reaction_stirring_speed = reaction_operation.parameters["target_stirring_speed"]
+        op = MTSynthReactAndSampleOp.from_args(target_sample=batch.samples[0],
+                                               target_temperature=reaction_temperature,
+                                               target_stirring_speed=reaction_stirring_speed)
+        self.request_station_op(op)
 
     def request_analysis_process(self):
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
@@ -216,26 +212,37 @@ class MTAPCSynthProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_filteration_process(self):
-        wash_volume_ml = self.data["wash_volume_ml"]
-        filter_drain_duration_sec = self.data["filteration_drain_duration_sec"]
-        dry_duration_min = self.data["dry_duration_min"]
-        cycles_to_discharge = self.data["cycles_to_discharge"]
-        cycles_to_clean = self.data["cycles_to_clean"]
+        discharge_operation = self.operation_specs_map["discharge_product"]
+        wash_operation = self.operation_specs_map["wash_product"]
+        dry_operation = self.operation_specs_map["dry_product"]
+        operations = [{
+            "name": "discharge_product",
+            "op": discharge_operation.op_type,
+            "parameters": dict(discharge_operation.parameters)
+        },
+        {
+            "name": "wash_product",
+            "op": wash_operation.op_type,
+            "parameters": dict(wash_operation.parameters)
+        },
+        {
+            "name": "dry_product",
+            "op": dry_operation.op_type,
+            "parameters": dict(dry_operation.parameters)
+        }]
+        num_discharge_cycles = self.data["num_discharge_cycles"]
+        num_wash_cycles = self.data["num_wash_cycles"]
         proc = MTAPCFilterProcess.from_args(lot=self.lot,
-                                           wash_volume_ml=wash_volume_ml,
-                                           filteration_drain_duration_sec=filter_drain_duration_sec,
-                                           dry_duration_min=dry_duration_min,
-                                           cycles_to_discharge=cycles_to_discharge,
-                                           cycles_to_clean=cycles_to_clean,
+                                           operations=operations,
+                                           num_discharge_cycles=num_discharge_cycles,
+                                           num_wash_cycles=num_wash_cycles,
                                            is_subprocess=True)
         self.request_station_process(proc)
 
     def request_cleaning_process(self):
         purity_concentration = self.data["target_purity_concentration"]
-        drain_duration_sec = self.data["cleaning_drain_duration_sec"]
         proc = MTAPCCleanProcess.from_args(lot=None,
                                            target_purity_concentration=purity_concentration,
-                                           cleaning_drain_duration_sec=drain_duration_sec,
                                            is_subprocess=True)
         self.request_station_process(proc)
 
@@ -261,9 +268,7 @@ class MTAPCFilterProcess(StationProcess):
         ''' States '''
         self.STATES = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'), 
-            State(name='open_drain_valve', on_enter=['request_open_drain_valve']),
-            State(name='wait_for_drain', on_enter=['start_drain_wait']),
-            State(name='close_drain_valve', on_enter=['request_close_drain_valve']),
+            State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
             State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
             State(name='filter_product', on_enter=['request_filtration']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
@@ -273,21 +278,19 @@ class MTAPCFilterProcess(StationProcess):
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'open_drain_valve'},
+            {'source':'prep_state', 'dest': 'open_close_drain_valve'},
             
-            {'source':'open_drain_valve','dest':'wait_for_drain', 'conditions':'are_req_station_ops_completed'},
-            {'source':'wait_for_drain','dest':'close_drain_valve', 'conditions':'is_drain_timer_up'},
-            {'source':'close_drain_valve','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
             {'source':'increment_discharge_cycle','dest':'filter_product'},
 
-            {'source':'filter_product','dest':'open_drain_valve',
+            {'source':'filter_product','dest':'open_close_drain_valve',
                 "unless": ["is_product_discharged", "is_vessel_clean"],
                 'conditions':'are_req_station_ops_completed'},
             
             {'source':'filter_product','dest':'add_wash_liquid',
                 "unless": "is_vessel_clean",
                 'conditions':['are_req_station_ops_completed', "is_product_discharged"]},
-            {'source':'add_wash_liquid','dest':'open_drain_valve', 'conditions':'are_req_station_ops_completed'},
+            {'source':'add_wash_liquid','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
 
             {'source':'filter_product','dest':'dry_product',
                 'conditions':['are_req_station_ops_completed', "is_product_discharged", "is_vessel_clean"]},
@@ -296,11 +299,8 @@ class MTAPCFilterProcess(StationProcess):
 
     @classmethod
     def from_args(cls, lot: Lot,
-                  wash_volume_ml: int,
-                  filteration_drain_duration_sec: int,
-                  dry_duration_min: int,
-                  cycles_to_discharge: int,
-                  cycles_to_clean: int,
+                  num_discharge_cycles: int,
+                  num_wash_cycles: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -316,11 +316,8 @@ class MTAPCFilterProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["wash_volume_ml"] = wash_volume_ml
-        model.data["filteration_drain_duration_sec"] = filteration_drain_duration_sec
-        model.data["dry_duration_min"] = dry_duration_min
-        model.data["cycles_to_discharge"] = cycles_to_discharge
-        model.data["max_num_cycles"] = cycles_to_clean + cycles_to_discharge
+        model.data["max_num_discharge_cycles"] = num_discharge_cycles
+        model.data["max_num_cycles"] = num_wash_cycles + num_discharge_cycles
         model.save()
         return cls(model)
 
@@ -329,17 +326,8 @@ class MTAPCFilterProcess(StationProcess):
     def initialise_process_data(self):
         self.data['num_discharge_cycles'] = 0
 
-    def request_open_drain_valve(self):
-        station_op = MTSynthOpenReactionValveOp.from_args()
-        self.request_station_op(station_op)
-
-    def start_drain_wait(self):
-        filteration_drain_duration_sec = self.data["filteration_drain_duration_sec"]
-        drain_finish_time = datetime.now() + timedelta(seconds=filteration_drain_duration_sec)
-        self.data["drain_finish_time"] = drain_finish_time.isoformat()
-    
-    def request_close_drain_valve(self):
-        station_op = MTSynthCloseReactionValveOp.from_args()
+    def request_open_close_drain_valve(self):
+        station_op = self.generate_operation("discharge_product")
         self.request_station_op(station_op)
 
     def request_filtration(self):
@@ -347,30 +335,19 @@ class MTAPCFilterProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_adding_wash_liquid(self):
-        wash_volume_ml = self.data["wash_volume_ml"]
-        station_op = MTSynthAddWashLiquidOp.from_args(liquid_name="H2O",
-                                                      dispense_volume=wash_volume_ml,
-                                                      dispense_unit="mL")
+        station_op = self.generate_operation("wash_product")
         self.request_station_op(station_op)
 
     def request_dry_product(self):
-        dry_duration_min = self.data["dry_duration_min"]
-        station_op = MTSynthDryOp.from_args(duration=dry_duration_min,
-                                            time_unit="minute")
+        station_op = self.generate_operation("dry_product")
         self.request_station_op(station_op)
 
     def request_discharge_cycle_update(self):
         self.data["num_discharge_cycles"] += 1
 
     ''' transitions callbacks '''
-
-    def is_drain_timer_up(self):
-        current_time = datetime.now()
-        finish_time = datetime.fromisoformat(self.data["drain_finish_time"])
-        return current_time >= finish_time
-
     def is_product_discharged(self):
-        return self.data["num_discharge_cycles"] >= self.data["cycles_to_discharge"]
+        return self.data["num_discharge_cycles"] >= self.data["max_num_discharge_cycles"]
 
     def is_vessel_clean(self):
         return self.data["num_discharge_cycles"] == self.data["max_num_cycles"]
@@ -390,9 +367,7 @@ class MTAPCCleanProcess(StationProcess):
             State(name='start_analysis_process', on_enter=['request_analysis_process']),
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
 
-            State(name='open_drain_valve', on_enter=['request_open_drain_valve']),
-            State(name='wait_for_drain', on_enter=['start_drain_wait']),
-            State(name='close_drain_valve', on_enter=['request_close_drain_valve']),
+            State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
             
             State(name='drain_filter', on_enter=['request_filter_drain']),
             State(name='final_state')]
@@ -405,10 +380,8 @@ class MTAPCCleanProcess(StationProcess):
             {'source':'run_reaction','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'stop_reaction','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'open_drain_valve', 'conditions':'are_req_station_procs_completed'},            
-            {'source':'open_drain_valve','dest':'wait_for_drain', 'conditions':'are_req_station_ops_completed'},
-            {'source':'wait_for_drain','dest':'close_drain_valve', 'conditions':'is_drain_timer_up'},
-            {'source':'close_drain_valve','dest':'drain_filter', 'conditions':'are_req_station_ops_completed'},
+            {'source':'start_analysis_process','dest':'open_close_drain_valve', 'conditions':'are_req_station_procs_completed'},            
+            {'source':'open_close_drain_valve','dest':'drain_filter', 'conditions':'are_req_station_ops_completed'},
             {'source':'drain_filter','dest':'add_wash_liquid', 'unless': 'is_reactor_clean','conditions':'are_req_station_ops_completed'},
             {'source':'drain_filter','dest':'final_state', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
         ]
@@ -416,7 +389,6 @@ class MTAPCCleanProcess(StationProcess):
     @classmethod
     def from_args(cls, lot: Lot,
                   target_purity_concentration: float,
-                  cleaning_drain_duration_sec: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -433,7 +405,6 @@ class MTAPCCleanProcess(StationProcess):
                                      skip_station_ops,
                                      skip_ext_procs)
         model.data["target_purity_concentration"] = target_purity_concentration
-        model.data["cleaning_drain_duration_sec"] = cleaning_drain_duration_sec
         model.save()
         return cls(model)
 
@@ -469,17 +440,9 @@ class MTAPCCleanProcess(StationProcess):
         station_op = MTSynthStopReactionOp.from_args()
         self.request_station_op(station_op)
 
-    def request_open_drain_valve(self):
-        station_op = MTSynthOpenReactionValveOp.from_args()
-        self.request_station_op(station_op)
-
-    def start_drain_wait(self):
-        cleaning_drain_duration_sec = self.data["cleaning_drain_duration_sec"]
-        drain_finish_time = datetime.now() + timedelta(seconds=cleaning_drain_duration_sec)
-        self.data["drain_finish_time"] = drain_finish_time.isoformat()
-    
-    def request_close_drain_valve(self):
-        station_op = MTSynthCloseReactionValveOp.from_args()
+    def request_open_close_drain_valve(self):
+        station_op = MTSynthTimedOpenReactionValveOp.from_args(duration=2,
+                                                               time_unit="second")
         self.request_station_op(station_op)
 
     def request_filter_drain(self):
@@ -495,8 +458,3 @@ class MTAPCCleanProcess(StationProcess):
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
                 return result.concentration <= target_purity_concentration
-
-    def is_drain_timer_up(self):
-        current_time = datetime.now()
-        finish_time = datetime.fromisoformat(self.data["drain_finish_time"])
-        return current_time >= finish_time

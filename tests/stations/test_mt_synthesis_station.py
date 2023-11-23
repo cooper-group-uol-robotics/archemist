@@ -13,14 +13,17 @@ from archemist.stations.mt_synthesis_station.state import (MTSynthesisStation,
                                                            MTSynthStopReactionOp,
                                                            MTSynthOpenReactionValveOp,
                                                            MTSynthCloseReactionValveOp,
+                                                           MTSynthTimedOpenReactionValveOp,
                                                            MTSynthFilterOp,
                                                            MTSynthDryOp,
                                                            MTSynthDrainOp,
                                                            OptiMaxMode,
                                                            MTSynthReactAndWaitOp)
 from archemist.stations.mt_synthesis_station.process import MTAPCSynthProcess, MTAPCCleanProcess, MTAPCFilterProcess
+from archemist.stations.mt_synthesis_station.handler import SimMTSynthesisStationHandler
 from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.util.enums import StationState
+from archemist.core.state.station_op_result import MaterialOpResult
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import OpOutcome, ProcessStatus
@@ -259,6 +262,17 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertFalse(station.optimax_valve_open)
 
+        # test MTSynthTimedOpenReactionValveOp
+        t_op = MTSynthTimedOpenReactionValveOp.from_args(duration=1.5,
+                                                         time_unit="second")
+        self.assertIsNotNone(t_op)
+
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        self.assertTrue(station.optimax_valve_open)
+        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        self.assertFalse(station.optimax_valve_open)
+
         # test MTSynthFilterOp
         t_op = MTSynthFilterOp.from_args()
         self.assertIsNotNone(t_op)
@@ -300,23 +314,6 @@ class MTSynthesisStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "sample_op",
-                    "op": "MTSynthReactAndSampleOp",
-                    "parameters": {
-                        "target_temperature": 100,
-                        "target_stirring_speed": 50
-                    }
-                },
-                {
-                    "name": "reaction_op",
-                    "op": "MTSynthReactAndWaitOp",
-                    "parameters": {
-                        "target_temperature": 100,
-                        "target_stirring_speed": 50,
-                        "wait_duration": None,
-                    }
-                },
-                {
                     "name": "add_liquid_op_1",
                     "op": "MTSynthDispenseLiquidOp",
                     "parameters": {
@@ -342,19 +339,47 @@ class MTSynthesisStationTest(unittest.TestCase):
                         "dispense_mass": 15,
                         "dispense_unit": "mg"                    
                     }
+                },
+                {
+                    "name": "reaction_op",
+                    "op": "MTSynthReactAndWaitOp",
+                    "parameters": {
+                        "target_temperature": 100,
+                        "target_stirring_speed": 50,
+                        "wait_duration": None,
+                    }
+                },
+                {
+                "name": "discharge_product",
+                "op": "MTSynthTimedOpenReactionValveOp",
+                "parameters": {
+                    "duration": 1,
+                    "time_unit": "second"                    
                 }
-            ]
+                },
+                {
+                    "name": "wash_product",
+                    "op": "MTSynthAddWashLiquidOp",
+                    "parameters": {
+                        "liquid_name": "H2O",
+                        "dispense_volume": 20,
+                        "dispense_unit": "mL"                    
+                    }
+                },
+                {
+                    "name": "dry_product",
+                    "op": "MTSynthDryOp",
+                    "parameters": {
+                        "duration": 5,
+                        "time_unit": "minute"                    
+                    }
+                }]
 
         process = MTAPCSynthProcess.from_args(lot=lot,
-                                              num_liquids=2,
                                               target_product_concentration=0.8,
-                                              wash_volume_ml=20,
-                                              filteration_drain_duration_sec=2,
-                                              dry_duration_min=5,
                                               target_purity_concentration=0.01,
-                                              cleaning_drain_duration_sec=2,
-                                              cycles_to_discharge=3,
-                                              cycles_to_clean=3,
+                                              num_discharge_cycles=3,
+                                              num_wash_cycles=3,
                                               operations=operations)
         process.lot_slot = 0
         process.assigned_to = station.object_id
@@ -522,14 +547,40 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.add_lot(lot)
 
         # create station process
-        cycles_to_discharge = 3
-        cycles_to_clean = 3
+        operations = [
+            {
+                "name": "discharge_product",
+                "op": "MTSynthTimedOpenReactionValveOp",
+                "parameters": {
+                    "duration": 1,
+                    "time_unit": "second"                    
+                }
+            },
+            {
+                "name": "wash_product",
+                "op": "MTSynthAddWashLiquidOp",
+                "parameters": {
+                    "liquid_name": "H2O",
+                    "dispense_volume": 20,
+                    "dispense_unit": "mL"                    
+                }
+            },
+            {
+                "name": "dry_product",
+                "op": "MTSynthDryOp",
+                "parameters": {
+                    "duration": 5,
+                    "time_unit": "minute"                    
+                }
+            },
+        ]
+
+        num_discharge_cycles = 3
+        num_wash_cycles = 3
         process = MTAPCFilterProcess.from_args(lot=lot,
-                                              wash_volume_ml=20,
-                                              filteration_drain_duration_sec=2,
-                                              dry_duration_min=5,
-                                              cycles_to_discharge=cycles_to_discharge,
-                                              cycles_to_clean=cycles_to_clean)
+                                              operations=operations,
+                                              num_discharge_cycles=num_discharge_cycles,
+                                              num_wash_cycles=num_wash_cycles)
         process.lot_slot = 0
         process.assigned_to = station.object_id
         # assert initial state
@@ -542,25 +593,10 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'prep_state')
         self.assertEqual(process.data['num_discharge_cycles'], 0)
 
-        # open_drain_valve
+        # open_close_drain_valve
         process.tick()
-        self.assertEqual(process.m_state, 'open_drain_valve')
-        test_req_station_op(self, process, MTSynthOpenReactionValveOp)
-
-        # wait_for_drain
-        process.tick()
-        self.assertEqual(process.m_state, 'wait_for_drain')
-
-        # wait_for_drain since timer is not up
-        process.tick()
-        self.assertEqual(process.m_state, 'wait_for_drain')
-
-        sleep(2) # to finish drain time
-
-        # close_drain_valve
-        process.tick()
-        self.assertEqual(process.m_state, 'close_drain_valve')
-        test_req_station_op(self, process, MTSynthCloseReactionValveOp)
+        self.assertEqual(process.m_state, 'open_close_drain_valve')
+        test_req_station_op(self, process, MTSynthTimedOpenReactionValveOp)
 
         # increment_discharge_cycle
         process.tick()
@@ -572,22 +608,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'filter_product')
         test_req_station_op(self, process, MTSynthFilterOp)
 
-        for i in range(1, cycles_to_discharge):
-            # open_drain_valve
+        for i in range(1, num_discharge_cycles):
+            # open_close_drain_valve
             process.tick()
-            self.assertEqual(process.m_state, 'open_drain_valve')
-            test_req_station_op(self, process, MTSynthOpenReactionValveOp)
-
-            # wait_for_drain
-            process.tick()
-            self.assertEqual(process.m_state, 'wait_for_drain')
-
-            sleep(2) # to finish drain time
-
-            # close_drain_valve
-            process.tick()
-            self.assertEqual(process.m_state, 'close_drain_valve')
-            test_req_station_op(self, process, MTSynthCloseReactionValveOp)
+            self.assertEqual(process.m_state, 'open_close_drain_valve')
+            test_req_station_op(self, process, MTSynthTimedOpenReactionValveOp)
 
             # increment_discharge_cycle
             process.tick()
@@ -599,27 +624,16 @@ class MTSynthesisStationTest(unittest.TestCase):
             self.assertEqual(process.m_state, 'filter_product')
             test_req_station_op(self, process, MTSynthFilterOp)
 
-        for i in range(cycles_to_discharge, cycles_to_clean + cycles_to_discharge):
+        for i in range(num_discharge_cycles, num_wash_cycles + num_discharge_cycles):
             # test add_wash_liquid 
             process.tick()
             self.assertEqual(process.m_state, 'add_wash_liquid')
             test_req_station_op(self, process, MTSynthAddWashLiquidOp)
 
-            # open_drain_valve
+            # open_close_drain_valve
             process.tick()
-            self.assertEqual(process.m_state, 'open_drain_valve')
-            test_req_station_op(self, process, MTSynthOpenReactionValveOp)
-
-            # wait_for_drain
-            process.tick()
-            self.assertEqual(process.m_state, 'wait_for_drain')
-
-            sleep(2) # to finish drain time
-
-            # close_drain_valve
-            process.tick()
-            self.assertEqual(process.m_state, 'close_drain_valve')
-            test_req_station_op(self, process, MTSynthCloseReactionValveOp)
+            self.assertEqual(process.m_state, 'open_close_drain_valve')
+            test_req_station_op(self, process, MTSynthTimedOpenReactionValveOp)
 
             # increment_discharge_cycle
             process.tick()
@@ -654,8 +668,7 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # create station process
         process = MTAPCCleanProcess.from_args(lot=lot,
-                                              target_purity_concentration=0.01,
-                                              cleaning_drain_duration_sec=2)
+                                              target_purity_concentration=0.01)
         process.lot_slot = 0
         process.assigned_to = station.object_id
 
@@ -694,21 +707,10 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'start_analysis_process')
         test_req_station_proc(self, process, APCLCMSAnalysisProcess)
 
-        # open_drain_valve
+        # open_close_drain_valve
         process.tick()
-        self.assertEqual(process.m_state, 'open_drain_valve')
-        test_req_station_op(self, process, MTSynthOpenReactionValveOp)
-
-        # wait_for_drain
-        process.tick()
-        self.assertEqual(process.m_state, 'wait_for_drain')
-
-        sleep(2) # to finish drain time
-
-        # close_drain_valve
-        process.tick()
-        self.assertEqual(process.m_state, 'close_drain_valve')
-        test_req_station_op(self, process, MTSynthCloseReactionValveOp)
+        self.assertEqual(process.m_state, 'open_close_drain_valve')
+        test_req_station_op(self, process, MTSynthTimedOpenReactionValveOp)
 
         # drain_filter
         process.tick()
@@ -747,21 +749,10 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'start_analysis_process')
         test_req_station_proc(self, process, APCLCMSAnalysisProcess)
 
-        # open_drain_valve
+        # open_close_drain_valve
         process.tick()
-        self.assertEqual(process.m_state, 'open_drain_valve')
-        test_req_station_op(self, process, MTSynthOpenReactionValveOp)
-
-        # wait_for_drain
-        process.tick()
-        self.assertEqual(process.m_state, 'wait_for_drain')
-
-        sleep(2) # to finish drain time
-
-        # close_drain_valve
-        process.tick()
-        self.assertEqual(process.m_state, 'close_drain_valve')
-        test_req_station_op(self, process, MTSynthCloseReactionValveOp)
+        self.assertEqual(process.m_state, 'open_close_drain_valve')
+        test_req_station_op(self, process, MTSynthTimedOpenReactionValveOp)
 
         # drain_filter
         process.tick()
@@ -778,3 +769,102 @@ class MTSynthesisStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
         self.assertEqual(process.status, ProcessStatus.FINISHED)
+
+    def test_sim_handler(self):
+        # construct station
+        station = MTSynthesisStation.from_dict(self.station_doc)
+
+        batch_1 = Batch.from_args(1)
+        lot = Lot.from_args([batch_1])
+
+        # add batches to station
+        station.add_lot(lot)
+
+        # construct handler
+        handler = SimMTSynthesisStationHandler(station)
+
+        # initialise the handler
+        self.assertTrue(handler.initialise())
+
+        # construct liquid dispense op
+        t_op = MTSynthDispenseLiquidOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            liquid_name='C4O3H6',
+                                            dispense_volume=100,
+                                            dispense_unit="mL")
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], MaterialOpResult))
+        self.assertEqual(op_results[0].material_names[0], "C4O3H6")
+        self.assertEqual(op_results[0].amounts[0], 100)
+        self.assertEqual(op_results[0].units[0], "mL")
+
+        station.complete_assigned_op(outcome, op_results)
+
+        # construct solid dispense op
+        station.load_cartridge(0)
+        t_op = MTSynthDispenseSolidOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            solid_name='NaCl',
+                                            dispense_mass=10,
+                                            dispense_unit="mg")
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], MaterialOpResult))
+        self.assertEqual(op_results[0].material_names[0], "NaCl")
+        self.assertEqual(op_results[0].amounts[0], 10)
+        self.assertEqual(op_results[0].units[0], "mg")
+
+        station.complete_assigned_op(outcome, op_results)
+
+        # construct MTSynthReactAndWaitOp
+        t_op = MTSynthReactAndWaitOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            target_temperature=100,
+                                            target_stirring_speed=110,
+                                            wait_duration=3,
+                                            time_unit="minute")
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+
+        # get op 
+        parameters = {}
+        parameters["target_temperature"]  = t_op.target_temperature
+        parameters["target_stirring_speed"]  = t_op.target_stirring_speed
+        parameters["wait_duration"]  = t_op.wait_duration
+        parameters["time_unit"]  = t_op.time_unit
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertDictEqual(op_results[0].parameters, parameters)
+
+        station.complete_assigned_op(outcome, op_results)
+
+        # construct MTSynthReactAndSampleOp
+        t_op = MTSynthReactAndSampleOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            target_temperature=100,
+                                            target_stirring_speed=110)
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+
+        # get op 
+        parameters = {}
+        parameters["target_temperature"]  = t_op.target_temperature
+        parameters["target_stirring_speed"]  = t_op.target_stirring_speed
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertDictEqual(op_results[0].parameters, parameters)
+
+        station.complete_assigned_op(outcome, op_results)
