@@ -19,6 +19,7 @@ class APCWeighingStation(Station):
     def from_dict(cls, station_dict: Dict):
         model = APCWeighingStationModel()
         cls._set_model_common_fields(model, station_dict)
+        model.funnel_storage_capacity = station_dict['properties']['funnel_storage_capacity']
         model.save()
         return cls(model)
 
@@ -37,6 +38,18 @@ class APCWeighingStation(Station):
     @vertical_doors_open.setter
     def vertical_doors_open(self, new_state: bool):
         self._model_proxy.vertical_doors_open = new_state
+
+    @property
+    def funnel_storage_capacity(self) -> int:
+        return self._model_proxy.funnel_storage_capacity
+
+    @property
+    def funnel_storage_index(self) -> int:
+        return self._model_proxy.funnel_storage_index
+
+    @funnel_storage_index.setter
+    def funnel_storage_index(self, new_value: int):
+        self._model_proxy.funnel_storage_index = new_value
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op

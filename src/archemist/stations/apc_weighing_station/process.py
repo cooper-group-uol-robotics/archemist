@@ -31,6 +31,7 @@ class APCWeighingProcess(StationProcess):
             State(name='close_balance_door', on_enter=['request_close_balance_door']),
             State(name='weigh', on_enter=['request_weigh']),
             State(name='unload_funnel', on_enter=['request_unload_funnel']),
+            State(name='update_funnel_index', on_enter=['increment_funnel_index']),
             State(name='close_fh_door_vertical', on_enter=['request_close_fh_door_vertical']),
             State(name='final_state')
         ]
@@ -47,7 +48,8 @@ class APCWeighingProcess(StationProcess):
             { 'source':'close_balance_door','dest':'weigh', 'conditions':'are_req_station_ops_completed'},
             { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
             { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
-            { 'source':'unload_funnel','dest':'close_fh_door_vertical', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'unload_funnel','dest':'update_funnel_index', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'update_funnel_index','dest':'close_fh_door_vertical'},
             { 'source':'close_fh_door_vertical','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
 
@@ -124,6 +126,10 @@ class APCWeighingProcess(StationProcess):
     def request_close_fh_door_vertical(self):
         station_op = APCWeighingCloseVDoorOp.from_args()
         self.request_station_op(station_op)
+
+    def increment_funnel_index(self):
+        weighing_station: APCWeighingStation = self.get_assigned_station()
+        weighing_station.funnel_storage_index += 1
 
     ''' Transition callbacks. '''
 

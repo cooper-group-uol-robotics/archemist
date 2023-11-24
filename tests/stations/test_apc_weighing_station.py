@@ -17,7 +17,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import ProcessStatus, OpOutcome
 from archemist.core.state.robot_op import RobotTaskOp, RobotNavOp, RobotWaitOp
-from testing_utils import test_req_robot_ops, test_req_station_op
+from .testing_utils import test_req_robot_ops, test_req_station_op
 
 
 class APCWeighingStationTest(unittest.TestCase):
@@ -30,12 +30,15 @@ class APCWeighingStationTest(unittest.TestCase):
         )
 
         self.station_doc = {
-            'type': 'ApcWeighingStation',
+            'type': 'APCWeighingStation',
             'id': 35,
             'location': {'coordinates': [1,7], 'descriptor': "ApcWeighingStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
-            'properties': None,
+            'properties': 
+            {
+                'funnel_storage_capacity': 3
+            },
             'materials': None
         }
 
@@ -47,12 +50,15 @@ class APCWeighingStationTest(unittest.TestCase):
             self._client[self._db_name][coll].drop()
 
     def test_state(self):
-        
         # test station is constructed properly
         self.assertIsNotNone(self.station)
 
         self.assertFalse(self.station.balance_doors_open)
         self.assertFalse(self.station.vertical_doors_open)
+        self.assertEqual(self.station.funnel_storage_capacity, 3)
+        self.assertEqual(self.station.funnel_storage_index, 0)
+        self.station.funnel_storage_index += 1
+        self.assertEqual(self.station.funnel_storage_index, 1)
 
         # construct lot and add it to station
         batch = Batch.from_args(1)
@@ -119,6 +125,7 @@ class APCWeighingStationTest(unittest.TestCase):
         # create station process
         process = APCWeighingProcess.from_args(lot=lot)
         process.lot_slot = 0
+        process.assigned_to = self.station.object_id
 
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
@@ -175,6 +182,11 @@ class APCWeighingStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'unload_funnel')
         test_req_robot_ops(self, process, [RobotTaskOp])
+
+        # test update_funnel_index
+        process.tick()
+        self.assertEqual(process.m_state, 'update_funnel_index')
+        self.assertEqual(self.station.funnel_storage_index, 1)
 
         # close_fh_door_vertical
         process.tick()
