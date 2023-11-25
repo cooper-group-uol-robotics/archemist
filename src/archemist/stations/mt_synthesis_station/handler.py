@@ -29,8 +29,9 @@ class SimMTSynthesisStationHandler(SimStationOpHandler):
             parameters = {}
             parameters["target_temperature"]  = op.target_temperature
             parameters["target_stirring_speed"]  = op.target_stirring_speed
-            parameters["wait_duration"]  = op.wait_duration
-            parameters["time_unit"]  = op.time_unit
+            if op.wait_duration is not None:
+                parameters["wait_duration"]  = op.wait_duration
+                parameters["time_unit"]  = op.time_unit
             result = ProcessOpResult.from_args(origin_op=op.object_id,
                                                 parameters=parameters)
         elif isinstance(op, MTSynthReactAndSampleOp):

@@ -105,8 +105,8 @@ class MTAPCSynthProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["target_product_concentration"] = target_product_concentration
-        model.data["target_purity_concentration"] = target_purity_concentration
+        model.data["target_product_concentration"] = float(target_product_concentration)
+        model.data["target_purity_concentration"] = float(target_purity_concentration)
         model.data["num_discharge_cycles"] = num_discharge_cycles
         model.data["num_wash_cycles"] = num_wash_cycles
         model.save()
@@ -124,7 +124,6 @@ class MTAPCSynthProcess(StationProcess):
     def request_adding_liquid(self):
         batch = self.lot.batches[0]
         liquid_index = self.data['liquid_index']
-
         current_op = self.generate_operation(f"add_liquid_op_{liquid_index+1}", target_sample=batch.samples[0])
         self.request_station_op(current_op)
 
@@ -241,7 +240,7 @@ class MTAPCSynthProcess(StationProcess):
 
     def request_cleaning_process(self):
         purity_concentration = self.data["target_purity_concentration"]
-        proc = MTAPCCleanProcess.from_args(lot=None,
+        proc = MTAPCCleanProcess.from_args(lot=self.lot,
                                            target_purity_concentration=purity_concentration,
                                            is_subprocess=True)
         self.request_station_process(proc)
@@ -316,8 +315,8 @@ class MTAPCFilterProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["max_num_discharge_cycles"] = num_discharge_cycles
-        model.data["max_num_cycles"] = num_wash_cycles + num_discharge_cycles
+        model.data["max_num_discharge_cycles"] = int(num_discharge_cycles)
+        model.data["max_num_cycles"] = int(num_wash_cycles) + int(num_discharge_cycles)
         model.save()
         return cls(model)
 
@@ -404,13 +403,13 @@ class MTAPCCleanProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["target_purity_concentration"] = target_purity_concentration
+        model.data["target_purity_concentration"] = float(target_purity_concentration)
         model.save()
         return cls(model)
 
     ''' state callbacks '''
     def request_adding_wash_liquid(self):
-        station_op = MTSynthAddWashLiquidOp.from_args(liquid_name="H2O",
+        station_op = MTSynthAddWashLiquidOp.from_args(liquid_name="water",
                                                       dispense_volume=10,
                                                       dispense_unit="mL")
         self.request_station_op(station_op)
@@ -426,7 +425,7 @@ class MTAPCCleanProcess(StationProcess):
 
     def request_analysis_process(self):
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
-        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot)
+        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot, is_subprocess=True)
         self.request_station_process(proc)
 
     def request_sample_reaction(self):

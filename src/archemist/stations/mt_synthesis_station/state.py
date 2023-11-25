@@ -219,7 +219,7 @@ class MTSynthDispenseLiquidOp(StationSampleOp):
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
-        model.dispense_volume = dispense_volume
+        model.dispense_volume = float(dispense_volume)
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)
@@ -250,7 +250,7 @@ class MTSynthAddWashLiquidOp(StationOp):
         model = MTSynthAddWashLiquidOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.liquid_name = liquid_name
-        model.dispense_volume = dispense_volume
+        model.dispense_volume = float(dispense_volume)
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)
@@ -284,7 +284,7 @@ class MTSynthReactAndWaitOp(StationSampleOp):
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_temperature = int(target_temperature) if target_temperature else None
         model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
-        model.wait_duration = int(wait_duration) if wait_duration else None
+        model.wait_duration = int(wait_duration) if wait_duration != "Null" else None
         if model.wait_duration:
             model.time_unit = time_unit
         model.save()
@@ -351,7 +351,7 @@ class MTSynthTimedOpenReactionValveOp(StationOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = MTSynthTimedOpenReactionValveOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.duration = duration
+        model.duration = float(duration)
         model.time_unit = time_unit
         model.save()
         return cls(model)
@@ -407,7 +407,7 @@ class MTSynthDryOp(StationOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = MTSynthDryOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.duration = duration
+        model.duration = int(duration)
         model.time_unit = time_unit
         model.save()
         return cls(model)
