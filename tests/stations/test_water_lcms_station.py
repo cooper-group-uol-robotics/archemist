@@ -5,7 +5,7 @@ from archemist.core.state.lot import Lot
 from archemist.core.state.batch import Batch
 from archemist.core.state.robot_op import RobotTaskOp
 from archemist.stations.waters_lcms_station.state import (WatersLCMSStation,
-                                                          LCMSAnalysisOp,
+                                                          LCMSSampleAnalysisOp,
                                                           LCMSAnalysisResult, 
                                                           LCMSInsertRackOp, 
                                                           LCMSEjectRackOp,
@@ -60,8 +60,8 @@ class WatersLCMSStationTest(unittest.TestCase):
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertTrue(self.station.batch_inserted)
 
-        # test LCMSAnalysisOp
-        t_op = LCMSAnalysisOp.from_args(batch_1)
+        # test LCMSSampleAnalysisOp
+        t_op = LCMSSampleAnalysisOp.from_args(batch_1.samples[0])
         self.assertIsNotNone(t_op)
         
         self.station.add_station_op(t_op)
@@ -97,7 +97,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         self.station.add_lot(lot)
 
         # create station process
-        process = APCLCMSAnalysisProcess.from_args(lot=lot)
+        process = APCLCMSAnalysisProcess.from_args(lot=lot, sample_index=0)
         process.lot_slot = 0
 
         # assert initial state
@@ -121,7 +121,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         # run_analysis
         process.tick()
         self.assertEqual(process.m_state, 'run_analysis')
-        test_req_station_op(self, process, LCMSAnalysisOp)
+        test_req_station_op(self, process, LCMSSampleAnalysisOp)
 
         # eject_rack
         process.tick()
@@ -152,7 +152,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         self.assertTrue(handler.initialise())
 
         # construct analyse op
-        t_op = LCMSAnalysisOp.from_args(batch_1)
+        t_op = LCMSSampleAnalysisOp.from_args(batch_1.samples[0])
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         

@@ -1,6 +1,6 @@
 from typing import Union
 from transitions import State
-from .state import WatersLCMSStation, LCMSInsertRackOp, LCMSEjectRackOp, LCMSAnalysisOp
+from .state import WatersLCMSStation, LCMSInsertRackOp, LCMSEjectRackOp, LCMSSampleAnalysisOp
 from archemist.core.state.lot import Lot
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOp
@@ -35,6 +35,7 @@ class APCLCMSAnalysisProcess(StationProcess):
 
     @classmethod
     def from_args(cls, lot: Lot,
+                  sample_index: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -50,6 +51,7 @@ class APCLCMSAnalysisProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
+        model.data["sample_index"] = sample_index
         model.save()
         return cls(model)
         
@@ -66,7 +68,8 @@ class APCLCMSAnalysisProcess(StationProcess):
 
     def request_analysis(self):
         batch = self.lot.batches[0]
-        analysis_op = LCMSAnalysisOp.from_args(target_batch=batch)
+        sample_index = self.data["sample_index"]
+        analysis_op = LCMSSampleAnalysisOp.from_args(target_sample=batch.samples[sample_index])
         self.request_station_op(analysis_op)
 
     def request_rack_insertion(self):

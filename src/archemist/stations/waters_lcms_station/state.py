@@ -3,10 +3,10 @@ from .model import (WatersLCMSStationModel,
                     LCMSAnalysisResultModel)
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
-from archemist.core.state.batch import Batch
-from archemist.core.models.station_op_model import StationOpModel, StationBatchOpModel
+from archemist.core.state.sample import Sample
+from archemist.core.models.station_op_model import StationOpModel, StationSampleOpModel
 from archemist.core.state.station_op_result import StationOpResult
-from archemist.core.state.station_op import StationOp, StationBatchOp
+from archemist.core.state.station_op import StationOp, StationSampleOp
 from typing import Dict, Union, List, Optional
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
@@ -42,7 +42,7 @@ class WatersLCMSStation(Station):
     def update_assigned_op(self):
         super().update_assigned_op()
         current_op = self.assigned_op
-        if isinstance(current_op, LCMSAnalysisOp):
+        if isinstance(current_op, LCMSSampleAnalysisOp):
             self.analysis_status = LCMSAnalysisStatus.RUNNING_ANALYSIS
 
     def complete_assigned_op(self, outcome: OpOutcome, results: Optional[List[LCMSAnalysisResultModel]]):
@@ -51,7 +51,7 @@ class WatersLCMSStation(Station):
             self.batch_inserted = True
         elif isinstance(current_op, LCMSEjectRackOp):
             self.batch_inserted = False
-        elif isinstance(current_op, LCMSAnalysisOp):
+        elif isinstance(current_op, LCMSSampleAnalysisOp):
             self.analysis_status = LCMSAnalysisStatus.ANALYSIS_COMPLETE
         super().complete_assigned_op(outcome, results)
 
@@ -79,15 +79,15 @@ class LCMSEjectRackOp(StationOp):
         model.save()
         return cls(model)
 
-class LCMSAnalysisOp(StationBatchOp):
-    def __init__(self, op_model: Union[StationBatchOpModel, ModelProxy]) -> None:
+class LCMSSampleAnalysisOp(StationSampleOp):
+    def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, target_batch: Batch):
-        model = StationBatchOpModel()
+    def from_args(cls, target_sample: Sample):
+        model = StationSampleOpModel()
         cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
-        model.target_batch = target_batch.model
+        model.target_sample = target_sample.model
         model.save()
         return cls(model)
 

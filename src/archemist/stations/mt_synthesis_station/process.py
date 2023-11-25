@@ -4,6 +4,7 @@ from archemist.core.state.lot import Lot
 from archemist.core.state.robot_op import (RobotTaskOp)
 from .state import (MTSynthesisStation,
                     MTSynthStopReactionOp,
+                    MTSynthStopLiquidDispensingOp,
                     MTSynthTimedOpenReactionValveOp,
                     MTSynthFilterOp,
                     MTSynthAddWashLiquidOp,
@@ -19,10 +20,9 @@ class MTAPCSynthProcess(StationProcess):
         
         ''' States '''
         self.STATES = [ State(name='init_state'),
-            State(name='prep_state', on_enter='initialise_process_data'), 
+            State(name='prep_state'), 
             
-            State(name='add_liquid', on_enter=['request_adding_liquid']),
-            State(name='update_liquid_addition', on_enter=['request_liquid_index_update']),
+            State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
             
             State(name='open_sash', on_enter=['request_open_sash']),
             State(name='update_open_sash', on_enter=['set_sash_to_open']),
@@ -41,53 +41,53 @@ class MTAPCSynthProcess(StationProcess):
 
             State(name='sample_reaction', on_enter=['request_sample_reaction']),
             State(name='start_analysis_process', on_enter=['request_analysis_process']),
+            State(name='start_adding_liquid_2', on_enter=['request_start_adding_liquid_2']),
 
             State(name='run_reaction', on_enter=['request_reaction_start']),
             
             State(name='wait_for_result'),
 
+            State(name='stop_adding_liquid_2', on_enter=['request_stop_adding_liquid_2']),
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
-            State(name='filteration_process', on_enter=['request_filteration_process']),
+            State(name='filtration_process', on_enter=['request_filtration_process']),
             State(name='queue_cleaning_process', on_enter='request_cleaning_process'),
             State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'add_liquid'},
-            {'source':'add_liquid','dest':'update_liquid_addition', 'conditions':'are_req_station_ops_completed'},
-            {'source':'update_liquid_addition','dest':'add_liquid', 'unless':'are_all_liquids_added'},
+            {'source':'prep_state', 'dest': 'add_liquid_1'},
+            {'source':'add_liquid_1','dest':'open_sash', 'conditions':'are_req_station_ops_completed'},
 
-            {'source':'update_liquid_addition','dest':'open_sash', 'conditions':'are_all_liquids_added'},
             {'source':'open_sash','dest':'update_open_sash', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'update_open_sash','dest':'load_solid_cartridge', 'conditions':'are_req_station_ops_completed'},
+            {'source':'update_open_sash','dest':'load_solid_cartridge'},
 
 
             {'source':'load_solid_cartridge','dest':'update_loading_cartridge', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'update_loading_cartridge','dest':'operate_solid_cartridge', 'conditions':'are_req_station_ops_completed'},
+            {'source':'update_loading_cartridge','dest':'operate_solid_cartridge'},
             {'source':'operate_solid_cartridge','dest':'add_solid', 'conditions':'are_req_robot_ops_completed'},
             {'source':'add_solid','dest':'unload_solid_cartridge', 'conditions':'are_req_station_ops_completed'},
             {'source':'unload_solid_cartridge','dest':'update_unloading_cartridge', 'conditions':'are_req_robot_ops_completed'},
             
-            {'source':'update_unloading_cartridge','dest':'close_sash', 'conditions':'are_req_station_ops_completed'},
+            {'source':'update_unloading_cartridge','dest':'close_sash'},
             {'source':'close_sash','dest':'update_close_sash', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'update_close_sash','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
+            {'source':'update_close_sash','dest':'start_adding_liquid_2'},
+            {'source':'start_adding_liquid_2','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
             
             {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
             {'source':'start_analysis_process','dest':'run_reaction'},
             {'source':'run_reaction','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
-            {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
+            {'source':'wait_for_result','dest':'stop_adding_liquid_2', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
             
-            {'source':'stop_reaction','dest':'filteration_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'filteration_process','dest':'queue_cleaning_process', 'conditions':'are_req_station_procs_completed'},
-            {'source':'queue_cleaning_process','dest':'final_state'},
+            {'source':'stop_adding_liquid_2','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
+            {'source':'stop_reaction','dest':'filtration_process', 'conditions':'are_req_station_ops_completed'},
+            {'source':'filtration_process','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
         ]
 
     @classmethod
     def from_args(cls, lot: Lot,
                   target_product_concentration: float,
-                  target_purity_concentration: float,
                   num_discharge_cycles: int,
                   num_wash_cycles: int,
                   operations: List[Dict[str, Any]] = None,
@@ -106,7 +106,6 @@ class MTAPCSynthProcess(StationProcess):
                                      skip_station_ops,
                                      skip_ext_procs)
         model.data["target_product_concentration"] = float(target_product_concentration)
-        model.data["target_purity_concentration"] = float(target_purity_concentration)
         model.data["num_discharge_cycles"] = num_discharge_cycles
         model.data["num_wash_cycles"] = num_wash_cycles
         model.save()
@@ -114,21 +113,10 @@ class MTAPCSynthProcess(StationProcess):
 
     ''' states callbacks '''
 
-    def initialise_process_data(self):
-        self.data['liquid_index'] = 0
-        num_liquids = 0
-        for op_names, _ in self.operation_specs_map.items():
-            num_liquids += 1 if "add_liquid" in op_names else 0
-        self.data['num_liquids'] = num_liquids
-
-    def request_adding_liquid(self):
+    def request_adding_liquid_1(self):
         batch = self.lot.batches[0]
-        liquid_index = self.data['liquid_index']
-        current_op = self.generate_operation(f"add_liquid_op_{liquid_index+1}", target_sample=batch.samples[0])
+        current_op = self.generate_operation(f"add_liquid_op_1", target_sample=batch.samples[0])
         self.request_station_op(current_op)
-
-    def request_liquid_index_update(self):
-        self.data['liquid_index'] += 1
 
     def request_open_sash(self):
         robot_task = RobotTaskOp.from_args(name="OpenFumeHoodSash",
@@ -186,6 +174,18 @@ class MTAPCSynthProcess(StationProcess):
         synth_station: MTSynthesisStation = self.get_assigned_station()
         synth_station.window_open = False
 
+    def request_start_adding_liquid_2(self):
+        current_op = self.generate_operation(f"add_liquid_op_2")
+        self.request_station_op(current_op)
+
+    def request_stop_adding_liquid_2(self):
+        batch = self.lot.batches[0]
+        add_liquid_2_operation = self.operation_specs_map["add_liquid_op_2"]
+        liquid_name = add_liquid_2_operation.parameters["liquid_name"]
+        op = MTSynthStopLiquidDispensingOp.from_args(target_sample=batch.samples[0],
+                                                     liquid_name=liquid_name)
+        self.request_station_op(op)
+
     def request_sample_reaction(self):
         batch = self.lot.batches[0]
         reaction_operation = self.operation_specs_map["reaction_op"]
@@ -198,7 +198,7 @@ class MTAPCSynthProcess(StationProcess):
 
     def request_analysis_process(self):
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
-        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot, is_subprocess=True)
+        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot, sample_index=0)
         self.request_station_process(proc)
 
     def request_reaction_start(self):
@@ -210,11 +210,17 @@ class MTAPCSynthProcess(StationProcess):
         station_op = MTSynthStopReactionOp.from_args()
         self.request_station_op(station_op)
 
-    def request_filteration_process(self):
+    def request_filtration_process(self):
+        heat_stir_operation = self.operation_specs_map["heat_stir_discharge"]
         discharge_operation = self.operation_specs_map["discharge_product"]
         wash_operation = self.operation_specs_map["wash_product"]
         dry_operation = self.operation_specs_map["dry_product"]
         operations = [{
+            "name": "heat_stir_discharge",
+            "op": heat_stir_operation.op_type,
+            "parameters": dict(heat_stir_operation.parameters)
+        },
+        {
             "name": "discharge_product",
             "op": discharge_operation.op_type,
             "parameters": dict(discharge_operation.parameters)
@@ -238,18 +244,7 @@ class MTAPCSynthProcess(StationProcess):
                                            is_subprocess=True)
         self.request_station_process(proc)
 
-    def request_cleaning_process(self):
-        purity_concentration = self.data["target_purity_concentration"]
-        proc = MTAPCCleanProcess.from_args(lot=self.lot,
-                                           target_purity_concentration=purity_concentration,
-                                           is_subprocess=True)
-        self.request_station_process(proc)
-
     ''' transitions callbacks '''
-    def are_all_liquids_added(self):
-        liquid_index = self.data['liquid_index']
-        num_liquids = self.data["num_liquids"]
-        return liquid_index == num_liquids
 
     def is_reaction_complete(self):
         target_product_concentration = self.data["target_product_concentration"]
@@ -266,18 +261,21 @@ class MTAPCFilterProcess(StationProcess):
         
         ''' States '''
         self.STATES = [ State(name='init_state'),
-            State(name='prep_state', on_enter='initialise_process_data'), 
+            State(name='prep_state', on_enter='initialise_process_data'),
+            State(name='start_heat_stir', on_enter=['request_heating_stirring']),
             State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
             State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
             State(name='filter_product', on_enter=['request_filtration']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
+            State(name='stop_heat_stir', on_enter=['request_stop_heating_stirring']),
             State(name='dry_product', on_enter=['request_dry_product']),
             State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'open_close_drain_valve'},
+            {'source':'prep_state', 'dest': 'start_heat_stir'},
+            {'source':'start_heat_stir', 'dest': 'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
             
             {'source':'open_close_drain_valve','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
             {'source':'increment_discharge_cycle','dest':'filter_product'},
@@ -291,8 +289,9 @@ class MTAPCFilterProcess(StationProcess):
                 'conditions':['are_req_station_ops_completed', "is_product_discharged"]},
             {'source':'add_wash_liquid','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
 
-            {'source':'filter_product','dest':'dry_product',
+            {'source':'filter_product','dest':'stop_heat_stir',
                 'conditions':['are_req_station_ops_completed', "is_product_discharged", "is_vessel_clean"]},
+            {'source':'stop_heat_stir','dest':'dry_product', 'conditions':'are_req_station_ops_completed'},
             {'source':'dry_product','dest':'final_state', 'conditions':'are_req_station_ops_completed'},
         ]
 
@@ -325,6 +324,12 @@ class MTAPCFilterProcess(StationProcess):
     def initialise_process_data(self):
         self.data['num_discharge_cycles'] = 0
 
+    def request_heating_stirring(self):
+        batch = self.lot.batches[0]
+        current_op = self.generate_operation("heat_stir_discharge", target_sample=batch.samples[0])
+        self.request_station_op(current_op)
+
+
     def request_open_close_drain_valve(self):
         station_op = self.generate_operation("discharge_product")
         self.request_station_op(station_op)
@@ -335,6 +340,10 @@ class MTAPCFilterProcess(StationProcess):
 
     def request_adding_wash_liquid(self):
         station_op = self.generate_operation("wash_product")
+        self.request_station_op(station_op)
+
+    def request_stop_heating_stirring(self):
+        station_op = MTSynthStopReactionOp.from_args()
         self.request_station_op(station_op)
 
     def request_dry_product(self):
@@ -359,6 +368,7 @@ class MTAPCCleanProcess(StationProcess):
         self.STATES = [ State(name='init_state'),
             State(name='prep_state'), 
 
+            State(name='load_cleaning_funnel', on_enter=['request_load_cleaning_funnel']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
 
             State(name='run_reaction', on_enter=['request_reaction_start']),
@@ -367,14 +377,15 @@ class MTAPCCleanProcess(StationProcess):
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
 
             State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
-            
+            State(name='unload_cleaning_funnel', on_enter=['request_unload_cleaning_funnel']),
             State(name='drain_filter', on_enter=['request_filter_drain']),
             State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'add_wash_liquid'},
+            {'source':'prep_state', 'dest': 'load_cleaning_funnel'},
+            {'source':'load_cleaning_funnel', 'dest': 'add_wash_liquid', 'conditions': 'are_req_robot_ops_completed'},
             {'source':'add_wash_liquid','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'run_reaction','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'stop_reaction','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
@@ -382,7 +393,8 @@ class MTAPCCleanProcess(StationProcess):
             {'source':'start_analysis_process','dest':'open_close_drain_valve', 'conditions':'are_req_station_procs_completed'},            
             {'source':'open_close_drain_valve','dest':'drain_filter', 'conditions':'are_req_station_ops_completed'},
             {'source':'drain_filter','dest':'add_wash_liquid', 'unless': 'is_reactor_clean','conditions':'are_req_station_ops_completed'},
-            {'source':'drain_filter','dest':'final_state', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
+            {'source':'drain_filter','dest':'unload_cleaning_funnel', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
+            {'source':'unload_cleaning_funnel', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
         ]
 
     @classmethod
@@ -408,6 +420,13 @@ class MTAPCCleanProcess(StationProcess):
         return cls(model)
 
     ''' state callbacks '''
+    def request_load_cleaning_funnel(self):
+        robot_task = RobotTaskOp.from_args(
+            name="LoadCleaningFunnel",
+            target_robot="KMRIIWARobot"
+        )
+        self.request_robot_ops([robot_task])
+
     def request_adding_wash_liquid(self):
         station_op = MTSynthAddWashLiquidOp.from_args(liquid_name="water",
                                                       dispense_volume=10,
@@ -416,7 +435,7 @@ class MTAPCCleanProcess(StationProcess):
     
     def request_reaction_start(self):
         batch = self.lot.batches[0]
-        current_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
+        current_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[-1],
                                                      target_temperature=100,
                                                      target_stirring_speed=50,
                                                      wait_duration=5,
@@ -425,12 +444,14 @@ class MTAPCCleanProcess(StationProcess):
 
     def request_analysis_process(self):
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
-        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot, is_subprocess=True)
+        sample_index = len(self.lot.batches[0].samples) - 1
+        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot,
+                                                sample_index=sample_index)
         self.request_station_process(proc)
 
     def request_sample_reaction(self):
         batch = self.lot.batches[0]
-        current_op = MTSynthSampleOp.from_args(target_sample=batch.samples[0],
+        current_op = MTSynthSampleOp.from_args(target_sample=batch.samples[-1],
                                                      target_temperature=100,
                                                      target_stirring_speed=50)
         self.request_station_op(current_op)
@@ -447,6 +468,13 @@ class MTAPCCleanProcess(StationProcess):
     def request_filter_drain(self):
         station_op = MTSynthDrainOp.from_args()
         self.request_station_op(station_op)
+
+    def request_unload_cleaning_funnel(self):
+        robot_task = RobotTaskOp.from_args(
+            name="UnloadCleaningFunnel",
+            target_robot="KMRIIWARobot"
+        )
+        self.request_robot_ops([robot_task])
 
     ''' transitions callbacks '''
     def is_reactor_clean(self):

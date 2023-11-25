@@ -351,17 +351,19 @@ class MTSynthesisStationTest(unittest.TestCase):
                     "name": "add_liquid_op_1",
                     "op": "MTSynthDispenseLiquidOp",
                     "parameters": {
-                        "liquid_name": "C4O3H6",
+                        "liquid_name": "H2O",
                         "dispense_volume": 50,
                         "dispense_unit": "mL"                    
                     }
                 },
                 {
                     "name": "add_liquid_op_2",
-                    "op": "MTSynthDispenseLiquidOp",
+                    "op": "MTSynthStartLiquidDispensingOp",
                     "parameters": {
-                        "liquid_name": "H2O",
-                        "dispense_volume": 50,
+                        "liquid_name": "C4O3H6",
+                        "dispense_rate": 5,
+                        "rate_unit": "mL/minute",
+                        "max_dispense_volume": 50,
                         "dispense_unit": "mL"                    
                     }
                 },
@@ -376,6 +378,15 @@ class MTSynthesisStationTest(unittest.TestCase):
                 },
                 {
                     "name": "reaction_op",
+                    "op": "MTSynthHeatStirOp",
+                    "parameters": {
+                        "target_temperature": 100,
+                        "target_stirring_speed": 50,
+                        "wait_duration": None,
+                    }
+                },
+                {
+                    "name": "heat_stir_discharge",
                     "op": "MTSynthHeatStirOp",
                     "parameters": {
                         "target_temperature": 100,
@@ -411,7 +422,6 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         process = MTAPCSynthProcess.from_args(lot=lot,
                                               target_product_concentration=0.8,
-                                              target_purity_concentration=0.01,
                                               num_discharge_cycles=3,
                                               num_wash_cycles=3,
                                               operations=operations)
@@ -425,27 +435,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.status, ProcessStatus.RUNNING)
         self.assertEqual(process.m_state, 'prep_state')
-        self.assertEqual(process.data['liquid_index'], 0)
 
-        # add_liquid and wait
+        # add_liquid
         process.tick()
-        self.assertEqual(process.m_state, 'add_liquid')
+        self.assertEqual(process.m_state, 'add_liquid_1')
         test_req_station_op(self, process, MTSynthDispenseLiquidOp)
-
-        # update_liquid_addition
-        process.tick()
-        self.assertEqual(process.m_state, 'update_liquid_addition')
-        self.assertEqual(process.data['liquid_index'], 1)
-        
-        # add_liquid and wait
-        process.tick()
-        self.assertEqual(process.m_state, 'add_liquid')
-        test_req_station_op(self, process, MTSynthDispenseLiquidOp)
-
-        # update_liquid_addition
-        process.tick()
-        self.assertEqual(process.m_state, 'update_liquid_addition')
-        self.assertEqual(process.data['liquid_index'], 2)
 
         # open_sash
         process.tick()
@@ -496,6 +490,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'update_close_sash')
         self.assertFalse(station.window_open)
+
+        # start_adding_liquid_2
+        process.tick()
+        self.assertEqual(process.m_state, 'start_adding_liquid_2')
+        test_req_station_op(self, process, MTSynthStartLiquidDispensingOp)
 
         # sample_reaction
         process.tick()
@@ -549,20 +548,20 @@ class MTSynthesisStationTest(unittest.TestCase):
                                                          result_filename="some_file.xml")
         batch.samples[0].add_result_op(solubility_result)
 
+        # stop_adding_liquid_2
+        process.tick()
+        self.assertEqual(process.m_state, 'stop_adding_liquid_2')
+        test_req_station_op(self, process, MTSynthStopLiquidDispensingOp)
+
         # stop_reaction
         process.tick()
         self.assertEqual(process.m_state, 'stop_reaction')
         test_req_station_op(self, process, MTSynthStopReactionOp)
 
-        # filteration_process
+        # filtration_process
         process.tick()
-        self.assertEqual(process.m_state, 'filteration_process')
+        self.assertEqual(process.m_state, 'filtration_process')
         test_req_station_proc(self, process, MTAPCFilterProcess)
-
-        # test queue_cleaning_process
-        process.tick()
-        self.assertEqual(process.m_state, 'queue_cleaning_process')
-        test_req_station_proc(self, process, MTAPCCleanProcess)
         
         # final_state
         process.tick()
@@ -582,6 +581,15 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # create station process
         operations = [
+            {
+                    "name": "heat_stir_discharge",
+                    "op": "MTSynthHeatStirOp",
+                    "parameters": {
+                        "target_temperature": 100,
+                        "target_stirring_speed": 50,
+                        "wait_duration": None,
+                    }
+            },
             {
                 "name": "discharge_product",
                 "op": "MTSynthTimedOpenReactionValveOp",
@@ -626,6 +634,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(process.status, ProcessStatus.RUNNING)
         self.assertEqual(process.m_state, 'prep_state')
         self.assertEqual(process.data['num_discharge_cycles'], 0)
+
+        # start_heat_stir
+        process.tick()
+        self.assertEqual(process.m_state, 'start_heat_stir')
+        test_req_station_op(self, process, MTSynthHeatStirOp)
 
         # open_close_drain_valve
         process.tick()
@@ -679,6 +692,11 @@ class MTSynthesisStationTest(unittest.TestCase):
             self.assertEqual(process.m_state, 'filter_product')
             test_req_station_op(self, process, MTSynthFilterOp)
 
+        # stop_heat_stir
+        process.tick()
+        self.assertEqual(process.m_state, 'stop_heat_stir')
+        test_req_station_op(self, process, MTSynthStopReactionOp)
+
         # dry_product
         process.tick()
         self.assertEqual(process.m_state, 'dry_product')
@@ -714,6 +732,11 @@ class MTSynthesisStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.status, ProcessStatus.RUNNING)
         self.assertEqual(process.m_state, 'prep_state')
+
+        # load_cleaning_funnel
+        process.tick()
+        self.assertEqual(process.m_state, 'load_cleaning_funnel')
+        test_req_robot_ops(self, process, [RobotTaskOp])
 
         # add_wash_liquid
         process.tick()
@@ -798,6 +821,11 @@ class MTSynthesisStationTest(unittest.TestCase):
                                                          concentration=0.005,
                                                          result_filename="some_file.xml")
         batch.samples[0].add_result_op(solubility_result)
+
+        # unload_cleaning_funnel
+        process.tick()
+        self.assertEqual(process.m_state, 'unload_cleaning_funnel')
+        test_req_robot_ops(self, process, [RobotTaskOp])
         
         # final_state
         process.tick()

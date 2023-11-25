@@ -1,6 +1,6 @@
 from typing import Tuple, List, Optional
 from archemist.core.state.station import Station
-from .state import (LCMSAnalysisOp,
+from .state import (LCMSSampleAnalysisOp,
                     LCMSAnalysisResult, 
                     LCMSInsertRackOp, 
                     LCMSEjectRackOp)
@@ -17,7 +17,7 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
 
     def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
             current_op = self._station.assigned_op
-            if isinstance(current_op, LCMSAnalysisOp):
+            if isinstance(current_op, LCMSSampleAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
                                                       concentration=choice([0.99, 0.01, 0.5]),
                                                       result_filename="file.xml")
@@ -53,7 +53,7 @@ class WaterLCMSSocketHandler(StationOpHandler):
             print(f'Autosampler - extracting rack {current_op.rack}')
             msg = f'ExtractRack{current_op.rack}'
             self._socket.sendall(msg.encode('ascii'))
-        elif isinstance(current_op,LCMSAnalysisOp):
+        elif isinstance(current_op,LCMSSampleAnalysisOp):
             self._socket.sendall(b'StartAnalysisRack2')
         else:
             print(f'[{self.__class__.__name__}] Unkown operation was received')
@@ -64,7 +64,7 @@ class WaterLCMSSocketHandler(StationOpHandler):
 
     def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
             current_op = self._station.assigned_op
-            if isinstance(current_op, LCMSAnalysisOp):
+            if isinstance(current_op, LCMSSampleAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
                                                       concentration=0.5,
                                                       result_filename="file.xml") #TODO need to receive from LCMS
