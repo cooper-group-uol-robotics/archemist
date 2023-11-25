@@ -7,8 +7,8 @@ from .state import (MTSynthesisStation,
                     MTSynthTimedOpenReactionValveOp,
                     MTSynthFilterOp,
                     MTSynthAddWashLiquidOp,
-                    MTSynthReactAndWaitOp,
-                    MTSynthReactAndSampleOp,
+                    MTSynthHeatStirOp,
+                    MTSynthSampleOp,
                     MTSynthDrainOp)
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
@@ -191,7 +191,7 @@ class MTAPCSynthProcess(StationProcess):
         reaction_operation = self.operation_specs_map["reaction_op"]
         reaction_temperature = reaction_operation.parameters["target_temperature"]
         reaction_stirring_speed = reaction_operation.parameters["target_stirring_speed"]
-        op = MTSynthReactAndSampleOp.from_args(target_sample=batch.samples[0],
+        op = MTSynthSampleOp.from_args(target_sample=batch.samples[0],
                                                target_temperature=reaction_temperature,
                                                target_stirring_speed=reaction_stirring_speed)
         self.request_station_op(op)
@@ -416,7 +416,7 @@ class MTAPCCleanProcess(StationProcess):
     
     def request_reaction_start(self):
         batch = self.lot.batches[0]
-        current_op = MTSynthReactAndWaitOp.from_args(target_sample=batch.samples[0],
+        current_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
                                                      target_temperature=100,
                                                      target_stirring_speed=50,
                                                      wait_duration=5,
@@ -430,7 +430,7 @@ class MTAPCCleanProcess(StationProcess):
 
     def request_sample_reaction(self):
         batch = self.lot.batches[0]
-        current_op = MTSynthReactAndSampleOp.from_args(target_sample=batch.samples[0],
+        current_op = MTSynthSampleOp.from_args(target_sample=batch.samples[0],
                                                      target_temperature=100,
                                                      target_stirring_speed=50)
         self.request_station_op(current_op)

@@ -5,8 +5,10 @@ from .model import (MTSynthesisStationModel,
                     OptiMaxMode,
                     MTSynthDispenseSolidOpModel,
                     MTSynthDispenseLiquidOpModel,
-                    MTSynthReactAndWaitOpModel,
-                    MTSynthReactAndSampleOpModel,
+                    MTSynthStartLiquidDispensingOpModel,
+                    MTSynthStopLiquidDispensingOpModel,
+                    MTSynthHeatStirOpModel,
+                    MTSynthSampleOpModel,
                     MTSynthAddWashLiquidOpModel,
                     MTSynthTimedOpenReactionValveOpModel,
                     MTSynthDryOpModel)
@@ -126,7 +128,7 @@ class MTSynthesisStation(Station):
     def update_assigned_op(self):
         super().update_assigned_op()
         op = self.assigned_op
-        if isinstance(op, MTSynthReactAndWaitOp) or isinstance(op, MTSynthReactAndSampleOp):
+        if isinstance(op, MTSynthHeatStirOp) or isinstance(op, MTSynthSampleOp):
             if op.target_temperature is not None and op.target_stirring_speed is not None:
                 self.optimax_mode = OptiMaxMode.HEATING_STIRRING
                 self.set_reaction_temperature = op.target_temperature
@@ -151,9 +153,15 @@ class MTSynthesisStation(Station):
         elif isinstance(op, MTSynthDispenseLiquidOp) or isinstance(op, MTSynthAddWashLiquidOp):
             liquid = self.liquids_dict[op.liquid_name]
             liquid.decrease_volume(op.dispense_volume, op.dispense_unit)
-        elif isinstance(op, MTSynthReactAndWaitOp) or isinstance(op, MTSynthStopReactionOp):
+        elif isinstance(op, MTSynthStopLiquidDispensingOp):
+            op_result = results[0]
+            op.dispensed_volume = op_result.amounts[0]
+            op.dispense_unit = op_result.units[0]
+            liquid = self.liquids_dict[op.liquid_name]
+            liquid.decrease_volume(op.dispensed_volume, op.dispense_unit)
+        elif isinstance(op, MTSynthHeatStirOp) or isinstance(op, MTSynthStopReactionOp):
             self.optimax_mode =None
-        elif isinstance(op, MTSynthReactAndSampleOp):
+        elif isinstance(op, MTSynthSampleOp):
             self.num_sampling_vials -= 1
         elif isinstance(op, MTSynthOpenReactionValveOp):
             self.optimax_valve_open = True
@@ -237,6 +245,83 @@ class MTSynthDispenseLiquidOp(StationSampleOp):
     def dispense_unit(self) -> Literal["L", "mL", "uL"]:
         return self._model_proxy.dispense_unit
 
+class MTSynthStartLiquidDispensingOp(StationOp):
+    def __init__(self, station_op_model: Union[MTSynthStartLiquidDispensingOpModel, ModelProxy]) -> None:
+        super().__init__(station_op_model)
+
+
+    @classmethod
+    def from_args(cls,
+                  liquid_name: str,
+                  dispense_rate: float,
+                  rate_unit: Literal["mL/minute", "mL/second"],
+                  max_dispense_volume: float,
+                  dispense_unit: Literal["L", "mL", "uL"]):
+        model = MTSynthStartLiquidDispensingOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.liquid_name = liquid_name
+        model.dispense_rate = float(dispense_rate)
+        model.rate_unit = rate_unit
+        model.max_dispense_volume = float(max_dispense_volume)
+        model.dispense_unit = dispense_unit
+        model.save()
+        return cls(model)
+        
+
+    @property
+    def liquid_name(self) -> str:
+        return self._model_proxy.liquid_name
+
+    @property
+    def dispense_rate(self) -> float:
+        return self._model_proxy.dispense_rate
+
+    @property
+    def rate_unit(self) -> Literal["mL/minute", "mL/second"]:
+        return self._model_proxy.rate_unit
+
+    @property
+    def max_dispense_volume(self) -> float:
+        return self._model_proxy.max_dispense_volume
+
+    @property
+    def dispense_unit(self) -> Literal["L", "mL", "uL"]:
+        return self._model_proxy.dispense_unit
+
+class MTSynthStopLiquidDispensingOp(StationSampleOp):
+    def __init__(self, op_model: Union[MTSynthStopLiquidDispensingOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls, target_sample: Sample,
+                  liquid_name: str):
+        model = MTSynthStopLiquidDispensingOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.target_sample = target_sample.model
+        model.liquid_name = liquid_name
+        model.save()
+        return cls(model)
+
+    @property
+    def liquid_name(self) -> str:
+        return self._model_proxy.liquid_name
+
+    @property
+    def dispensed_volume(self) -> float:
+        return self._model_proxy.dispensed_volume
+
+    @dispensed_volume.setter
+    def dispensed_volume(self, new_value: float):
+        self._model_proxy.dispensed_volume = new_value
+
+    @property
+    def dispense_unit(self) -> Literal["L", "mL", "uL"]:
+        return self._model_proxy.dispense_unit
+
+    @dispense_unit.setter
+    def dispense_unit(self, unit: Literal["L", "mL", "uL"]):
+        self._model_proxy.dispense_unit = unit
+
 class MTSynthAddWashLiquidOp(StationOp):
     def __init__(self, station_op_model: Union[MTSynthAddWashLiquidOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
@@ -268,8 +353,8 @@ class MTSynthAddWashLiquidOp(StationOp):
         return self._model_proxy.dispense_unit
 
 ''' OPTIMAX OPERATIONS '''
-class MTSynthReactAndWaitOp(StationSampleOp):
-    def __init__(self, op_model: Union[MTSynthReactAndWaitOpModel, ModelProxy]) -> None:
+class MTSynthHeatStirOp(StationSampleOp):
+    def __init__(self, op_model: Union[MTSynthHeatStirOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -279,12 +364,12 @@ class MTSynthReactAndWaitOp(StationSampleOp):
                   target_stirring_speed: int,
                   wait_duration: int,
                   time_unit: Literal["second", "minute", "hour"]=None):
-        model = MTSynthReactAndWaitOpModel()
+        model = MTSynthHeatStirOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_temperature = int(target_temperature) if target_temperature else None
         model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
-        model.wait_duration = int(wait_duration) if wait_duration != "Null" else None
+        model.wait_duration = int(wait_duration) if wait_duration and wait_duration != "Null" else None
         if model.wait_duration:
             model.time_unit = time_unit
         model.save()
@@ -306,8 +391,8 @@ class MTSynthReactAndWaitOp(StationSampleOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
-class MTSynthReactAndSampleOp(StationSampleOp):
-    def __init__(self, op_model: Union[MTSynthReactAndSampleOpModel, ModelProxy]) -> None:
+class MTSynthSampleOp(StationSampleOp):
+    def __init__(self, op_model: Union[MTSynthSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -315,7 +400,7 @@ class MTSynthReactAndSampleOp(StationSampleOp):
                   target_sample: Sample,
                   target_temperature: int,
                   target_stirring_speed: int):
-        model = MTSynthReactAndSampleOpModel()
+        model = MTSynthSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_temperature = int(target_temperature) if target_temperature else None

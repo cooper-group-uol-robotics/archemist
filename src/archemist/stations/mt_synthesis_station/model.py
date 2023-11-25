@@ -40,18 +40,30 @@ class MTSynthDispenseLiquidOpModel(StationSampleOpModel):
     dispense_volume = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
 
+class MTSynthStartLiquidDispensingOpModel(StationOpModel):
+    liquid_name = fields.StringField(required=True)
+    dispense_rate = fields.FloatField(min_value=0, required=True)
+    rate_unit = fields.StringField(choices=["mL/minute", "mL/second"], default="mL/minute")
+    max_dispense_volume = fields.FloatField(min_value=0, required=True)
+    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
+
+class MTSynthStopLiquidDispensingOpModel(StationSampleOpModel):
+    liquid_name = fields.StringField(required=True)
+    dispensed_volume = fields.FloatField(min_value=0, null=True)
+    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], null=True)
+
 class MTSynthAddWashLiquidOpModel(StationOpModel):
     liquid_name = fields.StringField(required=True)
     dispense_volume = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
 
-class MTSynthReactAndWaitOpModel(StationSampleOpModel):
+class MTSynthHeatStirOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
     wait_duration = fields.IntField(null=True)
     time_unit = fields.StringField(choices=["second", "minute", "hour"], null=True)
 
-class MTSynthReactAndSampleOpModel(StationSampleOpModel):
+class MTSynthSampleOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
 

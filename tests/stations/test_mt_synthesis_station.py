@@ -8,8 +8,10 @@ from archemist.stations.mt_synthesis_station.state import (MTSynthesisStation,
                                                            SynthesisCartridge,
                                                            MTSynthDispenseSolidOp,
                                                            MTSynthDispenseLiquidOp,
+                                                           MTSynthStartLiquidDispensingOp,
+                                                           MTSynthStopLiquidDispensingOp,
                                                            MTSynthAddWashLiquidOp,
-                                                           MTSynthReactAndSampleOp,
+                                                           MTSynthSampleOp,
                                                            MTSynthStopReactionOp,
                                                            MTSynthOpenReactionValveOp,
                                                            MTSynthCloseReactionValveOp,
@@ -18,7 +20,7 @@ from archemist.stations.mt_synthesis_station.state import (MTSynthesisStation,
                                                            MTSynthDryOp,
                                                            MTSynthDrainOp,
                                                            OptiMaxMode,
-                                                           MTSynthReactAndWaitOp)
+                                                           MTSynthHeatStirOp)
 from archemist.stations.mt_synthesis_station.process import MTAPCSynthProcess, MTAPCCleanProcess, MTAPCFilterProcess
 from archemist.stations.mt_synthesis_station.handler import SimMTSynthesisStationHandler
 from archemist.core.state.robot_op import RobotTaskOp
@@ -150,6 +152,38 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertEqual(station.liquids_dict["H2O"].volume, 350)
 
+        # test MTSynthStartLiquidDispensingOp
+        t_op = MTSynthStartLiquidDispensingOp.from_args(liquid_name="H2O",
+                                                        dispense_rate=1.5,
+                                                        rate_unit="mL/minute",
+                                                        max_dispense_volume=10,
+                                                        dispense_unit="mL")
+        self.assertEqual(t_op.dispense_rate, 1.5)
+        self.assertEqual(t_op.rate_unit, "mL/minute")
+        self.assertEqual(t_op.max_dispense_volume, 10)
+        self.assertEqual(t_op.dispense_unit, "mL")
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+
+        # test MTSynthStopLiquidDispensingOp
+        t_op = MTSynthStopLiquidDispensingOp.from_args(target_sample=batch.samples[0],
+                                                 liquid_name="H2O")
+        self.assertIsNone(t_op.dispensed_volume)
+        self.assertIsNone(t_op.dispense_unit)
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+
+        op_result = MaterialOpResult.from_args(origin_op=t_op.object_id,
+                                               material_names=["H2O"],
+                                               amounts=[5],
+                                               units=["mL"])
+
+        station.complete_assigned_op(OpOutcome.SUCCEEDED, [op_result])
+        self.assertEqual(t_op.dispensed_volume, 5)
+        self.assertEqual(t_op.dispense_unit, "mL")
+        self.assertEqual(station.liquids_dict["H2O"].volume, 345)
+
         # test MTSynthAddWashLiquidOp
         t_op = MTSynthAddWashLiquidOp.from_args(liquid_name="H2O",
                                                  dispense_volume=50,
@@ -157,10 +191,10 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.add_station_op(t_op)
         station.update_assigned_op()
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
-        self.assertEqual(station.liquids_dict["H2O"].volume, 300)
+        self.assertEqual(station.liquids_dict["H2O"].volume, 295)
 
-        # test MTSynthReactionOp heating and stirring
-        t_op = MTSynthReactAndWaitOp.from_args(target_sample=batch.samples[0],
+        # test MTSynthHeatStirOp heating and stirring
+        t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
                                             target_temperature=100,
                                             target_stirring_speed=50,
                                             wait_duration=3,
@@ -181,8 +215,8 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(station.set_reaction_temperature, 100)
         self.assertEqual(station.set_stirring_speed, 50)
 
-        # test MTSynthReactionOp heating
-        t_op = MTSynthReactAndWaitOp.from_args(target_sample=batch.samples[0],
+        # test MTSynthHeatStirOp heating
+        t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
                                             target_temperature=103,
                                             target_stirring_speed=None,
                                             wait_duration=None,
@@ -200,8 +234,8 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(station.optimax_mode)
 
-        # test MTSynthReactionOp stirring
-        t_op = MTSynthReactAndWaitOp.from_args(target_sample=batch.samples[0],
+        # test MTSynthHeatStirOp stirring
+        t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
                                             target_temperature=None,
                                             target_stirring_speed=55,
                                             wait_duration=None,
@@ -219,8 +253,8 @@ class MTSynthesisStationTest(unittest.TestCase):
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertIsNone(station.optimax_mode)
 
-        # test MTSynthReactAndSampleOp heating
-        t_op = MTSynthReactAndSampleOp.from_args(target_sample=batch.samples[0],
+        # test MTSynthSampleOp heating
+        t_op = MTSynthSampleOp.from_args(target_sample=batch.samples[0],
                                             target_temperature=99,
                                             target_stirring_speed=None)
         self.assertIsNotNone(t_op)
@@ -342,7 +376,7 @@ class MTSynthesisStationTest(unittest.TestCase):
                 },
                 {
                     "name": "reaction_op",
-                    "op": "MTSynthReactAndWaitOp",
+                    "op": "MTSynthHeatStirOp",
                     "parameters": {
                         "target_temperature": 100,
                         "target_stirring_speed": 50,
@@ -466,7 +500,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # sample_reaction
         process.tick()
         self.assertEqual(process.m_state, 'sample_reaction')
-        test_req_station_op(self, process, MTSynthReactAndSampleOp)
+        test_req_station_op(self, process, MTSynthSampleOp)
 
         # start_analysis_process
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
@@ -477,7 +511,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # run_reaction
         process.tick()
         self.assertEqual(process.m_state, 'run_reaction')
-        test_req_station_op(self, process, MTSynthReactAndWaitOp)
+        test_req_station_op(self, process, MTSynthHeatStirOp)
 
         # wait_for_result
         process.tick()
@@ -493,7 +527,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # sample_reaction
         process.tick()
         self.assertEqual(process.m_state, 'sample_reaction')
-        test_req_station_op(self, process, MTSynthReactAndSampleOp)
+        test_req_station_op(self, process, MTSynthSampleOp)
 
         # start_analysis_process
         process.tick()
@@ -503,7 +537,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # run_reaction
         process.tick()
         self.assertEqual(process.m_state, 'run_reaction')
-        test_req_station_op(self, process, MTSynthReactAndWaitOp)
+        test_req_station_op(self, process, MTSynthHeatStirOp)
 
         # wait_for_result
         process.tick()
@@ -689,7 +723,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # run_reaction
         process.tick()
         self.assertEqual(process.m_state, 'run_reaction')
-        test_req_station_op(self, process, MTSynthReactAndWaitOp)
+        test_req_station_op(self, process, MTSynthHeatStirOp)
 
         # stop_reaction
         process.tick()
@@ -699,7 +733,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # sample_reaction
         process.tick()
         self.assertEqual(process.m_state, 'sample_reaction')
-        test_req_station_op(self, process, MTSynthReactAndSampleOp)
+        test_req_station_op(self, process, MTSynthSampleOp)
 
         # start_analysis_process
         from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
@@ -732,7 +766,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # run_reaction
         process.tick()
         self.assertEqual(process.m_state, 'run_reaction')
-        test_req_station_op(self, process, MTSynthReactAndWaitOp)
+        test_req_station_op(self, process, MTSynthHeatStirOp)
 
         # stop_reaction
         process.tick()
@@ -742,7 +776,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # sample_reaction
         process.tick()
         self.assertEqual(process.m_state, 'sample_reaction')
-        test_req_station_op(self, process, MTSynthReactAndSampleOp)
+        test_req_station_op(self, process, MTSynthSampleOp)
 
         # start_analysis_process
         process.tick()
@@ -805,6 +839,23 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         station.complete_assigned_op(outcome, op_results)
 
+        # construct stop liquid dispense op
+        t_op = MTSynthStopLiquidDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
+                                            liquid_name='C4O3H6')
+        station.add_station_op(t_op)
+        station.update_assigned_op()
+        
+        outcome, op_results = handler.get_op_result()
+        self.assertEqual(outcome, OpOutcome.SUCCEEDED)
+        self.assertEqual(len(op_results), 1)
+        self.assertEqual(op_results[0].origin_op, t_op.object_id)
+        self.assertTrue(isinstance(op_results[0], MaterialOpResult))
+        self.assertEqual(op_results[0].material_names[0], "C4O3H6")
+        self.assertLessEqual(op_results[0].amounts[0], 5)
+        self.assertEqual(op_results[0].units[0], "mL")
+
+        station.complete_assigned_op(outcome, op_results)
+
         # construct solid dispense op
         station.load_cartridge(0)
         t_op = MTSynthDispenseSolidOp.from_args(target_sample=lot.batches[0].samples[0],
@@ -825,8 +876,8 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         station.complete_assigned_op(outcome, op_results)
 
-        # construct MTSynthReactAndWaitOp
-        t_op = MTSynthReactAndWaitOp.from_args(target_sample=lot.batches[0].samples[0],
+        # construct MTSynthHeatStirOp
+        t_op = MTSynthHeatStirOp.from_args(target_sample=lot.batches[0].samples[0],
                                             target_temperature=100,
                                             target_stirring_speed=110,
                                             wait_duration=3,
@@ -849,8 +900,8 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         station.complete_assigned_op(outcome, op_results)
 
-        # construct MTSynthReactAndSampleOp
-        t_op = MTSynthReactAndSampleOp.from_args(target_sample=lot.batches[0].samples[0],
+        # construct MTSynthSampleOp
+        t_op = MTSynthSampleOp.from_args(target_sample=lot.batches[0].samples[0],
                                             target_temperature=100,
                                             target_stirring_speed=110)
         station.add_station_op(t_op)
