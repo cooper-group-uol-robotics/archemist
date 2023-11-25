@@ -137,6 +137,13 @@ class Station:
     @property
     def running_procs(self) -> List[Type[StationProcess]]:
         return ListProxy(self._model_proxy.running_procs, ProcessFactory.create_from_model)
+
+    @property
+    def num_running_main_procs(self) -> int:
+        num_main_procs = 0
+        for proc in self.running_procs:
+            num_main_procs += 1 if not proc.is_subprocess else 0
+        return num_main_procs
     
     @property
     def procs_history(self) -> List[Type[StationProcess]]:

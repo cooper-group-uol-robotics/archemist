@@ -349,6 +349,8 @@ class HandlerTest(unittest.TestCase):
         # construct process
         proc_1 = TestProcess.from_args(lot_1)
         proc_2 = TestProcess.from_args(lot_2)
+        proc_3 = StationProcess.from_args(lot_1)
+        sub_proc = StationProcess.from_args(lot=None, is_subprocess=True)
 
         # construct station and its process handler
         station = Station.from_dict(self.station_dict)
@@ -379,19 +381,45 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(station.running_procs[0].status, ProcessStatus.RUNNING)
         self.assertEqual(station.running_procs[1].status, ProcessStatus.RUNNING)
 
+        # test adding a process beyond station capacity and adding sub process
+        station.add_process(proc_3)
+        station.add_process(sub_proc)
+        self.assertEqual(len(station.queued_procs), 2)
+
         # test processes state advancement
         proc_handler.handle()
+        self.assertEqual(len(station.queued_procs), 1) # proc_3 is not running
+        self.assertEqual(len(station.running_procs), 3)
         self.assertEqual(station.running_procs[0].m_state, "final_state")
         self.assertEqual(station.running_procs[1].m_state, "final_state")
+        self.assertEqual(station.running_procs[2].m_state, "init_state")
         self.assertEqual(station.running_procs[0].status, ProcessStatus.FINISHED)
         self.assertEqual(station.running_procs[1].status, ProcessStatus.FINISHED)
+        self.assertEqual(station.running_procs[2].object_id, sub_proc.object_id)
 
-         # test processes completion
+        # test processes completion of proc_1 and proc_2
         proc_handler.handle()
-        self.assertFalse(station.running_procs)
+        self.assertEqual(len(station.procs_history), 2)
         self.assertEqual(proc_1.status, ProcessStatus.FINISHED)
         self.assertEqual(proc_2.status, ProcessStatus.FINISHED)
-        self.assertEqual(len(station.procs_history), 2)
+        self.assertEqual(len(station.queued_procs), 0)
+        self.assertEqual(len(station.running_procs), 2)
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+        self.assertEqual(station.running_procs[1].m_state, "init_state")
+        self.assertEqual(station.running_procs[1].object_id, proc_3.object_id)
+
+        # test processes completion of sub_proc
+        proc_handler.handle()
+        self.assertEqual(len(station.procs_history), 3)
+        self.assertEqual(sub_proc.status, ProcessStatus.FINISHED)
+        self.assertEqual(len(station.running_procs), 1)
+        self.assertEqual(station.running_procs[0].m_state, "final_state")
+
+        # test processes completion of proc_3
+        proc_handler.handle()
+        self.assertEqual(len(station.procs_history), 4)
+        self.assertEqual(proc_3.status, ProcessStatus.FINISHED)
+        self.assertEqual(len(station.running_procs), 0)
 
     def test_station_process_handler_with_added_lots(self):
         # construct lots and their recipes

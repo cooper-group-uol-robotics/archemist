@@ -1,4 +1,5 @@
 from time import sleep
+import traceback
 from datetime import datetime, timedelta
 from archemist.core.state.robot import Robot
 from archemist.core.state.robot_op import (RobotWaitOp,
@@ -53,15 +54,6 @@ class StationOpHandler(OpHandler):
             self.execute_op()
         elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
             self._station.complete_assigned_op(OpOutcome.SKIPPED, None)
-    def run(self):
-        try:
-            while True:
-                self.handle()
-                sleep(1)
-        except Exception as err:
-            print(err)
-        finally:
-            self.shut_down()
 
 class RobotOpHandler(OpHandler):
     def __init__(self, robot: Robot):
@@ -128,12 +120,16 @@ class StationProcessHandler:
                 self._station.procs_history.append(proc)
 
         # handle queued procs
-        while self._station.queued_procs:
-            if len(self._station.running_procs) < self._station.total_lot_capacity:
-                new_proc = self._station.queued_procs.pop(left=True)
-                self._station.running_procs.append(new_proc)
+        temp_queued_procs = [proc for proc in self._station.queued_procs]
+        for proc in temp_queued_procs:
+            if not proc.is_subprocess:
+                if self._station.num_running_main_procs < self._station.total_lot_capacity:
+                    self._station.queued_procs.remove(proc)
+                    self._station.running_procs.append(proc)
             else:
-                break
+                self._station.queued_procs.remove(proc)
+                self._station.running_procs.append(proc)
+
 
     def _handle_proc_requests(self):
         for proc in self._station.running_procs:
@@ -194,6 +190,7 @@ class StationHandler:
                 sleep(1)
         except Exception as err:
             print(err)
+            traceback.print_exc()
         finally:
             self._station_op_handler.shut_down()
             
@@ -222,6 +219,7 @@ class RobotHandler:
                 sleep(1)
         except Exception as err:
             print(err)
+            traceback.print_exc()
         finally:
             self._robot_op_handler.shut_down()
 

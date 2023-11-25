@@ -221,6 +221,7 @@ class StationTest(unittest.TestCase):
         self.assertFalse(self.station.requested_ext_procs)
         self.assertFalse(self.station.queued_procs)
         self.assertFalse(self.station.running_procs)
+        self.assertEqual(self.station.num_running_main_procs, 0)
         self.assertFalse(self.station.procs_history)
 
         # construct process
@@ -240,10 +241,18 @@ class StationTest(unittest.TestCase):
         self.assertEqual(len(self.station.queued_procs),1)
         self.assertEqual(self.station.queued_procs[0].object_id, proc.object_id)
 
-        # add process to running_procs
+        # add main process to running_procs
         self.station.running_procs.append(ext_proc)
         self.assertEqual(len(self.station.running_procs), 1)
+        self.assertEqual(self.station.num_running_main_procs, 1)
         self.assertEqual(self.station.running_procs[0].object_id, ext_proc.object_id)
+
+        # add sub process to running_procs
+        sub_proc = StationProcess.from_args(lot, is_subprocess=True)
+        self.station.running_procs.append(sub_proc)
+        self.assertEqual(len(self.station.running_procs), 2)
+        self.assertEqual(self.station.num_running_main_procs, 1)
+        self.assertEqual(self.station.running_procs[1].object_id, sub_proc.object_id)
 
 if __name__ == '__main__':
     unittest.main()
