@@ -5,12 +5,12 @@ from mongoengine import connect
 
 from archemist.stations.diaphragm_pump_station.state import (DiaphragmPumpStation,
                                                                  DiaphragmPumpDispenseVolumeOp)
-from archemist.stations.diaphragm_pump_station.handler import SimAPCDiaphragmPumpStationHandler
+from archemist.stations.diaphragm_pump_station.handler import SimDiaphragmPumpStationHandler
 from archemist.core.util.enums import StationState, OpOutcome
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult
 
-class PeristalticLiquidDispensingTest(unittest.TestCase):
+class DiaphragmPumpStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
@@ -83,7 +83,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         station.add_lot(lot)
 
         # construct handler
-        handler = SimAPCDiaphragmPumpStationHandler(station)
+        handler = SimDiaphragmPumpStationHandler(station)
 
         # initialise the handler
         self.assertTrue(handler.initialise())

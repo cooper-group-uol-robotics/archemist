@@ -3,23 +3,22 @@ from datetime import datetime
 
 from mongoengine import connect
 
-from archemist.stations.apc_syringe_pump_station.state import (APCSyringePumpStation,
-                                                              APCSPumpDispenseVolumeOp,
-                                                              APCSPumpDispenseRateOp,
-                                                              APCSPumpFinishDispensingOp)
-from archemist.stations.apc_syringe_pump_station.handler import SimAPCSyringePumpStationHandler
+from archemist.stations.syringe_pump_station.state import (SyringePumpStation,
+                                                              SyringePumpDispenseVolumeOp,
+                                                              SyringePumpDispenseRateOp,
+                                                              SyringePumpFinishDispensingOp)
+from archemist.stations.syringe_pump_station.handler import SimSyringePumpStationHandler
 from archemist.core.util.enums import StationState, OpOutcome
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpResult
-from .testing_utils import test_req_robot_ops, test_req_station_op
 
-class PeristalticLiquidDispensingTest(unittest.TestCase):
+class SyringePumpStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
         self.station_dict = {
-            'type': 'APCSyringePumpStation',
+            'type': 'SyringePumpStation',
             'id': 20,
             'location': {'coordinates': [1,7], 'descriptor': "APCSyringePumpStation"},
             'total_lot_capacity': 1,
@@ -47,7 +46,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
     
     def test_state(self):
         # test station is constructed properly
-        station = APCSyringePumpStation.from_dict(self.station_dict)
+        station = SyringePumpStation.from_dict(self.station_dict)
         self.assertIsNotNone(station)
         self.assertEqual(station.state, StationState.INACTIVE)
 
@@ -56,8 +55,8 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         lot = Lot.from_args([batch_1])
         station.add_lot(lot)
 
-        # test APCSPumpDispenseVolumeOp
-        t_op = APCSPumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test SyringePumpDispenseVolumeOp
+        t_op = SyringePumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
                                             liquid_name='water',
                                             dispense_volume=100,
                                             dispense_unit="mL",
@@ -81,8 +80,8 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.assertEqual(station.liquids_dict["water"].volume, 300)
         self.assertEqual(station.liquids_dict["water"].volume_unit, "mL")
 
-        # test APCSPumpDispenseRateOp
-        t_op = APCSPumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test SyringePumpDispenseRateOp
+        t_op = SyringePumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
                                                 liquid_name='water',
                                                 dispense_rate=5.0,
                                                 rate_unit="mL/minute")
@@ -96,8 +95,8 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
 
 
-        # test APCSPumpFinishDispensingOp
-        t_op = APCSPumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test SyringePumpFinishDispensingOp
+        t_op = SyringePumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
                                             liquid_name='water')
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.liquid_name, "water")
@@ -114,7 +113,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.assertEqual(station.liquids_dict["water"].volume_unit, "mL")
 
     def test_sim_handler(self):
-        station = APCSyringePumpStation.from_dict(self.station_dict)
+        station = SyringePumpStation.from_dict(self.station_dict)
         batch_1 = Batch.from_args(3)
         lot = Lot.from_args([batch_1])
 
@@ -122,13 +121,13 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         station.add_lot(lot)
 
         # construct handler
-        handler = SimAPCSyringePumpStationHandler(station)
+        handler = SimSyringePumpStationHandler(station)
 
         # initialise the handler
         self.assertTrue(handler.initialise())
 
-        # test handling APCSPumpDispenseVolumeOp
-        t_op = APCSPumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test handling SyringePumpDispenseVolumeOp
+        t_op = SyringePumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
                                             liquid_name='water',
                                             dispense_volume=100,
                                             dispense_unit="mL",
@@ -148,8 +147,8 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         station.complete_assigned_op(outcome, op_results)
         self.assertEqual(station.liquids_dict["water"].volume, 300)
 
-        # test handling APCSPumpDispenseRateOp
-        t_op = APCSPumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test handling SyringePumpDispenseRateOp
+        t_op = SyringePumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
                                             liquid_name='water',
                                             dispense_rate=3.5,
                                             rate_unit="mL/minute")
@@ -165,8 +164,8 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.assertEqual(op_results[0].parameters["rate_unit"], "mL/minute")
         station.complete_assigned_op(outcome, op_results)
 
-        # test handling APCSPumpFinishDispensingOp
-        t_op = APCSPumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
+        # test handling SyringePumpFinishDispensingOp
+        t_op = SyringePumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
                                             liquid_name='water')
         station.add_station_op(t_op)
         station.update_assigned_op()

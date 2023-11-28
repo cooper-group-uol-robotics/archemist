@@ -5,7 +5,7 @@ from archemist.core.state.station_op_result import MaterialOpResult
 from .state import DiaphragmPumpDispenseVolumeOp
 from archemist.core.util.enums import OpOutcome
 
-class SimAPCDiaphragmPumpStationHandler(SimStationOpHandler):
+class SimDiaphragmPumpStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
 

@@ -1,6 +1,6 @@
-from .model import (APCSPumpDispenseVolumeOpModel,
-                    APCSPumpDispenseRateOpModel,
-                    APCSPumpFinishDispensingOpModel)
+from .model import (SyringePumpDispenseVolumeOpModel,
+                    SyringePumpDispenseRateOpModel,
+                    SyringePumpFinishDispensingOpModel)
 
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.sample import Sample
@@ -11,7 +11,7 @@ from typing import Dict, Union, Literal, Type, List
 from archemist.core.util.enums import OpOutcome
 
 
-class APCSyringePumpStation(Station):
+class SyringePumpStation(Station):
     def __init__(self, station_model: Union[StationModel, ModelProxy]) -> None:
         super().__init__(station_model)
 
@@ -32,8 +32,8 @@ class APCSyringePumpStation(Station):
         super().complete_assigned_op(outcome, results)
 
 
-class APCSPumpDispenseVolumeOp(StationSampleOp):
-    def __init__(self, station_op_model: Union[APCSPumpDispenseVolumeOpModel, ModelProxy]) -> None:
+class SyringePumpDispenseVolumeOp(StationSampleOp):
+    def __init__(self, station_op_model: Union[SyringePumpDispenseVolumeOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
 
@@ -45,8 +45,8 @@ class APCSPumpDispenseVolumeOp(StationSampleOp):
                   dispense_unit: Literal["L", "mL", "uL"],
                   dispense_rate: float,
                   rate_unit: Literal["mL/minute", "mL/second"]):
-        model = APCSPumpDispenseVolumeOpModel()
-        cls._set_model_common_fields(model, associated_station=APCSyringePumpStation.__name__)
+        model = SyringePumpDispenseVolumeOpModel()
+        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.dispense_volume = float(dispense_volume)
@@ -77,8 +77,8 @@ class APCSPumpDispenseVolumeOp(StationSampleOp):
     def rate_unit(self) -> Literal["mL/minute", "mL/second"]:
         return self._model_proxy.rate_unit
 
-class APCSPumpDispenseRateOp(StationSampleOp):
-    def __init__(self, station_op_model: Union[APCSPumpDispenseRateOpModel, ModelProxy]) -> None:
+class SyringePumpDispenseRateOp(StationSampleOp):
+    def __init__(self, station_op_model: Union[SyringePumpDispenseRateOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
 
@@ -88,8 +88,8 @@ class APCSPumpDispenseRateOp(StationSampleOp):
                   liquid_name: str, 
                   dispense_rate: float,
                   rate_unit: Literal["mL/minute", "mL/second"]):
-        model = APCSPumpDispenseRateOpModel()
-        cls._set_model_common_fields(model, associated_station=APCSyringePumpStation.__name__)
+        model = SyringePumpDispenseRateOpModel()
+        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.dispense_rate = float(dispense_rate)
@@ -110,8 +110,8 @@ class APCSPumpDispenseRateOp(StationSampleOp):
     def rate_unit(self) -> Literal["mL/minute", "mL/second"]:
         return self._model_proxy.rate_unit
 
-class APCSPumpFinishDispensingOp(StationSampleOp):
-    def __init__(self, station_op_model: Union[APCSPumpFinishDispensingOpModel, ModelProxy]) -> None:
+class SyringePumpFinishDispensingOp(StationSampleOp):
+    def __init__(self, station_op_model: Union[SyringePumpFinishDispensingOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
 
@@ -119,8 +119,8 @@ class APCSPumpFinishDispensingOp(StationSampleOp):
     def from_args(cls,
                   target_sample: Sample,
                   liquid_name: str):
-        model = APCSPumpFinishDispensingOpModel()
-        cls._set_model_common_fields(model, associated_station=APCSyringePumpStation.__name__)
+        model = SyringePumpFinishDispensingOpModel()
+        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.save()
