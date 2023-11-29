@@ -35,7 +35,8 @@ class APCLCMSAnalysisProcess(StationProcess):
 
     @classmethod
     def from_args(cls, lot: Lot,
-                  sample_index: int,
+                  target_batch_index: int,
+                  target_sample_index: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -51,7 +52,8 @@ class APCLCMSAnalysisProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
-        model.data["sample_index"] = sample_index
+        model.data["target_batch_index"] = target_batch_index
+        model.data["target_sample_index"] = target_sample_index
         model.save()
         return cls(model)
         
@@ -67,9 +69,10 @@ class APCLCMSAnalysisProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     def request_analysis(self):
-        batch = self.lot.batches[0]
-        sample_index = self.data["sample_index"]
-        analysis_op = LCMSSampleAnalysisOp.from_args(target_sample=batch.samples[sample_index])
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        sample = self.lot.batches[batch_index].samples[sample_index]
+        analysis_op = LCMSSampleAnalysisOp.from_args(target_sample=sample)
         self.request_station_op(analysis_op)
 
     def request_rack_insertion(self):

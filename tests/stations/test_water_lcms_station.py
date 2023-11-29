@@ -97,7 +97,9 @@ class WatersLCMSStationTest(unittest.TestCase):
         self.station.add_lot(lot)
 
         # create station process
-        process = APCLCMSAnalysisProcess.from_args(lot=lot, sample_index=0)
+        process = APCLCMSAnalysisProcess.from_args(lot=lot,
+                                                   target_batch_index=0,
+                                                   target_sample_index=0)
         process.lot_slot = 0
 
         # assert initial state
