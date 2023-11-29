@@ -1,5 +1,6 @@
 from mongoengine import Document, fields
 from archemist.core.models.robot_op_model import RobotOpModel
+from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.models.station_process_model import StationProcessModel
 from archemist.core.models.batch_model import BatchModel
 from archemist.core.models.lot_model import LotModel
@@ -11,6 +12,7 @@ class WorkflowStateModel(Document):
     workflow_name = fields.StringField(required=True)
     
     robot_ops_queue = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
+    station_op_requests_queue = fields.ListField(fields.ReferenceField(StationOpModel),default=[])
     proc_requests_queue = fields.ListField(fields.ReferenceField(StationProcessModel),default=[])
     lots_buffer = fields.ListField(fields.ReferenceField(LotModel), default=[])
 

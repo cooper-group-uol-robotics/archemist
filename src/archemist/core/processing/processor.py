@@ -217,6 +217,12 @@ class WorkflowProcessor:
                 self._log_processor(f'{ext_proc} is added to processes queue')
                 self._state.proc_requests_queue.append(ext_proc)
 
+            # get requested external station op
+            while station.requested_ext_ops:
+                ext_op = station.requested_ext_ops.pop(left=True)
+                self._log_processor(f'{ext_op} is added to station ops queue')
+                self._state.station_op_requests_queue.append(ext_op)
+
             # get processed lots
             ready_for_collection_lots = station.retrieve_ready_for_collection_lots()
             for lot in ready_for_collection_lots:
@@ -231,6 +237,13 @@ class WorkflowProcessor:
             req_station_type = ext_proc.associated_station
             station = StationsGetter.get_station(req_station_type)
             station.add_process(ext_proc)
+
+        # process external station op requests
+        while self._state.station_op_requests_queue:
+            ext_op = self._state.station_op_requests_queue.pop()
+            req_station_type = ext_op.associated_station
+            station = StationsGetter.get_station(req_station_type)
+            station.add_station_op(ext_op)
 
     def retrieve_completed_lot(self) -> Lot:
         completed_lot = None

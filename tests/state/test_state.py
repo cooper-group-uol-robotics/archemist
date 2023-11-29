@@ -2,6 +2,7 @@ import unittest
 from datetime import date
 from archemist.core.util.location import Location
 from archemist.core.state.robot_op import RobotOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.station_process import StationProcess
 from archemist.core.state.recipe import Recipe
 from archemist.core.state.batch import Batch
@@ -161,6 +162,15 @@ class StateTest(unittest.TestCase):
         self.assertEqual(len(workflow_state.robot_ops_queue), 1)
         self.assertIsNotNone(workflow_state.robot_ops_queue.pop())
         self.assertEqual(len(workflow_state.robot_ops_queue), 0)
+
+        # test station_op_requests_queue
+        self.assertFalse(workflow_state.station_op_requests_queue)
+        
+        station_op = StationOp.from_args()
+        workflow_state.station_op_requests_queue.append(station_op)
+        self.assertEqual(len(workflow_state.station_op_requests_queue), 1)
+        self.assertIsNotNone(workflow_state.station_op_requests_queue.pop())
+        self.assertEqual(len(workflow_state.station_op_requests_queue), 0)
 
         # test proc_requests_queue
         self.assertFalse(workflow_state.proc_requests_queue)

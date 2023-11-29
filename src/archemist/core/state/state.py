@@ -3,11 +3,12 @@ from typing import Dict, List, Union, Type, TYPE_CHECKING
 if TYPE_CHECKING:
     from archemist.core.state.station_process import StationProcess
     from archemist.core.state.robot_op import RobotOp
+    from archemist.core.state.station_op import StationOp
 
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.state.recipe import Recipe
-from archemist.core.persistence.object_factory import RobotOpFactory, ProcessFactory
+from archemist.core.persistence.object_factory import RobotOpFactory, ProcessFactory, StationOpFactory
 from archemist.core.models.state_model import WorkflowStateModel, InputStateModel, OutputStateModel
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy, DictProxy
 from archemist.core.util.enums import LotStatus
@@ -44,6 +45,10 @@ class WorkflowState:
     @property
     def robot_ops_queue(self) -> List[Type[RobotOp]]:
         return ListProxy(self._model_proxy.robot_ops_queue, RobotOpFactory.create_from_model)
+
+    @property
+    def station_op_requests_queue(self) -> List[Type[StationOp]]:
+        return ListProxy(self._model_proxy.station_op_requests_queue, StationOpFactory.create_from_model)
         
     @property
     def proc_requests_queue(self) -> List[Type[StationProcess]]:

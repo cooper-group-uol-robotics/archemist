@@ -147,7 +147,10 @@ class StationProcessHandler:
             
             if proc.status == ProcessStatus.REQUESTING_STATION_OPS:
                 for station_op in proc.req_station_ops:
-                    self._station.add_station_op(station_op)
+                    if station_op.associated_station != self._station.__class__.__name__:
+                        self._station.request_external_op(station_op)
+                    else:
+                        self._station.add_station_op(station_op)
                 proc.switch_to_waiting()
             
             if proc.status == ProcessStatus.REQUESTING_STATION_PROCS:

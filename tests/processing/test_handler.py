@@ -35,16 +35,20 @@ class TestFullProcess(StationProcess):
         self.STATES = [State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'), 
             State(name='pickup_batch', on_enter=['request_pickup_batch']),
-            State(name='run_op', on_enter=['request_to_run_op']),
-            State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
+            State(name='run_internal_op', on_enter=['request_to_run_internal_op']),
+            State(name='run_external_op', on_enter=['request_to_run_external_op']),
+            State(name='run_internal_proc', on_enter=['request_internal_proc']),
+            State(name='run_external_proc', on_enter=['request_external_proc']),
             State(name='final_state')]
         
         self.TRANSITIONS = [
             {'source':'init_state','dest':'prep_state'},
             {'source':'prep_state','dest':'pickup_batch'},
-            {'source':'pickup_batch','dest':'run_op', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'run_op','dest':'run_analysis_proc', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_analysis_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
+            {'source':'pickup_batch','dest':'run_internal_op', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'run_internal_op','dest':'run_external_op', 'conditions':'are_req_station_ops_completed'},
+            {'source':'run_external_op','dest':'run_internal_proc', 'conditions':'are_req_station_ops_completed'},
+            {'source':'run_internal_proc','dest':'run_external_proc', 'conditions':'are_req_station_procs_completed'},
+            {'source':'run_external_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
         ]
 
 
@@ -55,13 +59,25 @@ class TestFullProcess(StationProcess):
         robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
-    def request_to_run_op(self):
+    def request_to_run_internal_op(self):
         station_op = self.generate_operation("some_op")
         self.request_station_op(station_op)
 
-    def request_analysis_proc(self):
+    def request_to_run_external_op(self):
+        ext_station_op = self.generate_operation("some_op")
+        # change ext_station_op associated_station to a different station
+        ext_station_op._model_proxy.associated_station = "NewStation"
+        self.request_station_op(ext_station_op)
+
+    def request_internal_proc(self):
         station_proc = StationProcess.from_args(self.lot, {})
         self.request_station_process(station_proc)
+
+    def request_external_proc(self):
+        ext_station_proc = StationProcess.from_args(self.lot, {})
+        # change ext_station_proc associated_station to a different station
+        ext_station_proc._model_proxy.associated_station = "NewStation"
+        self.request_station_process(ext_station_proc)
 
 class HandlerTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -612,7 +628,7 @@ class HandlerTest(unittest.TestCase):
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station.running_procs[0].m_state, "run_op")
+        self.assertEqual(station.running_procs[0].m_state, "run_internal_op")
         self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
         self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_OPS)
         self.assertEqual(station.running_procs[1].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
@@ -623,12 +639,34 @@ class HandlerTest(unittest.TestCase):
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(station.running_procs[0].m_state, "run_analysis_proc")
+        self.assertEqual(station.running_procs[0].m_state, "run_external_op")
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_OPS)
+        self.assertEqual(station.running_procs[1].status, ProcessStatus.WAITING_ON_ROBOT_OPS)
+        self.assertEqual(len(station.requested_robot_ops), 1)
+        self.assertFalse(station._queued_ops)
+        self.assertEqual(len(station.requested_ext_ops), 1)
+        ext_station_op = station.requested_ext_ops.pop()
+        ext_station_op.complete_op(OpOutcome.SUCCEEDED, None)
+
+        # test processes state advancement
+        proc_handler.handle()
+        self.assertEqual(station.running_procs[0].m_state, "run_internal_proc")
         self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
         self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_PROCS)
-        self.assertEqual(len(station.queued_procs), 1) # added to queued procs directly since it is internal proc
+        self.assertEqual(len(station.queued_procs), 1)
         station_proc = station.queued_procs.pop()
         station_proc._model_proxy.status = ProcessStatus.FINISHED
+
+        # test processes state advancement
+        proc_handler.handle()
+        self.assertEqual(station.running_procs[0].m_state, "run_external_proc")
+        self.assertEqual(station.running_procs[1].m_state, "pickup_batch")
+        self.assertEqual(station.running_procs[0].status, ProcessStatus.WAITING_ON_STATION_PROCS)
+        self.assertFalse(station.queued_procs)
+        self.assertEqual(len(station.requested_ext_procs), 1)
+        ext_station_proc = station.requested_ext_procs.pop()
+        ext_station_proc._model_proxy.status = ProcessStatus.FINISHED
 
         # test processes state advancement
         proc_handler.handle()

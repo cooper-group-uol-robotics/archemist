@@ -36,6 +36,7 @@ class StationModel(Document):
     requested_robot_ops = fields.ListField(fields.ReferenceField(RobotOpModel),default=[])
     
     ''' station ops '''
+    requested_ext_ops = fields.ListField(fields.ReferenceField(StationOpModel), default=[])
     queued_ops = fields.ListField(fields.ReferenceField(StationOpModel),default=[])
     assigned_op = fields.ReferenceField(StationOpModel, null=True)
     assigned_op_state = fields.EnumField(OpState,default=OpState.INVALID)

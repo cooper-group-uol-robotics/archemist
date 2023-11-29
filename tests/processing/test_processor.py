@@ -1,12 +1,12 @@
-from typing import Any, Dict, List, Type, Union
 import unittest
 from mongoengine import connect
 from transitions import State
 from archemist.core.models.station_model import StationModel
 
 from archemist.core.state.station import Station
-from archemist.core.state.station_process import StationProcess, StationProcessModel
+from archemist.core.state.station_process import StationProcess
 from archemist.core.state.robot_op import RobotOp
+from archemist.core.state.station_op import StationOp
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.state.recipe import Recipe
@@ -44,12 +44,14 @@ class TestProcess2(StationProcess):
         self.STATES = [State(name='init_state'),
             State(name='pickup_batch', on_enter=['request_pickup_batch']),
             State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
+            State(name='run_external_op', on_enter=['request_external_op']),
             State(name='final_state')]
         
         self.TRANSITIONS = [
             {'source':'init_state','dest':'pickup_batch'},
             {'source':'pickup_batch','dest':'run_analysis_proc', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'run_analysis_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
+            {'source':'run_analysis_proc','dest':'run_external_op', 'conditions':'are_req_station_procs_completed'},
+            {'source':'run_external_op','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
 
     def request_pickup_batch(self):
@@ -59,6 +61,10 @@ class TestProcess2(StationProcess):
     def request_analysis_proc(self):
         station_proc = StationProcess.from_args(self.lot, is_subprocess=True)
         self.request_station_process(station_proc)
+    
+    def request_external_op(self):
+        station_op = StationOp.from_args()
+        self.request_station_op(station_op)
 
 class SomeStation(Station):
     def __init__(self, station_model) -> None:
@@ -509,6 +515,23 @@ class ProcessorTest(unittest.TestCase):
         # tick station_1_proc_handler to finish procs
         station_1_proc_handler.handle()
         self.assertFalse(station_1.running_procs)
+
+        # tick station_2_proc_handler to advance state
+        station_2_proc_handler.handle()
+        self.assertEqual(station_2.running_procs[0].m_state, "run_external_op")
+        self.assertEqual(station_2.running_procs[1].m_state, "run_external_op")
+        self.assertEqual(len(station_2.requested_ext_ops), 2)
+
+        # tick workflow processor to pick station ops from station 2 and add them to station 1
+        workflow_processor.process_workflow()
+        self.assertFalse(station_2.requested_ext_ops)
+        self.assertFalse(workflow_state.station_op_requests_queue)
+        self.assertEqual(len(station_1._queued_ops), 2)
+        # complete ops
+        station_1.update_assigned_op()
+        station_1.complete_assigned_op(OpOutcome.SUCCEEDED, None)
+        station_1.update_assigned_op()
+        station_1.complete_assigned_op(OpOutcome.SUCCEEDED, None)
 
         # tick station_2_proc_handler to advance proc states
         station_2_proc_handler.handle()

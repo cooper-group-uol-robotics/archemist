@@ -148,10 +148,17 @@ class StationTest(unittest.TestCase):
         
     def test_station_ops_members(self):
         # assert empty members
+        self.assertFalse(self.station.requested_ext_ops)
         self.assertFalse(self.station._queued_ops)
         self.assertIsNone(self.station.assigned_op)
         self.assertEqual(self.station.assigned_op_state, OpState.INVALID)
         self.assertFalse(self.station.ops_history)
+
+        # create external op
+        ext_station_op = StationOp.from_args()
+        self.station.request_external_op(ext_station_op)
+        self.assertEqual(len(self.station.requested_ext_ops), 1)
+        self.assertEqual(self.station.requested_ext_ops[0], ext_station_op)
 
         # op creation
         station_op_1 = StationOp.from_args()

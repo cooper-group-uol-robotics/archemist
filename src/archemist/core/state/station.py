@@ -215,6 +215,14 @@ class Station:
     ''' Station ops properties and methods '''
 
     @property
+    def requested_ext_ops(self) -> List[Type[StationOp]]:
+        return ListProxy(self._model_proxy.requested_ext_ops, StationOpFactory.create_from_model)
+
+    def request_external_op(self, ext_op: Type[StationOp]):
+        ext_op.requested_by = self.object_id
+        self.requested_ext_ops.append(ext_op)
+
+    @property
     def _queued_ops(self) -> List[Type[StationOp]]:
         return ListProxy(self._model_proxy.queued_ops, StationOpFactory.create_from_model)
 
