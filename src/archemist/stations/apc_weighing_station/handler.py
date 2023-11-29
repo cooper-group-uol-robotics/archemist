@@ -3,8 +3,6 @@ from typing import Tuple, List, Optional
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from .state import (
     APCWeighingStation, 
-    APCWeighingOpenVDoorOp, 
-    APCWeighingCloseVDoorOp, 
     APCOpenBalanceDoorOp, 
     APCCloseBalanceDoorOp,
     APCTareOp,
@@ -66,16 +64,6 @@ try:
                 rospy.loginfo('Taring balance.')
                 for i in range(10):
                     self._pub_balance.publish(kern_command=KernPCB2500Cmd.TARE_BALANCE)
-            elif isinstance(current_op, APCWeighingOpenVDoorOp):
-                self._target_sash_door_status = "door_open"
-                rospy.loginfo('Opening vertical door.')
-                for i in range(10):
-                    self._pub_sash.publish(sash_door_command=sashDoorCmd.OPEN_DOOR)
-            elif isinstance(current_op, APCWeighingCloseVDoorOp):
-                rospy.loginfo('Closing vertical door.')
-                self._target_sash_door_status = "door_closed"
-                for i in range(10):
-                    self._pub_sash.publish(sash_door_command=sashDoorCmd.CLOSE_DOOR) 
             elif isinstance(current_op, APCOpenBalanceDoorOp):
                 rospy.loginfo('Opening balance door.')
                 self._target_balance_door_status = "door_open"

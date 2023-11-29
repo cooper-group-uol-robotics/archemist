@@ -32,14 +32,6 @@ class APCWeighingStation(Station):
         self._model_proxy.balance_doors_open = new_state
 
     @property
-    def vertical_doors_open(self) -> bool:
-        return self._model_proxy.vertical_doors_open
-
-    @vertical_doors_open.setter
-    def vertical_doors_open(self, new_state: bool):
-        self._model_proxy.vertical_doors_open = new_state
-
-    @property
     def funnel_storage_capacity(self) -> int:
         return self._model_proxy.funnel_storage_capacity
 
@@ -53,11 +45,7 @@ class APCWeighingStation(Station):
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
         current_op = self.assigned_op
-        if isinstance(current_op, APCWeighingOpenVDoorOp):
-            self.vertical_doors_open = True
-        elif isinstance(current_op, APCWeighingCloseVDoorOp):
-            self.vertical_doors_open = False
-        elif isinstance(current_op, APCOpenBalanceDoorOp):
+        if isinstance(current_op, APCOpenBalanceDoorOp):
             self.balance_doors_open = True
         elif isinstance(current_op, APCCloseBalanceDoorOp):
             self.balance_doors_open = False
@@ -66,28 +54,6 @@ class APCWeighingStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
-
-class APCWeighingOpenVDoorOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
-        model.save()
-        return cls(model)
-    
-class APCWeighingCloseVDoorOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
-        model.save()
-        return cls(model)
 
 class APCOpenBalanceDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
