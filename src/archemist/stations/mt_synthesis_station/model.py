@@ -9,53 +9,14 @@ class OptiMaxMode(Enum):
     HEATING_STIRRING = auto()
     SAMPLING = auto()
     DRAINING = auto()
-    
-class SynthesisCartridgeModel(EmbeddedDocument):
-    hotel_index = fields.IntField(required=True)
-    associated_solid= fields.StringField(required=True)
-    depleted = fields.BooleanField(default=False)
 
 
 class MTSynthesisStationModel(StationModel):
     optimax_mode = fields.EnumField(OptiMaxMode, null=True)
-    
-    cartridges = fields.EmbeddedDocumentListField(SynthesisCartridgeModel, default=[])
-    loaded_cartridge_index = fields.IntField(min_value=0, null=True)
-   
-    window_open = fields.BooleanField(default=False)
     optimax_valve_open = fields.BooleanField(default=False)
-
     num_sampling_vials = fields.IntField(min_value=0, required=True)
-
     set_reaction_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
     set_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
-
-class MTSynthDispenseSolidOpModel(StationSampleOpModel):
-    solid_name = fields.StringField(required=True)
-    dispense_mass = fields.FloatField(min_value=0, required=True)
-    dispense_unit = fields.StringField(choices=["g", "mg", "ug"], default="g")
-
-class MTSynthDispenseLiquidOpModel(StationSampleOpModel):
-    liquid_name = fields.StringField(required=True)
-    dispense_volume = fields.FloatField(min_value=0, required=True)
-    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
-
-class MTSynthStartLiquidDispensingOpModel(StationOpModel):
-    liquid_name = fields.StringField(required=True)
-    dispense_rate = fields.FloatField(min_value=0, required=True)
-    rate_unit = fields.StringField(choices=["mL/minute", "mL/second"], default="mL/minute")
-    max_dispense_volume = fields.FloatField(min_value=0, required=True)
-    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
-
-class MTSynthStopLiquidDispensingOpModel(StationSampleOpModel):
-    liquid_name = fields.StringField(required=True)
-    dispensed_volume = fields.FloatField(min_value=0, null=True)
-    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], null=True)
-
-class MTSynthAddWashLiquidOpModel(StationOpModel):
-    liquid_name = fields.StringField(required=True)
-    dispense_volume = fields.FloatField(min_value=0, required=True)
-    dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
 
 class MTSynthHeatStirOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
@@ -70,7 +31,3 @@ class MTSynthSampleOpModel(StationSampleOpModel):
 class MTSynthTimedOpenReactionValveOpModel(StationOpModel):
     duration = fields.FloatField(required=True)
     time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
-
-class MTSynthDryOpModel(StationSampleOpModel):
-    duration = fields.IntField(required=True)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="minute")

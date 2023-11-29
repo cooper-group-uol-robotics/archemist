@@ -2,12 +2,8 @@ from typing import Tuple, List
 from archemist.core.state.station import Station
 from archemist.core.processing.handler import SimStationOpHandler
 from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpResult
-from .state import (MTSynthDispenseLiquidOp,
-                    MTSynthStopLiquidDispensingOp,
-                    MTSynthDispenseSolidOp,
-                    MTSynthHeatStirOp,
+from .state import (MTSynthHeatStirOp,
                     MTSynthSampleOp)
-import random
 from archemist.core.util.enums import OpOutcome
 
 class SimMTSynthesisStationHandler(SimStationOpHandler):
@@ -17,22 +13,7 @@ class SimMTSynthesisStationHandler(SimStationOpHandler):
     def get_op_result(self) -> Tuple[OpOutcome, List[MaterialOpResult]]:
         op = self._station.assigned_op
         result = None
-        if isinstance(op, MTSynthDispenseLiquidOp):
-            result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
-                                                amounts=[op.dispense_volume],
-                                                units=[op.dispense_unit])
-        if isinstance(op, MTSynthStopLiquidDispensingOp):
-            result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
-                                                amounts=[5*random.random()],
-                                                units=["mL"])
-        elif isinstance(op, MTSynthDispenseSolidOp):
-            result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.solid_name],
-                                                amounts=[op.dispense_mass],
-                                                units=[op.dispense_unit])
-        elif isinstance(op, MTSynthHeatStirOp):
+        if isinstance(op, MTSynthHeatStirOp):
             parameters = {}
             parameters["target_temperature"]  = op.target_temperature
             parameters["target_stirring_speed"]  = op.target_stirring_speed
