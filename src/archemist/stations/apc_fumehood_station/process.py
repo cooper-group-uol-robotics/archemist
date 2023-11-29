@@ -53,6 +53,8 @@ class APCSolidAdditionProcess(StationProcess):
 
     @classmethod
     def from_args(cls, lot: Lot,
+                  target_batch_index: int,
+                  target_sample_index: int,
                   operations: List[Dict[str, Any]] = None,
                   is_subprocess: bool=False,
                   skip_robot_ops: bool=False,
@@ -68,6 +70,8 @@ class APCSolidAdditionProcess(StationProcess):
                                      skip_robot_ops,
                                      skip_station_ops,
                                      skip_ext_procs)
+        model.data["target_batch_index"] = target_batch_index
+        model.data["target_sample_index"] = target_sample_index
         model.save()
         return cls(model)
 
@@ -109,8 +113,10 @@ class APCSolidAdditionProcess(StationProcess):
         self.request_robot_ops([robot_task, wait_task])
     
     def request_adding_solid(self):
-        batch = self.lot.batches[0]
-        current_op = self.generate_operation("add_solid_op", target_sample=batch.samples[0])
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        sample = self.lot.batches[batch_index].samples[sample_index]
+        current_op = self.generate_operation("add_solid_op", target_sample=sample)
         self.request_station_op(current_op)
 
     def request_unload_solid_cartridge(self):

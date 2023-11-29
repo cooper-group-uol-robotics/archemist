@@ -145,6 +145,8 @@ class MTSynthesisStationTest(unittest.TestCase):
                 }]
 
         process = APCSolidAdditionProcess.from_args(lot=lot,
+                                              target_batch_index=0,
+                                              target_sample_index=0,
                                               operations=operations)
         process.lot_slot = 0
         process.assigned_to = station.object_id
