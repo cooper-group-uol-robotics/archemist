@@ -25,9 +25,7 @@ class APCWeighingStationTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
         self._client = connect(
-            db=self._db_name, alias='archemist_state', host='mongodb://localhost:27017',
-            uuidrepresentation='standard'
-        )
+            db=self._db_name, alias='archemist_state', host='mongodb://localhost:27017')
 
         self.station_doc = {
             'type': 'APCWeighingStation',
