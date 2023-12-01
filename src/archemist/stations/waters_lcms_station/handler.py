@@ -6,9 +6,11 @@ from .state import (LCMSSampleAnalysisOp,
                     LCMSEjectRackOp)
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from archemist.core.util.enums import OpOutcome
-from random import random, choice
+import random
 from threading import Thread
 import socket
+
+random.seed(123)
 
 
 class SimWatersLCMSStationHandler(SimStationOpHandler):
@@ -19,7 +21,7 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
             current_op = self._station.assigned_op
             if isinstance(current_op, LCMSSampleAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                      concentration=choice([0.99, 0.01, 0.5]),
+                                                      concentration=random.choice([0.99, 0.01]),
                                                       result_filename="file.xml")
                 return OpOutcome.SUCCEEDED, [result]
             else:

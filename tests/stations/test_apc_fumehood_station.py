@@ -35,8 +35,7 @@ class MTSynthesisStationTest(unittest.TestCase):
                 'cartridges': [
                     {'associated_solid': "NaCl", 'hotel_index': 1},
                     {'associated_solid': "NaCl", 'hotel_index': 2}
-                    ],
-                'num_sampling_vials': 12
+                    ]
             },
             'materials':
             {
@@ -135,7 +134,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         # create station process
         operations = [
                 {
-                    "name": "add_solid_op",
+                    "name": "add_solid",
                     "op": "APCDispenseSolidOp",
                     "parameters": {
                         "solid_name": "NaCl",

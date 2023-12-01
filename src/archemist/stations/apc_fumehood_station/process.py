@@ -116,7 +116,7 @@ class APCSolidAdditionProcess(StationProcess):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
-        current_op = self.generate_operation("add_solid_op", target_sample=sample)
+        current_op = self.generate_operation("add_solid", target_sample=sample)
         self.request_station_op(current_op)
 
     def request_unload_solid_cartridge(self):

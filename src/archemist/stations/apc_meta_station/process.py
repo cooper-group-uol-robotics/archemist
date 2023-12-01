@@ -417,7 +417,9 @@ class APCCleaningProcess(StationProcess):
     ''' transitions callbacks '''
     def is_reactor_clean(self):
         target_purity_concentration = self.data["target_purity_concentration"]
-        sample = self.lot.batches[0].samples[0]
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        sample = self.lot.batches[batch_index].samples[sample_index]
         results = list(sample.result_ops)
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
