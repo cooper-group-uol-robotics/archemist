@@ -154,6 +154,7 @@ class Station:
         self.requested_ext_procs.append(ext_proc)
 
     def add_process(self, proc: Type[StationProcess]):
+        proc.assigned_to = self.object_id
         self.queued_procs.append(proc)
 
     ''' Lots properties and methods '''
