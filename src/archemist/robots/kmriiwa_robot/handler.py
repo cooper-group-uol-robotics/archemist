@@ -1,37 +1,32 @@
 import rospy
-from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, NavCommand, KMRStatus, LBRStatus
+from kmriiwa_chemist_msgs.msg import TaskStatus, LBRCommand, KMPCommand, RobotCommand, RobotStatus
 from archemist.core.state.robot import Robot,MobileRobotMode, RobotState
 from archemist.core.util.location import Location
 from archemist.core.processing.handler import RobotHandler
-from .state import KukaLBRTask, KukaNAVTask, KukaLBRMaintenanceTask
+from .state import KukaLBRTask, KukaKMPTask, KukaCombinedTask
 
 class KmriiwaROSHandler(RobotHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
         rospy.init_node(f'{self._robot}_handler')
-        self._kmrCmdPub = rospy.Publisher('/kuka2/kmr/nav_commands', NavCommand, queue_size=1)
-        self._lbrCmdPub = rospy.Publisher('/kuka2/lbr/command', LBRCommand, queue_size=1)
-        rospy.Subscriber('/kuka2/kmr/task_status', TaskStatus, self._kmr_task_cb, queue_size=1)
-        rospy.Subscriber('/kuka2/lbr/task_status', TaskStatus, self._lbr_task_cb, queue_size=1)
+        self._kmrCmdPub = rospy.Publisher('/kuka4/commands', RobotCommand, queue_size=1)
+        rospy.Subscriber('/kuka4/robot_status', RobotStatus, self._kmr_task_cb, queue_size=1)
+        rospy.Subscriber('/kuka4/task_status', TaskStatus, self._lbr_task_cb, queue_size=1)
         
-        # TODO add callbacks to check on the robot status so that charging or other operations can 
-        # performed to run the process smoothly.
-        rospy.Subscriber('/kuka2/lbr/robot_status', LBRStatus, self._update_lbr_status_cb, queue_size=2)
-        rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_kmr_status_cb, queue_size=2)
         
         #self._kmr_current_status = ''
-        self._kmr_cmd_seq = 0
-        self._kmr_task = None
-        self._kmr_task_name = ''
+        self._kuka_cmd_seq = 0
+        self._kuka_task = None
+        self._kuka_task_name = ''
         self._kmr_done = False
         self._kmr_exec_successful = False
         
-        self._lbr_current_op_state = ''
-        self._lbr_cmd_seq = 0
-        self._lbr_task = None
-        self._lbr_task_name = ''
-        self._lbr_done = False
-        self._lbr_exec_successful = False
+        # self._lbr_current_op_state = ''
+        # self._lbr_cmd_seq = 0
+        # self._lbr_task = None
+        # self._lbr_task_name = ''
+        # self._lbr_done = False
+        # self._lbr_exec_successful = False
 
         self._need_to_charge = False
         self._need_to_calibrate = False
