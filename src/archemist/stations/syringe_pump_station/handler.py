@@ -34,7 +34,7 @@ class SimSyringePumpStationHandler(SimStationOpHandler):
 
 try:  
     import rospy
-    from roslabware_msgs.msg import TecanXlp6000Cmd, TecanXlp6000Reading
+    from roslabware_msgs.msg import TecanXlp6000Cmd, TecanXlp6000Reading, TecanXlp6000Task
     from std_msgs.msg import Bool
 
     class APCSyringePumpStationRosHandler(StationOpHandler):
@@ -44,7 +44,7 @@ try:
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
             self._pub_pump = rospy.Publisher("tecan_xlp6000_command", TecanXlp6000Cmd, queue_size=2)
-            rospy.Subscriber("/tecan_xlp/task_complete", Bool, self.syringe_pump_callback)
+            rospy.Subscriber("/tecan_xlp/task_complete", TecanXlp6000Task, self.syringe_pump_callback)
             self._op_complete = False
             self._op_results = {}
             self._seq_id = 1
@@ -72,7 +72,7 @@ try:
                     self._pub_door.publish(seq=self._seq_id, tecan_xlp_command=TecanXlp6000Cmd.STOP)
             else:
                 rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
-            self._seq_id+=1
+            
 
         def is_op_execution_complete(self) -> bool: 
             return self._op_complete
@@ -102,7 +102,9 @@ try:
             pass
 
         def syringe_pump_callback(self, msg):
-            self._op_complete = msg.data
+            if msg.seq == self._seq_id and msg.complete:
+                self._op_complete = msg.complete
+                self._seq_id+=1
 
 
 except ImportError:
