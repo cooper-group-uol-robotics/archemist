@@ -225,7 +225,7 @@ class MobileRobot(Robot):
                     break
 
 
-    def add_op(self, robot_op: type[RobotOp]):
+    def add_op(self, robot_op: Type[RobotOp]):
         if isinstance(robot_op, CollectBatchOp):
             if robot_op.related_lot not in self.consigned_lots:
                 self.consigned_lots.append(robot_op.related_lot)
