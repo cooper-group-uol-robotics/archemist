@@ -5,7 +5,7 @@ from archemist.stations.syringe_pump_station.state import (
     SyringePumpDispenseVolumeOp,
     SyringePumpFinishDispensingOp,
 )
-from archemist.stations.syringe_pump_station.handler import (APCSyringePumpStationRosHandler)
+from archemist.stations.syringe_pump_station.handler import APCSyringePumpStationRosHandler
 from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 
