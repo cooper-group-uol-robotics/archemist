@@ -43,7 +43,7 @@ class SimMTSynthesisStationHandler(SimStationOpHandler):
 
 try:
     import rospy
-    from roslabware_msgs.msg import MettlerOptimaxCmd, MettlerOptimaxReading, BaseValveCmd, BaseValveStatus
+    from roslabware_msgs.msg import MettlerOptimaxCmd, MettlerOptimaxReading, MettlerOptimaxTask, BaseValveCmd, BaseValveStatus, BaseValveTask
     from std_msgs.msg import Bool
 
     class APCMTSynthesisStationRosHandler(StationOpHandler):
@@ -59,10 +59,10 @@ try:
                 "/optimax_basevalve_command", BaseValveCmd, queue_size=2
             )
             rospy.Subscriber(
-                "/mettler_optimax/task_complete", Bool, self.MTOptimax_callback
+                "/mettler_optimax/task_complete", MettlerOptimaxTask, self.MTOptimax_callback
             )
             rospy.Subscriber(
-                "/base_valve/task_complete", Bool, self.BaseValve_callback
+                "/base_valve/task_complete", BaseValveTask, self.BaseValve_callback
             )
             self._op_complete = False
             self._op_results = {}
@@ -81,10 +81,11 @@ try:
                 for i in range(10):
                     self._pub_optimax.publish(
                         seq=self._seq_id,
-                        optimax_command = MettlerOptimaxCmd.PARA_HW,
+                        optimax_command = MettlerOptimaxCmd.HEAT_WAIT,
                         temperature = current_op.target_temperature,
                         stir_speed = current_op.target_stirring_speed,
-                        wait_duration = current_op.wait_duration
+                        wait_duration = current_op.wait_duration,
+                        stir_duration = current_op.stir_duration
                     )
 
             elif isinstance(current_op, MTSynthSampleOp):
@@ -94,9 +95,10 @@ try:
                 for i in range(10):
                     self._pub_optimax.publish(
                         seq=self._seq_id,
-                        optimax_command = MettlerOptimaxCmd.PARA_S,
+                        optimax_command = MettlerOptimaxCmd.SAMPLE,
                         temperature = current_op.target_temperature,
-                        stir_speed = current_op.target_stirring_speed
+                        stir_speed = current_op.target_stirring_speed,
+                        dilution = current_op.dilution
                     )
 
             elif isinstance(current_op, MTSynthStopReactionOp):
@@ -112,6 +114,7 @@ try:
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
+                        valve_command = BaseValveCmd.OPEN_S
                     )
 
             elif isinstance(current_op, MTSynthOpenReactionValveOp):
@@ -133,7 +136,6 @@ try:
                 rospy.logwarn(
                     f"[{self.__class__.__name__}] Unkown operation was received"
                 )
-            self._seq_id += 1
 
         def is_op_execution_complete(self) -> bool:
             return self._op_complete
@@ -165,10 +167,14 @@ try:
             pass
 
         def MTOptimax_callback(self, msg):
-            self._op_complete = msg.data
+            if msg.seq == self._seq_id and msg.complete:
+                self._op_complete = msg.complete
+                self._seq_id+=1
         
         def BaseValve_callback(self, msg):
-            self._op_complete = msg.data
+            if msg.seq == self._seq_id and msg.complete:
+                self._op_complete = msg.complete
+                self._seq_id+=1
 
 except ImportError:
     pass

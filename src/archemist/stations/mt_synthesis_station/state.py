@@ -108,6 +108,7 @@ class MTSynthHeatStirOp(StationSampleOp):
                   target_temperature: int,
                   target_stirring_speed: int,
                   wait_duration: int,
+                  stir_duration:int,
                   time_unit: Literal["second", "minute", "hour"]=None):
         model = MTSynthHeatStirOpModel()
         model.target_sample = target_sample.model
@@ -115,6 +116,7 @@ class MTSynthHeatStirOp(StationSampleOp):
         model.target_temperature = int(target_temperature) if target_temperature else None
         model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
         model.wait_duration = int(wait_duration) if wait_duration and wait_duration != "Null" else None
+        model.stir_duration = int(stir_duration) if stir_duration and stir_duration != "Null" else None
         if model.wait_duration:
             model.time_unit = time_unit
         model.save()
@@ -129,12 +131,16 @@ class MTSynthHeatStirOp(StationSampleOp):
         return self._model_proxy.target_stirring_speed
 
     @property
-    def wait_duration(self) -> int:
-        return self._model_proxy.wait_duration
+    def stir_duration(self) -> int:
+        return self._model_proxy.stir_duration
 
     @property
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
+  
+    @property
+    def wait_duration(self) -> int:
+        return self._model_proxy.wait_duration
 
 class MTSynthSampleOp(StationSampleOp):
     def __init__(self, op_model: Union[MTSynthSampleOpModel, ModelProxy]) -> None:
@@ -144,12 +150,14 @@ class MTSynthSampleOp(StationSampleOp):
     def from_args(cls,
                   target_sample: Sample,
                   target_temperature: int,
-                  target_stirring_speed: int):
+                  target_stirring_speed: int,
+                  dilution: int):
         model = MTSynthSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
         model.target_temperature = int(target_temperature) if target_temperature else None
         model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
+        model.dilution = int(dilution) if dilution else None
         model.save()
         return cls(model)
 
@@ -160,6 +168,10 @@ class MTSynthSampleOp(StationSampleOp):
     @property
     def target_stirring_speed(self) -> int:
         return self._model_proxy.target_stirring_speed
+    
+    @property
+    def dilution(self) -> int:
+        return self._model_proxy.dilution
 
 class MTSynthStopReactionOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:

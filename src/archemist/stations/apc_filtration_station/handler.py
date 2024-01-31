@@ -27,7 +27,7 @@ try:
     from roslabware_msgs.msg import FiltrationCmd, FiltrationStatus, FiltrationTask
     from std_msgs.msg import Bool
 
-    class APCMTSynthesisStationRosHandler(StationOpHandler):
+    class APCFiltrationStationHandler(StationOpHandler):
         def __init__(self, station: APCFiltrationStation):
             super().__init__(station)
 
@@ -52,7 +52,7 @@ try:
             self._op_complete = False
             if isinstance(current_op, APCFilterProductOp):
                 rospy.loginfo(
-                    f"Synthesis operation started"
+                    f"Filtration operation started"
                 )
 
                 for i in range(10):
@@ -63,7 +63,7 @@ try:
 
             elif isinstance(current_op, APCDryProductOp):
                 rospy.loginfo(
-                    f"Sampling operation started"
+                    f"Drying operation started"
                 )
                 for i in range(10):
                     self._pub_optimax.publish(
@@ -72,18 +72,17 @@ try:
                     )
 
             elif isinstance(current_op, APCDrainWasteOp):
-                rospy.loginfo(f"Synthesis operation stopped")
+                rospy.loginfo(f"Drain operation stopped")
                 for i in range(10):
                     self._pub_optimax.publish(
                         seq=self._seq_id,
-                        filtration_system_command = FiltrationCmd.DRAIN
+                        filtration_system_command = FiltrationCmd.TIMED_DRAIN
                     )
 
             else:
                 rospy.logwarn(
                     f"[{self.__class__.__name__}] Unkown operation was received"
                 )
-            self._seq_id += 1
 
         def is_op_execution_complete(self) -> bool:
             return self._op_complete

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import unittest
 
 from mongoengine import connect
@@ -18,7 +20,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import OpOutcome, ProcessStatus
 from datetime import date
-from .testing_utils import test_req_robot_ops, test_req_station_op, test_req_station_proc
+from testing_utils import test_req_robot_ops, test_req_station_op, test_req_station_proc
 
 class MTSynthesisStationTest(unittest.TestCase):
     def setUp(self):
@@ -247,3 +249,8 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertEqual(op_results[0].units[0], "mg")
 
         station.complete_assigned_op(outcome, op_results)
+
+
+
+if __name__ == '__main__':
+    unittest.main()

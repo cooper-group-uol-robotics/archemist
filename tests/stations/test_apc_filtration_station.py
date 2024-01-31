@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import unittest
 
 from mongoengine import connect
@@ -97,3 +99,7 @@ class APCWeighingStationTest(unittest.TestCase):
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertIsInstance(op_results[0], ProcessOpResult)
         self.assertDictEqual(dict(op_results[0].parameters), {"duration": 3, "time_unit": "minute"})
+
+
+if __name__ == '__main__':
+    unittest.main()
