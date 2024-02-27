@@ -79,6 +79,17 @@ class LCMSEjectRackOp(StationOp):
         model.save()
         return cls(model)
 
+class LCMSPrepAnalysisOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        model.save()
+        return cls(model)
+
 class LCMSSampleAnalysisOp(StationSampleOp):
     def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)

@@ -97,10 +97,14 @@ class RobotTaskOp(RobotOp):
     @classmethod
     def from_args(cls, name: str,
                   target_robot: str,
+                  task_type: int,
+                  lbr_program_name: str,
                   params: Dict={},
                   target_location: Location=None,
                   requested_by: ObjectId()=None,
-                  target_batch: Batch=None
+                  target_batch: Batch=None,
+                  lbr_program_params: list=[],
+                  fine_localization: bool=True 
                   ):
         model = RobotTaskOpModel()
         cls._set_model_common_fields(model, target_robot)
@@ -110,6 +114,10 @@ class RobotTaskOp(RobotOp):
             model.target_location = target_location.model
         model.requested_by = requested_by
         model.target_batch = target_batch.model if target_batch else None
+        model.task_type = task_type
+        model.lbr_program_name = lbr_program_name
+        model.lbr_program_params = lbr_program_params
+        model.fine_localization = fine_localization
         model.save()
         return cls(model)
     
@@ -120,6 +128,23 @@ class RobotTaskOp(RobotOp):
     @property
     def params(self) -> Dict:
         return self._model_proxy.params
+    
+    @property
+    def task_type(self) -> int:
+        return self._model_proxy.task_type
+    
+    @property
+    def lbr_program_name(self) -> str:
+        return self._model_proxy.lbr_program_name
+    
+    @property
+    def lbr_program_params(self) -> list:
+        return self._model_proxy.lbr_program_params
+    
+    @property
+    def fine_localization(self) -> bool:
+        return self._model_proxy.fine_localization
+    
 
     @property
     def target_location(self) -> Location:
