@@ -41,21 +41,21 @@ For more information on these files, check their documentation and refer to the 
 
 After creating the workflow directory, start the ARChemist application server using:
 ```
-$ archemist start_server -path path/to/workflow/dir
+$ archemist start_server --path path/to/workflow/dir
 ```
 In case starting with an already existing workflow where its database entry exists use:
 ```
-$ archemist start_server -path path/to/workflow/dir --exists
+$ archemist start_server --path path/to/workflow/dir --exists
 ```
 Next launch all the station and robot handlers using:
 ```
-$ archemist launch_handlers -path path/to/workflow/dir
+$ archemist launch_handlers --path path/to/workflow/dir
 ```
 This will launch all the robots/stations handlers as specified in the configuration file. Note that, this assumes that all the robots and stations drivers are up and running and reachable by their respective handlers.
 
 Alternatively, for testing and debugging purposes, simulated stations/robots handlers can be launched that won't connect to any physical equipment using:
 ```
-$ archemist launch_handlers -path path/to/workflow/dir --sim
+$ archemist launch_handlers --path path/to/workflow/dir --sim
 ```
 Finally, the ARChemist command line interface can be launched using:
 ```
