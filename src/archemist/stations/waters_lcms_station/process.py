@@ -1,6 +1,6 @@
 from typing import Union
 from transitions import State
-from .state import WatersLCMSStation, LCMSInsertRackOp, LCMSEjectRackOp, LCMSSampleAnalysisOp
+from .state import WatersLCMSStation, LCMSInsertRackOp, LCMSEjectRackOp, LCMSSampleAnalysisOp, LCMSPrepAnalysisOp
 from archemist.core.state.lot import Lot
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOp
@@ -14,7 +14,7 @@ class APCLCMSAnalysisProcess(StationProcess):
 
         ''' States '''
         self.STATES = [State(name='init_state'), 
-            State(name='prep_state'),
+            State(name='prep_state', on_enter=['request_prep_analysis']),
             State(name='place_vial', on_enter=['request_vial_placement']),
             State(name='insert_rack', on_enter=['request_rack_insertion']),
             State(name='run_analysis', on_enter=['request_analysis']),
@@ -25,7 +25,7 @@ class APCLCMSAnalysisProcess(StationProcess):
         ''' Transitions '''
         self.TRANSITIONS = [
             { 'source':'init_state', 'dest': 'prep_state'},
-            { 'source':'prep_state','dest':'place_vial'},
+            { 'source':'prep_state','dest':'place_vial', 'conditions':'are_req_station_ops_completed'},
             { 'source':'place_vial','dest':'insert_rack', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'insert_rack','dest':'run_analysis', 'conditions':'are_req_station_ops_completed'},
             { 'source':'run_analysis','dest':'eject_rack', 'conditions':'are_req_station_ops_completed'},
@@ -58,6 +58,10 @@ class APCLCMSAnalysisProcess(StationProcess):
         return cls(model)
         
     ''' states callbacks '''
+    def request_prep_analysis(self):
+        prep_op = LCMSPrepAnalysisOp.from_args()
+        self.request_station_op(prep_op)
+
     def request_vial_placement(self):
         robot_task = RobotTaskOp.from_args(name='PlaceLCMSVial',
                                            target_robot="KMRIIWARobot")
