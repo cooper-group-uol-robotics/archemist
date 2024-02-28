@@ -1,4 +1,5 @@
 from typing import Tuple, List
+import time
 from archemist.core.state.station import Station
 from archemist.core.processing.handler import SimStationOpHandler, StationOpHandler
 from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpResult
@@ -6,6 +7,7 @@ from .state import (
     MTSynthHeatStirOp,
     MTSynthSampleOp,
     MTSynthTimedOpenReactionValveOp,
+    MTSynthShortOpenReactionValveOp,
     MTSynthStopReactionOp,
     MTSynthCloseReactionValveOp,
     MTSynthOpenReactionValveOp,
@@ -114,7 +116,21 @@ try:
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN_S
+                        valve_command = BaseValveCmd.OPEN
+                    )
+                time.sleep(current_op.duration()) # TODO is this correct?
+                for i in range(10):
+                    self._pub_base_valve.publish(
+                        seq=self._seq_id, 
+                        valve_command = BaseValveCmd.CLOSE
+                    )
+
+            elif isinstance(current_op, MTSynthShortOpenReactionValveOp):
+                rospy.loginfo(f"Base valve open")
+                for i in range(10):
+                    self._pub_base_valve.publish(
+                        seq=self._seq_id, 
+                        valve_command = BaseValveCmd.OPEN_s
                     )
 
             elif isinstance(current_op, MTSynthOpenReactionValveOp):

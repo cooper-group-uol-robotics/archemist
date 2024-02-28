@@ -9,12 +9,13 @@ from archemist.stations.apc_weighing_station.process import APCWeighingProcess
 
 from archemist.stations.waters_lcms_station.state import LCMSAnalysisResult
 from archemist.stations.syringe_pump_station.state import SyringePumpFinishDispensingOp
-from archemist.stations.mt_synthesis_station.state import MTSynthSampleOp, MTSynthStopReactionOp
+from archemist.stations.mt_synthesis_station.state import MTSynthSampleOp, MTSynthStopReactionOp, MTSynthShortOpenReactionValveOp
 from archemist.stations.apc_filtration_station.state import APCFilterProductOp, APCDrainWasteOp
 from archemist.stations.apc_fumehood_station.state import APCOpenSashOp, APCCloseSashOp
 
 from archemist.core.state.lot import Lot
 from .state import APCMetaStation
+import time
 
 from typing import Union, List, Dict, Any
 
@@ -24,7 +25,7 @@ class APCSynthesisProcess(StationProcess):
         
         ''' States '''
         self.STATES = [ State(name='init_state'),
-            State(name='prep_state'), 
+            State(name='prep_state', on_enter=['initialise_process_data']), 
             
             State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
             
@@ -32,13 +33,12 @@ class APCSynthesisProcess(StationProcess):
 
             State(name='sample_reaction', on_enter=['request_sample_reaction']),
             State(name='start_analysis_process', on_enter=['request_analysis_process']),
-            State(name='start_adding_liquid_2', on_enter=['request_start_adding_liquid_2']),
+            State(name='add_liquid_2', on_enter=['request_adding_liquid_2']),
 
             State(name='run_reaction', on_enter=['request_reaction_start']),
             
             State(name='wait_for_result'),
 
-            State(name='stop_adding_liquid_2', on_enter=['request_stop_adding_liquid_2']),
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
             State(name='final_state')]
 
@@ -47,17 +47,18 @@ class APCSynthesisProcess(StationProcess):
             {'source':'init_state', 'dest': 'prep_state'},
             {'source':'prep_state', 'dest': 'add_liquid_1'},
             {'source':'add_liquid_1','dest':'add_solid', 'conditions':'are_req_station_ops_completed'},
-            {'source':'add_solid','dest':'start_adding_liquid_2', 'conditions':'are_req_station_procs_completed'},
-
-            {'source':'start_adding_liquid_2','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
+            {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
             {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
             {'source':'start_analysis_process','dest':'run_reaction'},
+
+            {'source':'run_reaction','dest':'add_liquid_2', 'unless':'is_liquid_2_added', 'conditions':'are_req_station_ops_completed'},
+            {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             {'source':'run_reaction','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
+
             {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
-            {'source':'wait_for_result','dest':'stop_adding_liquid_2', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
+            {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
             
-            {'source':'stop_adding_liquid_2','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'stop_reaction','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
 
@@ -89,6 +90,9 @@ class APCSynthesisProcess(StationProcess):
 
     ''' states callbacks '''
 
+    def initialise_process_data(self):
+        self.data['is_liquid_2_added'] = False
+
     def request_adding_liquid_1(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
@@ -112,22 +116,13 @@ class APCSynthesisProcess(StationProcess):
                                                  operations=operations)
         self.request_station_process(proc)
 
-    def request_start_adding_liquid_2(self):
+    def request_adding_liquid_2(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
-        current_op = self.generate_operation(f"dispense_liquid_2", target_sample=sample)
+        current_op = self.generate_operation(f"add_liquid_2", target_sample=sample)
         self.request_station_op(current_op)
-
-    def request_stop_adding_liquid_2(self):
-        batch_index = self.data["target_batch_index"]
-        sample_index = self.data["target_sample_index"]
-        sample = self.lot.batches[batch_index].samples[sample_index]
-        add_liquid_2_operation = self.operation_specs_map["dispense_liquid_2"]
-        liquid_name = add_liquid_2_operation.parameters["liquid_name"]
-        op = SyringePumpFinishDispensingOp.from_args(target_sample=sample,
-                                                     liquid_name=liquid_name)
-        self.request_station_op(op)
+        self.data['is_liquid_2_added'] = True
 
     def request_sample_reaction(self):
         batch_index = self.data["target_batch_index"]
@@ -162,6 +157,9 @@ class APCSynthesisProcess(StationProcess):
 
     ''' transitions callbacks '''
 
+    def is_liquid_2_added(self):
+        return self.data['is_liquid_2_added']
+
     def is_reaction_complete(self):
         target_product_concentration = self.data["target_product_concentration"]
         batch_index = self.data["target_batch_index"]
@@ -179,8 +177,10 @@ class APCFiltrationProcess(StationProcess):
         ''' States '''
         self.STATES = [ State(name='init_state'),
             State(name='prep_state', on_enter='initialise_process_data'),
-            State(name='start_heat_stir', on_enter=['request_heating_stirring']),
-            State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
+            State(name='start_heat_stir', on_enter=['request_heating_stirring']), 
+            State(name='wait_for_crystallisation', on_enter=['request_wait_for_crystallisation']), 
+            State(name='open_close_drain_valve_short', on_enter=['request_open_close_drain_valve_short']),
+            State(name='open_close_drain_valve_timed', on_enter=['request_open_close_drain_valve_timed']),
             State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
             State(name='filter_product', on_enter=['request_filtration']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
@@ -192,12 +192,15 @@ class APCFiltrationProcess(StationProcess):
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
             {'source':'prep_state', 'dest': 'start_heat_stir'},
-            {'source':'start_heat_stir', 'dest': 'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
+            {'source':'start_heat_stir', 'dest': 'wait_for_crystallisation', 'conditions':'are_req_station_ops_completed'},
+            {'source':'wait_for_crystallisation', 'dest': 'open_close_drain_valve_short', 'conditions':'are_req_station_ops_completed'},
             
-            {'source':'open_close_drain_valve','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve_short','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve_timed','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+
             {'source':'increment_discharge_cycle','dest':'filter_product'},
 
-            {'source':'filter_product','dest':'open_close_drain_valve',
+            {'source':'filter_product','dest':'open_close_drain_valve_timed',
                 "unless": ["is_product_discharged", "is_vessel_clean"],
                 'conditions':'are_req_station_ops_completed'},
             
@@ -234,7 +237,7 @@ class APCFiltrationProcess(StationProcess):
                                      skip_station_ops,
                                      skip_ext_procs)
         model.data["max_num_discharge_cycles"] = int(num_discharge_cycles)
-        model.data["max_num_cycles"] = int(num_wash_cycles) + int(num_discharge_cycles)
+        model.data["max_num_cycles"] = int(num_wash_cycles)*int(num_discharge_cycles)
         model.data["target_batch_index"] = int(target_batch_index)
         model.data["target_sample_index"] = int(target_sample_index)
         model.save()
@@ -252,8 +255,14 @@ class APCFiltrationProcess(StationProcess):
         current_op = self.generate_operation("heat_stir_discharge", target_sample=sample)
         self.request_station_op(current_op)
 
+    def request_wait_for_crystallisation(self):
+        time.sleep(1800) # TODO how should this be done properly?
 
-    def request_open_close_drain_valve(self):
+    def request_open_close_drain_valve_short(self):
+        station_op = MTSynthShortOpenReactionValveOp.from_args()
+        self.request_station_op(station_op)
+
+    def request_open_close_drain_valve_timed(self):
         station_op = self.generate_operation("discharge_product")
         self.request_station_op(station_op)
 
@@ -285,7 +294,10 @@ class APCFiltrationProcess(StationProcess):
 
     ''' transitions callbacks '''
     def is_product_discharged(self):
-        return self.data["num_discharge_cycles"] >= self.data["max_num_discharge_cycles"]
+        if (self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"] == 0) and (self.data["num_discharge_cycles"] != 0):
+            return True
+        else:
+            return False
 
     def is_vessel_clean(self):
         return self.data["num_discharge_cycles"] == self.data["max_num_cycles"]
