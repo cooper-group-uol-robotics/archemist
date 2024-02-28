@@ -32,6 +32,14 @@ class WatersLCMSStation(Station):
         self._model_proxy.analysis_status = new_status
 
     @property
+    def sample_index(self) -> int:
+        return self._model_proxy.sample_index
+    
+    @sample_index.setter
+    def sample_index(self, index: int):
+        self._model_proxy.sample_index = index
+
+    @property
     def batch_inserted(self) -> bool:
         return self._model_proxy.batch_inserted
 

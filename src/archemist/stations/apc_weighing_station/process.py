@@ -84,8 +84,10 @@ class APCWeighingProcess(StationProcess):
 
     def request_load_funnel(self):
         robot_task = RobotTaskOp.from_args(
-            name="LoadFunnel",
-            target_robot="KMRIIWARobot"
+            name="loadWeighingFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "loadWeighingFunnel"
         )
         wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, wait_for_next_op])
@@ -103,9 +105,14 @@ class APCWeighingProcess(StationProcess):
         self.data['is_weighing_complete'] = True
 
     def request_unload_funnel(self):
-        # TODO add parameter for funnel index?
-        robot_task = RobotTaskOp.from_args(name="UnloadFunnel",
-                                           target_robot="KMRIIWARobot")
+        weighing_station: APCWeighingStation = self.get_assigned_station()
+        robot_task = RobotTaskOp.from_args(
+            name="unLoadFinishedFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "unLoadFinishedFunnel",
+            lbr_program_params = weighing_station.funnel_storage_index
+            )
         self.request_robot_ops([robot_task])
 
     def increment_funnel_index(self):

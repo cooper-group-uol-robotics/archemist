@@ -66,14 +66,6 @@ class APCFumehoodStation(Station):
             return self.cartridges[cartridge_index]
 
     @property
-    def slide_window_open(self) -> bool:
-        return self._model_proxy.slide_window_open
-
-    @slide_window_open.setter
-    def slide_window_open(self, new_state: bool):
-        self._model_proxy.slide_window_open = new_state
-
-    @property
     def sash_open(self) -> bool:
         return self._model_proxy.sash_open
 

@@ -12,6 +12,7 @@ from archemist.stations.syringe_pump_station.state import SyringePumpFinishDispe
 from archemist.stations.mt_synthesis_station.state import MTSynthSampleOp, MTSynthStopReactionOp, MTSynthCustomOpenCloseReactionValveOp, MTSynthLongOpenCloseReactionValveOp
 from archemist.stations.apc_filtration_station.state import APCFilterProductOp, APCDrainWasteOp
 from archemist.stations.apc_fumehood_station.state import APCOpenSashOp, APCCloseSashOp
+from archemist.stations.apc_weighing_station.state import APCWeighingStation
 
 from archemist.core.state.lot import Lot
 from .state import APCMetaStation
@@ -26,6 +27,7 @@ class APCSynthesisProcess(StationProcess):
         ''' States '''
         self.STATES = [ State(name='init_state'),
             State(name='prep_state', on_enter=['initialise_process_data']), 
+            State(name='load_funnel', on_enter=['request_load_funnel']), 
             
             State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
             
@@ -45,7 +47,8 @@ class APCSynthesisProcess(StationProcess):
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'add_liquid_1'},
+            {'source':'prep_state', 'dest': 'load_funnel'},
+            {'source':'load_funnel', 'dest': 'add_liquid_1'},
             {'source':'add_liquid_1','dest':'add_solid', 'conditions':'are_req_station_ops_completed'},
             {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
@@ -93,6 +96,17 @@ class APCSynthesisProcess(StationProcess):
 
     def initialise_process_data(self):
         self.data['is_liquid_2_added'] = False
+
+    def request_load_funnel(self):
+        weighing_station: APCWeighingStation = self.get_assigned_station()
+        robot_task = RobotTaskOp.from_args(
+            name="loadFreshFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "loadFreshFunnel",
+            lbr_program_params = weighing_station.funnel_storage_index
+            )
+        self.request_robot_ops([robot_task])
 
     def request_adding_liquid_1(self):
         batch_index = self.data["target_batch_index"]
@@ -367,11 +381,13 @@ class APCCleaningProcess(StationProcess):
     ''' state callbacks '''
     def request_load_cleaning_funnel(self):
         robot_task = RobotTaskOp.from_args(
-            name="LoadCleaningFunnel",
-            target_robot="KMRIIWARobot"
+            name="loadEmptyFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "loadEmptyFunnel"
         )
         self.request_robot_ops([robot_task])
-
+        
     def request_adding_wash_liquid(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
@@ -420,8 +436,10 @@ class APCCleaningProcess(StationProcess):
 
     def request_unload_cleaning_funnel(self):
         robot_task = RobotTaskOp.from_args(
-            name="UnloadCleaningFunnel",
-            target_robot="KMRIIWARobot"
+            name="unLoadEmptyFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "unLoadEmptyFunnel"
         )
         self.request_robot_ops([robot_task])
 
