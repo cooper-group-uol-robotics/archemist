@@ -161,11 +161,6 @@ steps:
               target_temperature: 85
               target_stirring_speed: 400
               wait_duration: Null
-          - name: wash_discharge
-            op: MTSynthTimedOpenReactionValveOp
-            parameters:
-              duration: 20
-              time_unit: second
         args:
           target_batch_index: 0
           target_sample_index: 1

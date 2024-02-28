@@ -197,21 +197,19 @@ class APCFiltrationProcess(StationProcess):
             {'source':'wait_for_crystallisation', 'dest': 'open_close_drain_valve_custom', 'conditions':'are_req_station_ops_completed'},
             
             {'source':'open_close_drain_valve_custom','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
-            {'source':'open_close_drain_valve_long','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
-
             {'source':'increment_discharge_cycle','dest':'filter_product'},
 
-            {'source':'filter_product','dest':'open_close_drain_valve_long',
-                "unless": ["is_product_discharged", "is_vessel_clean"],
+            {'source':'filter_product','dest':'open_close_drain_valve_custom',
+                "unless": "is_last_discharge",
                 'conditions':'are_req_station_ops_completed'},
-            {'source':'filter_product','dest':'add_wash_liquid',
-                "unless": "is_vessel_clean",
-                'conditions':['are_req_station_ops_completed', "is_product_discharged"]},
+            {'source':'filter_product','dest':'open_close_drain_valve_long',
+                'conditions':['are_req_station_ops_completed', "is_last_discharge"]},
+            
+            {'source':'open_close_drain_valve_long','dest':'add_wash_liquid', "unless":"is_vessel_clean",'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve_long','dest':'stop_heat_stir', 'conditions':['are_req_station_ops_completed', "is_vessel_clean"]},
 
-            {'source':'add_wash_liquid','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
+            {'source':'add_wash_liquid','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
 
-            {'source':'filter_product','dest':'stop_heat_stir',
-                'conditions':['are_req_station_ops_completed', "is_product_discharged", "is_vessel_clean"]},
             {'source':'stop_heat_stir','dest':'dry_product', 'conditions':'are_req_station_ops_completed'},
             {'source':'dry_product','dest':'final_state', 'conditions':'are_req_station_ops_completed'},
         ]
@@ -294,7 +292,7 @@ class APCFiltrationProcess(StationProcess):
         self.data["num_discharge_cycles"] += 1
 
     ''' transitions callbacks '''
-    def is_product_discharged(self):
+    def is_last_discharge(self):
         if (self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"] == 0) and (self.data["num_discharge_cycles"] != 0):
             return True
         else:
@@ -388,14 +386,6 @@ class APCCleaningProcess(StationProcess):
         current_op = self.generate_operation("wash_heat_stir", target_sample=sample)
         self.request_station_op(current_op)
 
-    def request_analysis_process(self):
-        batch_index = self.data["target_batch_index"]
-        sample_index = self.data["target_sample_index"]
-        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot,
-                                                target_batch_index=batch_index,
-                                                target_sample_index=sample_index)
-        self.request_station_process(proc)
-
     def request_sample_reaction(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
@@ -408,12 +398,20 @@ class APCCleaningProcess(StationProcess):
                                         target_stirring_speed=reaction_stirring_speed)
         self.request_station_op(op)
 
+    def request_analysis_process(self):
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        proc = APCLCMSAnalysisProcess.from_args(lot=self.lot,
+                                                target_batch_index=batch_index,
+                                                target_sample_index=sample_index)
+        self.request_station_process(proc)
+
     def request_reaction_stop(self):
         station_op = MTSynthStopReactionOp.from_args()
         self.request_station_op(station_op)
 
     def request_open_close_drain_valve(self):
-        station_op = self.generate_operation("wash_discharge")
+        station_op = MTSynthLongOpenCloseReactionValveOp.from_args()
         self.request_station_op(station_op)
 
     def request_filter_drain(self):
