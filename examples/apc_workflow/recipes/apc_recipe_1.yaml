@@ -102,11 +102,10 @@ steps:
               target_temperature: 5
               target_stirring_speed: 400
               wait_duration: Null
-          - name: discharge_product
-            op: MTSynthTimedOpenReactionValveOp
+          - name: custom_discharge
+            op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              duration: 0.5
-              time_unit: second
+              steps: 5000
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:

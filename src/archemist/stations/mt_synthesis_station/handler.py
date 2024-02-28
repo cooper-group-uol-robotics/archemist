@@ -8,8 +8,7 @@ from .state import (
     MTSynthSampleOp,
     MTSynthCustomOpenCloseReactionValveOp,
     MTSynthStopReactionOp,
-    MTSynthCloseReactionValveOp,
-    MTSynthOpenReactionValveOp,
+    MTSynthLongOpenCloseReactionValveOp,
     MTSynthesisStation,
 )
 from archemist.core.util.enums import OpOutcome
@@ -122,24 +121,17 @@ try:
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN_CLOSE
+                        valve_command = BaseValveCmd.OPEN_CLOSE_STEPS
                     )
 
-            elif isinstance(current_op, MTSynthOpenReactionValveOp):
-                rospy.loginfo(f"Base valve open")
+            elif isinstance(current_op, MTSynthLongOpenCloseReactionValveOp):
+                rospy.loginfo(f"Base valve open & close for a long time.")
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN
+                        valve_command = BaseValveCmd.OPEN_CLOSE_LONG
                     )
 
-            elif isinstance(current_op, MTSynthCloseReactionValveOp):
-                rospy.loginfo(f"Base valve close")
-                for i in range(10):
-                    self._pub_base_valve.publish(
-                        seq=self._seq_id, 
-                        valve_command = BaseValveCmd.CLOSE
-                    )
             else:
                 rospy.logwarn(
                     f"[{self.__class__.__name__}] Unkown operation was received"

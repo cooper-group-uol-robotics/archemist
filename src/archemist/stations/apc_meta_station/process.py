@@ -9,7 +9,7 @@ from archemist.stations.apc_weighing_station.process import APCWeighingProcess
 
 from archemist.stations.waters_lcms_station.state import LCMSAnalysisResult
 from archemist.stations.syringe_pump_station.state import SyringePumpFinishDispensingOp
-from archemist.stations.mt_synthesis_station.state import MTSynthSampleOp, MTSynthStopReactionOp, MTSynthShortOpenReactionValveOp
+from archemist.stations.mt_synthesis_station.state import MTSynthSampleOp, MTSynthStopReactionOp, MTSynthCustomOpenCloseReactionValveOp, MTSynthLongOpenCloseReactionValveOp
 from archemist.stations.apc_filtration_station.state import APCFilterProductOp, APCDrainWasteOp
 from archemist.stations.apc_fumehood_station.state import APCOpenSashOp, APCCloseSashOp
 
@@ -53,9 +53,10 @@ class APCSynthesisProcess(StationProcess):
             {'source':'start_analysis_process','dest':'run_reaction'},
 
             {'source':'run_reaction','dest':'add_liquid_2', 'unless':'is_liquid_2_added', 'conditions':'are_req_station_ops_completed'},
-            {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             {'source':'run_reaction','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
 
+            {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
+            
             {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
             {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
             
@@ -179,8 +180,8 @@ class APCFiltrationProcess(StationProcess):
             State(name='prep_state', on_enter='initialise_process_data'),
             State(name='start_heat_stir', on_enter=['request_heating_stirring']), 
             State(name='wait_for_crystallisation', on_enter=['request_wait_for_crystallisation']), 
-            State(name='open_close_drain_valve_short', on_enter=['request_open_close_drain_valve_short']),
-            State(name='open_close_drain_valve_timed', on_enter=['request_open_close_drain_valve_timed']),
+            State(name='open_close_drain_valve_custom', on_enter=['request_open_close_drain_valve_custom']),
+            State(name='open_close_drain_valve_long', on_enter=['request_open_close_drain_valve_long']),
             State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
             State(name='filter_product', on_enter=['request_filtration']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
@@ -193,20 +194,20 @@ class APCFiltrationProcess(StationProcess):
             {'source':'init_state', 'dest': 'prep_state'},
             {'source':'prep_state', 'dest': 'start_heat_stir'},
             {'source':'start_heat_stir', 'dest': 'wait_for_crystallisation', 'conditions':'are_req_station_ops_completed'},
-            {'source':'wait_for_crystallisation', 'dest': 'open_close_drain_valve_short', 'conditions':'are_req_station_ops_completed'},
+            {'source':'wait_for_crystallisation', 'dest': 'open_close_drain_valve_custom', 'conditions':'are_req_station_ops_completed'},
             
-            {'source':'open_close_drain_valve_short','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
-            {'source':'open_close_drain_valve_timed','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve_custom','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
+            {'source':'open_close_drain_valve_long','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
 
             {'source':'increment_discharge_cycle','dest':'filter_product'},
 
-            {'source':'filter_product','dest':'open_close_drain_valve_timed',
+            {'source':'filter_product','dest':'open_close_drain_valve_long',
                 "unless": ["is_product_discharged", "is_vessel_clean"],
                 'conditions':'are_req_station_ops_completed'},
-            
             {'source':'filter_product','dest':'add_wash_liquid',
                 "unless": "is_vessel_clean",
                 'conditions':['are_req_station_ops_completed', "is_product_discharged"]},
+
             {'source':'add_wash_liquid','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
 
             {'source':'filter_product','dest':'stop_heat_stir',
@@ -258,12 +259,12 @@ class APCFiltrationProcess(StationProcess):
     def request_wait_for_crystallisation(self):
         time.sleep(1800) # TODO how should this be done properly?
 
-    def request_open_close_drain_valve_short(self):
-        station_op = MTSynthShortOpenReactionValveOp.from_args()
+    def request_open_close_drain_valve_long(self):
+        station_op = MTSynthLongOpenCloseReactionValveOp.from_args()
         self.request_station_op(station_op)
 
-    def request_open_close_drain_valve_timed(self):
-        station_op = self.generate_operation("discharge_product")
+    def request_open_close_drain_valve_custom(self):
+        station_op = self.generate_operation("custom_discharge")
         self.request_station_op(station_op)
 
     def request_filtration(self):
