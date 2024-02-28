@@ -13,7 +13,7 @@ class KmriiwaROSHandler(RobotOpHandler):
     def initialise(self) -> bool:
         rospy.init_node(f'{self._robot}_handler')
         self._kukaCmdPub = rospy.Publisher('/kuka4/commands', RobotCommand, queue_size=1)
-        rospy.Subscriber('/kuka4/robot_status', RobotStatus, self._update_kmp_status_cb, queue_size=1)
+        # rospy.Subscriber('/kuka4/robot_status', RobotStatus, self._update_kmp_status_cb, queue_size=1)
         rospy.Subscriber('/kuka4/task_status', TaskStatus, self._kuka_task_cb, queue_size=1)
         
         self._kuka_cmd_seq = 1
@@ -24,7 +24,7 @@ class KmriiwaROSHandler(RobotOpHandler):
         self._lbr_current_op_state = ''
         self._need_to_charge = False
         self._need_to_calibrate = False
-        # rospy.sleep(2)
+        rospy.sleep(2)
         return True
 
     def run(self):
