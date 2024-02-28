@@ -5,7 +5,7 @@ from archemist.core.state.robot_op import RobotTaskOp, RobotWaitOp, RobotNavOp
 
 from archemist.stations.apc_fumehood_station.process import APCSolidAdditionProcess
 from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProcess
-from archemist.stations.apc_weighing_station.process import APCWeighingProcess
+from archemist.stations.apc_weighing_station.process import APCWeighingProcess, APCNewFunnelProcess
 
 from archemist.stations.waters_lcms_station.state import LCMSAnalysisResult
 from archemist.stations.syringe_pump_station.state import SyringePumpFinishDispensingOp
@@ -27,7 +27,7 @@ class APCSynthesisProcess(StationProcess):
         ''' States '''
         self.STATES = [ State(name='init_state'),
             State(name='prep_state', on_enter=['initialise_process_data']), 
-            State(name='load_funnel', on_enter=['request_load_funnel']), 
+            State(name='load_funnel', on_enter=['request_load_funnel_process']), 
             
             State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
             
@@ -48,7 +48,7 @@ class APCSynthesisProcess(StationProcess):
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
             {'source':'prep_state', 'dest': 'load_funnel'},
-            {'source':'load_funnel', 'dest': 'add_liquid_1'},
+            {'source':'load_funnel', 'dest': 'add_liquid_1', 'conditions':'are_req_station_procs_completed'},
             {'source':'add_liquid_1','dest':'add_solid', 'conditions':'are_req_station_ops_completed'},
             {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
@@ -97,16 +97,21 @@ class APCSynthesisProcess(StationProcess):
     def initialise_process_data(self):
         self.data['is_liquid_2_added'] = False
 
-    def request_load_funnel(self):
-        weighing_station: APCWeighingStation = self.get_assigned_station()
-        robot_task = RobotTaskOp.from_args(
-            name="loadFreshFunnel",
-            target_robot="KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "loadFreshFunnel",
-            lbr_program_params = weighing_station.funnel_storage_index
-            )
-        self.request_robot_ops([robot_task])
+    def request_load_funnel_process(self):
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        add_solid_operation = self.operation_specs_map["add_solid"]
+        operations = [{
+            "name": "add_solid",
+            "op": add_solid_operation.op_type,
+            "parameters": dict(add_solid_operation.parameters)
+        }]
+
+        proc = APCNewFunnelProcess.from_args(lot=self.lot,
+                                                 target_batch_index=batch_index,
+                                                 target_sample_index=sample_index,
+                                                 operations=operations)
+        self.request_station_process(proc)
 
     def request_adding_liquid_1(self):
         batch_index = self.data["target_batch_index"]

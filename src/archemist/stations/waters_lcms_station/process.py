@@ -91,7 +91,7 @@ class APCLCMSAnalysisProcess(StationProcess):
             target_robot="KMRIIWARobot",
             task_type = 2,
             lbr_program_name = "unLoadLCMS",
-            lbr_program_params = lcms_station.sample_index
+            lbr_program_params = [str(lcms_station.sample_index)]
             )
         self.request_robot_ops([robot_task])
 

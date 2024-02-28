@@ -111,7 +111,7 @@ class APCWeighingProcess(StationProcess):
             target_robot="KMRIIWARobot",
             task_type = 2,
             lbr_program_name = "unLoadFinishedFunnel",
-            lbr_program_params = weighing_station.funnel_storage_index
+            lbr_program_params = [str(weighing_station.funnel_storage_index)]
             )
         self.request_robot_ops([robot_task])
 
@@ -122,3 +122,60 @@ class APCWeighingProcess(StationProcess):
     ''' transition callbacks '''
     def is_weighing_complete(self):
         return self.data['is_weighing_complete']
+    
+class APCNewFunnelProcess(StationProcess):
+    
+    def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
+        super().__init__(process_model)
+
+        ''' States '''
+        self.STATES = [
+            State(name='init_state'), 
+            State(name='prep_state'),
+            State(name='load_funnel', on_enter=['request_load_funnel']),
+            State(name='final_state')
+        ]
+            
+        ''' Transitions '''
+        self.TRANSITIONS = [
+            { 'source':'init_state','dest':'prep_state'},
+            { 'source':'prep_state','dest':'load_funnel'},
+            { 'source':'load_funnel','dest':'final_state', 'conditions':'are_req_robot_ops_completed'}
+            ]
+
+    @classmethod
+    def from_args(cls, lot: Lot,
+                  target_batch_index: int,
+                  target_sample_index: int,
+                  operations: List[Dict[str, Any]] = None,
+                  is_subprocess: bool=False,
+                  skip_robot_ops: bool=False,
+                  skip_station_ops: bool=False,
+                  skip_ext_procs: bool=False
+                  ):
+        model = StationProcessModel()
+        cls._set_model_common_fields(model,
+                                     APCWeighingStation.__name__,
+                                     lot,
+                                     operations,
+                                     is_subprocess,
+                                     skip_robot_ops,
+                                     skip_station_ops,
+                                     skip_ext_procs)
+        model.data["target_batch_index"] = int(target_batch_index)
+        model.data["target_sample_index"] = int(target_sample_index)
+        model.save()
+        return cls(model)
+    
+    ''' States callbacks. '''
+    def request_load_funnel(self):
+        weighing_station: APCWeighingStation = self.get_assigned_station()
+        robot_task = RobotTaskOp.from_args(
+            name="loadFreshFunnel",
+            target_robot="KMRIIWARobot",
+            task_type = 2,
+            lbr_program_name = "loadFreshFunnel",
+            lbr_program_params = [str(weighing_station.funnel_storage_index)]
+            )
+        self.request_robot_ops([robot_task])
+

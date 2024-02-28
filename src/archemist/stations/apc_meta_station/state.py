@@ -13,3 +13,4 @@ class APCMetaStation(Station):
         cls._set_model_common_fields(model, station_dict)
         model.save()
         return cls(model)
+    

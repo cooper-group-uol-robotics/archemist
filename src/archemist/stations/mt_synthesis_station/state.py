@@ -151,7 +151,7 @@ class MTSynthSampleOp(StationSampleOp):
                   target_sample: Sample,
                   target_temperature: int,
                   target_stirring_speed: int,
-                  dilution: int):
+                  dilution: int=100):
         model = MTSynthSampleOpModel()
         model.target_sample = target_sample.model
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)

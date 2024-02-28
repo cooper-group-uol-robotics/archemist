@@ -66,7 +66,7 @@ class APCSolidAdditionProcess(StationProcess):
             target_robot="KMRIIWARobot",
             task_type = 2,
             lbr_program_name = "addSolid",
-            lbr_program_params = cartridge_index
+            lbr_program_params = [str(cartridge_index)]
             )
         wait_task = RobotWaitOp.from_args("KMRIIWARobot", 3)
         self.request_robot_ops([robot_task, wait_task])
