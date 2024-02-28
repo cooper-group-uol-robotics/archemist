@@ -157,9 +157,9 @@ class WaterLCMSRosHandler(StationOpHandler):
 
     def lcms_callback(self, msg):
         self.check_cb = False
-        print("im outside condition")
+        print("I am outside condition.")
         if msg.seq == self._seq_id and msg.complete:
             self.check_cb = True
-            print("im inside condition")
+            print("I am inside condition.")
             self._op_complete = msg.complete
             self._seq_id+=1

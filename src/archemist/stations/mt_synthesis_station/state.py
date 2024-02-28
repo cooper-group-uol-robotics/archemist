@@ -4,7 +4,7 @@ from .model import (MTSynthesisStationModel,
                     OptiMaxMode,
                     MTSynthHeatStirOpModel,
                     MTSynthSampleOpModel,
-                    MTSynthTimedOpenReactionValveOpModel)
+                    MTSynthCustomOpenCloseReactionValveOpModel)
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOp, StationSampleOp, StationOpModel
 from archemist.core.state.sample import Sample
@@ -79,7 +79,7 @@ class MTSynthesisStation(Station):
                 self.optimax_mode = OptiMaxMode.STIRRING
                 self.set_reaction_temperature = None
                 self.set_stirring_speed = op.target_stirring_speed
-        elif isinstance(op, MTSynthTimedOpenReactionValveOp):
+        elif isinstance(op, MTSynthCustomOpenCloseReactionValveOp):
             self.optimax_valve_open = True
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
@@ -90,7 +90,7 @@ class MTSynthesisStation(Station):
             self.num_sampling_vials -= 1
         elif isinstance(op, MTSynthOpenReactionValveOp):
             self.optimax_valve_open = True
-        elif isinstance(op, MTSynthCloseReactionValveOp) or isinstance(op, MTSynthTimedOpenReactionValveOp):
+        elif isinstance(op, MTSynthCloseReactionValveOp) or isinstance(op, MTSynthCustomOpenClosrReactionValveOp):
             self.optimax_valve_open = False
         super().complete_assigned_op(outcome, results)
 
@@ -184,38 +184,21 @@ class MTSynthStopReactionOp(StationOp):
         model.save()
         return cls(model)
     
-class MTSynthTimedOpenReactionValveOp(StationOp):
-    def __init__(self, op_model: Union[MTSynthTimedOpenReactionValveOpModel, ModelProxy]) -> None:
+class MTSynthCustomOpenCloseReactionValveOp(StationOp):
+    def __init__(self, op_model: Union[MTSynthCustomOpenCloseReactionValveOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, duration: float,
-                  time_unit: Literal["second", "minute", "hour"]):
-        model = MTSynthTimedOpenReactionValveOpModel()
+    def from_args(cls, steps: int):
+        model = MTSynthCustomOpenCloseReactionValveOpModel()
         cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.duration = float(duration)
-        model.time_unit = time_unit
+        model.steps = int(steps)
         model.save()
         return cls(model)
     
     @property
-    def duration(self) -> float:
-        return self._model_proxy.duration
-
-    @property
-    def time_unit(self) -> Literal["second", "minute", "hour"]:
-        return self._model_proxy.time_unit
-    
-class MTSynthShortOpenReactionValveOp(StationOp):
-    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
-        super().__init__(op_model)
-
-    @classmethod
-    def from_args(cls):
-        model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.save()
-        return cls(model)
+    def steps(self) -> int:
+        return self._model_proxy.steps
 
 class MTSynthOpenReactionValveOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:

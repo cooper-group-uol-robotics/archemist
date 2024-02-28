@@ -6,8 +6,7 @@ from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpRe
 from .state import (
     MTSynthHeatStirOp,
     MTSynthSampleOp,
-    MTSynthTimedOpenReactionValveOp,
-    MTSynthShortOpenReactionValveOp,
+    MTSynthCustomOpenCloseReactionValveOp,
     MTSynthStopReactionOp,
     MTSynthCloseReactionValveOp,
     MTSynthOpenReactionValveOp,
@@ -111,26 +110,19 @@ try:
                         optimax_command = MettlerOptimaxCmd.STOP
                     )
 
-            elif isinstance(current_op, MTSynthTimedOpenReactionValveOp):
-                rospy.loginfo(f"Base valve timed open & close")
+            elif isinstance(current_op, MTSynthCustomOpenCloseReactionValveOp):
+                rospy.loginfo(f"Base valve open & close with custom number of steps.")
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN
+                        valve_command = BaseValveCmd.UPDATE,
+                        num_steps = current_op.steps
                     )
-                time.sleep(current_op.duration()) # TODO is this correct?
+                time.sleep(5)
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.CLOSE
-                    )
-
-            elif isinstance(current_op, MTSynthShortOpenReactionValveOp):
-                rospy.loginfo(f"Base valve open")
-                for i in range(10):
-                    self._pub_base_valve.publish(
-                        seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN_s
+                        valve_command = BaseValveCmd.OPEN_CLOSE
                     )
 
             elif isinstance(current_op, MTSynthOpenReactionValveOp):
