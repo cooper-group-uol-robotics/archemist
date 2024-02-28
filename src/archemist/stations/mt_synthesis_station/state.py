@@ -108,7 +108,6 @@ class MTSynthHeatStirOp(StationSampleOp):
                   target_temperature: int,
                   target_stirring_speed: int,
                   wait_duration: int,
-                  stir_duration:int,
                   time_unit: Literal["second", "minute", "hour"]=None):
         model = MTSynthHeatStirOpModel()
         model.target_sample = target_sample.model
@@ -116,7 +115,6 @@ class MTSynthHeatStirOp(StationSampleOp):
         model.target_temperature = int(target_temperature) if target_temperature else None
         model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
         model.wait_duration = int(wait_duration) if wait_duration and wait_duration != "Null" else None
-        model.stir_duration = int(stir_duration) if stir_duration and stir_duration != "Null" else None
         if model.wait_duration:
             model.time_unit = time_unit
         model.save()
@@ -129,10 +127,6 @@ class MTSynthHeatStirOp(StationSampleOp):
     @property
     def target_stirring_speed(self) -> int:
         return self._model_proxy.target_stirring_speed
-
-    @property
-    def stir_duration(self) -> int:
-        return self._model_proxy.stir_duration
 
     @property
     def time_unit(self) -> Literal["second", "minute", "hour"]:

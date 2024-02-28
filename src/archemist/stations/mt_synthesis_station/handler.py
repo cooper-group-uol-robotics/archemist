@@ -85,7 +85,6 @@ try:
                         temperature = current_op.target_temperature,
                         stir_speed = current_op.target_stirring_speed,
                         wait_duration = current_op.wait_duration,
-                        stir_duration = current_op.stir_duration
                     )
 
             elif isinstance(current_op, MTSynthSampleOp):

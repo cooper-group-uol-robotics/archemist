@@ -5,7 +5,7 @@ from archemist.core.models.station_op_model import StationSampleOpModel
 
 class APCCartridgeModel(EmbeddedDocument):
     hotel_index = fields.IntField(required=True)
-    associated_solid= fields.StringField(required=True)
+    associated_solid = fields.StringField(required=True)
     depleted = fields.BooleanField(default=False)
 
 class APCFumehoodStationModel(StationModel):

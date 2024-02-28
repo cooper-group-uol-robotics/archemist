@@ -22,7 +22,6 @@ class MTSynthHeatStirOpModel(StationSampleOpModel):
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
     wait_duration = fields.IntField(null=True)
     time_unit = fields.StringField(choices=["second", "minute", "hour"], null=True)
-    stir_duration = fields.IntField(null=True)
 
 class MTSynthSampleOpModel(StationSampleOpModel):
     target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)

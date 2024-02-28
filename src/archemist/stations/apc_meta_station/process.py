@@ -39,7 +39,7 @@ class APCSynthesisProcess(StationProcess):
 
             State(name='run_reaction', on_enter=['request_reaction_start']),
             
-            State(name='wait_for_result'),
+            State(name='wait_for_result'), # TODO nothing here! Need to check for LCMS results
 
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
             State(name='final_state')]
@@ -53,7 +53,7 @@ class APCSynthesisProcess(StationProcess):
             {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
             {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'run_reaction'},
+            {'source':'start_analysis_process','dest':'run_reaction', 'conditions':'are_req_station_procs_completed'},
 
             {'source':'run_reaction','dest':'add_liquid_2', 'unless':'is_liquid_2_added', 'conditions':'are_req_station_ops_completed'},
             {'source':'run_reaction','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},

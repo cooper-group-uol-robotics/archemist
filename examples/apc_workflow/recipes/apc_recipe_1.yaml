@@ -81,7 +81,7 @@ steps:
             parameters:
               target_temperature: 70
               target_stirring_speed: 400
-              wait_duration: Null
+              wait_duration: 100
         args:
           target_batch_index: 0
           target_sample_index: 0
