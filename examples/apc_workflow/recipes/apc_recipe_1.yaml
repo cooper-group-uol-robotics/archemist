@@ -58,32 +58,34 @@ steps:
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 400
+              dispense_volume: 500
               dispense_unit: mL
-              dispense_rate: 5
+              dispense_rate: 150
               rate_unit: mL/minute
           - name: add_solid
             op: APCDispenseSolidOp
             parameters:
               solid_name: 4-aminophenol
-              dispense_mass: 30
+              dispense_mass: 20
               dispense_unit: g
-          - name: dispense_liquid_2
-            op: SyringePumpDispenseRateOp
+          - name: add_liquid_2
+            op: SyringePumpDispenseVolumeOp
             parameters:
-              liquid_name: acetic_anhyride
-              dispense_rate: 5
+              liquid_name: acetic anhydride
+              dispense_volume: 35
+              dispense_unit: mL
+              dispense_rate: 150
               rate_unit: mL/minute
           - name: heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 40
+              target_temperature: 70
               target_stirring_speed: 400
               wait_duration: Null
         args:
           target_batch_index: 0
           target_sample_index: 0
-          target_product_concentration: 0.7
+          target_product_concentration: 0.4
     transitions:
       on_success: filter
       on_fail: failed_state
@@ -97,7 +99,7 @@ steps:
           - name: heat_stir_discharge
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 40
+              target_temperature: 5
               target_stirring_speed: 400
               wait_duration: Null
           - name: discharge_product
@@ -106,11 +108,13 @@ steps:
               duration: 0.5
               time_unit: second
           - name: wash_product
-            op: DiaphragmPumpDispenseVolumeOp
+            op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 250
+              dispense_volume: 500
               dispense_unit: mL
+              dispense_rate: 150
+              rate_unit: mL/minute
           - name: dry_product
             op: APCDryProductOp
             parameters:
@@ -145,21 +149,23 @@ steps:
         type: APCCleaningProcess
         operations:
           - name: add_wash_liquid
-            op: DiaphragmPumpDispenseVolumeOp
+            op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 250
+              dispense_volume: 500
               dispense_unit: mL
+              dispense_rate: 150
+              rate_unit: mL/minute
           - name: wash_heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 40
+              target_temperature: 85
               target_stirring_speed: 400
               wait_duration: Null
           - name: wash_discharge
             op: MTSynthTimedOpenReactionValveOp
             parameters:
-              duration: 1
+              duration: 20
               time_unit: second
         args:
           target_batch_index: 0

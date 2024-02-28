@@ -205,6 +205,17 @@ class MTSynthTimedOpenReactionValveOp(StationOp):
     @property
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
+    
+class MTSynthShortOpenReactionValveOp(StationOp):
+    def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
+
+    @classmethod
+    def from_args(cls):
+        model = StationOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.save()
+        return cls(model)
 
 class MTSynthOpenReactionValveOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
