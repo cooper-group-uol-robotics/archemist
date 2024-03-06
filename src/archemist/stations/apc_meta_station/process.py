@@ -94,7 +94,7 @@ class APCSynthesisProcess(StationProcess):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
-        current_op = self.generate_operation(f"add_liquid_1", target_sample=sample)
+        current_op = self.generate_operation("add_liquid_1", target_sample=sample)
         self.request_station_op(current_op)
 
     def request_solid_addition_process(self):
@@ -117,7 +117,7 @@ class APCSynthesisProcess(StationProcess):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
-        current_op = self.generate_operation(f"dispense_liquid_2", target_sample=sample)
+        current_op = self.generate_operation("dispense_liquid_2", target_sample=sample)
         self.request_station_op(current_op)
 
     def request_stop_adding_liquid_2(self):

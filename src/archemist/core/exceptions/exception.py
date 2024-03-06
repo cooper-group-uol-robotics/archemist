@@ -39,19 +39,19 @@ class UsingConsumedCatridgeError(Error):
 
 class QuantosCatridgeLoadedError(Error):
     def __init__(self):
-        self.message = f'Quantos station already has a loaded catridge!!!'
+        self.message = 'Quantos station already has a loaded catridge!!!'
 
 
 class QuantosRackLoadedError(Error):
     def __init__(self):
-        self.message = f'Quantos station already has a loaded rack!!!'
+        self.message = 'Quantos station already has a loaded rack!!!'
 
 
 class QuantosCatridgeUnLoadError(Error):
     def __init__(self):
-        self.message = f'Quantos station does not have a loaded catridge!!!'
+        self.message = 'Quantos station does not have a loaded catridge!!!'
 
 
 class DatabaseNotPopulatedError(Error):
     def __init__(self):
-        self.message = f'The provided database is not existing or does not have any documents!!!'
+        self.message = 'The provided database is not existing or does not have any documents!!!'

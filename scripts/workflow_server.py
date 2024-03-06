@@ -12,12 +12,12 @@ import json
 
 if __name__ == '__main__':
     current_dir = Path.cwd()
-    server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
+    server_config_file_path = current_dir.joinpath('server_settings.yaml')
     server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
 
     workflow_dir = Path(server_setttings['workflow_dir_path'])
-    workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
-    recipes_dir_path = workflow_dir.joinpath(f'recipes')
+    workflow_config_file_path = workflow_dir.joinpath('config_files/workflow_config.yaml')
+    recipes_dir_path = workflow_dir.joinpath('recipes')
 
     db_name = server_setttings['db_name']
     batch_addition_location = Location(server_setttings['batch_addition']['location']['node_id'],
@@ -66,7 +66,7 @@ if __name__ == '__main__':
                 recipe_file_path = recipes_watcher.recipes_queue.pop()
                 recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
                 wm_manager.queue_recipe(recipe_dict)
-                print(f'new recipe file queued')
+                print('new recipe file queued')
 
         if auto_batch_addition:
             if not loop_batch_added:

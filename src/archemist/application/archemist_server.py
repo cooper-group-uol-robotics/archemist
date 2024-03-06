@@ -12,9 +12,9 @@ import json
 
 class ArchemistServer:
     def __init__(self, workflow_dir: Path, existing_db: bool = False) -> None:
-        server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
-        workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
-        recipes_dir_path = workflow_dir.joinpath(f'recipes')
+        server_config_file_path = workflow_dir.joinpath('config_files/server_settings.yaml')
+        workflow_config_file_path = workflow_dir.joinpath('config_files/workflow_config.yaml')
+        recipes_dir_path = workflow_dir.joinpath('recipes')
 
         # construct persistence manager
         self._persistence_mgr = PersistenceManager(server_config_file_path)
@@ -36,7 +36,7 @@ class ArchemistServer:
         self._server = context.socket(zmq.PAIR)
         self._server.bind('tcp://127.0.0.1:5555')
 
-        self._log_server(f'ARChemist server started')
+        self._log_server('ARChemist server started')
 
     def run(self):
         # spin

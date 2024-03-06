@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     workflow_dir = Path(args.workflow_dir)
 
-    server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
+    server_config_file_path = workflow_dir.joinpath('config_files/server_settings.yaml')
     server_settings = YamlHandler.load_server_settings_file(server_config_file_path)
     db_name = server_settings['db_name']
     db_host = server_settings['mongodb_host']
