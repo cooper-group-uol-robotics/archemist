@@ -78,7 +78,8 @@ class RobotOpHandler(OpHandler):
     def _begin_execution(self):
         self._robot.set_assigned_op_to_execute()
         if isinstance(self._robot.assigned_op, RobotWaitOp):
-            self._robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+            self._robot.complete_assigned_op(
+                OpOutcome.SUCCEEDED, clear_assigned_op=False)
         else:
             self.execute_op()
 
@@ -103,7 +104,8 @@ class StationProcessHandler:
                 state_details = lot.recipe.current_state_details
                 proc_dict = state_details.station_process
                 station_module_path = self._station.module_path
-                proc = ProcessFactory.create_from_dict(dict(proc_dict), lot, station_module_path)
+                proc = ProcessFactory.create_from_dict(
+                    dict(proc_dict), lot, station_module_path)
                 proc.lot_slot = slot
                 self._station.add_process(proc)
                 lot.status = LotStatus.IN_PROCESS
@@ -158,7 +160,8 @@ class StationProcessHandler:
             if proc.status == ProcessStatus.REQUESTING_STATION_PROCS:
                 for req_station_proc in proc.req_station_procs:
                     if req_station_proc.associated_station != self._station.__class__.__name__:
-                        self._station.request_external_process(req_station_proc)
+                        self._station.request_external_process(
+                            req_station_proc)
                     else:
                         self._station.add_process(req_station_proc)
                 proc.switch_to_waiting()
@@ -172,7 +175,8 @@ class StationProcessHandler:
 class StationHandler:
     def __init__(self, station: Station, use_sim: bool):
         self._station = station
-        self._station_op_handler: StationOpHandler = StationFactory.create_op_handler(station, use_sim)
+        self._station_op_handler: StationOpHandler = StationFactory.create_op_handler(
+            station, use_sim)
         self._station_process_handler = StationProcessHandler(station)
 
     def initialise(self):
@@ -204,7 +208,8 @@ class StationHandler:
 class RobotHandler:
     def __init__(self, robot: Robot, use_sim: bool):
         self._robot = robot
-        self._robot_op_handler: RobotOpHandler = RobotFactory.create_op_handler(robot, use_sim)
+        self._robot_op_handler: RobotOpHandler = RobotFactory.create_op_handler(
+            robot, use_sim)
 
     def initialise(self):
         init_successful = self._robot_op_handler.initialise()

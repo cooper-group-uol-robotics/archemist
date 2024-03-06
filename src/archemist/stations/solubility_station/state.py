@@ -34,7 +34,8 @@ class CheckSolubilityOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=SolubilityStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=SolubilityStation.__name__)
         model.save()
         return cls(model)
 

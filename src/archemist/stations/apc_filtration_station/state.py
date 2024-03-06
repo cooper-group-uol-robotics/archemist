@@ -31,7 +31,8 @@ class APCFilterProductOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.save()
         return cls(model)
 
@@ -46,7 +47,8 @@ class APCDryProductOp(StationSampleOp):
                   duration: int,
                   time_unit: Literal["second", "minute", "hour"]):
         model = APCDryProductOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.target_sample = target_sample.model
         model.duration = int(duration)
         model.time_unit = time_unit
@@ -69,6 +71,7 @@ class APCDrainWasteOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.save()
         return cls(model)

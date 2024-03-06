@@ -103,11 +103,14 @@ class QuantosSolidDispenserQS2(Station):
                     solid.decrease_mass(op.dispense_mass, op.dispense_unit)
                     loaded_cartridge.remaining_dosages -= 1
                 else:
-                    self._log_station(f'Current cartridge {loaded_cartridge} is blocked. Cannot Dispense solid!!!')
+                    self._log_station(
+                        f'Current cartridge {loaded_cartridge} is blocked. Cannot Dispense solid!!!')
             else:
-                self._log_station(f'the cartridge {loaded_cartridge} does not have any dosages left. please replace it.')
+                self._log_station(
+                    f'the cartridge {loaded_cartridge} does not have any dosages left. please replace it.')
         else:
-            self._log_station("dispense operation target is different from the loaded cartridge")
+            self._log_station(
+                "dispense operation target is different from the loaded cartridge")
 
     def load_cartridge(self, solid_name: str):
         for index, cartridge in enumerate(self.cartridges):
@@ -120,7 +123,8 @@ class QuantosSolidDispenserQS2(Station):
 
     def add_station_op(self, station_op: type[StationOp]):
         if isinstance(station_op, QuantosDispenseOp) and not self.loaded_cartridge:
-            self._log_station('Quantos station do not have a loaded cartridge!!!')
+            self._log_station(
+                'Quantos station do not have a loaded cartridge!!!')
             self._log_station(f'station_op {station_op} cannot be added')
         else:
             return super().add_station_op(station_op)
@@ -148,7 +152,8 @@ class QuantosOpenDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
 
@@ -160,7 +165,8 @@ class QuantosCloseDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
 
@@ -172,7 +178,8 @@ class QuantosMoveCarouselOp(StationOp):
     @classmethod
     def from_args(cls, target_pos: int):
         model = QuantosMoveCarouselOpModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.target_pos = target_pos
         model.save()
         return cls(model)
@@ -193,7 +200,8 @@ class QuantosDispenseOp(StationSampleOp):
                   dispense_mass: float,
                   dispense_unit: Literal["g", "mg", "ug"]):
         model = QuantosDispenseOpModel()
-        cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.target_sample = target_sample.model
         model.solid_name = solid_name
         model.dispense_mass = float(dispense_mass)

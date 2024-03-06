@@ -46,7 +46,8 @@ class PPLiquidDispenseOp(StationSampleOp):
                   dispense_volume: float,
                   dispense_unit: Literal["L", "mL", "uL"]):
         model = PPLiquidDispenseOpModel()
-        cls._set_model_common_fields(model, associated_station=PeristalticPumpsStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=PeristalticPumpsStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.dispense_volume = dispense_volume

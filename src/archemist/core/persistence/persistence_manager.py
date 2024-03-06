@@ -11,7 +11,8 @@ from typing import Tuple
 
 class PersistenceManager:
     def __init__(self, server_config_path: Path):
-        server_config = YamlHandler.load_server_settings_file(server_config_path)
+        server_config = YamlHandler.load_server_settings_file(
+            server_config_path)
         db_name = server_config["db_name"]
         db_host = server_config["mongodb_host"]
         self._db_handler = DatabaseHandler(db_host, db_name)
@@ -32,7 +33,8 @@ class PersistenceManager:
                 StationFactory.create_from_dict(station_dict)
 
         input_state = InputState.from_dict(config_dict['workflow_input'])
-        workflow_state = WorkflowState.from_args(config_dict['general']['name'])
+        workflow_state = WorkflowState.from_args(
+            config_dict['general']['name'])
         output_state = OutputState.from_dict(config_dict['workflow_output'])
 
         self._log("Workflow constructed from config file")

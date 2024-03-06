@@ -16,7 +16,8 @@ class PXRDWorkflowStirringProcess(StationProcess):
         self.STATES = [State(name='init_state'),
                        State(name='prep_state'),
                        State(name='place_lot', on_enter=['request_place_lot']),
-                       State(name='load_stir_plate', on_enter=['request_load_stir_plate']),
+                       State(name='load_stir_plate', on_enter=[
+                             'request_load_stir_plate']),
                        State(name='stir', on_enter=['request_stir_op']),
                        State(name='final_state')]
 
@@ -24,9 +25,12 @@ class PXRDWorkflowStirringProcess(StationProcess):
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'place_lot'},
-            {'source': 'place_lot', 'dest': 'load_stir_plate', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'load_stir_plate', 'dest': 'stir', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'stir', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'place_lot', 'dest': 'load_stir_plate',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'load_stir_plate', 'dest': 'stir',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'stir', 'dest': 'final_state',
+                'conditions': 'are_req_station_ops_completed'},
         ]
 
         if self.data["eight_well_rack_first"]:
@@ -94,28 +98,43 @@ class PandaIKASolubilityProcess(StationProcess):
 
         ''' States '''
         self.STATES = [State(name='init_state'),
-                       State(name='prep_state', on_enter='initialise_process_data'),
-                       State(name='load_ika_plate', on_enter='request_load_ika_plate'),
-                       State(name='start_stirring_heating', on_enter='request_stir_heat_op'),
-                       State(name='check_solubility', on_enter='request_check_solubility'),
-                       State(name='liquid_addition', on_enter='request_liquid_addition'),
+                       State(name='prep_state',
+                             on_enter='initialise_process_data'),
+                       State(name='load_ika_plate',
+                             on_enter='request_load_ika_plate'),
+                       State(name='start_stirring_heating',
+                             on_enter='request_stir_heat_op'),
+                       State(name='check_solubility',
+                             on_enter='request_check_solubility'),
+                       State(name='liquid_addition',
+                             on_enter='request_liquid_addition'),
                        State(name='sleep', on_enter='request_sleep'),
-                       State(name='stop_stirring_heating', on_enter='request_ika_stop'),
-                       State(name='unload_ika_plate', on_enter='request_unload_ika_plate'),
+                       State(name='stop_stirring_heating',
+                             on_enter='request_ika_stop'),
+                       State(name='unload_ika_plate',
+                             on_enter='request_unload_ika_plate'),
                        State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'load_ika_plate'},
-            {'source': 'load_ika_plate', 'dest': 'start_stirring_heating', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'start_stirring_heating', 'dest': 'sleep', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'sleep', 'dest': 'check_solubility', 'conditions': 'is_checking_time'},
-            {'source': 'check_solubility', 'dest': 'liquid_addition', 'unless': 'is_solid_dissolved', 'conditions': 'are_req_station_procs_completed'},
-            {'source': 'liquid_addition', 'dest': 'sleep', 'conditions': 'are_req_station_procs_completed'},
-            {'source': 'check_solubility', 'dest': 'stop_stirring_heating', 'conditions': ['are_req_station_procs_completed', 'is_solid_dissolved']},
-            {'source': 'stop_stirring_heating', 'dest': 'unload_ika_plate', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'unload_ika_plate', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'}
+            {'source': 'load_ika_plate', 'dest': 'start_stirring_heating',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'start_stirring_heating', 'dest': 'sleep',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'sleep', 'dest': 'check_solubility',
+                'conditions': 'is_checking_time'},
+            {'source': 'check_solubility', 'dest': 'liquid_addition',
+                'unless': 'is_solid_dissolved', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'liquid_addition', 'dest': 'sleep',
+                'conditions': 'are_req_station_procs_completed'},
+            {'source': 'check_solubility', 'dest': 'stop_stirring_heating', 'conditions': [
+                'are_req_station_procs_completed', 'is_solid_dissolved']},
+            {'source': 'stop_stirring_heating', 'dest': 'unload_ika_plate',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'unload_ika_plate', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'}
         ]
 
     @classmethod
@@ -152,7 +171,8 @@ class PandaIKASolubilityProcess(StationProcess):
 
     def request_stir_heat_op(self):
         batch = self.lot.batches[0]
-        current_op = self.generate_operation("stir_heat_op", target_batch=batch)
+        current_op = self.generate_operation(
+            "stir_heat_op", target_batch=batch)
         self.request_station_op(current_op)
 
     def request_ika_stop(self):
@@ -175,7 +195,8 @@ class PandaIKASolubilityProcess(StationProcess):
                 "parameters": None
             }
         ]
-        ext_process = PandaCheckSolubilityProcess.from_args(self.lot, operations=operations, is_subprocess=True)
+        ext_process = PandaCheckSolubilityProcess.from_args(
+            self.lot, operations=operations, is_subprocess=True)
         self.request_station_process(ext_process)
 
     def request_liquid_addition(self):
@@ -191,7 +212,8 @@ class PandaIKASolubilityProcess(StationProcess):
                 }
             }
         ]
-        ext_process = PandaPumpSolubilityProcess.from_args(self.lot, operations=operations, is_subprocess=True)
+        ext_process = PandaPumpSolubilityProcess.from_args(
+            self.lot, operations=operations, is_subprocess=True)
         self.request_station_process(ext_process)
 
     def request_sleep(self):

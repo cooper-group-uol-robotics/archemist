@@ -33,7 +33,8 @@ class Robot:
         robot_model.exp_id = robot_dict['id']
         robot_model.selected_handler = robot_dict['handler']
         if 'location' in robot_dict:
-            robot_model.location = Location.from_dict(robot_dict["location"]).model
+            robot_model.location = Location.from_dict(
+                robot_dict["location"]).model
 
     @property
     def model(self) -> RobotModel:
@@ -166,7 +167,8 @@ class MobileRobot(Robot):
         cls._set_model_common_fields(model, robot_dict)
         model.total_lot_capacity = robot_dict["total_lot_capacity"]
         model.onboard_capacity = robot_dict["onboard_capacity"]
-        model.onboard_batches_slots = {str(slot_num): None for slot_num in range(model.onboard_capacity)}
+        model.onboard_batches_slots = {
+            str(slot_num): None for slot_num in range(model.onboard_capacity)}
         model.save()
         return cls(model)
 
@@ -209,7 +211,8 @@ class MobileRobot(Robot):
         self._model_proxy.operational_mode = new_mode
 
     def is_batch_onboard(self, batch: Batch) -> bool:
-        onboard_batches = [batch for batch in self.onboard_batches_slots.values() if batch is not None]
+        onboard_batches = [
+            batch for batch in self.onboard_batches_slots.values() if batch is not None]
         return batch in onboard_batches
 
     def update_assigned_op(self):
@@ -231,7 +234,8 @@ class MobileRobot(Robot):
             if robot_op.related_lot not in self.consigned_lots:
                 self.consigned_lots.append(robot_op.related_lot)
             else:
-                self._log_robot(f"{robot_op} cannot be added to the robot queue since robot has no free lot capacity")
+                self._log_robot(
+                    f"{robot_op} cannot be added to the robot queue since robot has no free lot capacity")
         return super().add_op(robot_op)
 
     def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool = True):
@@ -240,7 +244,8 @@ class MobileRobot(Robot):
             if isinstance(op, CollectBatchOp):
                 slot = str(op.target_onboard_slot)
                 self.onboard_batches_slots[slot] = op.target_batch
-                op.target_batch.location = Location.from_args(descriptor=f"{self} @ slot:{slot}")
+                op.target_batch.location = Location.from_args(
+                    descriptor=f"{self} @ slot:{slot}")
             elif isinstance(op, DropBatchOp):
                 slot = str(op.onboard_collection_slot)
                 self.onboard_batches_slots[slot] = None

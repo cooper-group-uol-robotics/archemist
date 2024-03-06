@@ -36,7 +36,8 @@ class RecipeFilesWatchdog(Observer):
                 print(f'recipe file was added: {file.name}')
                 self._recipes_dir_handler.recipes_queue.append(file)
 
-        self.schedule(event_handler=self._recipes_dir_handler, path=self._recipes_dir, recursive=False)
+        self.schedule(event_handler=self._recipes_dir_handler,
+                      path=self._recipes_dir, recursive=False)
 
     @property
     def recipes_queue(self):

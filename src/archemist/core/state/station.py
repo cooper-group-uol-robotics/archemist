@@ -43,10 +43,12 @@ class Station:
         station_model._type = station_dict['type']
         station_model._module = cls.__module__
         station_model.exp_id = station_dict['id']
-        station_model.location = Location.from_dict(station_dict['location']).model
+        station_model.location = Location.from_dict(
+            station_dict['location']).model
         station_model.total_lot_capacity = station_dict['total_lot_capacity']
         slots_num = station_dict['total_lot_capacity']
-        station_model.lot_slots = {str(slot_num): None for slot_num in range(slots_num)}
+        station_model.lot_slots = {
+            str(slot_num): None for slot_num in range(slots_num)}
         station_model.selected_handler = station_dict['handler']
 
         materials_dict = station_dict.get('materials', {})
@@ -163,7 +165,8 @@ class Station:
     @property
     def lot_slots(self) -> Dict[str, Lot]:
         # to handle empty slots with None value
-        def modified_constructor(model): return Lot.from_object_id(model.object_id) if model else None
+        def modified_constructor(model): return Lot.from_object_id(
+            model.object_id) if model else None
         return DictProxy(self._model_proxy.lot_slots, modified_constructor)
 
     def add_lot(self, added_lot: Lot):
@@ -173,11 +176,13 @@ class Station:
                 lot_added = True
                 added_lot.add_station_stamp(str(self))
                 self.lot_slots[slot] = added_lot
-                self._log_station(f'{added_lot} is added for processing at slot {slot}')
+                self._log_station(
+                    f'{added_lot} is added for processing at slot {slot}')
                 break
 
         if not lot_added:
-            self._log_station(f'Cannot add {added_lot}, no lot capacity is available')
+            self._log_station(
+                f'Cannot add {added_lot}, no lot capacity is available')
 
     def finish_processing_lot(self, lot: Lot):
         lot.add_station_stamp(str(self))
@@ -185,7 +190,8 @@ class Station:
         self._log_station(f'processing {lot} is complete')
 
     def is_lot_onboard(self, lot: Lot):
-        onboard_lots = [lot for lot in self.lot_slots.values() if lot is not None]
+        onboard_lots = [lot for lot in self.lot_slots.values()
+                        if lot is not None]
         return lot in onboard_lots
 
     def retrieve_ready_for_collection_lots(self) -> List[Lot]:

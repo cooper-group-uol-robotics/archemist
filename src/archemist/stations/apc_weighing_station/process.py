@@ -23,12 +23,15 @@ class APCWeighingProcess(StationProcess):
             State(name='init_state'),
             State(name='prep_state', on_enter=['initialise_process_data']),
             State(name='tare', on_enter=['request_tare']),
-            State(name='open_balance_door', on_enter=['request_open_balance_door']),
+            State(name='open_balance_door', on_enter=[
+                  'request_open_balance_door']),
             State(name='load_funnel', on_enter=['request_load_funnel']),
-            State(name='close_balance_door', on_enter=['request_close_balance_door']),
+            State(name='close_balance_door', on_enter=[
+                  'request_close_balance_door']),
             State(name='weigh', on_enter=['request_weigh']),
             State(name='unload_funnel', on_enter=['request_unload_funnel']),
-            State(name='update_funnel_index', on_enter=['increment_funnel_index']),
+            State(name='update_funnel_index',
+                  on_enter=['increment_funnel_index']),
             State(name='final_state')
         ]
 
@@ -36,13 +39,20 @@ class APCWeighingProcess(StationProcess):
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'tare'},
-            {'source': 'tare', 'dest': 'open_balance_door', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'open_balance_door', 'dest': 'load_funnel', 'unless': 'is_weighing_complete', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'load_funnel', 'dest': 'close_balance_door', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'close_balance_door', 'dest': 'weigh', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'weigh', 'dest': 'open_balance_door', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'open_balance_door', 'dest': 'unload_funnel', 'conditions': ['are_req_station_ops_completed', 'is_weighing_complete']},
-            {'source': 'unload_funnel', 'dest': 'update_funnel_index', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'tare', 'dest': 'open_balance_door',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'open_balance_door', 'dest': 'load_funnel',
+                'unless': 'is_weighing_complete', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'load_funnel', 'dest': 'close_balance_door',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'close_balance_door', 'dest': 'weigh',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'weigh', 'dest': 'open_balance_door',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'open_balance_door', 'dest': 'unload_funnel', 'conditions': [
+                'are_req_station_ops_completed', 'is_weighing_complete']},
+            {'source': 'unload_funnel', 'dest': 'update_funnel_index',
+                'conditions': 'are_req_robot_ops_completed'},
             {'source': 'update_funnel_index', 'dest': 'final_state'}
         ]
 

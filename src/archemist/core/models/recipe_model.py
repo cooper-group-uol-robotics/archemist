@@ -10,7 +10,8 @@ class StateDetailsModel(EmbeddedDocument):
 class RecipeModel(Document):
     name = fields.StringField(required=True)
     exp_id = fields.IntField(required=True)
-    state_map = fields.MapField(fields.EmbeddedDocumentField(StateDetailsModel))
+    state_map = fields.MapField(
+        fields.EmbeddedDocumentField(StateDetailsModel))
     states = fields.ListField(fields.StringField(), default=[])
     transitions = fields.ListField(fields.DictField(), default=[])
     current_state = fields.StringField(required=True)

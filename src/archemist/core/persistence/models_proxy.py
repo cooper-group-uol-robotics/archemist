@@ -23,7 +23,8 @@ class ModelProxy:
         fields = self._model._fields
         for field_name in fields:
             # Create a property for each field
-            setattr(self.__class__, field_name, self._create_property(field_name))
+            setattr(self.__class__, field_name,
+                    self._create_property(field_name))
 
     def _create_property(self, field_name):
         # Create a getter function for the property
@@ -95,7 +96,8 @@ class EmbedModelProxy:
             super().__setattr__(attr, value)
         else:
             setattr(self._embedded, attr, value)
-            self._parent.update(**{f"set__{self._field_string}__{attr}": value})
+            self._parent.update(
+                **{f"set__{self._field_string}__{attr}": value})
 
     def _reload(self):
         self._parent.reload(self._field_name)
@@ -122,7 +124,8 @@ class ListFieldWrapper:
         if parent_type == ParentType.DOCUMENT:
             self._list_field_name = self._field_string
         elif parent_type == ParentType.EMBED:
-            self._parent_field_name, self._list_field_name = field_string.split("__")
+            self._parent_field_name, self._list_field_name = field_string.split(
+                "__")
         elif parent_type == ParentType.EMBED_LIST_ELEMENT or parent_type == ParentType.EMBED_DICT_ELEMENT:
             self._parent_field_name, self._parent_field_index, \
                 self._list_field_name = field_string.split("__")
@@ -136,7 +139,8 @@ class ListFieldWrapper:
                 return EmbedModelProxy(item, self._parent, f"{self._list_field_name}__{index}",
                                        ParentType.LIST)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
@@ -158,7 +162,8 @@ class ListFieldWrapper:
                     yield EmbedModelProxy(item, self._parent, f"{self._list_field_name}__{index}",
                                           ParentType.LIST)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 yield ModelProxy(item)
             else:
@@ -182,7 +187,8 @@ class ListFieldWrapper:
         return item
 
     def extend(self, obj_list):
-        self._parent.update(**{f'push_all__{self._field_string}': [obj for obj in obj_list]})
+        self._parent.update(
+            **{f'push_all__{self._field_string}': [obj for obj in obj_list]})
 
     def remove(self, item):
         self._parent.update(**{f'pull__{self._field_string}': item})
@@ -262,7 +268,8 @@ class DictFieldWrapper:
         if parent_type == ParentType.DOCUMENT:
             self._dict_field_name = self._field_string
         elif parent_type == ParentType.EMBED:
-            self._parent_field_name, self._dict_field_name = field_string.split("__")
+            self._parent_field_name, self._dict_field_name = field_string.split(
+                "__")
         elif parent_type == ParentType.EMBED_LIST_ELEMENT or parent_type == ParentType.EMBED_DICT_ELEMENT:
             self._parent_field_name, self._parent_field_index, \
                 self._dict_field_name = field_string.split("__")
@@ -277,7 +284,8 @@ class DictFieldWrapper:
                 return EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
                                        ParentType.DICT)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
@@ -303,7 +311,8 @@ class DictFieldWrapper:
                     yield EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
                                           ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 yield key, ModelProxy(item)
             else:
@@ -317,7 +326,8 @@ class DictFieldWrapper:
                 return EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
                                        ParentType.DICT)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
@@ -332,7 +342,8 @@ class DictFieldWrapper:
                     value = EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
                                             ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 value = ModelProxy(item)
             else:
@@ -350,7 +361,8 @@ class DictFieldWrapper:
                     value = EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
                                             ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 value = ModelProxy(item)
             else:

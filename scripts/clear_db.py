@@ -4,7 +4,8 @@ from archemist.core.persistence.db_handler import DatabaseHandler
 import argparse
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='script to clean up the stored db')
+    parser = argparse.ArgumentParser(
+        description='script to clean up the stored db')
     parser.add_argument('-db', dest='db_name', action='store',
                         help='datebase name to be deleted', required=True)
     args = parser.parse_args()

@@ -52,13 +52,16 @@ class Sample:
             for index, material_name in enumerate(result_op.material_names):
                 if self.materials.get(material_name):
                     material_dict = self.materials[material_name]
-                    current_amount = material_dict["amount"]*eval(material_dict["unit"])
-                    added_amount = result_op.amounts[index]*eval(result_op.units[index])
+                    current_amount = material_dict["amount"] * \
+                        eval(material_dict["unit"])
+                    added_amount = result_op.amounts[index] * \
+                        eval(result_op.units[index])
                     new_amount = current_amount + added_amount
                     material_dict["amount"] = new_amount.to_value()
                     self.materials[material_name] = material_dict
                 else:
-                    material_dict = {"amount": result_op.amounts[index], "unit": result_op.units[index]}
+                    material_dict = {
+                        "amount": result_op.amounts[index], "unit": result_op.units[index]}
                     self.materials[material_name] = material_dict
         self.result_ops.append(result_op)
 

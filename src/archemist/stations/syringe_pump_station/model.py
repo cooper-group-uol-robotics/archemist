@@ -7,13 +7,15 @@ class SyringePumpDispenseVolumeOpModel(StationSampleOpModel):
     dispense_volume = fields.FloatField(min_value=0, required=True)
     dispense_unit = fields.StringField(choices=["L", "mL", "uL"], default="mL")
     dispense_rate = fields.FloatField(min_value=0, required=True)
-    rate_unit = fields.StringField(choices=["mL/minute", "mL/second"], default="mL/minute")
+    rate_unit = fields.StringField(
+        choices=["mL/minute", "mL/second"], default="mL/minute")
 
 
 class SyringePumpDispenseRateOpModel(StationSampleOpModel):
     liquid_name = fields.StringField(required=True)
     dispense_rate = fields.FloatField(min_value=0, required=True)
-    rate_unit = fields.StringField(choices=["mL/minute", "mL/second"], default="mL/minute")
+    rate_unit = fields.StringField(
+        choices=["mL/minute", "mL/second"], default="mL/minute")
 
 
 class SyringePumpFinishDispensingOpModel(StationSampleOpModel):

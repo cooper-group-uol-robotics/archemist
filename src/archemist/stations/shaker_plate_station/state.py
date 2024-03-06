@@ -51,7 +51,8 @@ class ShakerPlateOp(StationBatchOp):
                   duration: int,
                   time_unit: Literal["second", "minute", "hour"]):
         model = ShakerPlateOpModel()
-        cls._set_model_common_fields(model, associated_station=ShakerPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ShakerPlateStation.__name__)
         model.target_batch = target_batch.model
         model.duration = duration
         model.time_unit = time_unit

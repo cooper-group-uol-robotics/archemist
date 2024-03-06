@@ -5,7 +5,8 @@ from pathlib import Path
 import argparse
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='script to run archemist server')
+    parser = argparse.ArgumentParser(
+        description='script to run archemist server')
     parser.add_argument('--path', dest='workflow_path', action='store', type=str,
                         help='path to the workflow directory', required=True)
     parser.add_argument('--exists', dest='existing_db', action='store_true',

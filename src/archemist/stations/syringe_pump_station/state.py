@@ -28,7 +28,8 @@ class SyringePumpStation(Station):
             if isinstance(result, MaterialOpResult):
                 for index, liquid_name in enumerate(result.material_names):
                     liquid = self.liquids_dict[liquid_name]
-                    liquid.decrease_volume(result.amounts[index], result.units[index])
+                    liquid.decrease_volume(
+                        result.amounts[index], result.units[index])
         super().complete_assigned_op(outcome, results)
 
 
@@ -45,7 +46,8 @@ class SyringePumpDispenseVolumeOp(StationSampleOp):
                   dispense_rate: float,
                   rate_unit: Literal["mL/minute", "mL/second"]):
         model = SyringePumpDispenseVolumeOpModel()
-        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.dispense_volume = float(dispense_volume)
@@ -87,7 +89,8 @@ class SyringePumpDispenseRateOp(StationSampleOp):
                   dispense_rate: float,
                   rate_unit: Literal["mL/minute", "mL/second"]):
         model = SyringePumpDispenseRateOpModel()
-        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.dispense_rate = float(dispense_rate)
@@ -117,7 +120,8 @@ class SyringePumpFinishDispensingOp(StationSampleOp):
                   target_sample: Sample,
                   liquid_name: str):
         model = SyringePumpFinishDispensingOpModel()
-        cls._set_model_common_fields(model, associated_station=SyringePumpStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=SyringePumpStation.__name__)
         model.target_sample = target_sample.model
         model.liquid_name = liquid_name
         model.save()

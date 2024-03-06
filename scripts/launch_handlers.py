@@ -11,14 +11,16 @@ import sys
 
 
 def run_station_handler(db_host, db_name, station, use_sim_handler):
-    p_manager = PersistenceManager(db_host, db_name)  # required to establish connection with db
+    # required to establish connection with db
+    p_manager = PersistenceManager(db_host, db_name)
     p_manager.load_station_models()  # required to load db models
     handler = StationFactory.create_handler(station, use_sim_handler)
     handler.run()
 
 
 def run_robot_handler(db_host, db_name, robot, use_sim_handler):
-    p_manager = PersistenceManager(db_host, db_name)  # required to establish connection with db
+    # required to establish connection with db
+    p_manager = PersistenceManager(db_host, db_name)
     p_manager.load_robot_models()  # required to load db models
     handler = RobotFactory.create_handler(robot, use_sim_handler)
     handler.run()
@@ -37,8 +39,10 @@ if __name__ == '__main__':
 
     workflow_dir = Path(args.workflow_dir)
 
-    server_config_file_path = workflow_dir.joinpath('config_files/server_settings.yaml')
-    server_settings = YamlHandler.load_server_settings_file(server_config_file_path)
+    server_config_file_path = workflow_dir.joinpath(
+        'config_files/server_settings.yaml')
+    server_settings = YamlHandler.load_server_settings_file(
+        server_config_file_path)
     db_name = server_settings['db_name']
     db_host = server_settings['mongodb_host']
 
@@ -63,7 +67,8 @@ if __name__ == '__main__':
                 'robot': robot,
                 'use_sim_handler': args.sim_mode
             }
-            robot_handlers_processes.append(mp.Process(target=run_robot_handler, kwargs=kwargs))
+            robot_handlers_processes.append(mp.Process(
+                target=run_robot_handler, kwargs=kwargs))
         # define station handlers processes
         station_handlers_processes = []
         for station in state.stations:
@@ -73,7 +78,8 @@ if __name__ == '__main__':
                 'station': station,
                 'use_sim_handler': args.sim_mode
             }
-            station_handlers_processes.append(mp.Process(target=run_station_handler, kwargs=kwargs))
+            station_handlers_processes.append(mp.Process(
+                target=run_station_handler, kwargs=kwargs))
         # launch handlers this assumes the state was constructed from a config file before hand
         processes = robot_handlers_processes + station_handlers_processes
         for p in processes:

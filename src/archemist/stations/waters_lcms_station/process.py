@@ -16,22 +16,32 @@ class APCLCMSAnalysisProcess(StationProcess):
         ''' States '''
         self.STATES = [State(name='init_state'),
                        State(name='prep_state'),
-                       State(name='place_vial', on_enter=['request_vial_placement']),
-                       State(name='insert_rack', on_enter=['request_rack_insertion']),
-                       State(name='run_analysis', on_enter=['request_analysis']),
-                       State(name='eject_rack', on_enter=['request_rack_ejection']),
-                       State(name='dispose_vial', on_enter=['request_vial_disposal']),
+                       State(name='place_vial', on_enter=[
+                             'request_vial_placement']),
+                       State(name='insert_rack', on_enter=[
+                             'request_rack_insertion']),
+                       State(name='run_analysis', on_enter=[
+                             'request_analysis']),
+                       State(name='eject_rack', on_enter=[
+                             'request_rack_ejection']),
+                       State(name='dispose_vial', on_enter=[
+                             'request_vial_disposal']),
                        State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'place_vial'},
-            {'source': 'place_vial', 'dest': 'insert_rack', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'insert_rack', 'dest': 'run_analysis', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'run_analysis', 'dest': 'eject_rack', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'eject_rack', 'dest': 'dispose_vial', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'dispose_vial', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'place_vial', 'dest': 'insert_rack',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'insert_rack', 'dest': 'run_analysis',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'run_analysis', 'dest': 'eject_rack',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'eject_rack', 'dest': 'dispose_vial',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'dispose_vial', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'},
         ]
 
     @classmethod

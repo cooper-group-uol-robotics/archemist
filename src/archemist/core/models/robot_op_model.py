@@ -9,7 +9,8 @@ class RobotOpModel(Document):
     _module = fields.StringField(required=True)
 
     target_robot = fields.StringField(required=True)
-    requested_by = fields.ObjectIdField(null=True)  # station that generated the op
+    requested_by = fields.ObjectIdField(
+        null=True)  # station that generated the op
     executed_by = fields.ObjectIdField(null=True)  # robot that executed the op
 
     outcome = fields.EnumField(OpOutcome, null=True)
@@ -17,14 +18,16 @@ class RobotOpModel(Document):
     start_timestamp = fields.ComplexDateTimeField()
     end_timestamp = fields.ComplexDateTimeField()
 
-    meta = {'collection': 'robot_ops', 'db_alias': 'archemist_state', 'allow_inheritance': True}
+    meta = {'collection': 'robot_ops',
+            'db_alias': 'archemist_state', 'allow_inheritance': True}
 
 
 class RobotTaskOpModel(RobotOpModel):
     name = fields.StringField(required=True)
     params = fields.DictField(default={})
     target_batch = fields.ReferenceField(BatchModel, null=True)
-    target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
+    target_location = fields.EmbeddedDocumentField(
+        LocationModel, default=LocationModel())
 
 
 class CollectBatchOpModel(RobotTaskOpModel):
@@ -43,7 +46,8 @@ class RobotMaintenanceOpModel(RobotOpModel):
 
 class RobotNavOpModel(RobotOpModel):
     name = fields.StringField(required=True)
-    target_location = fields.EmbeddedDocumentField(LocationModel, default=LocationModel())
+    target_location = fields.EmbeddedDocumentField(
+        LocationModel, default=LocationModel())
     params = fields.DictField(default={})
 
 

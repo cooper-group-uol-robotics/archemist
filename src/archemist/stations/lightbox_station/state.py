@@ -24,9 +24,11 @@ class LightBoxStation(Station):
         model = LightBoxStationModel()
         cls._set_model_common_fields(model, station_dict)
         if "rgb_target_index" in station_dict["properties"]:
-            model.rgb_target_index = int(station_dict["properties"]["rgb_target_index"])
+            model.rgb_target_index = int(
+                station_dict["properties"]["rgb_target_index"])
         if "lab_target_index" in station_dict["properties"]:
-            model.lab_target_index = float(station_dict["properties"]["lab_target_index"])
+            model.lab_target_index = float(
+                station_dict["properties"]["lab_target_index"])
         model.save()
         return cls(model)
 
@@ -50,7 +52,8 @@ class LBSampleAnalyseRGBOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=LightBoxStation.__name__)
         model.save()
         return cls(model)
 
@@ -112,7 +115,8 @@ class LBSampleAnalyseLABOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=LightBoxStation.__name__)
         model.save()
         return cls(model)
 

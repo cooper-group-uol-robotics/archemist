@@ -113,7 +113,8 @@ class APCDispenseSolidOp(StationSampleOp):
                   dispense_mass: float,
                   dispense_unit: Literal["g", "mg", "ug"]):
         model = APCDispenseSolidOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.target_sample = target_sample.model
         model.solid_name = solid_name
         model.dispense_mass = float(dispense_mass)
@@ -141,7 +142,8 @@ class APCOpenSashOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.save()
         return cls(model)
 
@@ -153,6 +155,7 @@ class APCCloseSashOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.save()
         return cls(model)

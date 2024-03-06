@@ -26,7 +26,8 @@ class RobotScheduler(ABC):
 class PriorityQueueRobotScheduler(RobotScheduler):
     def __init__(self, *args, **kwargs):
         robots = RobotsGetter.get_robots()
-        self.robots_schedules = {robot.__class__.__name__: [] for robot in robots}
+        self.robots_schedules = {robot.__class__.__name__: []
+                                 for robot in robots}
         super().__init__(*args, **kwargs)
 
     def schedule(self, robot_ops_queue: List[Type[RobotOp]]):
@@ -40,16 +41,21 @@ class PriorityQueueRobotScheduler(RobotScheduler):
         # sort robot queues according to priority
         for robot_name in self.robots_schedules:
             # group ops according to their lot and origin station
-            robot_ops_list = sorted(self.robots_schedules[robot_name], key=lambda op: self._get_lot_and_requester_keys(op))
+            robot_ops_list = sorted(
+                self.robots_schedules[robot_name], key=lambda op: self._get_lot_and_requester_keys(op))
             # sort robot queus
             robot = RobotsGetter.get_robot(robot_name)
             if isinstance(robot, MobileRobot):
                 self.robot_free_slots_num = robot.free_batch_capacity
-                robot_ops_with_priority_list = [(op, self._calculate_mobile_robot_priority(op, robot)) for op in robot_ops_list]
-                self.robots_schedules[robot_name] = sorted(robot_ops_with_priority_list, key=lambda tup: tup[1], reverse=True)
+                robot_ops_with_priority_list = [
+                    (op, self._calculate_mobile_robot_priority(op, robot)) for op in robot_ops_list]
+                self.robots_schedules[robot_name] = sorted(
+                    robot_ops_with_priority_list, key=lambda tup: tup[1], reverse=True)
             elif isinstance(robot, FixedRobot):
-                robot_ops_with_priority_list = [(op, self._calculate_fixed_robot_priority(op, robot)) for op in robot_ops_list]
-                self.robots_schedules[robot_name] = sorted(robot_ops_with_priority_list, key=lambda tup: tup[1], reverse=True)
+                robot_ops_with_priority_list = [
+                    (op, self._calculate_fixed_robot_priority(op, robot)) for op in robot_ops_list]
+                self.robots_schedules[robot_name] = sorted(
+                    robot_ops_with_priority_list, key=lambda tup: tup[1], reverse=True)
 
             # add ops to the robot queue
             for index, op_priority_tup in enumerate(self.robots_schedules[robot_name]):
@@ -125,7 +131,8 @@ class PriorityQueueRobotScheduler(RobotScheduler):
             if output_site.free_lot_capacity > 0:
                 is_free = True
         else:
-            next_station = StationsGetter.get_station(next_state.station_id, next_state.station_type)
+            next_station = StationsGetter.get_station(
+                next_state.station_id, next_state.station_type)
             if next_station.free_lot_capacity > 0:
                 is_free = True
 
@@ -136,5 +143,6 @@ class PriorityQueueRobotScheduler(RobotScheduler):
             lot_key = op.related_lot.object_id
         else:
             lot_key = ObjectId(b"no lot      ")
-        requester_key = op.requested_by if op.requested_by else ObjectId(b"no requester")
+        requester_key = op.requested_by if op.requested_by else ObjectId(
+            b"no requester")
         return (lot_key, requester_key)

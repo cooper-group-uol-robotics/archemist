@@ -97,7 +97,8 @@ class IKAHeatStirBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
@@ -135,7 +136,8 @@ class IKAHeatBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.duration = int(duration)
         if model.duration > 0:
@@ -168,7 +170,8 @@ class IKAStirBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
         if model.duration > 0:
@@ -196,6 +199,7 @@ class IKAStopOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.save()
         return cls(model)

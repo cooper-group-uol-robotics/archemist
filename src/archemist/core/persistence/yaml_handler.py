@@ -137,22 +137,26 @@ class YamlHandler:
 
     @staticmethod
     def load_config_file(file_path: Path) -> Dict:
-        yaml_config = YamlHandler._load_and_validate_schema(file_path=file_path, schema=WorkflowSchemas.config_schema)
+        yaml_config = YamlHandler._load_and_validate_schema(
+            file_path=file_path, schema=WorkflowSchemas.config_schema)
         return yaml_config.data
 
     @staticmethod
     def load_server_settings_file(file_path: Path) -> Dict:
-        yaml_server_settings = YamlHandler._load_and_validate_schema(file_path=file_path, schema=WorkflowSchemas.server_settings_schema)
+        yaml_server_settings = YamlHandler._load_and_validate_schema(
+            file_path=file_path, schema=WorkflowSchemas.server_settings_schema)
         return yaml_server_settings.data
 
     @staticmethod
     def load_recipe_file(file_path: Path) -> Dict:
-        yaml_recipe = YamlHandler._load_and_validate_schema(file_path=file_path, schema=WorkflowSchemas.recipe_schema)
+        yaml_recipe = YamlHandler._load_and_validate_schema(
+            file_path=file_path, schema=WorkflowSchemas.recipe_schema)
         return yaml_recipe.data
 
     @staticmethod
     def create_empty_config_file(file_path: Path):
-        config_file_content = resource_string('archemist.core.persistence.templates', 'workflow_config.yaml').decode('utf-8')
+        config_file_content = resource_string(
+            'archemist.core.persistence.templates', 'workflow_config.yaml').decode('utf-8')
         config_file_content = config_file_content.replace('\r\n', '\r')
         file_path = file_path.joinpath('workflow_config.yaml')
         with open(file_path, 'w') as config_file:
@@ -160,7 +164,8 @@ class YamlHandler:
 
     @staticmethod
     def create_sample_recipe_file(file_path: Path):
-        recipe_file_content = resource_string('archemist.core.persistence.templates', 'sample_recipe.yaml').decode('utf-8')
+        recipe_file_content = resource_string(
+            'archemist.core.persistence.templates', 'sample_recipe.yaml').decode('utf-8')
         recipe_file_content = recipe_file_content.replace('\r\n', '\r')
         file_path = file_path.joinpath('sample_recipe.yaml')
         with open(file_path, 'w') as recipe_file:
@@ -168,7 +173,8 @@ class YamlHandler:
 
     @staticmethod
     def create_empty_server_settings_file(file_path: Path):
-        recipe_file_content = resource_string('archemist.core.persistence.templates', 'server_settings.yaml').decode('utf-8')
+        recipe_file_content = resource_string(
+            'archemist.core.persistence.templates', 'server_settings.yaml').decode('utf-8')
         recipe_file_content = recipe_file_content.replace('\r\n', '\r')
         file_path = file_path.joinpath('server_settings.yaml')
         with open(file_path, 'w') as recipe_file:

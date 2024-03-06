@@ -21,7 +21,8 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
         current_op = self._station.assigned_op
         if isinstance(current_op, LCMSSampleAnalysisOp):
             result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                  concentration=random.choice([0.99, 0.01]),
+                                                  concentration=random.choice(
+                                                      [0.99, 0.01]),
                                                   result_filename="file.xml")
             return OpOutcome.SUCCEEDED, [result]
         else:

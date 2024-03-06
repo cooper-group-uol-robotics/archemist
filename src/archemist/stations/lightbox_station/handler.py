@@ -15,18 +15,25 @@ class SimLightBoxHandler(SimStationOpHandler):
         if isinstance(current_op, LBSampleAnalyseRGBOp):
             rgb_target_index = self._station.rgb_target_index
             result = LBAnalyseRGBResult.from_args(origin_op=current_op.object_id,
-                                                  r_value=random.randint(0, 127),
-                                                  g_value=random.randint(0, 127),
-                                                  b_value=random.randint(0, 127),
-                                                  color_index=random.randint(0, 255),
+                                                  r_value=random.randint(
+                                                      0, 127),
+                                                  g_value=random.randint(
+                                                      0, 127),
+                                                  b_value=random.randint(
+                                                      0, 127),
+                                                  color_index=random.randint(
+                                                      0, 255),
                                                   target_index=rgb_target_index,
                                                   result_filename=f"pic{random.randint(0, 100)}.png")
         elif isinstance(current_op, LBSampleAnalyseLABOp):
             lab_target_index = self._station.lab_target_index
             result = LBAnalyseLABResult.from_args(origin_op=current_op.object_id,
-                                                  l_value=random.randint(0, 100),
-                                                  a_value=random.randint(-128, 127),
-                                                  b_value=random.randint(-128, 127),
+                                                  l_value=random.randint(
+                                                      0, 100),
+                                                  a_value=random.randint(
+                                                      -128, 127),
+                                                  b_value=random.randint(
+                                                      -128, 127),
                                                   color_index=random.random()*100,
                                                   target_index=lab_target_index,
                                                   result_filename=f"pic{random.randint(0, 100)}.png")
@@ -43,9 +50,12 @@ try:
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
-            self.pubCamera = rospy.Publisher("/colorimetry_station/command", ColorimetryCommand, queue_size=1)
-            rospy.Subscriber("/colorimetry_station/result_rgb", ColorimetryRGBResult, self._colorimetry_rgb_callback)
-            rospy.Subscriber("/colorimetry_station/result_lab", ColorimetryLABResult, self._colorimetry_lab_callback)
+            self.pubCamera = rospy.Publisher(
+                "/colorimetry_station/command", ColorimetryCommand, queue_size=1)
+            rospy.Subscriber("/colorimetry_station/result_rgb",
+                             ColorimetryRGBResult, self._colorimetry_rgb_callback)
+            rospy.Subscriber("/colorimetry_station/result_lab",
+                             ColorimetryLABResult, self._colorimetry_lab_callback)
             self._op_result = None
             rospy.sleep(1)
             return True
@@ -64,7 +74,8 @@ try:
                 for i in range(10):
                     self.pubCamera.publish(op_msg)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._op_result is not None

@@ -39,12 +39,14 @@ try:
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
-            self._quantos_pub = rospy.Publisher("/Quantos_Commands", QuantosCommand, queue_size=1)
+            self._quantos_pub = rospy.Publisher(
+                "/Quantos_Commands", QuantosCommand, queue_size=1)
             rospy.Subscriber('/Quantos_Done', String, self._quantos_callback)
             self._received_results = False
             # put quantos in the correct place before robott
             rospy.sleep(3)
-            self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=20)
+            self._quantos_pub.publish(
+                quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=20)
             try:
                 rospy.wait_for_message("/Quantos_Done", String, timeout=30)
                 return True
@@ -60,13 +62,17 @@ try:
                 self._quantos_pub.publish(quantos_command=QuantosCommand.DISPENSESOLID,
                                           quantos_int=self._station.carousel_pos, quantos_float=current_op.dispense_mass)
             elif isinstance(current_op, QuantosOpenDoorOp):
-                self._quantos_pub.publish(quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=True)
+                self._quantos_pub.publish(
+                    quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=True)
             elif isinstance(current_op, QuantosCloseDoorOp):
-                self._quantos_pub.publish(quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=False)
+                self._quantos_pub.publish(
+                    quantos_command=QuantosCommand.MOVEDOOR, quantos_bool=False)
             elif isinstance(current_op, QuantosMoveCarouselOp):
-                self._quantos_pub.publish(quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=current_op.target_pos)
+                self._quantos_pub.publish(
+                    quantos_command=QuantosCommand.SETSAMPLEPOS, quantos_int=current_op.target_pos)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._received_results
@@ -75,7 +81,8 @@ try:
             op = self._station.assigned_op
             if isinstance(op, QuantosDispenseOp):
                 result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                    material_names=[op.solid_name],
+                                                    material_names=[
+                                                        op.solid_name],
                                                     amounts=[op.dispense_mass],
                                                     units=[op.dispense_unit])
                 return OpOutcome.SUCCEEDED, [result]

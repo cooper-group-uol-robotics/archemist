@@ -16,7 +16,8 @@ if __name__ == '__main__':
     server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
 
     workflow_dir = Path(server_setttings['workflow_dir_path'])
-    workflow_config_file_path = workflow_dir.joinpath('config_files/workflow_config.yaml')
+    workflow_config_file_path = workflow_dir.joinpath(
+        'config_files/workflow_config.yaml')
     recipes_dir_path = workflow_dir.joinpath('recipes')
 
     db_name = server_setttings['db_name']
@@ -37,7 +38,8 @@ if __name__ == '__main__':
     # Construct state from config file
     host = 'mongodb://localhost:27017'
     pers_manager = PersistenceManager(host, db_name)
-    state = pers_manager.construct_state_from_config_file(workflow_config_file_path)
+    state = pers_manager.construct_state_from_config_file(
+        workflow_config_file_path)
     # construct the state manager
     wm_manager = WorkflowManager(state)
 
@@ -93,11 +95,14 @@ if __name__ == '__main__':
                 state.add_clean_batch(batch_num_vials, batch_addition_location)
                 batch_id += 1
             elif msg['cmd'] == 'charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('ChargeRobot', [False, 85]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('ChargeRobot', [False, 85]))
             elif msg['cmd'] == 'stop_charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('StopCharge', [False]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('StopCharge', [False]))
             elif msg['cmd'] == 'resume_app':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('resumeLBRApp', [False]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('resumeLBRApp', [False]))
             elif msg['cmd'] == 'terminate':
                 if wm_manager._running:
                     wm_manager.stop_processor()

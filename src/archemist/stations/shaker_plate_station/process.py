@@ -16,10 +16,13 @@ class PXRDWorkflowShakingProcess(StationProcess):
         ''' States '''
         self.STATES = [State(name='init_state'),
                        State(name='prep_state'),
-                       State(name='load_shaker_plate', on_enter='request_load_shaker_plate'),
+                       State(name='load_shaker_plate',
+                             on_enter='request_load_shaker_plate'),
                        State(name='shake', on_enter='request_shake_op'),
-                       State(name='unload_shaker_plate', on_enter='request_unload_shaker_plate'),
-                       State(name='unscrew_caps', on_enter='request_unscrew_caps'),
+                       State(name='unload_shaker_plate',
+                             on_enter='request_unload_shaker_plate'),
+                       State(name='unscrew_caps',
+                             on_enter='request_unscrew_caps'),
                        State(name='pick_lot', on_enter='request_lot_pickup'),
                        State(name='final_state')]
 
@@ -27,11 +30,16 @@ class PXRDWorkflowShakingProcess(StationProcess):
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'load_shaker_plate'},
-            {'source': 'load_shaker_plate', 'dest': 'shake', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'shake', 'dest': 'unload_shaker_plate', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'unload_shaker_plate', 'dest': 'unscrew_caps', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'unscrew_caps', 'dest': 'pick_lot', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'pick_lot', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'}
+            {'source': 'load_shaker_plate', 'dest': 'shake',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'shake', 'dest': 'unload_shaker_plate',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'unload_shaker_plate', 'dest': 'unscrew_caps',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'unscrew_caps', 'dest': 'pick_lot',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'pick_lot', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'}
         ]
 
         if self.data["eight_well_rack_first"]:

@@ -27,35 +27,42 @@ class ArchemistCLI:
                 selection = prompt(main_menu)
                 if selection['main_menu'] == 'Start/Resume':
                     self._log_client('staring workflow')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='start')
+                    msg = CMDMessage(
+                        category=CMDCategory.WORKFLOW, cmd='start')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Pause':
                     self._log_client('pausing workflow')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='pause')
+                    msg = CMDMessage(
+                        category=CMDCategory.WORKFLOW, cmd='pause')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Add clean batch':
                     self._log_client('adding clean batch to the workflow')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='add_batch')
+                    msg = CMDMessage(
+                        category=CMDCategory.WORKFLOW, cmd='add_batch')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Clear need to remove lots':
                     self._log_client('clearing all need to remove lots')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='remove_all_lots')
+                    msg = CMDMessage(
+                        category=CMDCategory.WORKFLOW, cmd='remove_all_lots')
                     self._client.send_json(msg.to_json())
                 elif selection['main_menu'] == 'Stations':
-                    msg = CMDMessage(category=CMDCategory.STATION, cmd='get_list')
+                    msg = CMDMessage(
+                        category=CMDCategory.STATION, cmd='get_list')
                     self._client.send_json(msg.to_json())
                     reply = self._client.recv_json()
                     stations_dict = json.loads(reply)
                     self._process_list_menu(stations_dict, CMDCategory.STATION)
                 elif selection['main_menu'] == 'Robots':
-                    msg = CMDMessage(category=CMDCategory.ROBOT, cmd='get_list')
+                    msg = CMDMessage(
+                        category=CMDCategory.ROBOT, cmd='get_list')
                     self._client.send_json(msg.to_json())
                     reply = self._client.recv_json()
                     robots_dict = json.loads(reply)
                     self._process_list_menu(robots_dict, CMDCategory.ROBOT)
                 elif selection['main_menu'] == 'Terminate':
                     self._log_client('Terminating workflow')
-                    msg = CMDMessage(category=CMDCategory.WORKFLOW, cmd='terminate')
+                    msg = CMDMessage(
+                        category=CMDCategory.WORKFLOW, cmd='terminate')
                     self._client.send_json(msg.to_json())
                     break
                 sleep(.1)
@@ -91,12 +98,16 @@ class ArchemistCLI:
         }
         selection = prompt(station_menu)
         if selection['station_menu'] == 'Repeat assigned op':
-            self._log_client(f'repeating assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_name, station_id])
+            self._log_client(
+                f'repeating assigned op for station {station_name} with id: {station_id}')
+            msg = CMDMessage(category=CMDCategory.STATION,
+                             cmd='repeat_op', params=[station_name, station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Skip assigned op':
-            self._log_client(f'skipping assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_name, station_id])
+            self._log_client(
+                f'skipping assigned op for station {station_name} with id: {station_id}')
+            msg = CMDMessage(category=CMDCategory.STATION,
+                             cmd='skip_op', params=[station_name, station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Return':
             pass
@@ -110,12 +121,16 @@ class ArchemistCLI:
         }
         selection = prompt(robot_menu)
         if selection['robot_menu'] == 'Repeat assigned op':
-            self._log_client(f'repeating assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_name, robot_id])
+            self._log_client(
+                f'repeating assigned op for station {robot_name} with id: {robot_id}')
+            msg = CMDMessage(category=CMDCategory.ROBOT,
+                             cmd='repeat_op', params=[robot_name, robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Skip assigned op':
-            self._log_client(f'skipping assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_name, robot_id])
+            self._log_client(
+                f'skipping assigned op for station {robot_name} with id: {robot_id}')
+            msg = CMDMessage(category=CMDCategory.ROBOT,
+                             cmd='skip_op', params=[robot_name, robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Return':
             pass

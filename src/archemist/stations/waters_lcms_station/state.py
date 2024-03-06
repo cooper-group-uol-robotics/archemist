@@ -68,7 +68,8 @@ class LCMSInsertRackOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)
 
@@ -80,7 +81,8 @@ class LCMSEjectRackOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)
 
@@ -92,7 +94,8 @@ class LCMSSampleAnalysisOp(StationSampleOp):
     @classmethod
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.target_sample = target_sample.model
         model.save()
         return cls(model)

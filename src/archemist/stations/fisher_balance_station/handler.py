@@ -29,8 +29,10 @@ try:
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
-            self._fisher_pu = rospy.Publisher("/Balance_Commands", BalanceCommand, queue_size=2)
-            rospy.Subscriber('/Balance_Weights', BalanceReading, self._weight_callback)
+            self._fisher_pu = rospy.Publisher(
+                "/Balance_Commands", BalanceCommand, queue_size=2)
+            rospy.Subscriber('/Balance_Weights',
+                             BalanceReading, self._weight_callback)
             self._op_result = None
             rospy.sleep(1)
             return True
@@ -41,9 +43,11 @@ try:
             if isinstance(current_op, FisherWeighOp):
                 rospy.loginfo('reading stable weight')
                 for i in range(10):
-                    self._fisher_pu.publish(balance_command=BalanceCommand.WEIGHT_STABLE)
+                    self._fisher_pu.publish(
+                        balance_command=BalanceCommand.WEIGHT_STABLE)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._op_result is not None

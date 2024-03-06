@@ -16,18 +16,23 @@ class WaitingStationProcess(StationProcess):
         ''' States '''
         self.STATES = [State(name='init_state'),
                        State(name='prep_state'),
-                       State(name='waiting_process', on_enter=['request_process_operation']),
+                       State(name='waiting_process', on_enter=[
+                             'request_process_operation']),
                        State(name='load_lot', on_enter=['request_load_lot']),
-                       State(name='unload_lot', on_enter=['request_unload_lot']),
+                       State(name='unload_lot', on_enter=[
+                             'request_unload_lot']),
                        State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'load_lot'},
-            {'source': 'load_lot', 'dest': 'waiting_process', 'conditions': 'are_req_robot_ops_completed'},
-            {'source': 'waiting_process', 'dest': 'unload_lot', 'conditions': 'are_req_station_ops_completed'},
-            {'source': 'unload_lot', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'}
+            {'source': 'load_lot', 'dest': 'waiting_process',
+                'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'waiting_process', 'dest': 'unload_lot',
+                'conditions': 'are_req_station_ops_completed'},
+            {'source': 'unload_lot', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'}
         ]
 
     @classmethod
@@ -83,5 +88,6 @@ class WaitingStationProcess(StationProcess):
         self.request_robot_ops(req_robot_ops)
 
     def request_process_operation(self):
-        current_op: WaitOp = self.generate_operation("wait_op", target_lot=self.lot)
+        current_op: WaitOp = self.generate_operation(
+            "wait_op", target_lot=self.lot)
         self.request_station_op(current_op)

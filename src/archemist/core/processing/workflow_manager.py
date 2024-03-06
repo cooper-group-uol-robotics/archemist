@@ -73,13 +73,15 @@ class WorkflowManager:
 
                 # add input processor requested ops to the robot ops queue
                 while self._input_processor.requested_robot_ops:
-                    robot_op = self._input_processor.requested_robot_ops.pop(left=True)
+                    robot_op = self._input_processor.requested_robot_ops.pop(
+                        left=True)
                     self._workflow_processor.robot_ops_queue.append(robot_op)
 
                 # workflow processor update
                 new_lots = self._input_processor.retrieve_ready_for_collection_lots()
                 if new_lots:
-                    self._workflow_processor.add_ready_for_collection_lots(new_lots)
+                    self._workflow_processor.add_ready_for_collection_lots(
+                        new_lots)
 
                 self._workflow_processor.process_workflow()
 
@@ -93,12 +95,14 @@ class WorkflowManager:
 
                 # add output processor requested ops to the robot ops queue
                 while self._output_processor.requested_robot_ops:
-                    robot_op = self._output_processor.requested_robot_ops.pop(left=True)
+                    robot_op = self._output_processor.requested_robot_ops.pop(
+                        left=True)
                     self._workflow_processor.robot_ops_queue.append(robot_op)
 
             # schedule robot ops
             if self._workflow_processor.robot_ops_queue:
-                self._robot_scheduler.schedule(self._workflow_processor.robot_ops_queue)
+                self._robot_scheduler.schedule(
+                    self._workflow_processor.robot_ops_queue)
 
             sleep(PROCESSING_SLEEP_DURATION)
 

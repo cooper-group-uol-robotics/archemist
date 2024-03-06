@@ -17,7 +17,8 @@ class Material:
     @staticmethod
     def _set_model_common_fields(material_dict: dict, material_model: MaterialModel):
         material_model.name = material_dict['name']
-        material_model.expiry_date = date.isoformat(material_dict['expiry_date'])
+        material_model.expiry_date = date.isoformat(
+            material_dict['expiry_date'])
         material_model.details = material_dict.get('details')
 
     @property
@@ -122,25 +123,29 @@ class Liquid(Material):
         return self._model_proxy.volume_unit
 
     def increase_volume(self, quantity: float, unit: Literal["L", "mL", "uL", "m3", "cm3", "mm3"]):
-        modified_volume = self.volume*eval(self.volume_unit) + quantity*eval(unit)
+        modified_volume = self.volume * \
+            eval(self.volume_unit) + quantity*eval(unit)
         modified_mass = self.density*eval(self.density_unit)*modified_volume
         self._update_volume(modified_volume)
         self._update_mass(modified_mass)
 
     def decrease_volume(self, quantity: float, unit: Literal["L", "mL", "uL", "m3", "cm3", "mm3"]):
-        modified_volume = self.volume*eval(self.volume_unit) - quantity*eval(unit)
+        modified_volume = self.volume * \
+            eval(self.volume_unit) - quantity*eval(unit)
         modified_mass = self.density*eval(self.density_unit)*modified_volume
         self._update_volume(modified_volume)
         self._update_mass(modified_mass)
 
     def increase_mass(self, quantity: float, unit: Literal["kg", "g", "mg", "ug"]):
         super().increase_mass(quantity, unit)
-        new_volume = self.mass*eval(self.mass_unit) / self.density*eval(self.density_unit)
+        new_volume = self.mass*eval(self.mass_unit) / \
+            self.density*eval(self.density_unit)
         self._update_volume(new_volume)
 
     def decrease_mass(self, quantity: float, unit: Literal["kg", "g", "mg", "ug"]):
         super().decrease_mass(quantity, unit)
-        new_volume = self.mass*eval(self.mass_unit) / self.density*eval(self.density_unit)
+        new_volume = self.mass*eval(self.mass_unit) / \
+            self.density*eval(self.density_unit)
         self._update_volume(new_volume)
 
     def _update_volume(self, vol_quantity: unyt_quantity):

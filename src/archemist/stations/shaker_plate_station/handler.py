@@ -36,8 +36,10 @@ try:
             self._start_time = -1
             self._task_finished = False
             rospy.init_node(f'{self._station}_handler')
-            self._shaker_plate_pu = rospy.Publisher("/shaker_plate/command", ShakerCommand, queue_size=1)
-            rospy.Subscriber('/shaker_plate/status', ShakerStatus, self._state_update, queue_size=1)
+            self._shaker_plate_pu = rospy.Publisher(
+                "/shaker_plate/command", ShakerCommand, queue_size=1)
+            rospy.Subscriber('/shaker_plate/status', ShakerStatus,
+                             self._state_update, queue_size=1)
             rospy.sleep(1)
             return True
 
@@ -56,11 +58,13 @@ try:
                     self.total_seconds = current_op.duration, *60
                 elif current_op.time_unit == "hour":
                     self.total_seconds = current_op.duration, *60*60
-                msg = ShakerCommand(shake_duration=current_op.self.total_seconds, task_seq=self._task_seq)
+                msg = ShakerCommand(
+                    shake_duration=current_op.self.total_seconds, task_seq=self._task_seq)
                 for i in range(10):
                     self._shaker_plate_pu.publish(msg)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._task_finished

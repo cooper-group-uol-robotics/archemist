@@ -16,22 +16,30 @@ class MTSynthesisStationModel(StationModel):
     optimax_mode = fields.EnumField(OptiMaxMode, null=True)
     optimax_valve_open = fields.BooleanField(default=False)
     num_sampling_vials = fields.IntField(min_value=0, required=True)
-    set_reaction_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
-    set_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
+    set_reaction_temperature = fields.IntField(
+        min_value=-20, max_value=140, null=True)
+    set_stirring_speed = fields.IntField(
+        min_value=0, max_value=1000, null=True)
 
 
 class MTSynthHeatStirOpModel(StationSampleOpModel):
-    target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
-    target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
+    target_temperature = fields.IntField(
+        min_value=-20, max_value=140, null=True)
+    target_stirring_speed = fields.IntField(
+        min_value=0, max_value=1000, null=True)
     wait_duration = fields.IntField(null=True)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], null=True)
+    time_unit = fields.StringField(
+        choices=["second", "minute", "hour"], null=True)
 
 
 class MTSynthSampleOpModel(StationSampleOpModel):
-    target_temperature = fields.IntField(min_value=-20, max_value=140, null=True)
-    target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
+    target_temperature = fields.IntField(
+        min_value=-20, max_value=140, null=True)
+    target_stirring_speed = fields.IntField(
+        min_value=0, max_value=1000, null=True)
 
 
 class MTSynthTimedOpenReactionValveOpModel(StationOpModel):
     duration = fields.FloatField(required=True)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
+    time_unit = fields.StringField(
+        choices=["second", "minute", "hour"], default="second")

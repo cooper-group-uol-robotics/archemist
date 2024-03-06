@@ -11,7 +11,8 @@ class ChemSpeedJobStatus(Enum):
 
 
 class ChemSpeedFlexStationModel(StationModel):
-    job_status = fields.EnumField(ChemSpeedJobStatus, default=ChemSpeedJobStatus.INVALID)
+    job_status = fields.EnumField(
+        ChemSpeedJobStatus, default=ChemSpeedJobStatus.INVALID)
     door_closed = fields.BooleanField(default=True)
 
 

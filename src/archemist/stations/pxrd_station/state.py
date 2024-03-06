@@ -21,7 +21,8 @@ class PXRDStation(Station):
     def from_dict(cls, station_dict: Dict):
         model = PXRDStationModel()
         cls._set_model_common_fields(model, station_dict)
-        model.doors_location = Location.from_dict(station_dict['properties']['doors_location']).model
+        model.doors_location = Location.from_dict(
+            station_dict['properties']['doors_location']).model
         model.save()
         return cls(model)
 
@@ -69,7 +70,8 @@ class PXRDAnalysisOp(StationBatchOp):
     def from_args(cls, target_batch: Batch):
         model = StationBatchOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=PXRDStation.__name__)
         model.save()
         return cls(model)
 

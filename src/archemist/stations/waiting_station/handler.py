@@ -25,6 +25,7 @@ class WaitingStationHandler(SimStationOpHandler):
 
     def get_op_result(self) -> Tuple[OpOutcome, List[ProcessOpResult]]:
         origin_op: WaitOp = self._station.assigned_op
-        parameters = {"duration": origin_op.duration, "time_unit": origin_op.time_unit}
+        parameters = {"duration": origin_op.duration,
+                      "time_unit": origin_op.time_unit}
         return OpOutcome.SUCCEEDED, [ProcessOpResult.from_args(origin_op=origin_op.object_id,
                                                                parameters=parameters)]

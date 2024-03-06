@@ -54,46 +54,57 @@ class WorkflowManager:
                             recipe = self._workflow_state.recipes_queue.popleft()
                             new_batch = clean_batches.popleft()
                             new_batch.attach_recipe(recipe)
-                            self._workflow_state.batches_buffer.append(new_batch)
+                            self._workflow_state.batches_buffer.append(
+                                new_batch)
                         else:
                             break
 
                 # process unassigned batches
-                batches_buffer_copy = [batch for batch in self._workflow_state.batches_buffer]
+                batches_buffer_copy = [
+                    batch for batch in self._workflow_state.batches_buffer]
                 for batch in batches_buffer_copy:  # here the list gets copied
                     if batch.recipe.is_complete():
-                        self._log_processor(f'{batch} recipe is complete. The batch is added to the complete batches list')
+                        self._log_processor(
+                            f'{batch} recipe is complete. The batch is added to the complete batches list')
                         self._workflow_state.batches_buffer.remove(batch)
                     else:
                         station_name, station_id = batch.recipe.get_current_station()
-                        current_station = self._workflow_state.get_station(station_name, station_id)
-                        self._log_processor(f'Trying to assign ({batch}) to {current_station}')
+                        current_station = self._workflow_state.get_station(
+                            station_name, station_id)
+                        self._log_processor(
+                            f'Trying to assign ({batch}) to {current_station}')
                         if current_station.has_free_batch_capacity():
                             current_station.add_batch(batch)
                             self._workflow_state.batches_buffer.remove(batch)
                         else:
-                            self._log_processor(f'{batch} could not be assigned to {current_station}.')
+                            self._log_processor(
+                                f'{batch} could not be assigned to {current_station}.')
 
                 # process workflow stations
                 for station in self._workflow_state.stations:
                     if station.has_requested_robot_ops():
                         robot_jobs = station.get_requested_robot_ops()
-                        self._log_processor(f'{robot_jobs} is added to robot scheduling queue.')
+                        self._log_processor(
+                            f'{robot_jobs} is added to robot scheduling queue.')
                         self._workflow_state.robot_ops_queue.extend(robot_jobs)
                     elif station.has_processed_batch():
                         processed_batch = station.get_processed_batch()
                         processed_batch.recipe.advance_state(True)
-                        self._log_processor(f'Processing {processed_batch} is complete. Adding to the unassigned list.')
-                        self._workflow_state.batches_buffer.append(processed_batch)
+                        self._log_processor(
+                            f'Processing {processed_batch} is complete. Adding to the unassigned list.')
+                        self._workflow_state.batches_buffer.append(
+                            processed_batch)
 
             # process workflow robots
             for robot in self._workflow_state.robots:
                 if robot.is_assigned_op_complete():
                     robot_job = robot.get_complete_op()
-                    self._log_processor(f'{robot} finished executing job {robot_job}')
+                    self._log_processor(
+                        f'{robot} finished executing job {robot_job}')
                     # todo check the robot job matches
                     if robot_job.origin_station is not None:
-                        station_to_notify = self._workflow_state.get_station(robot_job.origin_station)
+                        station_to_notify = self._workflow_state.get_station(
+                            robot_job.origin_station)
                         self._log_processor(f'Notifying {station_to_notify}')
                         station_to_notify.complete_robot_op_request(robot_job)
 

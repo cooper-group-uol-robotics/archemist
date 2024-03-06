@@ -13,7 +13,8 @@ class BasicLotOutputProcess(StationProcess):
 
         ''' States '''
         self.STATES = [State(name='init_state'),
-                       State(name='prep_state', on_enter='initialise_process_data'),
+                       State(name='prep_state',
+                             on_enter='initialise_process_data'),
                        State(name='place_lot', on_enter=['request_place_lot']),
                        State(name='final_state')]
 
@@ -21,7 +22,8 @@ class BasicLotOutputProcess(StationProcess):
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'place_lot'},
-            {'source': 'place_lot', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'place_lot', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'},
         ]
 
     @classmethod

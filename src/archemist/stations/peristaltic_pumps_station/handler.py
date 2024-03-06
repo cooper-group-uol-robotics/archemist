@@ -30,7 +30,8 @@ try:
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
-            self._pump_pub = rospy.Publisher("/Dispenser_Commands", DispenserCommand, queue_size=1)
+            self._pump_pub = rospy.Publisher(
+                "/Dispenser_Commands", DispenserCommand, queue_size=1)
             rospy.Publisher('/Dispenser_Done', String, self._pump_callback)
             self._op_complete = False
             rospy.sleep(1)
@@ -42,9 +43,11 @@ try:
                 # TODO depending on the liquid we can select the correct pump
                 pump_index = self._station.liquid_pump_map[current_op.liquid_name]
                 for i in range(10):
-                    self._pump_pub.publish(dispenser_command=DispenserCommand.DISPENSEPID, dispenser_ml=current_op.dispense_volume)
+                    self._pump_pub.publish(
+                        dispenser_command=DispenserCommand.DISPENSEPID, dispenser_ml=current_op.dispense_volume)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._op_complete
@@ -52,7 +55,8 @@ try:
         def get_op_result(self) -> Tuple[OpOutcome, List[MaterialOpResult]]:
             op = self._station.assigned_op
             result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
+                                                material_names=[
+                                                    op.liquid_name],
                                                 amounts=[op.dispense_volume],
                                                 units=[op.dispense_unit])
             return OpOutcome.SUCCEEDED, [result]

@@ -13,15 +13,18 @@ class BasicLotInputProcess(StationProcess):
 
         ''' States '''
         self.STATES = [State(name='init_state'),
-                       State(name='prep_state', on_enter='initialise_process_data'),
-                       State(name='pickup_lot', on_enter=['request_pickup_lot']),
+                       State(name='prep_state',
+                             on_enter='initialise_process_data'),
+                       State(name='pickup_lot', on_enter=[
+                             'request_pickup_lot']),
                        State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source': 'init_state', 'dest': 'prep_state'},
             {'source': 'prep_state', 'dest': 'pickup_lot'},
-            {'source': 'pickup_lot', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'pickup_lot', 'dest': 'final_state',
+                'conditions': 'are_req_robot_ops_completed'},
         ]
 
     @classmethod

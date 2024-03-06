@@ -72,7 +72,8 @@ class CSOpenDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
@@ -84,7 +85,8 @@ class CSCloseDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
@@ -96,7 +98,8 @@ class CSRunJobOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
@@ -111,8 +114,10 @@ class CSLiquidDispenseOp(StationLotOp):
                   dispense_unit: str):
         model = CSLiquidDispenseOpModel()
         model.target_lot = target_lot.model
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
-        model.dispense_table = {key: map(float, v_list) for key, v_list in dispense_table.items()}
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
+        model.dispense_table = {key: map(float, v_list)
+                                for key, v_list in dispense_table.items()}
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)

@@ -14,7 +14,8 @@ class SimDiaphragmPumpStationHandler(SimStationOpHandler):
         op = self._station.assigned_op
         if isinstance(op, DiaphragmPumpDispenseVolumeOp):
             result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
+                                                material_names=[
+                                                    op.liquid_name],
                                                 amounts=[op.dispense_volume],
                                                 units=[op.dispense_unit])
 

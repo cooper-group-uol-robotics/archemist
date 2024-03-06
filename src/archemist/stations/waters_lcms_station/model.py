@@ -13,7 +13,8 @@ class LCMSAnalysisStatus(Enum):
 
 class WatersLCMSStationModel(StationModel):
     batch_inserted = fields.BooleanField(default=False)
-    analysis_status = fields.EnumField(LCMSAnalysisStatus, default=LCMSAnalysisStatus.INVALID)
+    analysis_status = fields.EnumField(
+        LCMSAnalysisStatus, default=LCMSAnalysisStatus.INVALID)
 
 
 class LCMSAnalysisResultModel(StationOpResultModel):

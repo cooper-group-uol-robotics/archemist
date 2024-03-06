@@ -112,10 +112,14 @@ class MTSynthHeatStirOp(StationSampleOp):
                   time_unit: Literal["second", "minute", "hour"] = None):
         model = MTSynthHeatStirOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.target_temperature = int(target_temperature) if target_temperature else None
-        model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
-        model.wait_duration = int(wait_duration) if wait_duration and wait_duration != "Null" else None
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
+        model.target_temperature = int(
+            target_temperature) if target_temperature else None
+        model.target_stirring_speed = int(
+            target_stirring_speed) if target_stirring_speed else None
+        model.wait_duration = int(
+            wait_duration) if wait_duration and wait_duration != "Null" else None
         if model.wait_duration:
             model.time_unit = time_unit
         model.save()
@@ -149,9 +153,12 @@ class MTSynthSampleOp(StationSampleOp):
                   target_stirring_speed: int):
         model = MTSynthSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
-        model.target_temperature = int(target_temperature) if target_temperature else None
-        model.target_stirring_speed = int(target_stirring_speed) if target_stirring_speed else None
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
+        model.target_temperature = int(
+            target_temperature) if target_temperature else None
+        model.target_stirring_speed = int(
+            target_stirring_speed) if target_stirring_speed else None
         model.save()
         return cls(model)
 
@@ -171,7 +178,8 @@ class MTSynthStopReactionOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
         model.save()
         return cls(model)
 
@@ -184,7 +192,8 @@ class MTSynthTimedOpenReactionValveOp(StationOp):
     def from_args(cls, duration: float,
                   time_unit: Literal["second", "minute", "hour"]):
         model = MTSynthTimedOpenReactionValveOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
         model.duration = float(duration)
         model.time_unit = time_unit
         model.save()
@@ -206,7 +215,8 @@ class MTSynthOpenReactionValveOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
         model.save()
         return cls(model)
 
@@ -218,6 +228,7 @@ class MTSynthCloseReactionValveOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=MTSynthesisStation.__name__)
         model.save()
         return cls(model)

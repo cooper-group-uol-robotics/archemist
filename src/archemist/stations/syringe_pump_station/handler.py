@@ -15,12 +15,14 @@ class SimSyringePumpStationHandler(SimStationOpHandler):
         op = self._station.assigned_op
         if isinstance(op, SyringePumpDispenseVolumeOp):
             result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
+                                                material_names=[
+                                                    op.liquid_name],
                                                 amounts=[op.dispense_volume],
                                                 units=[op.dispense_unit])
         elif isinstance(op, SyringePumpFinishDispensingOp):
             result = MaterialOpResult.from_args(origin_op=op.object_id,
-                                                material_names=[op.liquid_name],
+                                                material_names=[
+                                                    op.liquid_name],
                                                 amounts=[random()*5],
                                                 units=["mL"])
         elif isinstance(op, SyringePumpDispenseRateOp):

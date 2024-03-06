@@ -116,13 +116,15 @@ class InputState:
     @property
     def lot_slots(self) -> Dict[str, Lot]:
         # to handle empty slots with None value
-        def modified_constructor(model): return Lot.from_object_id(model.object_id) if model else None
+        def modified_constructor(model): return Lot.from_object_id(
+            model.object_id) if model else None
         return DictProxy(self._model_proxy.lot_slots, modified_constructor)
 
     @property
     def proc_slots(self) -> Dict[str, Type[StationProcess]]:
         # to handle empty slots with None value
-        def modified_constructor(model): return ProcessFactory.create_from_object_id(model.object_id) if model else None
+        def modified_constructor(model): return ProcessFactory.create_from_object_id(
+            model.object_id) if model else None
         return DictProxy(self._model_proxy.proc_slots, modified_constructor)
 
     @property
@@ -191,13 +193,15 @@ class OutputState:
     @property
     def lot_slots(self) -> Dict[str, Lot]:
         # to handle empty slots with None value
-        def modified_constructor(model): return Lot.from_object_id(model.object_id) if model else None
+        def modified_constructor(model): return Lot.from_object_id(
+            model.object_id) if model else None
         return DictProxy(self._model_proxy.lot_slots, modified_constructor)
 
     @property
     def proc_slots(self) -> Dict[str, Type[StationProcess]]:
         # to handle empty slots with None value
-        def modified_constructor(model): return ProcessFactory.create_from_object_id(model.object_id) if model else None
+        def modified_constructor(model): return ProcessFactory.create_from_object_id(
+            model.object_id) if model else None
         return DictProxy(self._model_proxy.proc_slots, modified_constructor)
 
     @property

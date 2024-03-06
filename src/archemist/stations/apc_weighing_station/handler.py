@@ -40,12 +40,18 @@ try:
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
-            self._pub_balance = rospy.Publisher("kern_PCB2500_Commands", KernPCB2500Cmd, queue_size=2)
-            self._pub_door = rospy.Publisher("kern_door_Commands", KernDoorCmd, queue_size=2)
-            self._pub_sash = rospy.Publisher("sash_door_Commands", sashDoorCmd, queue_size=2)
-            rospy.Subscriber("kern_PCB2500_Readings", KernPCB2500Reading, self.weight_callback)
-            rospy.Subscriber("kern_Door_Status", KernDoorStatus, self.door_callback)
-            rospy.Subscriber("sash_door_Status", sashDoorStatus, self.sash_callback)
+            self._pub_balance = rospy.Publisher(
+                "kern_PCB2500_Commands", KernPCB2500Cmd, queue_size=2)
+            self._pub_door = rospy.Publisher(
+                "kern_door_Commands", KernDoorCmd, queue_size=2)
+            self._pub_sash = rospy.Publisher(
+                "sash_door_Commands", sashDoorCmd, queue_size=2)
+            rospy.Subscriber("kern_PCB2500_Readings",
+                             KernPCB2500Reading, self.weight_callback)
+            rospy.Subscriber("kern_Door_Status",
+                             KernDoorStatus, self.door_callback)
+            rospy.Subscriber("sash_door_Status",
+                             sashDoorStatus, self.sash_callback)
             self._target_balance_door_status = None
             self._target_sash_door_status = None
             self._received_mass = False
@@ -60,25 +66,31 @@ try:
                 self.read_weight = None
                 rospy.loginfo('Reading stable weight.')
                 for i in range(10):
-                    self._pub_balance.publish(kern_command=KernPCB2500Cmd.GET_MASS_STABLE)
+                    self._pub_balance.publish(
+                        kern_command=KernPCB2500Cmd.GET_MASS_STABLE)
             elif isinstance(current_op, APCTareOp):
                 rospy.loginfo('Taring balance.')
                 for i in range(10):
-                    self._pub_balance.publish(kern_command=KernPCB2500Cmd.TARE_BALANCE)
+                    self._pub_balance.publish(
+                        kern_command=KernPCB2500Cmd.TARE_BALANCE)
             elif isinstance(current_op, APCOpenBalanceDoorOp):
                 rospy.loginfo('Opening balance door.')
                 self._target_balance_door_status = "door_open"
                 for i in range(10):
-                    self._pub_door.publish(kern_door_command=KernDoorCmd.OPEN_DOOR)
+                    self._pub_door.publish(
+                        kern_door_command=KernDoorCmd.OPEN_DOOR)
             elif isinstance(current_op, APCCloseBalanceDoorOp):
                 rospy.loginfo('Closing balance door.')
                 self._target_balance_door_status = "door_closed"
                 for i in range(10):
-                    self._pub_door.publish(kern_door_command=KernDoorCmd.CLOSE_DOOR)
+                    self._pub_door.publish(
+                        kern_door_command=KernDoorCmd.CLOSE_DOOR)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
-        def is_op_execution_complete(self) -> bool:  # TODO not sure what this is doing
+        # TODO not sure what this is doing
+        def is_op_execution_complete(self) -> bool:
             return self._command_executed
 
         def get_op_result(self) -> Tuple[OpOutcome, Optional[List[APCWeighResult]]]:

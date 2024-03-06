@@ -33,8 +33,10 @@ try:
             self._current_pxrd_status = PxrdStatus.NOT_LAUNCHED_YET
             self._desired_pxrd_status = None
             rospy.init_node(f'{self._station}_handler')
-            self.pub_pxrd = rospy.Publisher("/PXRD_commands", PxrdCommand, queue_size=1)
-            rospy.Subscriber('/PXRD_status', PxrdStatus, self._pxrd_state_update, queue_size=1)
+            self.pub_pxrd = rospy.Publisher(
+                "/PXRD_commands", PxrdCommand, queue_size=1)
+            rospy.Subscriber('/PXRD_status', PxrdStatus,
+                             self._pxrd_state_update, queue_size=1)
             rospy.sleep(1)
             if self._current_pxrd_status:
                 return True

@@ -225,7 +225,8 @@ class StationProcess:
 
     def generate_operation(self, operation_name: str, **kwargs) -> Type[StationOp]:
         operation_specs = self.operation_specs_map[operation_name]
-        parameters = dict(operation_specs.parameters) if operation_specs.parameters else {}
+        parameters = dict(
+            operation_specs.parameters) if operation_specs.parameters else {}
         if kwargs:
             parameters.update(kwargs)
         return StationOpFactory.create_from_args(operation_specs.op_type, parameters)
@@ -252,7 +253,8 @@ class StationProcess:
             self._model_proxy.status = ProcessStatus.REQUESTING_STATION_PROCS
 
     def are_req_station_procs_completed(self) -> bool:
-        req_station_procs = [station_proc for station_proc in self.req_station_procs]
+        req_station_procs = [
+            station_proc for station_proc in self.req_station_procs]
         for station_proc in req_station_procs:
             if station_proc.status == ProcessStatus.FINISHED:
                 self.req_station_procs.remove(station_proc)
@@ -274,8 +276,10 @@ class StationProcess:
         return StationsGetter.get_station(self.assigned_to)
 
     def _construct_state_machine(self) -> Machine:
-        states = self.STATES if self.STATES else [State(name="init_state"), State(name="final_state")]
-        transitions = self.TRANSITIONS if self.TRANSITIONS else [{'source': 'init_state', 'dest': 'final_state'}]
+        states = self.STATES if self.STATES else [
+            State(name="init_state"), State(name="final_state")]
+        transitions = self.TRANSITIONS if self.TRANSITIONS else [
+            {'source': 'init_state', 'dest': 'final_state'}]
         # add default trigger function to all transitions
         for transition in transitions:
             transition['trigger'] = self.TRIGGER_METHOD

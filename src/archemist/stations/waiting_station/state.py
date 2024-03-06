@@ -36,7 +36,8 @@ class WaitOp(StationLotOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = WaitOpModel()
         model.target_lot = target_lot.model
-        cls._set_model_common_fields(model, associated_station=WaitingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WaitingStation.__name__)
         model.duration = duration
         model.time_unit = time_unit
         model.save()

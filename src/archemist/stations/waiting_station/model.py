@@ -4,4 +4,5 @@ from mongoengine import fields
 
 class WaitOpModel(StationLotOpModel):
     duration = fields.IntField(min_value=0)
-    time_unit = fields.StringField(choices=["second", "minute", "hour"], default="second")
+    time_unit = fields.StringField(
+        choices=["second", "minute", "hour"], default="second")

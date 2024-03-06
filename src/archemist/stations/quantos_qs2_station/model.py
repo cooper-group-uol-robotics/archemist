@@ -13,7 +13,8 @@ class QuantosCartridgeModel(EmbeddedDocument):
 
 class QuantosSolidDispenserQS2Model(StationModel):
     carousel_pos = fields.IntField(min_value=1, max_value=20, default=1)
-    cartridges = fields.EmbeddedDocumentListField(QuantosCartridgeModel, default=[])
+    cartridges = fields.EmbeddedDocumentListField(
+        QuantosCartridgeModel, default=[])
     loaded_cartridge_index = fields.IntField(min_value=0, null=True)
     door_open = fields.BooleanField(default=False)
 

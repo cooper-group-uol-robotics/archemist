@@ -42,7 +42,8 @@ class Recipe:
                                        'dest': state_dict['transitions'][trigger]}
                                       for trigger in ['on_success', 'on_fail']])
             state_detail = StateDetailsModel(station_type=state_dict['station']['type'],
-                                             station_id=int(state_dict['station']['id']),
+                                             station_id=int(
+                                                 state_dict['station']['id']),
                                              station_process=state_dict['station']['process'])
             model.state_map.update({state_dict['state_name']: state_detail})
         model.states.append('end_state')

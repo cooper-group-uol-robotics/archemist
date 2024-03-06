@@ -38,9 +38,11 @@ class StationsGetter:
     def get_stations(station_type: str = None) -> List[Type[Station]]:
         stations_list = []
         if station_type:
-            stations_list = [StationFactory.create_from_model(model) for model in StationModel.objects(_type=station_type)]
+            stations_list = [StationFactory.create_from_model(
+                model) for model in StationModel.objects(_type=station_type)]
         else:
-            stations_list = [StationFactory.create_from_model(model) for model in StationModel.objects]
+            stations_list = [StationFactory.create_from_model(
+                model) for model in StationModel.objects]
 
         return stations_list
 
@@ -68,9 +70,11 @@ class RobotsGetter:
     def get_robots(robot_type: str = None) -> List[Type[Robot]]:
         robots_list = []
         if robot_type:
-            robots_list = [RobotFactory.create_from_model(model) for model in RobotModel.objects(_type=robot_type)]
+            robots_list = [RobotFactory.create_from_model(
+                model) for model in RobotModel.objects(_type=robot_type)]
         else:
-            robots_list = [RobotFactory.create_from_model(model) for model in RobotModel.objects]
+            robots_list = [RobotFactory.create_from_model(
+                model) for model in RobotModel.objects]
 
         return robots_list
 
