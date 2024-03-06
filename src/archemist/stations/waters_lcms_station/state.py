@@ -117,19 +117,25 @@ class LCMSAnalysisResult(StationOpResult):
     @classmethod
     def from_args(cls,
                   origin_op: ObjectId,
-                  concentration: float, 
-                  result_filename: str):
+                  chemicals: list,
+                  concentrations: list, 
+                  y_values: list):
         model = LCMSAnalysisResultModel()
         cls._set_model_common_fields(model, origin_op)
-        model.concentration = concentration
-        model.result_filename = result_filename
+        model.chemicals = chemicals
+        model.concentrations =concentrations
+        model.y_values = y_values
         model.save()
         return cls(model)
+    
+    @property
+    def chemicals(self) -> list:
+        return self._model_proxy.chemicals
 
     @property
-    def concentration(self) -> float:
-        return self._model_proxy.concentration
+    def concentrations(self) -> list:
+        return self._model_proxy.concentrations
 
     @property
-    def result_filename(self) -> str:
-        return self._model_proxy.result_filename
+    def y_values(self) -> list:
+        return self._model_proxy.y_values

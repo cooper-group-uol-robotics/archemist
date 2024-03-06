@@ -13,6 +13,10 @@ class WatersLCMSStationModel(StationModel):
     batch_inserted = fields.BooleanField(default=False)
     sample_index = fields.IntField(min_value=1, default=1)
     analysis_status = fields.EnumField(LCMSAnalysisStatus, default=LCMSAnalysisStatus.INVALID)
+
 class LCMSAnalysisResultModel(StationOpResultModel):
-    concentration = fields.FloatField(required=True)
-    result_filename = fields.StringField(required=True)
+    chemicals = fields.ListField(required=True)
+    concentrations = fields.ListField(required=True)
+    y_values = fields.ListField(required = True)
+
+    # result_filename = fields.StringField(required=True)

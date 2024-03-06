@@ -105,7 +105,7 @@ class APCSyringePumpStationRosHandler(StationOpHandler):
     def shut_down(self):
         pass
 
-    def syringe_pump_callback(self, msg):
+    def syringe_pump_callback(self, msg:TecanXlp6000Task):
         if msg.seq == self._seq_id and msg.complete:
             self._op_complete = msg.complete
             self._seq_id+=1

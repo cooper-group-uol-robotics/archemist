@@ -106,10 +106,13 @@ class WaterLCMSRosHandler(StationOpHandler):
         rospy.init_node(f'{self._station}_handler')
         self._lcms_pub = rospy.Publisher("/lcms_command", LcmsCmd, queue_size=2)
         rospy.Subscriber("/lcms/task_complete", LcmsTask, self.lcms_callback)
+        rospy.Subscriber("/lcms_info", LcmsReading, self.lcms_reading_callback)
         self._op_complete = False
-        self.check_cb = None
         self._op_results = {}
         self._seq_id = 1
+        self.chemicals = []
+        self.concentrations = []
+        self.y_values = []
         rospy.sleep(2)
         return True
     
@@ -146,8 +149,9 @@ class WaterLCMSRosHandler(StationOpHandler):
         current_op = self._station.assigned_op
         if isinstance(current_op, LCMSSampleAnalysisOp):
             result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                    concentration=0.5,
-                                                    result_filename="file.xml") #TODO need to receive from LCMS
+                                                  chemicals=self.chemicals,
+                                                  concentrations=self.concentrations,
+                                                  y_values=self.y_values) 
             return OpOutcome.SUCCEEDED, [result]
         else:
             return OpOutcome.SUCCEEDED, None
@@ -155,11 +159,12 @@ class WaterLCMSRosHandler(StationOpHandler):
     def shut_down(self):
         pass
 
-    def lcms_callback(self, msg):
-        self.check_cb = False
-        print("I am outside condition.")
+    def lcms_callback(self, msg:LcmsTask):
         if msg.seq == self._seq_id and msg.complete:
-            self.check_cb = True
-            print("I am inside condition.")
             self._op_complete = msg.complete
             self._seq_id+=1
+    
+    def lcms_reading_callback(self, msg:LcmsReading):
+        self.chemicals = msg.chemicals
+        self.concentrations = msg.concentrations
+        self.y_values = msg.y_values

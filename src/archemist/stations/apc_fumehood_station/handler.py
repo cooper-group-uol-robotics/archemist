@@ -93,7 +93,7 @@ try:
         def shut_down(self):
             pass
 
-        def SashDoor_callback(self, msg):
+        def SashDoor_callback(self, msg:sashDoorTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1

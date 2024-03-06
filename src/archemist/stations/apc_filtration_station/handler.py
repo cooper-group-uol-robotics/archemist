@@ -102,7 +102,7 @@ try:
         def shut_down(self):
             pass
 
-        def Filtration_callback(self, msg):
+        def Filtration_callback(self, msg:FiltrationTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1

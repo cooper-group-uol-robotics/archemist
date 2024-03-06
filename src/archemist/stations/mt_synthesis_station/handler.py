@@ -165,12 +165,12 @@ try:
         def shut_down(self):
             pass
 
-        def MTOptimax_callback(self, msg):
+        def MTOptimax_callback(self, msg:MettlerOptimaxTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1
         
-        def BaseValve_callback(self, msg):
+        def BaseValve_callback(self, msg:BaseValveTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1

@@ -99,31 +99,23 @@ class APCWeighingStationHandler(StationOpHandler):
     def shut_down(self):
         pass
 
-    def weight_callback(self, msg):
+    def weight_callback(self, msg:KernPCB2500Reading):
         if msg.seq == self._seq_id:
             self.read_weight = msg.mass
             self._seq_id+=1
             self._op_complete = True
 
-    def weight_task_callback(self, msg):
-        if msg.seq == self._seq_id and msg.complete:
-            self._op_complete = msg.complete
-            self._seq_id+=1
-    
-    # def door_callback(self, msg):
-    #     if self._target_balance_door_status == str(msg.status):
-    #         self._op_complete = True
-
-    def kern_door_task_callback(self, msg):
+    def weight_task_callback(self, msg:KernPCB2500Task):
         if msg.seq == self._seq_id and msg.complete:
             self._op_complete = msg.complete
             self._seq_id+=1
 
-    # def sash_callback(self, msg):
-    #     if self._target_sash_door_status == str(msg.status):
-    #         self._command_executed = True
+    def kern_door_task_callback(self, msg:KernDoorTask):
+        if msg.seq == self._seq_id and msg.complete:
+            self._op_complete = msg.complete
+            self._seq_id+=1
 
-    def sash_task_callback(self, msg):
+    def sash_task_callback(self, msg:sashDoorTask):
         if msg.seq == self._seq_id and msg.complete:
             self._op_complete = msg.complete
             self._seq_id+=1
