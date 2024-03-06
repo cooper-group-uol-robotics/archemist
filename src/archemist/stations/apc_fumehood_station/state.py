@@ -79,6 +79,11 @@ class APCFumehoodStation(Station):
             solid = self.solids_dict[op.solid_name]
             solid.decrease_mass(op.dispense_mass, op.dispense_unit)
             self.loaded_cartridge.depleted = True
+            # Check if all cartridges are depleted
+            if all(cartridge.depleted for cartridge in self.cartridges):
+                # Reset all cartridges to not depleted
+                for cartridge in self.cartridges:
+                    cartridge.depleted = False
         elif isinstance(op, APCOpenSashOp):
             self.sash_open = True
         elif isinstance(op, APCCloseSashOp):

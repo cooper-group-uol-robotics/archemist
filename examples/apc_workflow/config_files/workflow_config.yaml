@@ -156,6 +156,8 @@ stations:
       cartridges:
         - associated_solid: 4-aminophenol
           hotel_index: 1
+        - associated_solid: 4-aminophenol
+          hotel_index: 2
     materials:
       solids:
         - name: 4-aminophenol

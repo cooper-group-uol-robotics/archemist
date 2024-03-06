@@ -2,7 +2,7 @@ from transitions import State
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.lot import Lot
 from archemist.core.state.robot_op import RobotTaskOp, RobotWaitOp
-from .state import APCFumehoodStation
+from .state import APCFumehoodStation, APCDispenseSolidOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
 
@@ -72,6 +72,7 @@ class APCSolidAdditionProcess(StationProcess):
         self.request_robot_ops([robot_task, wait_task])
     
     def request_update_cartridge_state(self):
+        # Update the solid addition cartridge - uses APCDispenseSolidOp
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
