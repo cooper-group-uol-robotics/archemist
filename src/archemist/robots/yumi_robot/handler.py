@@ -5,6 +5,8 @@ from archemist.core.util.enums import OpOutcome
 try:
     import rospy
     from yumi_task_msgs.msg import YuMiTask, TaskStatus
+finally:
+    pass
 
 
 class YuMiROSHandler(RobotOpHandler):
