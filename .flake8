@@ -1,4 +1,6 @@
 [flake8]
+exclude = 
+    tests
 max-line-length = 160
 extend-ignore =
     # "Whitespace before ':'" - not PEP-8 compliant
