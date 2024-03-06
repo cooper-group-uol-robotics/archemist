@@ -214,7 +214,7 @@ class ListFieldWrapper:
         # check if weak ref is broken in case of a nested embedded document
         try:
             hasattr(self._list_instance._instance, "__weakref__")
-        except:
+        except Exception:
             self._list_instance._instance = proxy(self._parent)
 
 
@@ -389,7 +389,7 @@ class DictFieldWrapper:
         # check if weak ref is broken in case of a nested embedded document
         try:
             hasattr(self._dict_instance._instance, "__weakref__")
-        except:
+        except Exception:
             self._dict_instance._instance = proxy(self._parent)
 
 
