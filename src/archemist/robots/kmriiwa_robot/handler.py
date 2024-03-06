@@ -20,7 +20,7 @@ class KmriiwaROSHandler(RobotHandler):
         rospy.Subscriber('/kuka2/lbr/robot_status', LBRStatus, self._update_lbr_status_cb, queue_size=2)
         rospy.Subscriber('/kuka2/kmr/robot_status', KMRStatus, self._update_kmr_status_cb, queue_size=2)
 
-        #self._kmr_current_status = ''
+        # self._kmr_current_status = ''
         self._kmr_cmd_seq = 0
         self._kmr_task = None
         self._kmr_task_name = ''
@@ -72,7 +72,7 @@ class KmriiwaROSHandler(RobotHandler):
                 self._kmr_exec_successful = False
 
     def _wait_for_kmr(self):
-        while(not self._kmr_done):
+        while (not self._kmr_done):
             rospy.sleep(0.2)
         self._kmr_done = False
 
@@ -101,7 +101,7 @@ class KmriiwaROSHandler(RobotHandler):
                 self._lbr_exec_successful = False
 
     def _wait_for_lbr(self):
-        while(not self._lbr_done):
+        while (not self._lbr_done):
             rospy.sleep(0.1)
         self._lbr_done = False
 
