@@ -14,43 +14,44 @@ from archemist.core.state.recipe import Recipe
 from archemist.core.state.station_process import StationProcess, ProcessStatus
 from transitions import State
 
+
 class TestProcess(StationProcess):
 
     def __init__(self, process_model) -> None:
         super().__init__(process_model)
-        
+
         self.STATES = [State(name='init_state'),
-            State(name='some_state'),
-            State(name='final_state')]
-        
+                       State(name='some_state'),
+                       State(name='final_state')]
+
         self.TRANSITIONS = [
-            {'source':'init_state','dest':'some_state'},
-            {'source':'some_state','dest':'final_state'}]
-        
+            {'source': 'init_state', 'dest': 'some_state'},
+            {'source': 'some_state', 'dest': 'final_state'}]
+
+
 class TestFullProcess(StationProcess):
 
     def __init__(self, process_model) -> None:
         super().__init__(process_model)
-        
-        self.STATES = [State(name='init_state'),
-            State(name='prep_state', on_enter='initialise_process_data'), 
-            State(name='pickup_batch', on_enter=['request_pickup_batch']),
-            State(name='run_internal_op', on_enter=['request_to_run_internal_op']),
-            State(name='run_external_op', on_enter=['request_to_run_external_op']),
-            State(name='run_internal_proc', on_enter=['request_internal_proc']),
-            State(name='run_external_proc', on_enter=['request_external_proc']),
-            State(name='final_state')]
-        
-        self.TRANSITIONS = [
-            {'source':'init_state','dest':'prep_state'},
-            {'source':'prep_state','dest':'pickup_batch'},
-            {'source':'pickup_batch','dest':'run_internal_op', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'run_internal_op','dest':'run_external_op', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_external_op','dest':'run_internal_proc', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_internal_proc','dest':'run_external_proc', 'conditions':'are_req_station_procs_completed'},
-            {'source':'run_external_proc','dest':'final_state', 'conditions':'are_req_station_procs_completed'}
-        ]
 
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state', on_enter='initialise_process_data'),
+                       State(name='pickup_batch', on_enter=['request_pickup_batch']),
+                       State(name='run_internal_op', on_enter=['request_to_run_internal_op']),
+                       State(name='run_external_op', on_enter=['request_to_run_external_op']),
+                       State(name='run_internal_proc', on_enter=['request_internal_proc']),
+                       State(name='run_external_proc', on_enter=['request_external_proc']),
+                       State(name='final_state')]
+
+        self.TRANSITIONS = [
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'pickup_batch'},
+            {'source': 'pickup_batch', 'dest': 'run_internal_op', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'run_internal_op', 'dest': 'run_external_op', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'run_external_op', 'dest': 'run_internal_proc', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'run_internal_proc', 'dest': 'run_external_proc', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'run_external_proc', 'dest': 'final_state', 'conditions': 'are_req_station_procs_completed'}
+        ]
 
     def initialise_process_data(self):
         self.data['batch_index'] = 0
@@ -79,6 +80,7 @@ class TestFullProcess(StationProcess):
         ext_station_proc._model_proxy.associated_station = "NewStation"
         self.request_station_process(ext_station_proc)
 
+
 class HandlerTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
@@ -88,7 +90,7 @@ class HandlerTest(unittest.TestCase):
             "type": "Robot",
             "location": {"coordinates": [1, 2], "descriptor": "station"},
             "id": 187,
-            "batch_capacity":2,
+            "batch_capacity": 2,
             "handler": "SimRobotOpHandler"
         }
 
@@ -166,7 +168,7 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         robot.add_op(robot_op)
         self.assertIsNone(robot.assigned_op)
-        
+
         robot_handler.tick()
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.ASSIGNED)
@@ -179,7 +181,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNotNone(time_stamp_1)
         robot.repeat_assigned_op()
         self.assertEqual(robot.assigned_op_state, OpState.TO_BE_REPEATED)
-        
+
         robot_handler.tick()
         self.assertEqual(robot.assigned_op_state, OpState.EXECUTING)
         time_stamp_2 = robot_op.start_timestamp
@@ -214,9 +216,9 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNotNone(robot_op.start_timestamp)
         robot.skip_assigned_op()
         self.assertEqual(robot.assigned_op_state, OpState.TO_BE_SKIPPED)
-        
+
         robot_handler.tick()
-       
+
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
         self.assertEqual(robot_op.outcome, OpOutcome.SKIPPED)
@@ -255,8 +257,7 @@ class HandlerTest(unittest.TestCase):
         self.assertIsNotNone(robot.assigned_op)
         self.assertEqual(robot_op.outcome, OpOutcome.SUCCEEDED)
 
-        
-        sleep(3) # the wait op should be complete
+        sleep(3)  # the wait op should be complete
         robot_handler.tick()
         self.assertIsNone(robot.assigned_op)
         self.assertEqual(robot.assigned_op_state, OpState.INVALID)
@@ -273,7 +274,7 @@ class HandlerTest(unittest.TestCase):
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        
+
         station_handler.tick()
         self.assertEqual(station.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(station_op.start_timestamp)
@@ -300,7 +301,7 @@ class HandlerTest(unittest.TestCase):
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        
+
         station_handler.tick()
         self.assertEqual(station.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(station_op.start_timestamp)
@@ -337,7 +338,7 @@ class HandlerTest(unittest.TestCase):
         station.add_station_op(station_op)
         self.assertIsNone(station.assigned_op)
         self.assertEqual(station.assigned_op_state, OpState.INVALID)
-        
+
         station_handler.tick()
         self.assertEqual(station.assigned_op_state, OpState.ASSIGNED)
         self.assertIsNone(station_op.start_timestamp)
@@ -357,11 +358,11 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_procs(self):
         # construct lots
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
-        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
-        
+
         # construct process
         proc_1 = TestProcess.from_args(lot_1)
         proc_2 = TestProcess.from_args(lot_2)
@@ -380,7 +381,7 @@ class HandlerTest(unittest.TestCase):
         station.add_process(proc_2)
         self.assertEqual(len(station.queued_procs), 2)
         self.assertFalse(station.running_procs)
-        
+
         # test processes assignment
         proc_handler.handle()
         self.assertEqual(len(station.running_procs), 2)
@@ -404,7 +405,7 @@ class HandlerTest(unittest.TestCase):
 
         # test processes state advancement
         proc_handler.handle()
-        self.assertEqual(len(station.queued_procs), 1) # proc_3 is not running
+        self.assertEqual(len(station.queued_procs), 1)  # proc_3 is not running
         self.assertEqual(len(station.running_procs), 3)
         self.assertEqual(station.running_procs[0].m_state, "final_state")
         self.assertEqual(station.running_procs[1].m_state, "final_state")
@@ -439,8 +440,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_added_lots(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
-        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
@@ -464,7 +465,7 @@ class HandlerTest(unittest.TestCase):
         # add procs to station
         station.add_lot(lot_1)
         station.add_lot(lot_2)
-       
+
         self.assertFalse(station.queued_procs)
 
         # test processes assignment
@@ -487,8 +488,8 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_mixed(self):
         # construct lots and their recipes
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
-        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_1.status = LotStatus.IN_WORKFLOW
         lot_2 = Lot.from_args([batch_2])
@@ -503,7 +504,7 @@ class HandlerTest(unittest.TestCase):
         lot_2.attach_recipe(recipe_2)
 
         # construct process
-        batch_3 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_3 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot_3 = Lot.from_args([batch_3])
         lot_3.status = LotStatus.IN_WORKFLOW
         proc = TestProcess.from_args(lot_3)
@@ -518,9 +519,9 @@ class HandlerTest(unittest.TestCase):
         # add lots and procs to station
         station.add_lot(lot_1)
         station.add_process(proc)
-       
+
         self.assertEqual(len(station.queued_procs), 1)
-        
+
         # test processes assignment
         proc_handler.handle()
         self.assertEqual(len(station.queued_procs), 0)
@@ -572,19 +573,19 @@ class HandlerTest(unittest.TestCase):
 
     def test_station_process_handler_with_requests(self):
         # construct lots
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
-        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1])
         lot_2 = Lot.from_args([batch_2])
-        
+
         # construct process
         operations = [
-                {
-                    "name": "some_op",
-                    "op": "StationOp",
-                    "parameters": None
-                }
-            ]
+            {
+                "name": "some_op",
+                "op": "StationOp",
+                "parameters": None
+            }
+        ]
         proc_1 = TestFullProcess.from_args(lot_1, operations)
         proc_2 = TestFullProcess.from_args(lot_2, operations)
 
@@ -602,7 +603,7 @@ class HandlerTest(unittest.TestCase):
         station.add_process(proc_1)
         station.add_process(proc_2)
         self.assertEqual(len(station.queued_procs), 2)
-        
+
         # test processes assignment
         proc_handler.handle()
         self.assertEqual(station.running_procs[0].object_id, proc_1.object_id)
@@ -680,7 +681,5 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(station.running_procs[0].m_state, "pickup_batch")
 
 
-
 if __name__ == "__main__":
     unittest.main()
-        

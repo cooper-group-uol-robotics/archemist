@@ -4,6 +4,7 @@ from pathlib import Path
 from archemist.core.persistence.persistence_manager import PersistenceManager, DatabaseNotPopulatedError
 from archemist.core.persistence.objects_getter import RobotsGetter, StationsGetter, MaterialsGetter
 
+
 class PersistenceManagerTest(unittest.TestCase):
 
     def setUp(self):
@@ -17,15 +18,15 @@ class PersistenceManagerTest(unittest.TestCase):
         # test constructing workflow from non existing database
         with self.assertRaises(DatabaseNotPopulatedError):
             self.p_manager.construct_workflow_from_db()
-        
+
         # test constructing workflow from config file
         workflow_config_path = Path.joinpath(Path.cwd(), "tests/persistence/resources/good_wf_config.yaml")
-        
+
         in_state, wf_state, out_state = self.p_manager.construct_workflow_from_config_file(workflow_config_path)
         self.assertIsNotNone(in_state)
         self.assertIsNotNone(wf_state)
         self.assertIsNotNone(out_state)
-        
+
         self.assertEqual(len(StationsGetter.get_stations()), 3)
         self.assertEqual(len(RobotsGetter.get_robots()), 2)
         self.assertEqual(len(MaterialsGetter.get_solids()), 2)

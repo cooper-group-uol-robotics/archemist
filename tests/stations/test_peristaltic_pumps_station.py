@@ -13,6 +13,7 @@ from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class PeristalticLiquidDispensingTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -21,7 +22,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         station_dict = {
             'type': 'PeristalticPumpsStation',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ChemSpeedFlexStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials':
@@ -38,17 +39,17 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
                 }]
             },
             'properties': {
-                'liquid_pump_map':{'water': 1}
+                'liquid_pump_map': {'water': 1}
             }
         }
-        
+
         self.station = PeristalticPumpsStation.from_dict(station_dict)
-        
+
     def tearDown(self):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
-    
+
     def test_state(self):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
@@ -84,27 +85,27 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.assertEqual(self.station.liquids_dict["water"].volume_unit, "mL")
 
     def test_solubility_process(self):
-        
+
         batch = Batch.from_args(2)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "dispense_op",
-                    "op": "PPLiquidDispenseOp",
-                    "parameters": {
+            {
+                "name": "dispense_op",
+                "op": "PPLiquidDispenseOp",
+                "parameters": {
                         "liquid_name": "water",
                         "dispense_volume": 10,
                         "dispense_unit": "mL"
-                    }
                 }
-            ]
+            }
+        ]
         process = PandaPumpSolubilityProcess.from_args(lot=lot,
-                                                operations=operations)
+                                                       operations=operations)
         process.lot_slot = 0
 
         # assert initial state
@@ -156,7 +157,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
                                             dispense_unit="mL")
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -167,7 +168,7 @@ class PeristalticLiquidDispensingTest(unittest.TestCase):
         self.assertEqual(op_results[0].units[0], "mL")
 
         self.station.complete_assigned_op(outcome, op_results)
-        
+
 
 if __name__ == '__main__':
     unittest.main()

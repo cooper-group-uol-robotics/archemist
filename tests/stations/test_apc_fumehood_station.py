@@ -20,6 +20,7 @@ from archemist.core.util.enums import OpOutcome, ProcessStatus
 from datetime import date
 from .testing_utils import test_req_robot_ops, test_req_station_op, test_req_station_proc
 
+
 class MTSynthesisStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -28,14 +29,14 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'APCFumehoodStation',
             'id': 21,
-            'location': {'coordinates': [1,7], 'descriptor': "APCFumehoodStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "APCFumehoodStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'properties': {
                 'cartridges': [
                     {'associated_solid': "NaCl", 'hotel_index': 1},
                     {'associated_solid': "NaCl", 'hotel_index': 2}
-                    ]
+                ]
             },
             'materials':
             {
@@ -49,7 +50,7 @@ class MTSynthesisStationTest(unittest.TestCase):
             }
         }
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -65,7 +66,7 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.assertTrue(cartridge.depleted)
 
     def test_station_state(self):
-        
+
         station = APCFumehoodStation.from_dict(self.station_doc)
         # test station is constructed properly
         self.assertIsNotNone(station)
@@ -93,16 +94,16 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # test APCDispenseSolidOp
         t_op = APCDispenseSolidOp.from_args(target_sample=batch.samples[0],
-                                                solid_name="NaCl",
-                                                dispense_mass=15,
-                                                dispense_unit="mg")
+                                            solid_name="NaCl",
+                                            dispense_mass=15,
+                                            dispense_unit="mg")
         station.add_station_op(t_op)
         station.update_assigned_op()
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertEqual(station.solids_dict["NaCl"].mass, 85)
         self.assertTrue(station.loaded_cartridge.depleted)
 
-        # test unload_cartridge 
+        # test unload_cartridge
         station.unload_cartridge()
         self.assertIsNone(station.loaded_cartridge)
 
@@ -124,29 +125,29 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # construct station
         station = APCFumehoodStation.from_dict(self.station_doc)
-        
+
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "add_solid",
-                    "op": "APCDispenseSolidOp",
-                    "parameters": {
+            {
+                "name": "add_solid",
+                "op": "APCDispenseSolidOp",
+                "parameters": {
                         "solid_name": "NaCl",
                         "dispense_mass": 15,
-                        "dispense_unit": "mg"                    
-                    }
-                }]
+                        "dispense_unit": "mg"
+                }
+            }]
 
         process = APCSolidAdditionProcess.from_args(lot=lot,
-                                              target_batch_index=0,
-                                              target_sample_index=0,
-                                              operations=operations)
+                                                    target_batch_index=0,
+                                                    target_sample_index=0,
+                                                    operations=operations)
         process.lot_slot = 0
         process.assigned_to = station.object_id
         # assert initial state
@@ -236,7 +237,7 @@ class MTSynthesisStationTest(unittest.TestCase):
                                             dispense_unit="mg")
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)

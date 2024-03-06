@@ -7,41 +7,42 @@ from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
 
+
 class SolubilityStationProcess(StationProcess):
-    
+
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
 
         ''' States '''
-        self.STATES = [State(name='init_state'), 
-            State(name='prep_state', on_enter='initialise_process_data'),
-            State(name='load_sample', on_enter=['request_load_sample_job']),
-            State(name='unload_sample', on_enter=['request_unload_sample_job']),
-            State(name='station_process', on_enter=['request_process_data_job']),
-            State(name='update_batch_index', on_enter=['request_batch_index_update']),
-            State(name='update_sample_index', on_enter=['request_sample_index_update']),
-            State(name='final_state')]            
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state', on_enter='initialise_process_data'),
+                       State(name='load_sample', on_enter=['request_load_sample_job']),
+                       State(name='unload_sample', on_enter=['request_unload_sample_job']),
+                       State(name='station_process', on_enter=['request_process_data_job']),
+                       State(name='update_batch_index', on_enter=['request_batch_index_update']),
+                       State(name='update_sample_index', on_enter=['request_sample_index_update']),
+                       State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
-            { 'source':'init_state', 'dest': 'prep_state'},
-            { 'source':'prep_state','dest':'load_sample'},
-            { 'source':'load_sample','dest':'station_process', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'station_process','dest':'unload_sample', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'unload_sample','dest':'update_sample_index', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'update_sample_index','dest':'load_sample', 'unless':'are_all_samples_loaded'},
-            { 'source':'update_sample_index','dest':'update_batch_index', 'conditions':'are_all_samples_loaded'},
-            { 'source':'update_batch_index','dest':'load_sample', 'unless':'are_all_batches_processed'},
-            { 'source':'update_batch_index','dest':'final_state', 'conditions':'are_all_batches_processed'},
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'load_sample'},
+            {'source': 'load_sample', 'dest': 'station_process', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'station_process', 'dest': 'unload_sample', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'unload_sample', 'dest': 'update_sample_index', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'update_sample_index', 'dest': 'load_sample', 'unless': 'are_all_samples_loaded'},
+            {'source': 'update_sample_index', 'dest': 'update_batch_index', 'conditions': 'are_all_samples_loaded'},
+            {'source': 'update_batch_index', 'dest': 'load_sample', 'unless': 'are_all_batches_processed'},
+            {'source': 'update_batch_index', 'dest': 'final_state', 'conditions': 'are_all_batches_processed'},
         ]
 
     @classmethod
     def from_args(cls, lot: Lot,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -54,7 +55,7 @@ class SolubilityStationProcess(StationProcess):
                                      skip_ext_procs)
         model.save()
         return cls(model)
-        
+
     ''' states callbacks '''
 
     def initialise_process_data(self):
@@ -67,9 +68,9 @@ class SolubilityStationProcess(StationProcess):
         params_dict["batch_index"] = self.data['batch_index'] + 1
         target_batch = self.lot.batches[self.data['batch_index']]
         robot_task = RobotTaskOp.from_args(name='PresentVial',
-                                                     target_robot="FixedRobot",
-                                                     params=params_dict,
-                                                     target_batch=target_batch)
+                                           target_robot="FixedRobot",
+                                           params=params_dict,
+                                           target_batch=target_batch)
         self.request_robot_ops([robot_task])
 
     def request_unload_sample_job(self):
@@ -78,16 +79,16 @@ class SolubilityStationProcess(StationProcess):
         params_dict["batch_index"] = self.data['batch_index'] + 1
         target_batch = self.lot.batches[self.data['batch_index']]
         robot_task = RobotTaskOp.from_args(name='ReturnVial',
-                                                     target_robot="FixedRobot",
-                                                     params=params_dict,
-                                                     target_batch=target_batch)
+                                           target_robot="FixedRobot",
+                                           params=params_dict,
+                                           target_batch=target_batch)
         self.request_robot_ops([robot_task])
 
     def request_process_data_job(self):
         sample_index = self.data['sample_index']
         batch_index = self.data['batch_index']
         sample = self.lot.batches[batch_index].samples[sample_index]
-        
+
         current_op = self.generate_operation("check_solubility", target_sample=sample)
         self.request_station_op(current_op)
 
@@ -108,30 +109,31 @@ class SolubilityStationProcess(StationProcess):
     def are_all_batches_processed(self):
         return self.data['batch_index'] == self.lot.num_batches
 
+
 class PandaCheckSolubilityProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
-        
+
         ''' States '''
-        self.STATES = [ State(name='init_state'),
-            State(name='prep_state'),
-            State(name='check_solubility', on_enter='request_check_solubility'),
-            State(name='final_state')]
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state'),
+                       State(name='check_solubility', on_enter='request_check_solubility'),
+                       State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
-            {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state','dest':'check_solubility'},
-            {'source':'check_solubility','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'check_solubility'},
+            {'source': 'check_solubility', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'}
         ]
 
     @classmethod
     def from_args(cls, lot: Lot,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,

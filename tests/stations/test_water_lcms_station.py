@@ -6,8 +6,8 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.robot_op import RobotTaskOp
 from archemist.stations.waters_lcms_station.state import (WatersLCMSStation,
                                                           LCMSSampleAnalysisOp,
-                                                          LCMSAnalysisResult, 
-                                                          LCMSInsertRackOp, 
+                                                          LCMSAnalysisResult,
+                                                          LCMSInsertRackOp,
                                                           LCMSEjectRackOp,
                                                           LCMSAnalysisStatus)
 from archemist.stations.waters_lcms_station.handler import SimWatersLCMSStationHandler
@@ -15,16 +15,16 @@ from archemist.stations.waters_lcms_station.process import APCLCMSAnalysisProces
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class WatersLCMSStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
-
         station_dict = {
             'type': 'WatersLCMSStation',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "WatersLCMSStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "WatersLCMSStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'properties': None
@@ -36,7 +36,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
-    
+
     def test_state(self):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
@@ -54,7 +54,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         # test LCMSInsertBatchOp
         t_op = LCMSInsertRackOp.from_args()
         self.assertIsNotNone(t_op)
-        
+
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
@@ -63,7 +63,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         # test LCMSSampleAnalysisOp
         t_op = LCMSSampleAnalysisOp.from_args(batch_1.samples[0])
         self.assertIsNotNone(t_op)
-        
+
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.assertEqual(self.station.analysis_status, LCMSAnalysisStatus.RUNNING_ANALYSIS)
@@ -82,7 +82,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         # test LCMSEjectBatchOp
         t_op = LCMSEjectRackOp.from_args()
         self.assertIsNotNone(t_op)
-        
+
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
@@ -92,7 +92,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         num_samples = 1
         batch = Batch.from_args(num_samples)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         self.station.add_lot(lot)
 
@@ -157,7 +157,7 @@ class WatersLCMSStationTest(unittest.TestCase):
         t_op = LCMSSampleAnalysisOp.from_args(batch_1.samples[0])
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -171,12 +171,11 @@ class WatersLCMSStationTest(unittest.TestCase):
         t_op = LCMSInsertRackOp.from_args()
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertIsNone(op_results)
 
-        
 
 if __name__ == '__main__':
     unittest.main()

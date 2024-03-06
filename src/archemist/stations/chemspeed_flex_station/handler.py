@@ -1,9 +1,10 @@
 from typing import Tuple, List, Type
 from archemist.core.state.station import Station
-from .state import CSOpenDoorOp,CSCloseDoorOp,CSRunJobOp,CSLiquidDispenseOp
+from .state import CSOpenDoorOp, CSCloseDoorOp, CSRunJobOp, CSLiquidDispenseOp
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult
 from archemist.core.util.enums import OpOutcome
+
 
 class SimChemSpeedFlexHandler(SimStationOpHandler):
     def __init__(self, station: Station):
@@ -11,7 +12,7 @@ class SimChemSpeedFlexHandler(SimStationOpHandler):
 
     def get_op_result(self) -> Tuple[OpOutcome, List[Type[StationOpResult]]]:
         current_op = self._station.assigned_op
-        if (isinstance(current_op,CSLiquidDispenseOp)):
+        if (isinstance(current_op, CSLiquidDispenseOp)):
             materials_names = [material_name for material_name in current_op.dispense_table.keys()]
             samples_qtys = zip(*[qtys for qtys in current_op.dispense_table.values()])
             dispense_results = []
@@ -25,9 +26,10 @@ class SimChemSpeedFlexHandler(SimStationOpHandler):
         else:
             return OpOutcome.SUCCEEDED, None
 
+
 try:
     import rospy
-    from chemspeed_flex_msgs.msg import CSFlexCommand,CSFlexStatus
+    from chemspeed_flex_msgs.msg import CSFlexCommand, CSFlexStatus
 
     class ChemSpeedFlexROSHandler(StationOpHandler):
         def __init__(self, station: Station):
@@ -47,25 +49,25 @@ try:
 
         def execute_op(self):
             current_op = self._station.assigned_op
-            if (isinstance(current_op,CSOpenDoorOp)):
+            if (isinstance(current_op, CSOpenDoorOp)):
                 rospy.loginfo('opening chemspeed door')
                 for i in range(10):
                     self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.OPEN_DOOR)
                 self._desired_cs_status = CSFlexStatus.DOOR_OPEN
-            elif (isinstance(current_op,CSCloseDoorOp)):
+            elif (isinstance(current_op, CSCloseDoorOp)):
                 rospy.loginfo('closing chemspeed door')
                 for i in range(10):
                     self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.CLOSE_DOOR)
                 self._desired_cs_status = CSFlexStatus.DOOR_CLOSED
-            elif (isinstance(current_op,CSRunJobOp)):
+            elif (isinstance(current_op, CSRunJobOp)):
                 rospy.loginfo('starting chemspeed job')
                 for i in range(10):
                     self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
-                self._desired_cs_status =  CSFlexStatus.JOB_COMPLETE
-            elif (isinstance(current_op,CSLiquidDispenseOp)):
+                self._desired_cs_status = CSFlexStatus.JOB_COMPLETE
+            elif (isinstance(current_op, CSLiquidDispenseOp)):
                 rospy.loginfo('uploading csv file to rosparam server')
                 rospy.set_param('chemspeed_input_csv', current_op.to_csv_string())
-                rospy.sleep(3) # wait for csv to be uploaded
+                rospy.sleep(3)  # wait for csv to be uploaded
                 rospy.loginfo('starting chemspeed job')
                 for i in range(10):
                     self.pubCS_Flex.publish(cs_flex_command=CSFlexCommand.RUN_APP)
@@ -82,20 +84,20 @@ try:
 
         def get_op_result(self) -> Tuple[OpOutcome, List[Type[StationOpResult]]]:
             current_op = self._station.assigned_op
-            if (isinstance(current_op,CSLiquidDispenseOp)):
+            if (isinstance(current_op, CSLiquidDispenseOp)):
                 materials_names = [material_name for material_name in current_op.dispense_table.keys()]
                 samples_qtys = zip(*[qtys for qtys in current_op.dispense_table.values()])
                 dispense_results = []
                 for qty_tuple in samples_qtys:
                     sample_op_result = MaterialOpResult.from_args(origin_op=current_op.object_id,
-                                                                material_names=materials_names,
-                                                                amounts=list(qty_tuple),
-                                                                units=[current_op.dispense_unit]*len(materials_names))
+                                                                  material_names=materials_names,
+                                                                  amounts=list(qty_tuple),
+                                                                  units=[current_op.dispense_unit]*len(materials_names))
                     dispense_results.append(sample_op_result)
                 return OpOutcome.SUCCEEDED, dispense_results
             else:
                 return OpOutcome.SUCCEEDED, None
-            
+
         def shut_down(self):
             pass
 

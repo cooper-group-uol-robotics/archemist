@@ -12,14 +12,15 @@ from .state import (APCWeighingStation,
 
 from typing import Union, List, Dict, Any
 
+
 class APCWeighingProcess(StationProcess):
-    
+
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
 
         ''' States '''
         self.STATES = [
-            State(name='init_state'), 
+            State(name='init_state'),
             State(name='prep_state', on_enter=['initialise_process_data']),
             State(name='tare', on_enter=['request_tare']),
             State(name='open_balance_door', on_enter=['request_open_balance_door']),
@@ -30,30 +31,30 @@ class APCWeighingProcess(StationProcess):
             State(name='update_funnel_index', on_enter=['increment_funnel_index']),
             State(name='final_state')
         ]
-            
+
         ''' Transitions '''
         self.TRANSITIONS = [
-            { 'source':'init_state','dest':'prep_state'},
-            { 'source':'prep_state','dest':'tare'},
-            { 'source':'tare','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'open_balance_door','dest':'load_funnel', 'unless':'is_weighing_complete', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'load_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'close_balance_door','dest':'weigh', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
-            { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
-            { 'source':'unload_funnel','dest':'update_funnel_index', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'update_funnel_index','dest':'final_state'}
-            ]
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'tare'},
+            {'source': 'tare', 'dest': 'open_balance_door', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'open_balance_door', 'dest': 'load_funnel', 'unless': 'is_weighing_complete', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'load_funnel', 'dest': 'close_balance_door', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'close_balance_door', 'dest': 'weigh', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'weigh', 'dest': 'open_balance_door', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'open_balance_door', 'dest': 'unload_funnel', 'conditions': ['are_req_station_ops_completed', 'is_weighing_complete']},
+            {'source': 'unload_funnel', 'dest': 'update_funnel_index', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'update_funnel_index', 'dest': 'final_state'}
+        ]
 
     @classmethod
     def from_args(cls, lot: Lot,
                   target_batch_index: int,
                   target_sample_index: int,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -68,7 +69,7 @@ class APCWeighingProcess(StationProcess):
         model.data["target_sample_index"] = int(target_sample_index)
         model.save()
         return cls(model)
-    
+
     ''' States callbacks. '''
 
     def initialise_process_data(self):
@@ -113,5 +114,6 @@ class APCWeighingProcess(StationProcess):
         weighing_station.funnel_storage_index += 1
 
     ''' transition callbacks '''
+
     def is_weighing_complete(self):
         return self.data['is_weighing_complete']

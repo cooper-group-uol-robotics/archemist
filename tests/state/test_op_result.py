@@ -4,6 +4,7 @@ from mongoengine import connect
 
 from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult, ProcessOpResult
 
+
 class OpResultTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
@@ -20,7 +21,6 @@ class OpResultTest(unittest.TestCase):
         self.assertIsNotNone(op_result)
         self.assertIsNotNone(op_result.object_id)
         self.assertEqual(op_result.origin_op, mock_origin_op)
-
 
     def test_material_op_result(self):
         mock_origin_op = ObjectId()
@@ -42,4 +42,3 @@ class OpResultTest(unittest.TestCase):
         self.assertIsNotNone(op_result)
         self.assertEqual(op_result.origin_op, mock_origin_op)
         self.assertDictEqual(op_result.parameters, parameters_dict)
-    

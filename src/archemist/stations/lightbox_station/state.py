@@ -13,8 +13,10 @@ import math
 
 
 ''' ==== Station Description ==== '''
+
+
 class LightBoxStation(Station):
-    def __init__(self, station_model: Union[LightBoxStationModel,ModelProxy]) -> None:
+    def __init__(self, station_model: Union[LightBoxStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
 
     @classmethod
@@ -27,18 +29,21 @@ class LightBoxStation(Station):
             model.lab_target_index = float(station_dict["properties"]["lab_target_index"])
         model.save()
         return cls(model)
-    
+
     @property
     def rgb_target_index(self) -> int:
         return self._model_proxy.rgb_target_index
-    
+
     @property
     def lab_target_index(self) -> float:
         return self._model_proxy.lab_target_index
 
+
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class LBSampleAnalyseRGBOp(StationSampleOp):
-    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
+    def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -48,7 +53,8 @@ class LBSampleAnalyseRGBOp(StationSampleOp):
         cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class LBAnalyseRGBResult(StationOpResult):
     def __init__(self, result_model: Union[LBAnalyseRGBResultModel, ModelProxy]):
         super().__init__(result_model)
@@ -73,7 +79,6 @@ class LBAnalyseRGBResult(StationOpResult):
         model.save()
         return cls(model)
 
-
     @property
     def result_filename(self) -> str:
         return self._model_proxy.result_filename
@@ -89,17 +94,18 @@ class LBAnalyseRGBResult(StationOpResult):
     @property
     def blue_intensity(self) -> int:
         return self._model_proxy.blue_intensity
-    
+
     @property
     def color_index(self) -> int:
         return self._model_proxy.color_index
-    
+
     @property
     def color_diff(self) -> int:
         return self._model_proxy.color_diff
 
+
 class LBSampleAnalyseLABOp(StationSampleOp):
-    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
+    def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -109,6 +115,7 @@ class LBSampleAnalyseLABOp(StationSampleOp):
         cls._set_model_common_fields(model, associated_station=LightBoxStation.__name__)
         model.save()
         return cls(model)
+
 
 class LBAnalyseLABResult(StationOpResult):
     def __init__(self, result_model: Union[LBAnalyseLABResultModel, ModelProxy]):
@@ -134,7 +141,6 @@ class LBAnalyseLABResult(StationOpResult):
         model.save()
         return cls(model)
 
-
     @property
     def result_filename(self) -> str:
         return self._model_proxy.result_filename
@@ -150,15 +156,11 @@ class LBAnalyseLABResult(StationOpResult):
     @property
     def b_star_value(self) -> float:
         return self._model_proxy.b_star_value
-    
+
     @property
     def color_index(self) -> float:
         return self._model_proxy.color_index
-    
+
     @property
     def color_diff(self) -> float:
         return self._model_proxy.color_diff
-    
-    
-
-    

@@ -36,11 +36,10 @@ class SyringePumpDispenseVolumeOp(StationSampleOp):
     def __init__(self, station_op_model: Union[SyringePumpDispenseVolumeOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
-
     @classmethod
     def from_args(cls,
                   target_sample: Sample,
-                  liquid_name: str, 
+                  liquid_name: str,
                   dispense_volume: float,
                   dispense_unit: Literal["L", "mL", "uL"],
                   dispense_rate: float,
@@ -55,7 +54,6 @@ class SyringePumpDispenseVolumeOp(StationSampleOp):
         model.rate_unit = rate_unit
         model.save()
         return cls(model)
-        
 
     @property
     def liquid_name(self) -> str:
@@ -77,15 +75,15 @@ class SyringePumpDispenseVolumeOp(StationSampleOp):
     def rate_unit(self) -> Literal["mL/minute", "mL/second"]:
         return self._model_proxy.rate_unit
 
+
 class SyringePumpDispenseRateOp(StationSampleOp):
     def __init__(self, station_op_model: Union[SyringePumpDispenseRateOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
-
     @classmethod
     def from_args(cls,
                   target_sample: Sample,
-                  liquid_name: str, 
+                  liquid_name: str,
                   dispense_rate: float,
                   rate_unit: Literal["mL/minute", "mL/second"]):
         model = SyringePumpDispenseRateOpModel()
@@ -96,7 +94,6 @@ class SyringePumpDispenseRateOp(StationSampleOp):
         model.rate_unit = rate_unit
         model.save()
         return cls(model)
-        
 
     @property
     def liquid_name(self) -> str:
@@ -110,10 +107,10 @@ class SyringePumpDispenseRateOp(StationSampleOp):
     def rate_unit(self) -> Literal["mL/minute", "mL/second"]:
         return self._model_proxy.rate_unit
 
+
 class SyringePumpFinishDispensingOp(StationSampleOp):
     def __init__(self, station_op_model: Union[SyringePumpFinishDispensingOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
-
 
     @classmethod
     def from_args(cls,
@@ -125,7 +122,7 @@ class SyringePumpFinishDispensingOp(StationSampleOp):
         model.liquid_name = liquid_name
         model.save()
         return cls(model)
-        
+
     @property
     def liquid_name(self) -> str:
         return self._model_proxy.liquid_name

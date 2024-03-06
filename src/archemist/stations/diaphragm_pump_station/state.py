@@ -34,11 +34,10 @@ class DiaphragmPumpDispenseVolumeOp(StationSampleOp):
     def __init__(self, station_op_model: Union[DiaphragmPumpDispenseVolumeOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
-
     @classmethod
     def from_args(cls,
                   target_sample: Sample,
-                  liquid_name: str, 
+                  liquid_name: str,
                   dispense_volume: float,
                   dispense_unit: Literal["L", "mL", "uL"]):
         model = DiaphragmPumpDispenseVolumeOpModel()
@@ -49,7 +48,6 @@ class DiaphragmPumpDispenseVolumeOp(StationSampleOp):
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)
-        
 
     @property
     def liquid_name(self) -> str:

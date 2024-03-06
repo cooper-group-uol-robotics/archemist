@@ -82,15 +82,15 @@ class RecipeTest(unittest.TestCase):
         process_1 = current_state_details.station_process
         self.assertEqual(process_1["type"], "CrystalBotWorkflowProcess")
         self.assertIsNone(process_1["args"])
-        operation_1= [
-                        {
-                            "name": "stir",
-                            "op": "IKAStirringOp",
-                            "parameters": {
-                                "stirring_speed": [200, 300]
-                            },
-                        },
-                    ]
+        operation_1 = [
+            {
+                "name": "stir",
+                "op": "IKAStirringOp",
+                "parameters": {
+                    "stirring_speed": [200, 300]
+                },
+            },
+        ]
         self.assertListEqual(process_1["operations"], operation_1)
         self.assertFalse(recipe.is_complete())
         self.assertFalse(recipe.is_failed())
@@ -109,13 +109,13 @@ class RecipeTest(unittest.TestCase):
         process_2 = current_state_details.station_process
         self.assertEqual(process_2["type"], "SomeProcess")
         self.assertEqual(process_2["args"], {"some_variable": 42})
-        operation_2 =[
-                        {
-                            "name": "weigh",
-                            "op": "FisherWeightOp",
-                            "parameters": {"some_param": 123},
-                        },
-                    ]
+        operation_2 = [
+            {
+                "name": "weigh",
+                "op": "FisherWeightOp",
+                "parameters": {"some_param": 123},
+            },
+        ]
         self.assertListEqual(process_2["operations"], operation_2)
         self.assertFalse(recipe.is_complete())
 

@@ -4,11 +4,12 @@ from datetime import datetime
 from mongoengine import connect
 
 from archemist.stations.diaphragm_pump_station.state import (DiaphragmPumpStation,
-                                                                 DiaphragmPumpDispenseVolumeOp)
+                                                             DiaphragmPumpDispenseVolumeOp)
 from archemist.stations.diaphragm_pump_station.handler import SimDiaphragmPumpStationHandler
 from archemist.core.util.enums import StationState, OpOutcome
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult
+
 
 class DiaphragmPumpStationTest(unittest.TestCase):
     def setUp(self):
@@ -18,7 +19,7 @@ class DiaphragmPumpStationTest(unittest.TestCase):
         self.station_dict = {
             'type': 'DiaphragmPumpStation',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "APCSyringePumpStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "APCSyringePumpStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials':
@@ -36,12 +37,12 @@ class DiaphragmPumpStationTest(unittest.TestCase):
             },
             'properties': None
         }
-                
+
     def tearDown(self):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
-    
+
     def test_state(self):
         # test station is constructed properly
         station = DiaphragmPumpStation.from_dict(self.station_dict)
@@ -55,9 +56,9 @@ class DiaphragmPumpStationTest(unittest.TestCase):
 
         # test DiaphragmPumpDispenseVolumeOp
         t_op = DiaphragmPumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water',
-                                            dispense_volume=100,
-                                            dispense_unit="mL")
+                                                       liquid_name='water',
+                                                       dispense_volume=100,
+                                                       dispense_unit="mL")
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.liquid_name, "water")
         self.assertEqual(t_op.dispense_volume, 100)
@@ -90,12 +91,12 @@ class DiaphragmPumpStationTest(unittest.TestCase):
 
         # test handling DiaphragmPumpDispenseVolumeOp
         t_op = DiaphragmPumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water',
-                                            dispense_volume=100,
-                                            dispense_unit="mL")
+                                                       liquid_name='water',
+                                                       dispense_volume=100,
+                                                       dispense_unit="mL")
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)

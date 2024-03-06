@@ -3,9 +3,10 @@ from archemist.core.persistence.yaml_handler import YamlHandler
 from pathlib import Path
 from strictyaml.exceptions import YAMLValidationError
 
+
 class YamlHandlerTest(unittest.TestCase):
 
-    def setUp(self) :
+    def setUp(self):
         self._resource_path = Path.joinpath(Path.cwd(), "tests/persistence/resources")
 
     def test_config_file_loading(self):
@@ -39,6 +40,7 @@ class YamlHandlerTest(unittest.TestCase):
         bad_server_config_path = self._resource_path.joinpath("bad_server_config.yaml")
         with self.assertRaises(YAMLValidationError):
             YamlHandler.load_server_settings_file(bad_server_config_path)
+
 
 if __name__ == '__main__':
     unittest.main()

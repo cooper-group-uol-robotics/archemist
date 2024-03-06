@@ -2,7 +2,7 @@ from unyt import Unit, UnitRegistry
 from unyt.dimensions import volume
 
 reg = UnitRegistry()
-reg.add(symbol="L", base_value=1e-3, dimensions=volume, tex_repr=r"\rm{L}", 
+reg.add(symbol="L", base_value=1e-3, dimensions=volume, tex_repr=r"\rm{L}",
         prefixable=True)
 
 m3 = Unit("m**3", registry=reg)

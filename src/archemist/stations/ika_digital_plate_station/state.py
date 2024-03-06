@@ -9,8 +9,10 @@ from typing import Literal, Dict, Union, List
 
 
 ''' ==== Station Description ==== '''
+
+
 class IKADigitalPlateStation(Station):
-    def __init__(self, station_model: Union[IkaDigitalPlateStationModel,ModelProxy]) -> None:
+    def __init__(self, station_model: Union[IkaDigitalPlateStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
 
     @classmethod
@@ -80,6 +82,8 @@ class IKADigitalPlateStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class IKAHeatStirBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -117,6 +121,7 @@ class IKAHeatStirBatchOp(StationBatchOp):
     @property
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
+
 
 class IKAHeatBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
@@ -183,8 +188,9 @@ class IKAStirBatchOp(StationBatchOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
+
 class IKAStopOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
@@ -193,5 +199,3 @@ class IKAStopOp(StationOp):
         cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
         model.save()
         return cls(model)
-
-    

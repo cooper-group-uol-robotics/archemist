@@ -12,6 +12,8 @@ from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
 ''' ==== Station Description ==== '''
+
+
 class WatersLCMSStation(Station):
     def __init__(self, station_model: Union[WatersLCMSStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -57,6 +59,8 @@ class WatersLCMSStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class LCMSInsertRackOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -68,6 +72,7 @@ class LCMSInsertRackOp(StationOp):
         model.save()
         return cls(model)
 
+
 class LCMSEjectRackOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -78,6 +83,7 @@ class LCMSEjectRackOp(StationOp):
         cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)
+
 
 class LCMSSampleAnalysisOp(StationSampleOp):
     def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
@@ -91,6 +97,7 @@ class LCMSSampleAnalysisOp(StationSampleOp):
         model.save()
         return cls(model)
 
+
 class LCMSAnalysisResult(StationOpResult):
     def __init__(self, result_model: Union[LCMSAnalysisResultModel, ModelProxy]):
         super().__init__(result_model)
@@ -98,7 +105,7 @@ class LCMSAnalysisResult(StationOpResult):
     @classmethod
     def from_args(cls,
                   origin_op: ObjectId,
-                  concentration: float, 
+                  concentration: float,
                   result_filename: str):
         model = LCMSAnalysisResultModel()
         cls._set_model_common_fields(model, origin_op)

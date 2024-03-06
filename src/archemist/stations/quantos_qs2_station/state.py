@@ -9,6 +9,7 @@ from archemist.core.state.station_op import StationOp, StationSampleOp
 from archemist.core.util.enums import OpOutcome
 from typing import Dict, Any, Type, Union, List, Literal, Optional
 
+
 class QuantosCartridge:
     def __init__(self, op_specs_model: Union[QuantosCartridgeModel, EmbedModelProxy]):
         self._model_proxy = op_specs_model
@@ -51,11 +52,11 @@ class QuantosCartridge:
     def remaining_dosages(self, new_value: int):
         self._model_proxy.remaining_dosages = new_value
 
+
 class QuantosSolidDispenserQS2(Station):
     def __init__(self, station_model: Union[QuantosSolidDispenserQS2Model, ModelProxy]) -> None:
         super().__init__(station_model)
 
-    
     @classmethod
     def from_dict(cls, station_dict: Dict):
         model = QuantosSolidDispenserQS2Model()
@@ -135,8 +136,11 @@ class QuantosSolidDispenserQS2(Station):
         elif isinstance(current_op, QuantosDispenseOp):
             self._dispense()
         super().complete_assigned_op(outcome, results)
-            
+
+
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class QuantosOpenDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -148,6 +152,7 @@ class QuantosOpenDoorOp(StationOp):
         model.save()
         return cls(model)
 
+
 class QuantosCloseDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -158,6 +163,7 @@ class QuantosCloseDoorOp(StationOp):
         cls._set_model_common_fields(model, associated_station=QuantosSolidDispenserQS2.__name__)
         model.save()
         return cls(model)
+
 
 class QuantosMoveCarouselOp(StationOp):
     def __init__(self, op_model: Union[QuantosMoveCarouselOpModel, ModelProxy]):
@@ -174,6 +180,7 @@ class QuantosMoveCarouselOp(StationOp):
     @property
     def target_pos(self) -> int:
         return self._model_proxy.target_pos
+
 
 class QuantosDispenseOp(StationSampleOp):
     def __init__(self, op_model: Union[QuantosDispenseOpModel, ModelProxy]) -> None:
@@ -205,4 +212,3 @@ class QuantosDispenseOp(StationSampleOp):
     @property
     def dispense_unit(self) -> Literal["g", "mg", "ug"]:
         return self._model_proxy.dispense_unit
-

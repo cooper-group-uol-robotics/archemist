@@ -11,13 +11,13 @@ from typing import Dict, List, Any, Union, Type, Optional
 from archemist.core.persistence.object_factory import RobotOpFactory
 from bson.objectid import ObjectId
 
+
 class Robot:
     def __init__(self, robot_model: Union[RobotModel, ModelProxy]) -> None:
         if isinstance(robot_model, ModelProxy):
             self._model_proxy = robot_model
         else:
             self._model_proxy = ModelProxy(robot_model)
-        
 
     @classmethod
     def from_dict(cls, robot_dict: Dict):
@@ -38,7 +38,7 @@ class Robot:
     @property
     def model(self) -> RobotModel:
         return self._model_proxy.model
-    
+
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
@@ -46,14 +46,14 @@ class Robot:
     @property
     def id(self) -> int:
         return self._model_proxy.exp_id
-    
+
     @property
     def module_path(self) -> str:
         return self._model_proxy._module
 
     @property
     def selected_handler(self) -> str:
-       return self._model_proxy.selected_handler
+        return self._model_proxy.selected_handler
 
     @property
     def location(self) -> Location:
@@ -69,7 +69,7 @@ class Robot:
     @property
     def state(self) -> RobotState:
         return self._model_proxy.state
-    
+
     @state.setter
     def state(self, new_state: RobotState):
         self._model_proxy.state = new_state
@@ -77,7 +77,7 @@ class Robot:
     @property
     def attending_to(self) -> ObjectId:
         return self._model_proxy.attending_to
-    
+
     @attending_to.setter
     def attending_to(self, new_station: ObjectId):
         self._model_proxy.attending_to = new_station
@@ -97,8 +97,8 @@ class Robot:
     @property
     def assigned_op(self) -> Type[RobotOp]:
         return RobotOpFactory.create_from_model(self._model_proxy.assigned_op) \
-               if self._model_proxy.assigned_op else None
-    
+            if self._model_proxy.assigned_op else None
+
     def update_assigned_op(self):
         if self.queued_ops and self.assigned_op is None:
             op = self.queued_ops.pop()
@@ -110,27 +110,27 @@ class Robot:
     def add_op(self, robot_op: Type[RobotOp]):
         self.queued_ops.append(robot_op)
         self._log_robot(f'({robot_op}) is queued')
-        
+
     def set_assigned_op_to_execute(self):
         self.assigned_op.add_start_timestamp()
         self._model_proxy.assigned_op_state = OpState.EXECUTING
 
-    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
+    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool = True):
         op = self.assigned_op
         if op:
             op.complete_op(self._model_proxy.object_id, outcome)
             self._log_robot(f'{op} is complete')
             if clear_assigned_op:
                 self.clear_assigned_op()
-    
+
     def clear_assigned_op(self):
         op = self.assigned_op
         self._model_proxy.assigned_op = None
         self._model_proxy.assigned_op_state = OpState.INVALID
         self.ops_history.append(op)
-        
+
         if not self.queued_ops:
-                self.attending_to = None
+            self.attending_to = None
 
     def repeat_assigned_op(self):
         if self.assigned_op:
@@ -150,14 +150,16 @@ class Robot:
     def __str__(self) -> str:
         return f'{self.__class__.__name__}_{self.id}'
 
+
 class FixedRobot(Robot):
     def __init__(self, robot_model: Union[RobotModel, ModelProxy]) -> None:
         super().__init__(robot_model)
 
+
 class MobileRobot(Robot):
     def __init__(self, robot_model: Union[MobileRobotModel, ModelProxy]) -> None:
-       super().__init__(robot_model)
-    
+        super().__init__(robot_model)
+
     @classmethod
     def from_dict(cls, robot_dict: Dict):
         model = MobileRobotModel()
@@ -171,19 +173,19 @@ class MobileRobot(Robot):
     @property
     def total_lot_capacity(self) -> int:
         return self._model_proxy.total_lot_capacity
-    
+
     @property
     def free_lot_capacity(self) -> int:
         return self._model_proxy.total_lot_capacity - len(self.consigned_lots)
-    
-    @property 
+
+    @property
     def consigned_lots(self) -> List[Lot]:
         return ListProxy(self._model_proxy.consigned_lots, Lot)
-    
+
     @property
     def onboard_capacity(self) -> int:
         return self._model_proxy.onboard_capacity
-    
+
     @property
     def free_batch_capacity(self) -> int:
         free_capacity = 0
@@ -192,16 +194,16 @@ class MobileRobot(Robot):
                 free_capacity += 1
         return free_capacity
 
-    @property 
+    @property
     def onboard_batches_slots(self) -> Dict[str, Optional[Batch]]:
         # to handle empty slots with None value
-        modified_constructor = lambda model: Batch(model) if model else None
+        def modified_constructor(model): return Batch(model) if model else None
         return DictProxy(self._model_proxy.onboard_batches_slots, modified_constructor)
-    
+
     @property
     def operational_mode(self) -> MobileRobotMode:
         return self._model_proxy.operational_mode
-    
+
     @operational_mode.setter
     def operational_mode(self, new_mode: MobileRobotMode):
         self._model_proxy.operational_mode = new_mode
@@ -219,11 +221,10 @@ class MobileRobot(Robot):
                     op.target_onboard_slot = int(slot)
                     break
         elif isinstance(op, DropBatchOp):
-           for slot, batch in self.onboard_batches_slots.items():
+            for slot, batch in self.onboard_batches_slots.items():
                 if batch and batch == op.target_batch:
                     op.onboard_collection_slot = int(slot)
                     break
-
 
     def add_op(self, robot_op: type[RobotOp]):
         if isinstance(robot_op, CollectBatchOp):
@@ -233,7 +234,7 @@ class MobileRobot(Robot):
                 self._log_robot(f"{robot_op} cannot be added to the robot queue since robot has no free lot capacity")
         return super().add_op(robot_op)
 
-    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool=True):
+    def complete_assigned_op(self, outcome: OpOutcome, clear_assigned_op: bool = True):
         op = self.assigned_op
         if op:
             if isinstance(op, CollectBatchOp):
@@ -249,7 +250,7 @@ class MobileRobot(Robot):
                     if self.is_batch_onboard(batch):
                         all_lot_batches_removed = False
                         break
-                
+
                 if all_lot_batches_removed:
                     self.consigned_lots.remove(op.related_lot)
 

@@ -5,18 +5,20 @@ from archemist.core.processing.handler import StationHandler, SimStationOpHandle
 from archemist.core.util.enums import OpOutcome
 from random import randint
 
+
 class SimPXRDStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
 
     def get_op_result(self) -> Tuple[OpOutcome, Optional[List[PXRDAnalysisResult]]]:
-            current_op = self._station.assigned_op
-            if isinstance(current_op, PXRDAnalysisOp):
-                result = PXRDAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                      result_filename=f"pxrd_result_{randint(1, 100)}.xml")
-                return OpOutcome.SUCCEEDED, [result]
-            else:
-                return OpOutcome.SUCCEEDED, None
+        current_op = self._station.assigned_op
+        if isinstance(current_op, PXRDAnalysisOp):
+            result = PXRDAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                  result_filename=f"pxrd_result_{randint(1, 100)}.xml")
+            return OpOutcome.SUCCEEDED, [result]
+        else:
+            return OpOutcome.SUCCEEDED, None
+
 
 try:
     import rospy
@@ -41,13 +43,13 @@ try:
 
         def execute_op(self):
             current_op = self._station.assigned_op
-            print(f'performing pxrd operation {current_op}')  
+            print(f'performing pxrd operation {current_op}')
             if isinstance(current_op, PXRDAnalysisOp):
                 rospy.loginfo('starting pxrd job')
                 for i in range(10):
                     self.pub_pxrd.publish(PXRD_commands=PxrdCommand.EXECUTE)
-                self._desired_pxrd_status =  PxrdStatus.EXECUTION_DONE
-            
+                self._desired_pxrd_status = PxrdStatus.EXECUTION_DONE
+
         def is_op_execution_complete(self):
             if self._desired_pxrd_status == self._current_pxrd_status:
                 self._desired_pxrd_status = None
@@ -59,15 +61,15 @@ try:
             current_op = self._station.assigned_op
             if isinstance(current_op, PXRDAnalysisOp):
                 result = PXRDAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                      result_filename="somefile.xml") #TODO need to be implmented in ROS message
+                                                      result_filename="somefile.xml")  # TODO need to be implmented in ROS message
                 return OpOutcome.SUCCEEDED, [result]
             else:
                 return OpOutcome.SUCCEEDED, None
-            
+
         def _pxrd_state_update(self, msg):
             if self._current_pxrd_status != msg.pxrd_status:
                 self._current_pxrd_status = msg.pxrd_status
 
-        
+
 except ImportError:
     pass

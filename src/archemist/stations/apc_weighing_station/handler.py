@@ -2,8 +2,8 @@ import rospy
 from typing import Tuple, List, Optional
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from .state import (
-    APCWeighingStation, 
-    APCOpenBalanceDoorOp, 
+    APCWeighingStation,
+    APCOpenBalanceDoorOp,
     APCCloseBalanceDoorOp,
     APCTareOp,
     APCWeighingOp,
@@ -11,13 +11,14 @@ from .state import (
 )
 from archemist.core.util.enums import OpOutcome
 
+
 class SimAPCWeighingStationHandler(SimStationOpHandler):
     def __init__(self, station: APCWeighingStation):
         super().__init__(station)
 
     def get_op_result(self) -> Tuple[OpOutcome, Optional[List[APCWeighResult]]]:
         current_op = self._station.assigned_op
-        if isinstance(current_op, APCWeighingOp):  
+        if isinstance(current_op, APCWeighingOp):
             result = APCWeighResult.from_args(
                 origin_op=current_op.object_id,
                 reading_value=42
@@ -25,16 +26,16 @@ class SimAPCWeighingStationHandler(SimStationOpHandler):
             return OpOutcome.SUCCEEDED, [result]
         else:
             return OpOutcome.SUCCEEDED, None
-    
 
-try:  
+
+try:
     import rospy
     from roslabware_msgs.msg import KernPCB2500Cmd, KernPCB2500Reading
-    from roslabware_msgs.msg import KernDoorCmd, KernDoorStatus 
+    from roslabware_msgs.msg import KernDoorCmd, KernDoorStatus
     from roslabware_msgs.msg import sashDoorCmd, sashDoorStatus
 
     class APCWeighingStationHandler(StationOpHandler):
-        def __init__(self, station:APCWeighingStation):
+        def __init__(self, station: APCWeighingStation):
             super().__init__(station)
 
         def initialise(self) -> bool:
@@ -77,26 +78,26 @@ try:
             else:
                 rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
 
-        def is_op_execution_complete(self) -> bool: #TODO not sure what this is doing
+        def is_op_execution_complete(self) -> bool:  # TODO not sure what this is doing
             return self._command_executed
 
         def get_op_result(self) -> Tuple[OpOutcome, Optional[List[APCWeighResult]]]:
             current_op = self._station.assigned_op
-            if isinstance(current_op, APCWeighingOp):  
+            if isinstance(current_op, APCWeighingOp):
                 result = APCWeighResult.from_args(
                     origin_op=current_op.object_id,
                     reading_value=self.read_weight)
                 return OpOutcome.SUCCEEDED, [result]
             else:
                 return OpOutcome.SUCCEEDED, None
-        
+
         def shut_down(self):
             pass
 
         def weight_callback(self, msg):
             self._command_executed = True
             self.read_weight = msg.mass
-        
+
         def door_callback(self, msg):
             if self._target_balance_door_status == str(msg.status):
                 self._command_executed = True

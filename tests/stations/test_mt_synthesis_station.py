@@ -16,6 +16,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import OpOutcome
 
+
 class MTSynthesisStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -24,23 +25,23 @@ class MTSynthesisStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'MTSynthesisStation',
             'id': 21,
-            'location': {'coordinates': [1,7], 'descriptor': "MTSynthesisStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "MTSynthesisStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
-            'properties': 
+            'properties':
             {
                 'num_sampling_vials': 12
             },
             'materials': None
         }
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
 
     def test_station_state(self):
-        
+
         station = MTSynthesisStation.from_dict(self.station_doc)
         # test station is constructed properly
         self.assertIsNotNone(station)
@@ -60,10 +61,10 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # test MTSynthHeatStirOp heating and stirring
         t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
-                                            target_temperature=100,
-                                            target_stirring_speed=50,
-                                            wait_duration=3,
-                                            time_unit="minute")
+                                           target_temperature=100,
+                                           target_stirring_speed=50,
+                                           wait_duration=3,
+                                           time_unit="minute")
         self.assertIsNotNone(t_op)
         self.assertEqual(t_op.target_temperature, 100)
         self.assertEqual(t_op.target_stirring_speed, 50)
@@ -82,10 +83,10 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # test MTSynthHeatStirOp heating
         t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
-                                            target_temperature=103,
-                                            target_stirring_speed=None,
-                                            wait_duration=None,
-                                            time_unit=None)
+                                           target_temperature=103,
+                                           target_stirring_speed=None,
+                                           wait_duration=None,
+                                           time_unit=None)
         self.assertIsNotNone(t_op)
         self.assertEqual(t_op.target_temperature, 103)
         self.assertIsNone(t_op.target_stirring_speed)
@@ -101,10 +102,10 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # test MTSynthHeatStirOp stirring
         t_op = MTSynthHeatStirOp.from_args(target_sample=batch.samples[0],
-                                            target_temperature=None,
-                                            target_stirring_speed=55,
-                                            wait_duration=None,
-                                            time_unit=None)
+                                           target_temperature=None,
+                                           target_stirring_speed=55,
+                                           wait_duration=None,
+                                           time_unit=None)
         self.assertIsNotNone(t_op)
         self.assertEqual(t_op.target_stirring_speed, 55)
         self.assertIsNone(t_op.target_temperature)
@@ -120,8 +121,8 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # test MTSynthSampleOp heating
         t_op = MTSynthSampleOp.from_args(target_sample=batch.samples[0],
-                                            target_temperature=99,
-                                            target_stirring_speed=None)
+                                         target_temperature=99,
+                                         target_stirring_speed=None)
         self.assertIsNotNone(t_op)
         self.assertEqual(t_op.target_temperature, 99)
         self.assertIsNone(t_op.target_stirring_speed)
@@ -190,20 +191,20 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # construct MTSynthHeatStirOp
         t_op = MTSynthHeatStirOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            target_temperature=100,
-                                            target_stirring_speed=110,
-                                            wait_duration=3,
-                                            time_unit="minute")
+                                           target_temperature=100,
+                                           target_stirring_speed=110,
+                                           wait_duration=3,
+                                           time_unit="minute")
         station.add_station_op(t_op)
         station.update_assigned_op()
 
-        # get op 
+        # get op
         parameters = {}
-        parameters["target_temperature"]  = t_op.target_temperature
-        parameters["target_stirring_speed"]  = t_op.target_stirring_speed
-        parameters["wait_duration"]  = t_op.wait_duration
-        parameters["time_unit"]  = t_op.time_unit
-        
+        parameters["target_temperature"] = t_op.target_temperature
+        parameters["target_stirring_speed"] = t_op.target_stirring_speed
+        parameters["wait_duration"] = t_op.wait_duration
+        parameters["time_unit"] = t_op.time_unit
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -214,16 +215,16 @@ class MTSynthesisStationTest(unittest.TestCase):
 
         # construct MTSynthSampleOp
         t_op = MTSynthSampleOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            target_temperature=100,
-                                            target_stirring_speed=110)
+                                         target_temperature=100,
+                                         target_stirring_speed=110)
         station.add_station_op(t_op)
         station.update_assigned_op()
 
-        # get op 
+        # get op
         parameters = {}
-        parameters["target_temperature"]  = t_op.target_temperature
-        parameters["target_stirring_speed"]  = t_op.target_stirring_speed
-        
+        parameters["target_temperature"] = t_op.target_temperature
+        parameters["target_stirring_speed"] = t_op.target_stirring_speed
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)

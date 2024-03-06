@@ -14,6 +14,7 @@ from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
+
 class StationOp:
     def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         if isinstance(station_op_model, ModelProxy):
@@ -37,15 +38,15 @@ class StationOp:
     @property
     def model(self):
         return self._model_proxy.model
-    
+
     @property
     def object_id(self):
         return self._model_proxy.object_id
-    
+
     @property
     def associated_station(self) -> str:
         return self._model_proxy.associated_station
-    
+
     @property
     def requested_by(self) -> ObjectId:
         return self._model_proxy.requested_by
@@ -65,7 +66,7 @@ class StationOp:
     @property
     def start_timestamp(self) -> datetime:
         return self._model_proxy.start_timestamp
-    
+
     @start_timestamp.setter
     def start_timestamp(self, new_start_timestamp: datetime):
         self._model_proxy.start_timestamp = new_start_timestamp
@@ -73,7 +74,7 @@ class StationOp:
     @property
     def end_timestamp(self) -> datetime:
         return self._model_proxy.end_timestamp
-    
+
     @end_timestamp.setter
     def end_timestamp(self, new_end_timestamp: datetime):
         self._model_proxy.end_timestamp = new_end_timestamp
@@ -89,7 +90,8 @@ class StationOp:
 
     def __eq__(self, __value: object) -> bool:
         return self.object_id == __value.object_id
-    
+
+
 class StationLotOp(StationOp):
     def __init__(self, station_op_model: Union[StationLotOpModel, ModelProxy]):
         super().__init__(station_op_model)
@@ -101,7 +103,7 @@ class StationLotOp(StationOp):
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
         return cls(model)
-    
+
     @property
     def target_lot(self) -> Lot:
         return Lot(self._model_proxy.target_lot)
@@ -123,8 +125,9 @@ class StationLotOp(StationOp):
             for batch in self.target_lot.batches:
                 for sample in batch.samples:
                     sample.add_result_op(results[index])
-                    index += 1  
-    
+                    index += 1
+
+
 class StationBatchOp(StationOp):
     def __init__(self, station_op_model: Union[StationBatchOpModel, ModelProxy]):
         super().__init__(station_op_model)
@@ -136,11 +139,11 @@ class StationBatchOp(StationOp):
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
         return cls(model)
-    
+
     @property
     def target_batch(self) -> Batch:
         return Batch(self._model_proxy.target_batch)
-    
+
     def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:
@@ -153,7 +156,8 @@ class StationBatchOp(StationOp):
             for sample in self.target_batch.samples:
                 sample.add_result_op(results[index])
                 index += 1
-    
+
+
 class StationSampleOp(StationOp):
     def __init__(self, station_op_model: Union[StationSampleOpModel, ModelProxy]):
         super().__init__(station_op_model)
@@ -165,11 +169,11 @@ class StationSampleOp(StationOp):
         cls._set_model_common_fields(model, associated_station="Station")
         model.save()
         return cls(model)
-    
+
     @property
     def target_sample(self) -> Sample:
         return Sample(self._model_proxy.target_sample)
-    
+
     def complete_op(self, outcome: OpOutcome, results: List[type[StationOpResult]]):
         super().complete_op(outcome, results)
         if not results:

@@ -5,8 +5,9 @@ from .state import LBSampleAnalyseRGBOp, LBSampleAnalyseLABOp, LBAnalyseRGBResul
 from archemist.core.util.enums import OpOutcome
 import random
 
+
 class SimLightBoxHandler(SimStationOpHandler):
-    def __init__(self, station:LightBoxStation):
+    def __init__(self, station: LightBoxStation):
         super().__init__(station)
 
     def get_op_result(self) -> Tuple[OpOutcome, List[Union[LBAnalyseRGBResult, LBAnalyseLABResult]]]:
@@ -14,31 +15,31 @@ class SimLightBoxHandler(SimStationOpHandler):
         if isinstance(current_op, LBSampleAnalyseRGBOp):
             rgb_target_index = self._station.rgb_target_index
             result = LBAnalyseRGBResult.from_args(origin_op=current_op.object_id,
-                                                       r_value=random.randint(0, 127),
-                                                       g_value=random.randint(0, 127),
-                                                       b_value=random.randint(0, 127),
-                                                       color_index=random.randint(0, 255),
-                                                       target_index=rgb_target_index,
-                                                       result_filename=f"pic{random.randint(0, 100)}.png")
+                                                  r_value=random.randint(0, 127),
+                                                  g_value=random.randint(0, 127),
+                                                  b_value=random.randint(0, 127),
+                                                  color_index=random.randint(0, 255),
+                                                  target_index=rgb_target_index,
+                                                  result_filename=f"pic{random.randint(0, 100)}.png")
         elif isinstance(current_op, LBSampleAnalyseLABOp):
             lab_target_index = self._station.lab_target_index
             result = LBAnalyseLABResult.from_args(origin_op=current_op.object_id,
-                                                    l_value=random.randint(0, 100),
-                                                    a_value=random.randint(-128, 127),
-                                                    b_value=random.randint(-128, 127),
-                                                    color_index=random.random()*100,
-                                                    target_index=lab_target_index,
-                                                    result_filename=f"pic{random.randint(0, 100)}.png")
+                                                  l_value=random.randint(0, 100),
+                                                  a_value=random.randint(-128, 127),
+                                                  b_value=random.randint(-128, 127),
+                                                  color_index=random.random()*100,
+                                                  target_index=lab_target_index,
+                                                  result_filename=f"pic{random.randint(0, 100)}.png")
         return OpOutcome.SUCCEEDED, [result]
+
 
 try:
     import rospy
-    from colorimetry_msgs.msg import ColorimetryCommand,ColorimetryRGBResult, ColorimetryLABResult
-    
+    from colorimetry_msgs.msg import ColorimetryCommand, ColorimetryRGBResult, ColorimetryLABResult
+
     class LightBoxROSHandler(StationOpHandler):
-        def __init__(self, station:LightBoxStation):
+        def __init__(self, station: LightBoxStation):
             super().__init__(station)
-            
 
         def initialise(self) -> bool:
             rospy.init_node(f'{self._station}_handler')
@@ -70,7 +71,7 @@ try:
 
         def get_op_result(self) -> Tuple[OpOutcome, List[Union[LBAnalyseRGBResult, LBAnalyseLABResult]]]:
             return OpOutcome.SUCCEEDED, [self._op_result]
-        
+
         def shut_down(self):
             pass
 
@@ -78,25 +79,22 @@ try:
             origin_op_object_id = self._station.assigned_op.object_id
             rgb_target_index = self._station.rgb_target_index
             self._op_result = LBAnalyseRGBResult.from_args(origin_op=origin_op_object_id,
-                                                        r_value=msg.red_intensity,
-                                                        g_value=msg.green_intensity,
-                                                        b_value=msg.blue_intensity,
-                                                        color_index=msg.color_index,
-                                                        target_index=rgb_target_index,
-                                                        result_filename=msg.result_file_name)
-
+                                                           r_value=msg.red_intensity,
+                                                           g_value=msg.green_intensity,
+                                                           b_value=msg.blue_intensity,
+                                                           color_index=msg.color_index,
+                                                           target_index=rgb_target_index,
+                                                           result_filename=msg.result_file_name)
 
         def _colorimetry_lab_callback(self, msg: ColorimetryLABResult):
             origin_op_object_id = self._station.assigned_op.object_id
             lab_target_index = self._station.lab_target_index
             self._op_result = LBAnalyseLABResult.from_args(origin_op=origin_op_object_id,
-                                                        l_value=msg.L_value,
-                                                        a_value=msg.a_value,
-                                                        b_value=msg.b_value,
-                                                        color_index=msg.color_index,
-                                                        target_index=lab_target_index,
-                                                        result_filename=msg.result_file_name)
+                                                           l_value=msg.L_value,
+                                                           a_value=msg.a_value,
+                                                           b_value=msg.b_value,
+                                                           color_index=msg.color_index,
+                                                           target_index=lab_target_index,
+                                                           result_filename=msg.result_file_name)
 except ImportError:
     pass
-
-    

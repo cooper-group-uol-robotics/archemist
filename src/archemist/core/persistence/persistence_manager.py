@@ -15,13 +15,13 @@ class PersistenceManager:
         db_name = server_config["db_name"]
         db_host = server_config["mongodb_host"]
         self._db_handler = DatabaseHandler(db_host, db_name)
-        
+
     def construct_workflow_from_config_file(self, config_file_path: Path) -> Tuple[InputState, WorkflowState, OutputState]:
         if self._db_handler.is_database_existing():
             self._log("Database already existing")
             self._log("Deleting Database")
             self._db_handler.delete_database()
-        
+
         config_dict = YamlHandler.load_config_file(config_file_path)
         if 'robots' in config_dict:
             for robot_dict in config_dict['robots']:
@@ -40,20 +40,16 @@ class PersistenceManager:
         return input_state, workflow_state, output_state
 
     def construct_workflow_from_db(self) -> Tuple[InputState, WorkflowState, OutputState]:
-            if self._db_handler.is_database_existing():
-                input_state = StateGetter.get_input_state()
-                workflow_state = StateGetter.get_workflow_state()
-                output_state = StateGetter.get_output_state()
+        if self._db_handler.is_database_existing():
+            input_state = StateGetter.get_input_state()
+            workflow_state = StateGetter.get_workflow_state()
+            output_state = StateGetter.get_output_state()
 
-                self._log("Workflow constructed from existing database")
-                
-                return input_state, workflow_state, output_state
-            else:
-                raise DatabaseNotPopulatedError()
+            self._log("Workflow constructed from existing database")
 
-    def _log(self, message:str):
+            return input_state, workflow_state, output_state
+        else:
+            raise DatabaseNotPopulatedError()
+
+    def _log(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')
-
-    
-
-    

@@ -11,6 +11,7 @@ from archemist.core.state.lot import Lot, LotStatus
 from archemist.core.util.enums import ProcessStatus
 from typing import List, Type, Dict
 
+
 class InputProcessor:
 
     def __init__(self, input_state: InputState):
@@ -64,7 +65,7 @@ class InputProcessor:
                             new_proc_dict = self._state.lot_input_process
                         else:
                             new_proc_dict = {"type": "StationProcess", "args": None}
-                        
+
                         new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
                         self._state.proc_slots[slot] = new_proc
                         new_proc.lot_slot = slot
@@ -88,19 +89,20 @@ class InputProcessor:
                         self._state.procs_history.append(proc)
                         lot.status = LotStatus.READY_FOR_COLLECTION
                         self._log(f"{lot} is ready for collection")
-                        
+
     def retrieve_ready_for_collection_lots(self) -> List[Lot]:
         ready_for_collection_lots = []
         for slot, lot in self._state.lot_slots.items():
             if lot is not None and lot.status == LotStatus.READY_FOR_COLLECTION:
                 ready_for_collection_lots.append(lot)
                 self._state.lot_slots[slot] = None
-        
+
         return ready_for_collection_lots
-    
-    def _log(self, message:str):
+
+    def _log(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')
-    
+
+
 class OutputProcessor:
     def __init__(self, output_state: OutputState):
         self._state = output_state
@@ -132,7 +134,7 @@ class OutputProcessor:
                     self._state.proc_slots[slot] = new_proc
                     new_proc.lot_slot = slot
                     lot.status = LotStatus.OFFBOARDING
-                
+
                 elif lot.status == LotStatus.OFFBOARDING:
                     proc = self._state.proc_slots[slot]
                     if proc.m_state != "final_state":
@@ -171,8 +173,9 @@ class OutputProcessor:
             if lot and lot.status == LotStatus.NEED_REMOVAL:
                 self.remove_lot(slot)
 
-    def _log(self, message:str):
+    def _log(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')
+
 
 class WorkflowProcessor:
     def __init__(self, workflow_state: WorkflowState):
@@ -202,7 +205,7 @@ class WorkflowProcessor:
                     self._state.lots_buffer.remove(lot)
                 else:
                     self._log_processor(f'{lot} could not be assigned to {current_station}')
-        
+
         # process workflow stations
         for station in StationsGetter.get_stations():
             # get requested robot ops
@@ -255,9 +258,8 @@ class WorkflowProcessor:
                 break
         return completed_lot
 
-    def _log_processor(self, message:str):
+    def _log_processor(self, message: str):
         print(f'[{self}]: {message}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}'
-    

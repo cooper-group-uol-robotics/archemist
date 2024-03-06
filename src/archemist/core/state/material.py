@@ -6,8 +6,9 @@ from typing import Union, Literal, Dict, Any
 from archemist.core.util.units import L, mL, uL, kg, g, mg, ug, m3, cm3, mm3
 from unyt.array import unyt_quantity
 
+
 class Material:
-    def __init__(self, material_model: Union[MaterialModel, ModelProxy]) -> None:        
+    def __init__(self, material_model: Union[MaterialModel, ModelProxy]) -> None:
         if isinstance(material_model, ModelProxy):
             self._model_proxy = material_model
         else:
@@ -26,15 +27,15 @@ class Material:
     @property
     def model(self) -> MaterialModel:
         return self._model_proxy.model
-    
+
     @property
     def name(self) -> str:
         return self._model_proxy.name
-    
+
     @property
     def belongs_to(self) -> ObjectId:
         return self._model_proxy.belongs_to
-    
+
     @belongs_to.setter
     def belongs_to(self, new_owner: ObjectId):
         self._model_proxy.belongs_to = new_owner
@@ -46,7 +47,7 @@ class Material:
     @property
     def mass(self) -> float:
         return self._model_proxy.mass
-     
+
     @property
     def mass_unit(self) -> str:
         return self._model_proxy.mass_unit
@@ -66,6 +67,7 @@ class Material:
     @property
     def details(self) -> Dict[str, Any]:
         return self._model_proxy.details
+
 
 class Liquid(Material):
     def __init__(self, material_model: Union[LiquidMaterialModel, ModelProxy]) -> None:
@@ -106,7 +108,7 @@ class Liquid(Material):
     @property
     def density(self) -> float:
         return self._model_proxy.density
-    
+
     @property
     def density_unit(self) -> str:
         return self._model_proxy.density_unit
@@ -114,7 +116,7 @@ class Liquid(Material):
     @property
     def volume(self) -> float:
         return self._model_proxy.volume
-    
+
     @property
     def volume_unit(self) -> str:
         return self._model_proxy.volume_unit
@@ -140,7 +142,7 @@ class Liquid(Material):
         super().decrease_mass(quantity, unit)
         new_volume = self.mass*eval(self.mass_unit) / self.density*eval(self.density_unit)
         self._update_volume(new_volume)
-    
+
     def _update_volume(self, vol_quantity: unyt_quantity):
         new_vol = vol_quantity.to(self.volume_unit)
         self._model_proxy.volume = new_vol.to_value()
@@ -148,6 +150,7 @@ class Liquid(Material):
     def __str__(self):
         return f'Liquid: {self.name}, Expiry date: {self.expiry_date},\
                  Mass: {self.mass} {self.mass_unit}, Volume: {self.volume} {self.volume_unit}'
+
 
 class Solid(Material):
     def __init__(self, material_model: Union[SolidMaterialModel, ModelProxy]) -> None:
@@ -157,7 +160,7 @@ class Solid(Material):
     def from_dict(cls, solid_dict: dict):
         model = SolidMaterialModel()
         model._type = cls.__name__
-        cls._set_model_common_fields(solid_dict,model)
+        cls._set_model_common_fields(solid_dict, model)
         model.mass = solid_dict['amount']
         model.mass_unit = solid_dict['unit']
         model.save()

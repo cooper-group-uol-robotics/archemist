@@ -1,10 +1,11 @@
 from __future__ import print_function, unicode_literals
 from typing import Dict
-from archemist.application.cmd_message import CMDCategory,CMDMessage
+from archemist.application.cmd_message import CMDCategory, CMDMessage
 from PyInquirer import prompt
 from time import sleep
 import zmq
 import json
+
 
 class ArchemistCLI:
     def __init__(self) -> None:
@@ -18,7 +19,7 @@ class ArchemistCLI:
                 'type': 'list',
                 'name': 'main_menu',
                 'message': 'Please select from one of the options below:',
-                'choices': ['Start/Resume', 'Pause','Add clean batch', 'Clear need to remove lots','Stations', 'Robots', 'Terminate']
+                'choices': ['Start/Resume', 'Pause', 'Add clean batch', 'Clear need to remove lots', 'Stations', 'Robots', 'Terminate']
             }
         ]
         while True:
@@ -61,7 +62,7 @@ class ArchemistCLI:
             except KeyboardInterrupt:
                 self._client.close()
                 break
-    
+
     def _process_list_menu(self, objects_dict: Dict, category: CMDCategory):
         list_menu = {
             'type': 'list',
@@ -87,15 +88,15 @@ class ArchemistCLI:
             'name': 'station_menu',
             'message': 'Please select from one of the stations below:',
             'choices': ['Repeat assigned op', 'Skip assigned op', 'Return']
-            }
+        }
         selection = prompt(station_menu)
         if selection['station_menu'] == 'Repeat assigned op':
             self._log_client(f'repeating assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_name,station_id])
+            msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_name, station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Skip assigned op':
             self._log_client(f'skipping assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_name,station_id])
+            msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_name, station_id])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Return':
             pass
@@ -106,18 +107,18 @@ class ArchemistCLI:
             'name': 'robot_menu',
             'message': 'Please select from one of the stations below:',
             'choices': ['Repeat assigned op', 'Skip assigned op', 'Return']
-            }
+        }
         selection = prompt(robot_menu)
         if selection['robot_menu'] == 'Repeat assigned op':
             self._log_client(f'repeating assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_name,robot_id])
+            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_name, robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Skip assigned op':
             self._log_client(f'skipping assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_name,robot_id])
+            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_name, robot_id])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Return':
             pass
 
-    def _log_client(self, message:str):
+    def _log_client(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')

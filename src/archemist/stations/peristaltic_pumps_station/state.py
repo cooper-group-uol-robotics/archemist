@@ -31,18 +31,18 @@ class PeristalticPumpsStation(Station):
     def liquid_pump_map(self) -> Dict[str, int]:
         return self._model_proxy.liquid_pump_map
 
-    
 
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class PPLiquidDispenseOp(StationSampleOp):
     def __init__(self, station_op_model: Union[PPLiquidDispenseOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
-
     @classmethod
     def from_args(cls,
                   target_sample: Sample,
-                  liquid_name: str, 
+                  liquid_name: str,
                   dispense_volume: float,
                   dispense_unit: Literal["L", "mL", "uL"]):
         model = PPLiquidDispenseOpModel()
@@ -53,7 +53,6 @@ class PPLiquidDispenseOp(StationSampleOp):
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)
-        
 
     @property
     def liquid_name(self) -> str:
@@ -66,5 +65,3 @@ class PPLiquidDispenseOp(StationSampleOp):
     @property
     def dispense_unit(self) -> Literal["L", "mL", "uL"]:
         return self._model_proxy.dispense_unit
-
-    

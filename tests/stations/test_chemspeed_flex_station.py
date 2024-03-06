@@ -4,11 +4,11 @@ from datetime import datetime
 from mongoengine import connect
 
 from archemist.core.state.material import Liquid
-from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStation, 
+from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStation,
                                                              ChemSpeedJobStatus,
                                                              CSOpenDoorOp,
                                                              CSCloseDoorOp,
-                                                             CSLiquidDispenseOp, 
+                                                             CSLiquidDispenseOp,
                                                              CSRunJobOp)
 from archemist.core.state.robot_op import (RobotNavOp,
                                            RobotWaitOp,
@@ -21,6 +21,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class ChemspeedFlexStationTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
@@ -29,7 +30,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         station_doc = {
             'type': 'ChemSpeedFlexStation',
             'id': 22,
-            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ChemSpeedFlexStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials':
@@ -49,7 +50,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
 
         self.station = ChemSpeedFlexStation.from_dict(station_doc)
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -72,7 +73,6 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.assertIsNotNone(liquid)
         self.assertEqual(liquid.volume, 400)
 
-        
         # test CSOpenDoorOp
         t_op = CSOpenDoorOp.from_args()
         self.assertIsNotNone(t_op)
@@ -100,27 +100,27 @@ class ChemspeedFlexStationTest(unittest.TestCase):
 
         # test CSProcessingOp
         t_op = CSLiquidDispenseOp.from_args(target_lot=lot,
-                                            dispense_table={'water':[10.0,20.0]},
+                                            dispense_table={'water': [10.0, 20.0]},
                                             dispense_unit="mL")
         self.assertIsNotNone(t_op)
-        self.assertDictEqual(dict(t_op.dispense_table), {'water':[10.0,20.0]})
+        self.assertDictEqual(dict(t_op.dispense_table), {'water': [10.0, 20.0]})
         self.assertEqual(t_op.dispense_unit, "mL")
-        self.assertEqual(t_op.to_csv_string(),r"10.0\n20.0\n")
+        self.assertEqual(t_op.to_csv_string(), r"10.0\n20.0\n")
 
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.assertEqual(self.station.job_status, ChemSpeedJobStatus.RUNNING_JOB)
         self.assertEqual(liquid.volume, 400)
-        
+
         # create results for operation
         materials_names = [material_name for material_name in t_op.dispense_table.keys()]
         samples_qtys = zip(*[qtys for qtys in t_op.dispense_table.values()])
         dispense_results = []
         for qty_tuple in samples_qtys:
             sample_op_result = MaterialOpResult.from_args(origin_op=t_op.object_id,
-                                                            material_names=materials_names,
-                                                            amounts=list(qty_tuple),
-                                                            units=[t_op.dispense_unit]*len(materials_names))
+                                                          material_names=materials_names,
+                                                          amounts=list(qty_tuple),
+                                                          units=[t_op.dispense_unit]*len(materials_names))
             dispense_results.append(sample_op_result)
 
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, dispense_results)
@@ -128,27 +128,27 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         self.assertEqual(liquid.volume, 370.0)
 
     def test_chemspeed_process(self):
-        
+
         batch_1 = Batch.from_args(2)
         batch_2 = Batch.from_args(2)
         lot = Lot.from_args([batch_1, batch_2])
-        
+
         # add batches to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "dispense_op",
-                    "op": "CSLiquidDispenseOp",
-                    "parameters": {
-                        "dispense_table": {"water": [10.0,20.0]},
+            {
+                "name": "dispense_op",
+                "op": "CSLiquidDispenseOp",
+                "parameters": {
+                        "dispense_table": {"water": [10.0, 20.0]},
                         "dispense_unit": "mL"
-                    }
                 }
-            ]
+            }
+        ]
         process = CMFlexLiquidDispenseProcess.from_args(lot=lot,
-                                                operations=operations)
+                                                        operations=operations)
         process.lot_slot = 0
 
         # assert initial state
@@ -175,7 +175,6 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'load_lot')
         test_req_robot_ops(self, process, [DropBatchOp]*2)
-        
 
         # close_chemspeed_door
         process.tick()
@@ -221,7 +220,7 @@ class ChemspeedFlexStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
         self.assertEqual(process.status, ProcessStatus.FINISHED)
-        
+
 
 if __name__ == '__main__':
     unittest.main()

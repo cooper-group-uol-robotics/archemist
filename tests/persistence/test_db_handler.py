@@ -2,13 +2,16 @@ import unittest
 from mongoengine import Document, fields, connection, ConnectionFailure
 from archemist.core.persistence.db_handler import DatabaseHandler
 
+
 class DummyDocumentA(Document):
-        a_field = fields.StringField(required=True)
-        meta = {'collection': 'docs_A', 'db_alias': 'archemist_state'}
+    a_field = fields.StringField(required=True)
+    meta = {'collection': 'docs_A', 'db_alias': 'archemist_state'}
+
 
 class DummyDocumentB(Document):
-        a_field = fields.StringField(required=True)
-        meta = {'collection': 'docs_B', 'db_alias': 'archemist_state'}
+    a_field = fields.StringField(required=True)
+    meta = {'collection': 'docs_B', 'db_alias': 'archemist_state'}
+
 
 class TestDatabaseHandler(unittest.TestCase):
 
@@ -19,7 +22,7 @@ class TestDatabaseHandler(unittest.TestCase):
             # need this to clear the cache and re-establish the connection
             # with the db
             connection._connections = {}
-            connection._connection_settings ={}
+            connection._connection_settings = {}
             connection._dbs = {}
 
             DummyDocumentA._collection = None
@@ -33,7 +36,7 @@ class TestDatabaseHandler(unittest.TestCase):
         self.db_handler._client = None
 
         connection._connections = {}
-        connection._connection_settings ={}
+        connection._connection_settings = {}
         connection._dbs = {}
 
         DummyDocumentA._collection = None
@@ -50,7 +53,7 @@ class TestDatabaseHandler(unittest.TestCase):
         doc = DummyDocumentB()
         doc.a_field = "some_text"
         doc.save()
-        
+
         self.assertTrue(self.db_handler.is_database_existing())
         self.assertTrue(self.db_handler.is_collection_populated("docs_A"))
         self.assertTrue(self.db_handler.is_collection_populated("docs_B"))

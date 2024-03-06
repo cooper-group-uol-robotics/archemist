@@ -5,20 +5,20 @@ from archemist.core.persistence.persistence_manager import PersistenceManager
 from archemist.core.persistence.objects_getter import RobotsGetter, StationsGetter
 from archemist.core.util.enums import WorkflowManagerStatus
 from pathlib import Path
-from archemist.application.cmd_message import CMDCategory,CMDMessage
+from archemist.application.cmd_message import CMDCategory, CMDMessage
 import zmq
 import json
 
+
 class ArchemistServer:
-    def __init__(self, workflow_dir: Path, existing_db: bool=False) -> None:
+    def __init__(self, workflow_dir: Path, existing_db: bool = False) -> None:
         server_config_file_path = workflow_dir.joinpath(f'config_files/server_settings.yaml')
         workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
         recipes_dir_path = workflow_dir.joinpath(f'recipes')
 
-
         # construct persistence manager
         self._persistence_mgr = PersistenceManager(server_config_file_path)
-        
+
         # construct workflow
         if not existing_db:
             self._log_server('constructing new workflow state from config file')
@@ -26,7 +26,7 @@ class ArchemistServer:
         else:
             self._log_server('reconstructing workflow state from existing database')
             in_state, wf_state, out_state = self._persistence_mgr.construct_workflow_from_db()
-        
+
         # construct workflow manager
         robot_scheduler = PriorityQueueRobotScheduler()
         self._workflow_mgr = WorkflowManager(in_state, wf_state, out_state, robot_scheduler, recipes_dir_path)
@@ -35,9 +35,8 @@ class ArchemistServer:
         context = zmq.Context()
         self._server = context.socket(zmq.PAIR)
         self._server.bind('tcp://127.0.0.1:5555')
-        
-        self._log_server(f'ARChemist server started')
 
+        self._log_server(f'ARChemist server started')
 
     def run(self):
         # spin
@@ -104,5 +103,5 @@ class ArchemistServer:
             self._workflow_mgr.terminate()
         self._server.close()
 
-    def _log_server(self, message:str):
+    def _log_server(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')

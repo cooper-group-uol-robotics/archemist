@@ -1,5 +1,6 @@
 from mongoengine import connect
 
+
 class DatabaseHandler:
     def __init__(self, host: str, db_name: str):
         self._client = connect(db=db_name, host=host, alias='archemist_state')
@@ -7,8 +8,8 @@ class DatabaseHandler:
 
     def clear_collection(self, collection: str):
         if self.is_database_existing():
-                if collection in self._client[self._db_name].list_collection_names():
-                    self._client[self._db_name][collection].drop()
+            if collection in self._client[self._db_name].list_collection_names():
+                self._client[self._db_name][collection].drop()
 
     def is_collection_populated(self, collection: str):
         if self.is_database_existing():

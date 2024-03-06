@@ -15,7 +15,7 @@ from typing import Callable, Any
 
 class WorkflowManagerTest(unittest.TestCase):
 
-    def waitTillAssertion(self, condition_eval: Callable[[Any], bool], timeout: int=10):
+    def waitTillAssertion(self, condition_eval: Callable[[Any], bool], timeout: int = 10):
         t_start = time()
         while (time() - t_start) < timeout:
             if condition_eval():
@@ -23,7 +23,7 @@ class WorkflowManagerTest(unittest.TestCase):
                 return
             sleep(0.1)
         self.assertTrue(False)
-    
+
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
@@ -92,10 +92,10 @@ class WorkflowManagerTest(unittest.TestCase):
                                            output_state, robot_scheduler,
                                            self._recipes_path)
         self.assertEqual(workflow_manager.status, WorkflowManagerStatus.INVALID)
-        
+
         station_1_proc_handler = StationProcessHandler(self.station_1)
         station_2_proc_handler = StationProcessHandler(self.station_2)
-       
+
         # test start workflow
         self.assertFalse(input_state.recipes_queue)
         workflow_manager.start()
@@ -110,7 +110,7 @@ class WorkflowManagerTest(unittest.TestCase):
         self.assertEqual(input_state.get_lots_num(), 1)
         workflow_manager.add_clean_batch()
         self.waitTillAssertion(lambda: input_state.get_lots_num() == 2)
-        
+
         # test finishing input processes
         self.waitTillAssertion(lambda: input_state.get_lots_num() == 0)
         self.assertEqual(len(input_state.procs_history), 2)
@@ -165,8 +165,7 @@ class WorkflowManagerTest(unittest.TestCase):
         workflow_manager.terminate()
         self.assertEqual(workflow_manager.status, WorkflowManagerStatus.INVALID)
         sleep(2)
-        
+
 
 if __name__ == "__main__":
     unittest.main()
-        

@@ -9,6 +9,8 @@ from archemist.core.state.station_op import StationSampleOp, StationSampleOpMode
 from typing import Dict, Union
 
 ''' ==== Station Description ==== '''
+
+
 class SolubilityStation(Station):
     def __init__(self, station_model: Union[StationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -20,9 +22,12 @@ class SolubilityStation(Station):
         model.save()
         return cls(model)
 
+
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class CheckSolubilityOp(StationSampleOp):
-    def __init__(self, op_model: Union[StationSampleOpModel,ModelProxy]) -> None:
+    def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
@@ -32,7 +37,8 @@ class CheckSolubilityOp(StationSampleOp):
         cls._set_model_common_fields(model, associated_station=SolubilityStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class SolubilityOpResult(StationOpResult):
     def __init__(self, result_model: Union[SolubilityOpResultModel, ModelProxy]):
         super().__init__(result_model)
@@ -51,12 +57,7 @@ class SolubilityOpResult(StationOpResult):
     @property
     def result_filename(self) -> str:
         return self._model_proxy.result_filename
-    
+
     @property
     def solubility_state(self) -> SolubilityState:
         return self._model_proxy.solubility_state
-
-
-
-
-

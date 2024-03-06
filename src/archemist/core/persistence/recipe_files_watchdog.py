@@ -4,6 +4,7 @@ from watchdog.events import FileSystemEventHandler
 from collections import deque
 from pathlib import Path
 
+
 class RecipesDirHandler(FileSystemEventHandler):
 
     def __init__(self):
@@ -21,19 +22,20 @@ class RecipesDirHandler(FileSystemEventHandler):
             print(f'recipe file was removed: {recipe_file.name}')
             self.recipes_queue.remove(recipe_file)
 
+
 class RecipeFilesWatchdog(Observer):
     def __init__(self, recipes_dir):
         super().__init__()
-        self._recipes_dir= recipes_dir
+        self._recipes_dir = recipes_dir
         self._recipes_dir_handler = RecipesDirHandler()
-        
+
         # add already existing recipes to the queue
         print('checking recipes directory for existing recipes')
         for file in Path(recipes_dir).glob('*'):
             if file.name[-5:] == '.yaml':
                 print(f'recipe file was added: {file.name}')
                 self._recipes_dir_handler.recipes_queue.append(file)
-        
+
         self.schedule(event_handler=self._recipes_dir_handler, path=self._recipes_dir, recursive=False)
 
     @property

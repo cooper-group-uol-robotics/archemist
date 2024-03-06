@@ -18,47 +18,48 @@ from .state import APCMetaStation
 
 from typing import Union, List, Dict, Any
 
+
 class APCSynthesisProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
-        
+
         ''' States '''
-        self.STATES = [ State(name='init_state'),
-            State(name='prep_state'), 
-            
-            State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
-            
-            State(name='add_solid', on_enter=['request_solid_addition_process']),
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state'),
 
-            State(name='sample_reaction', on_enter=['request_sample_reaction']),
-            State(name='start_analysis_process', on_enter=['request_analysis_process']),
-            State(name='start_adding_liquid_2', on_enter=['request_start_adding_liquid_2']),
+                       State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
 
-            State(name='run_reaction', on_enter=['request_reaction_start']),
-            
-            State(name='wait_for_result'),
+                       State(name='add_solid', on_enter=['request_solid_addition_process']),
 
-            State(name='stop_adding_liquid_2', on_enter=['request_stop_adding_liquid_2']),
-            State(name='stop_reaction', on_enter=['request_reaction_stop']),
-            State(name='final_state')]
+                       State(name='sample_reaction', on_enter=['request_sample_reaction']),
+                       State(name='start_analysis_process', on_enter=['request_analysis_process']),
+                       State(name='start_adding_liquid_2', on_enter=['request_start_adding_liquid_2']),
+
+                       State(name='run_reaction', on_enter=['request_reaction_start']),
+
+                       State(name='wait_for_result'),
+
+                       State(name='stop_adding_liquid_2', on_enter=['request_stop_adding_liquid_2']),
+                       State(name='stop_reaction', on_enter=['request_reaction_stop']),
+                       State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
-            {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'add_liquid_1'},
-            {'source':'add_liquid_1','dest':'add_solid', 'conditions':'are_req_station_ops_completed'},
-            {'source':'add_solid','dest':'start_adding_liquid_2', 'conditions':'are_req_station_procs_completed'},
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'add_liquid_1'},
+            {'source': 'add_liquid_1', 'dest': 'add_solid', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'add_solid', 'dest': 'start_adding_liquid_2', 'conditions': 'are_req_station_procs_completed'},
 
-            {'source':'start_adding_liquid_2','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
-            
-            {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'run_reaction'},
-            {'source':'run_reaction','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
-            {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
-            {'source':'wait_for_result','dest':'stop_adding_liquid_2', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
-            
-            {'source':'stop_adding_liquid_2','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'stop_reaction','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+            {'source': 'start_adding_liquid_2', 'dest': 'sample_reaction', 'conditions': 'are_req_station_ops_completed'},
+
+            {'source': 'sample_reaction', 'dest': 'start_analysis_process', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'start_analysis_process', 'dest': 'run_reaction'},
+            {'source': 'run_reaction', 'dest': 'wait_for_result', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'wait_for_result', 'dest': 'sample_reaction', 'unless': 'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'wait_for_result', 'dest': 'stop_adding_liquid_2', 'conditions': ['is_reaction_complete', 'are_req_station_procs_completed']},
+
+            {'source': 'stop_adding_liquid_2', 'dest': 'stop_reaction', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'stop_reaction', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'}
         ]
 
     @classmethod
@@ -67,10 +68,10 @@ class APCSynthesisProcess(StationProcess):
                   target_batch_index: int,
                   target_sample_index: int,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -137,8 +138,8 @@ class APCSynthesisProcess(StationProcess):
         reaction_temperature = reaction_operation.parameters["target_temperature"]
         reaction_stirring_speed = reaction_operation.parameters["target_stirring_speed"]
         op = MTSynthSampleOp.from_args(target_sample=sample,
-                                        target_temperature=reaction_temperature,
-                                        target_stirring_speed=reaction_stirring_speed)
+                                       target_temperature=reaction_temperature,
+                                       target_stirring_speed=reaction_stirring_speed)
         self.request_station_op(op)
 
     def request_analysis_process(self):
@@ -172,44 +173,45 @@ class APCSynthesisProcess(StationProcess):
             if isinstance(result, LCMSAnalysisResult):
                 return result.concentration >= target_product_concentration
 
+
 class APCFiltrationProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
-        
+
         ''' States '''
-        self.STATES = [ State(name='init_state'),
-            State(name='prep_state', on_enter='initialise_process_data'),
-            State(name='start_heat_stir', on_enter=['request_heating_stirring']),
-            State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
-            State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
-            State(name='filter_product', on_enter=['request_filtration']),
-            State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
-            State(name='stop_heat_stir', on_enter=['request_stop_heating_stirring']),
-            State(name='dry_product', on_enter=['request_dry_product']),
-            State(name='final_state')]
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state', on_enter='initialise_process_data'),
+                       State(name='start_heat_stir', on_enter=['request_heating_stirring']),
+                       State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
+                       State(name='increment_discharge_cycle', on_enter=['request_discharge_cycle_update']),
+                       State(name='filter_product', on_enter=['request_filtration']),
+                       State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
+                       State(name='stop_heat_stir', on_enter=['request_stop_heating_stirring']),
+                       State(name='dry_product', on_enter=['request_dry_product']),
+                       State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
-            {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'start_heat_stir'},
-            {'source':'start_heat_stir', 'dest': 'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
-            
-            {'source':'open_close_drain_valve','dest':'increment_discharge_cycle', 'conditions':'are_req_station_ops_completed'},
-            {'source':'increment_discharge_cycle','dest':'filter_product'},
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'start_heat_stir'},
+            {'source': 'start_heat_stir', 'dest': 'open_close_drain_valve', 'conditions': 'are_req_station_ops_completed'},
 
-            {'source':'filter_product','dest':'open_close_drain_valve',
+            {'source': 'open_close_drain_valve', 'dest': 'increment_discharge_cycle', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'increment_discharge_cycle', 'dest': 'filter_product'},
+
+            {'source': 'filter_product', 'dest': 'open_close_drain_valve',
                 "unless": ["is_product_discharged", "is_vessel_clean"],
                 'conditions':'are_req_station_ops_completed'},
-            
-            {'source':'filter_product','dest':'add_wash_liquid',
-                "unless": "is_vessel_clean",
-                'conditions':['are_req_station_ops_completed', "is_product_discharged"]},
-            {'source':'add_wash_liquid','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
 
-            {'source':'filter_product','dest':'stop_heat_stir',
-                'conditions':['are_req_station_ops_completed', "is_product_discharged", "is_vessel_clean"]},
-            {'source':'stop_heat_stir','dest':'dry_product', 'conditions':'are_req_station_ops_completed'},
-            {'source':'dry_product','dest':'final_state', 'conditions':'are_req_station_ops_completed'},
+            {'source': 'filter_product', 'dest': 'add_wash_liquid',
+                "unless": "is_vessel_clean",
+                'conditions': ['are_req_station_ops_completed', "is_product_discharged"]},
+            {'source': 'add_wash_liquid', 'dest': 'open_close_drain_valve', 'conditions': 'are_req_station_ops_completed'},
+
+            {'source': 'filter_product', 'dest': 'stop_heat_stir',
+                'conditions': ['are_req_station_ops_completed', "is_product_discharged", "is_vessel_clean"]},
+            {'source': 'stop_heat_stir', 'dest': 'dry_product', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'dry_product', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'},
         ]
 
     @classmethod
@@ -219,10 +221,10 @@ class APCFiltrationProcess(StationProcess):
                   num_discharge_cycles: int,
                   num_wash_cycles: int,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -251,7 +253,6 @@ class APCFiltrationProcess(StationProcess):
         sample = self.lot.batches[batch_index].samples[sample_index]
         current_op = self.generate_operation("heat_stir_discharge", target_sample=sample)
         self.request_station_op(current_op)
-
 
     def request_open_close_drain_valve(self):
         station_op = self.generate_operation("discharge_product")
@@ -284,47 +285,49 @@ class APCFiltrationProcess(StationProcess):
         self.data["num_discharge_cycles"] += 1
 
     ''' transitions callbacks '''
+
     def is_product_discharged(self):
         return self.data["num_discharge_cycles"] >= self.data["max_num_discharge_cycles"]
 
     def is_vessel_clean(self):
         return self.data["num_discharge_cycles"] == self.data["max_num_cycles"]
 
+
 class APCCleaningProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
-        
+
         ''' States '''
-        self.STATES = [ State(name='init_state'),
-            State(name='prep_state'), 
+        self.STATES = [State(name='init_state'),
+                       State(name='prep_state'),
 
-            State(name='load_cleaning_funnel', on_enter=['request_load_cleaning_funnel']),
-            State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
+                       State(name='load_cleaning_funnel', on_enter=['request_load_cleaning_funnel']),
+                       State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
 
-            State(name='run_reaction', on_enter=['request_reaction_start']),
-            State(name='sample_reaction', on_enter=['request_sample_reaction']),
-            State(name='start_analysis_process', on_enter=['request_analysis_process']),
-            State(name='stop_reaction', on_enter=['request_reaction_stop']),
+                       State(name='run_reaction', on_enter=['request_reaction_start']),
+                       State(name='sample_reaction', on_enter=['request_sample_reaction']),
+                       State(name='start_analysis_process', on_enter=['request_analysis_process']),
+                       State(name='stop_reaction', on_enter=['request_reaction_stop']),
 
-            State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
-            State(name='unload_cleaning_funnel', on_enter=['request_unload_cleaning_funnel']),
-            State(name='drain_filter', on_enter=['request_filter_drain']),
-            State(name='final_state')]
+                       State(name='open_close_drain_valve', on_enter=['request_open_close_drain_valve']),
+                       State(name='unload_cleaning_funnel', on_enter=['request_unload_cleaning_funnel']),
+                       State(name='drain_filter', on_enter=['request_filter_drain']),
+                       State(name='final_state')]
 
         ''' Transitions '''
         self.TRANSITIONS = [
-            {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'load_cleaning_funnel'},
-            {'source':'load_cleaning_funnel', 'dest': 'add_wash_liquid', 'conditions': 'are_req_robot_ops_completed'},
-            {'source':'add_wash_liquid','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_reaction','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'stop_reaction','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'open_close_drain_valve', 'conditions':'are_req_station_procs_completed'},            
-            {'source':'open_close_drain_valve','dest':'drain_filter', 'conditions':'are_req_station_ops_completed'},
-            {'source':'drain_filter','dest':'add_wash_liquid', 'unless': 'is_reactor_clean','conditions':'are_req_station_ops_completed'},
-            {'source':'drain_filter','dest':'unload_cleaning_funnel', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
-            {'source':'unload_cleaning_funnel', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'load_cleaning_funnel'},
+            {'source': 'load_cleaning_funnel', 'dest': 'add_wash_liquid', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'add_wash_liquid', 'dest': 'run_reaction', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'run_reaction', 'dest': 'stop_reaction', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'stop_reaction', 'dest': 'sample_reaction', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'sample_reaction', 'dest': 'start_analysis_process', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'start_analysis_process', 'dest': 'open_close_drain_valve', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'open_close_drain_valve', 'dest': 'drain_filter', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'drain_filter', 'dest': 'add_wash_liquid', 'unless': 'is_reactor_clean', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'drain_filter', 'dest': 'unload_cleaning_funnel', 'conditions': ['are_req_station_ops_completed', 'is_reactor_clean']},
+            {'source': 'unload_cleaning_funnel', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
         ]
 
     @classmethod
@@ -333,10 +336,10 @@ class APCCleaningProcess(StationProcess):
                   target_sample_index: int,
                   target_purity_concentration: float,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -354,6 +357,7 @@ class APCCleaningProcess(StationProcess):
         return cls(model)
 
     ''' state callbacks '''
+
     def request_load_cleaning_funnel(self):
         robot_task = RobotTaskOp.from_args(
             name="LoadCleaningFunnel",
@@ -367,7 +371,7 @@ class APCCleaningProcess(StationProcess):
         sample = self.lot.batches[batch_index].samples[sample_index]
         station_op = self.generate_operation("add_wash_liquid", target_sample=sample)
         self.request_station_op(station_op)
-    
+
     def request_reaction_start(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
@@ -391,8 +395,8 @@ class APCCleaningProcess(StationProcess):
         reaction_temperature = reaction_operation.parameters["target_temperature"]
         reaction_stirring_speed = reaction_operation.parameters["target_stirring_speed"]
         op = MTSynthSampleOp.from_args(target_sample=sample,
-                                        target_temperature=reaction_temperature,
-                                        target_stirring_speed=reaction_stirring_speed)
+                                       target_temperature=reaction_temperature,
+                                       target_stirring_speed=reaction_stirring_speed)
         self.request_station_op(op)
 
     def request_reaction_stop(self):
@@ -415,6 +419,7 @@ class APCCleaningProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     ''' transitions callbacks '''
+
     def is_reactor_clean(self):
         target_purity_concentration = self.data["target_purity_concentration"]
         batch_index = self.data["target_batch_index"]
@@ -425,14 +430,15 @@ class APCCleaningProcess(StationProcess):
             if isinstance(result, LCMSAnalysisResult):
                 return result.concentration <= target_purity_concentration
 
+
 class APCMeasureYieldProcess(StationProcess):
-    
+
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
         super().__init__(process_model)
 
         ''' States '''
         self.STATES = [
-            State(name='init_state'), 
+            State(name='init_state'),
             State(name='prep_state'),
             State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
             State(name='open_sash', on_enter=['request_open_sash']),
@@ -440,15 +446,15 @@ class APCMeasureYieldProcess(StationProcess):
             State(name='close_sash', on_enter=['request_close_sash']),
             State(name='final_state')
         ]
-            
+
         ''' Transitions '''
         self.TRANSITIONS = [
-            { 'source':'init_state','dest':'prep_state'},
-            { 'source':'prep_state','dest':'navigate_to_weighing_station'},
-            { 'source':'navigate_to_weighing_station','dest':'open_sash', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'open_sash','dest':'weight_yield', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'weight_yield','dest':'close_sash', 'conditions':'are_req_station_procs_completed'},
-            { 'source':'close_sash','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+            {'source': 'init_state', 'dest': 'prep_state'},
+            {'source': 'prep_state', 'dest': 'navigate_to_weighing_station'},
+            {'source': 'navigate_to_weighing_station', 'dest': 'open_sash', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'open_sash', 'dest': 'weight_yield', 'conditions': 'are_req_station_ops_completed'},
+            {'source': 'weight_yield', 'dest': 'close_sash', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'close_sash', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'}
         ]
 
     @classmethod
@@ -456,10 +462,10 @@ class APCMeasureYieldProcess(StationProcess):
                   target_batch_index: int,
                   target_sample_index: int,
                   operations: List[Dict[str, Any]] = None,
-                  is_subprocess: bool=False,
-                  skip_robot_ops: bool=False,
-                  skip_station_ops: bool=False,
-                  skip_ext_procs: bool=False
+                  is_subprocess: bool = False,
+                  skip_robot_ops: bool = False,
+                  skip_station_ops: bool = False,
+                  skip_ext_procs: bool = False
                   ):
         model = StationProcessModel()
         cls._set_model_common_fields(model,
@@ -474,7 +480,7 @@ class APCMeasureYieldProcess(StationProcess):
         model.data["target_sample_index"] = int(target_sample_index)
         model.save()
         return cls(model)
-    
+
     ''' States callbacks. '''
 
     def request_navigate_to_weighing(self):
@@ -494,10 +500,9 @@ class APCMeasureYieldProcess(StationProcess):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
         proc = APCWeighingProcess.from_args(lot=self.lot,
-                                                target_batch_index=batch_index,
-                                                target_sample_index=sample_index)
+                                            target_batch_index=batch_index,
+                                            target_sample_index=sample_index)
         self.request_station_process(proc)
-
 
     def request_close_sash(self):
         station_op = APCCloseSashOp.from_args()

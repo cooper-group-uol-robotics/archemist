@@ -41,8 +41,8 @@ class WorkflowManager:
     def queue_robot_op(self, robot_op):
         self._workflow_state.robot_ops_queue.append(robot_op)
 
-
     # this can keep track of the batches on the robot deck
+
     def _process(self):
         while (self._running):
             if not self._pause_workflow:
@@ -50,7 +50,7 @@ class WorkflowManager:
                 if self._workflow_state.recipes_queue:
                     clean_batches = self._workflow_state.get_clean_batches()
                     while self._workflow_state.recipes_queue:
-                        if clean_batches: 
+                        if clean_batches:
                             recipe = self._workflow_state.recipes_queue.popleft()
                             new_batch = clean_batches.popleft()
                             new_batch.attach_recipe(recipe)
@@ -60,7 +60,7 @@ class WorkflowManager:
 
                 # process unassigned batches
                 batches_buffer_copy = [batch for batch in self._workflow_state.batches_buffer]
-                for batch in batches_buffer_copy: # here the list gets copied
+                for batch in batches_buffer_copy:  # here the list gets copied
                     if batch.recipe.is_complete():
                         self._log_processor(f'{batch} recipe is complete. The batch is added to the complete batches list')
                         self._workflow_state.batches_buffer.remove(batch)
@@ -73,7 +73,6 @@ class WorkflowManager:
                             self._workflow_state.batches_buffer.remove(batch)
                         else:
                             self._log_processor(f'{batch} could not be assigned to {current_station}.')
-
 
                 # process workflow stations
                 for station in self._workflow_state.stations:
@@ -100,13 +99,11 @@ class WorkflowManager:
 
             if self._workflow_state.robot_ops_queue:
                 self._robot_scheduler.schedule(self._workflow_state)
-            
+
             sleep(2)
 
-    def _log_processor(self, message:str):
+    def _log_processor(self, message: str):
         print(f'[{self}]: {message}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}'
-
-

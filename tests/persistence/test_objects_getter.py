@@ -35,7 +35,7 @@ class ObjectsGetterTest(unittest.TestCase):
             'expiry_date': date.fromisoformat('2025-02-11'),
             'details': {
                 'pump_id': 'pUmP1'
-                }
+            }
         }
 
         solid_dict = {
@@ -61,7 +61,7 @@ class ObjectsGetterTest(unittest.TestCase):
             "type": "MobileRobot",
             "location": {"coordinates": [1, 2], "descriptor": "a_frame"},
             "id": 17,
-            "total_lot_capacity":1,
+            "total_lot_capacity": 1,
             "onboard_capacity": 2,
             "handler": "SimRobotOpHandler"
         }
@@ -88,7 +88,7 @@ class ObjectsGetterTest(unittest.TestCase):
 
         self.station_1 = Station.from_dict(station_dict_1)
         self.station_2 = Station.from_dict(station_dict_2)
-        
+
         # construct recipes
         recipe_doc_1 = {
             "general": {"name": "test_archemist_recipe", "id": 198},
@@ -138,8 +138,8 @@ class ObjectsGetterTest(unittest.TestCase):
         recipe_2 = Recipe.from_dict(recipe_doc_2)
 
         # construct batches
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
-        self.batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        self.batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
 
         # construct lots
         lot_1 = Lot.from_args([batch_1])
@@ -220,7 +220,7 @@ class ObjectsGetterTest(unittest.TestCase):
         mobile_robots = RobotsGetter.get_robots("MobileRobot")
         self.assertEqual(len(mobile_robots), 1)
         self.assertEqual(mobile_robots[0].id, self.robot_2.id)
-        
+
         # test getting individual robot
         # by using object id
         robot_by_obj_id = RobotsGetter.get_robot(self.robot_1.object_id)
@@ -279,5 +279,3 @@ class ObjectsGetterTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

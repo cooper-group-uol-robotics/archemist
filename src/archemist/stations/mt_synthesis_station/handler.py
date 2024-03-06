@@ -6,6 +6,7 @@ from .state import (MTSynthHeatStirOp,
                     MTSynthSampleOp)
 from archemist.core.util.enums import OpOutcome
 
+
 class SimMTSynthesisStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
@@ -15,18 +16,18 @@ class SimMTSynthesisStationHandler(SimStationOpHandler):
         result = None
         if isinstance(op, MTSynthHeatStirOp):
             parameters = {}
-            parameters["target_temperature"]  = op.target_temperature
-            parameters["target_stirring_speed"]  = op.target_stirring_speed
+            parameters["target_temperature"] = op.target_temperature
+            parameters["target_stirring_speed"] = op.target_stirring_speed
             if op.wait_duration is not None:
-                parameters["wait_duration"]  = op.wait_duration
-                parameters["time_unit"]  = op.time_unit
+                parameters["wait_duration"] = op.wait_duration
+                parameters["time_unit"] = op.time_unit
             result = ProcessOpResult.from_args(origin_op=op.object_id,
-                                                parameters=parameters)
+                                               parameters=parameters)
         elif isinstance(op, MTSynthSampleOp):
             parameters = {}
-            parameters["target_temperature"]  = op.target_temperature
-            parameters["target_stirring_speed"]  = op.target_stirring_speed
+            parameters["target_temperature"] = op.target_temperature
+            parameters["target_stirring_speed"] = op.target_stirring_speed
             result = ProcessOpResult.from_args(origin_op=op.object_id,
-                                                parameters=parameters)
-        
+                                               parameters=parameters)
+
         return OpOutcome.SUCCEEDED, [result] if result is not None else None

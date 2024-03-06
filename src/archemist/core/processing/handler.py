@@ -11,8 +11,9 @@ from archemist.core.state.station import Station, OpState, LotStatus
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from archemist.core.util.enums import StationState, RobotState, OpOutcome, ProcessStatus
-from typing import Tuple,Dict, List, Type, Optional
+from typing import Tuple, Dict, List, Type, Optional
 from abc import ABC, abstractmethod
+
 
 class OpHandler(ABC):
     @abstractmethod
@@ -22,7 +23,7 @@ class OpHandler(ABC):
     @abstractmethod
     def execute_op(self):
         pass
-    
+
     @abstractmethod
     def is_op_execution_complete(self) -> bool:
         pass
@@ -34,6 +35,7 @@ class OpHandler(ABC):
     @abstractmethod
     def shut_down(self):
         pass
+
 
 class StationOpHandler(OpHandler):
     def __init__(self, station: Station):
@@ -54,6 +56,7 @@ class StationOpHandler(OpHandler):
             self.execute_op()
         elif self._station.assigned_op_state == OpState.TO_BE_SKIPPED:
             self._station.complete_assigned_op(OpOutcome.SKIPPED, None)
+
 
 class RobotOpHandler(OpHandler):
     def __init__(self, robot: Robot):
@@ -81,13 +84,14 @@ class RobotOpHandler(OpHandler):
 
     def _check_op_execution(self):
         if isinstance(self._robot.assigned_op, RobotWaitOp):
-             op = self._robot.assigned_op
-             if (datetime.now() - op.start_timestamp) >= timedelta(seconds=op.timeout):
+            op = self._robot.assigned_op
+            if (datetime.now() - op.start_timestamp) >= timedelta(seconds=op.timeout):
                 self._robot.clear_assigned_op()
         else:
             if self.is_op_execution_complete():
                 op_outcome = self.get_op_result()
                 self._robot.complete_assigned_op(op_outcome)
+
 
 class StationProcessHandler:
     def __init__(self, station: Station):
@@ -129,21 +133,20 @@ class StationProcessHandler:
                 self._station.queued_procs.remove(proc)
                 self._station.running_procs.append(proc)
 
-
     def _handle_proc_requests(self):
         for proc in self._station.running_procs:
             if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                 for robot_op in proc.req_robot_ops:
                     if isinstance(robot_op, RobotTaskOp) or \
-                        isinstance(robot_op, CollectBatchOp) or\
-                        isinstance(robot_op, DropBatchOp) or\
-                        (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
-                        
+                            isinstance(robot_op, CollectBatchOp) or\
+                            isinstance(robot_op, DropBatchOp) or\
+                            (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
+
                         robot_op.target_location = self._station.location
-                        
+
                     self._station.add_req_robot_op(robot_op)
                 proc.switch_to_waiting()
-            
+
             if proc.status == ProcessStatus.REQUESTING_STATION_OPS:
                 for station_op in proc.req_station_ops:
                     if station_op.associated_station != self._station.__class__.__name__:
@@ -151,7 +154,7 @@ class StationProcessHandler:
                     else:
                         self._station.add_station_op(station_op)
                 proc.switch_to_waiting()
-            
+
             if proc.status == ProcessStatus.REQUESTING_STATION_PROCS:
                 for req_station_proc in proc.req_station_procs:
                     if req_station_proc.associated_station != self._station.__class__.__name__:
@@ -164,6 +167,7 @@ class StationProcessHandler:
         self._handle_assigned_lots()
         self._handle_processes()
         self._handle_proc_requests()
+
 
 class StationHandler:
     def __init__(self, station: Station, use_sim: bool):
@@ -179,7 +183,7 @@ class StationHandler:
         else:
             print(f"{self._station} handler was unsuccessfully initialised")
             self._station.state = StationState.ERROR
-        
+
     def tick(self):
         if self._station.state == StationState.ACTIVE:
             self._station_op_handler.handle()
@@ -195,7 +199,8 @@ class StationHandler:
             traceback.print_exc()
         finally:
             self._station_op_handler.shut_down()
-            
+
+
 class RobotHandler:
     def __init__(self, robot: Robot, use_sim: bool):
         self._robot = robot
@@ -225,6 +230,7 @@ class RobotHandler:
         finally:
             self._robot_op_handler.shut_down()
 
+
 class SimRobotOpHandler(RobotOpHandler):
     def __init__(self, robot: Robot):
         super().__init__(robot)
@@ -238,13 +244,14 @@ class SimRobotOpHandler(RobotOpHandler):
         print(f'[{self.__class__.__name__}] executing {str(robot_op)}')
 
     def is_op_execution_complete(self):
-            return True
+        return True
 
     def get_op_result(self) -> OpOutcome:
         return OpOutcome.SUCCEEDED
-    
+
     def shut_down(self):
-         print(f"[{self.__class__.__name__}] is shutting down")
+        print(f"[{self.__class__.__name__}] is shutting down")
+
 
 class SimStationOpHandler(StationOpHandler):
     def __init__(self, station: Station):
@@ -259,11 +266,11 @@ class SimStationOpHandler(StationOpHandler):
         print(f'[{self.__class__.__name__}] executing {station_op}')
 
     def is_op_execution_complete(self):
-            return True
+        return True
 
     def get_op_result(self) -> Tuple[OpOutcome, List[Type[StationOpResult]]]:
         origin_op = self._station.assigned_op
         return OpOutcome.SUCCEEDED, [StationOpResult.from_args(origin_op=origin_op.object_id)]
-    
+
     def shut_down(self):
-         print(f"[{self.__class__.__name__}] is shutting down")
+        print(f"[{self.__class__.__name__}] is shutting down")

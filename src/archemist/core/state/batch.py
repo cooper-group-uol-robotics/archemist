@@ -6,6 +6,7 @@ from archemist.core.state.sample import Sample
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.util import Location
 
+
 class Batch:
     def __init__(self, batch_model: Union[BatchModel, ModelProxy]) -> None:
         if isinstance(batch_model, ModelProxy):
@@ -14,7 +15,7 @@ class Batch:
             self._model_proxy = ModelProxy(batch_model)
 
     @classmethod
-    def from_args(cls, num_samples: int, location:Location=None):
+    def from_args(cls, num_samples: int, location: Location = None):
         model = BatchModel()
         if location:
             model.location = location.model
@@ -42,7 +43,7 @@ class Batch:
     @property
     def parent_lot_id(self) -> ObjectId:
         return self._model_proxy.parent_lot_id
-    
+
     @parent_lot_id.setter
     def parent_lot_id(self, lot_id: ObjectId):
         self._model_proxy.parent_lot_id = lot_id
@@ -57,7 +58,7 @@ class Batch:
             self._model_proxy.location = new_location.model
         else:
             raise ValueError
-        
+
     @property
     def samples(self) -> List[Sample]:
         return ListProxy(self._model_proxy.samples, Sample)
@@ -80,7 +81,6 @@ class Batch:
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}-{self.object_id}'
-    
+
     def __eq__(self, other_batch) -> bool:
         return self.object_id == other_batch.object_id
-
