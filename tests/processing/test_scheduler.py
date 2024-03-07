@@ -21,7 +21,8 @@ from archemist.core.util.location import Location
 class SchedulerTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
-        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
+        self._client = connect(
+            db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
         fixed_robot_dict = {
             "type": "FixedRobot",
@@ -228,7 +229,8 @@ class SchedulerTest(unittest.TestCase):
 
     def test_priority_queue_scheduler_fixed_robot(self):
         scheduler = PriorityQueueRobotScheduler()
-        self.assertDictEqual(scheduler.robots_schedules, {"FixedRobot": [], "MobileRobot": []})
+        self.assertDictEqual(scheduler.robots_schedules, {
+                             "FixedRobot": [], "MobileRobot": []})
         requester_object_id = ObjectId()
 
         # create ops queue
@@ -311,21 +313,26 @@ class SchedulerTest(unittest.TestCase):
 
     def test_priority_queue_scheduler_mobile_robot(self):
         # construct recipe and lot
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
-        batch_2 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(
+            coordinates=(1, 2), descriptor="some_frame"))
+        batch_2 = Batch.from_args(3, Location.from_args(
+            coordinates=(1, 2), descriptor="some_frame"))
         lot_1 = Lot.from_args([batch_1, batch_2])
         recipe_1 = Recipe.from_dict(self.recipe_doc_1)
         lot_1.attach_recipe(recipe_1)
 
-        batch_3 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
-        batch_4 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
+        batch_3 = Batch.from_args(3, Location.from_args(
+            coordinates=(1, 2), descriptor="some_frame"))
+        batch_4 = Batch.from_args(3, Location.from_args(
+            coordinates=(1, 2), descriptor="some_frame"))
         lot_2 = Lot.from_args([batch_3, batch_4])
         recipe_2 = Recipe.from_dict(self.recipe_doc_2)
         lot_2.attach_recipe(recipe_2)
 
         # construct scheduler
         scheduler = PriorityQueueRobotScheduler()
-        self.assertDictEqual(scheduler.robots_schedules, {"FixedRobot": [], "MobileRobot": []})
+        self.assertDictEqual(scheduler.robots_schedules, {
+                             "FixedRobot": [], "MobileRobot": []})
 
         # add lots to station 1
         self.station_1.add_lot(lot_1)
@@ -383,7 +390,8 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOp.from_args("move_to_s2", "MobileRobot",
-                                           Location.from_args(coordinates=(1, 1)), {"fine_local": False},
+                                           Location.from_args(coordinates=(1, 1)), {
+                                               "fine_local": False},
                                            requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOp.from_args("MobileRobot", 5,
                                              requested_by=self.station_2.object_id)
@@ -404,7 +412,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # schedule ops -> no change since robot is waiting and also has no space
         scheduler.schedule(self.workflow_state.robot_ops_queue)
@@ -462,7 +471,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # create ops queue
         s2_load_op_1 = CollectBatchOp.from_args("load_rack", "MobileRobot", {"index": 0},
@@ -528,7 +538,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s3 robot ops
         s3_unload_op_1 = DropBatchOp.from_args("unload_rack", "MobileRobot", {"index": 0},
@@ -584,7 +595,8 @@ class SchedulerTest(unittest.TestCase):
 
         # add s2 robot ops
         s2_nav_op_1 = RobotNavOp.from_args("move_to_s2", "MobileRobot",
-                                           Location.from_args(coordinates=(1, 1)), {"fine_local": False},
+                                           Location.from_args(coordinates=(1, 1)), {
+                                               "fine_local": False},
                                            requested_by=self.station_2.object_id,)
         s2_wait_op_1 = RobotWaitOp.from_args("MobileRobot", 5,
                                              requested_by=self.station_2.object_id)
@@ -604,7 +616,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s2 robot ops
         s2_unload_op_1 = DropBatchOp.from_args("unload_rack", "MobileRobot", {"index": 0},
@@ -654,7 +667,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s2_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s2 ops
         s2_load_op_1 = CollectBatchOp.from_args("load_rack", "MobileRobot", {"index": 0},
@@ -788,7 +802,8 @@ class SchedulerTest(unittest.TestCase):
 
         # update the assigned op and complete it -> s3_wait_op_1
         self.mobile_robot.update_assigned_op()
-        self.mobile_robot.complete_assigned_op(OpOutcome.SUCCEEDED, clear_assigned_op=False)
+        self.mobile_robot.complete_assigned_op(
+            OpOutcome.SUCCEEDED, clear_assigned_op=False)
 
         # add s3 robot ops
         s3_unload_op_1 = DropBatchOp.from_args("unload_rack", "MobileRobot", {"index": 0},
@@ -885,3 +900,7 @@ class SchedulerTest(unittest.TestCase):
 
         # advance lot recipe and assign lot to station 4
         lot_2.recipe.advance_state(success=True)
+
+
+if __name__ == "__main__":
+    unittest.main()
