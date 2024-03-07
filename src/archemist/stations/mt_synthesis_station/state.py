@@ -1,5 +1,5 @@
 from typing import Dict, Union, List, Literal, Type
-from archemist.core.persistence.models_proxy import ModelProxy,
+from archemist.core.persistence.models_proxy import ModelProxy
 from .model import (MTSynthesisStationModel,
                     OptiMaxMode,
                     MTSynthHeatStirOpModel,
