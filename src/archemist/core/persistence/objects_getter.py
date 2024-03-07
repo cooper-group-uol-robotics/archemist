@@ -66,6 +66,7 @@ class StationsGetter:
 class RobotsGetter:
     # this is needed to query derived robots models
     import_robots_models()
+    get_robot = Dispatcher("get_robot")
 
     @staticmethod
     def get_robots(robot_type: str = None) -> List[Type[Robot]]:
@@ -79,16 +80,16 @@ class RobotsGetter:
 
         return robots_list
 
-    @dispatch(ObjectId)
+    @get_robot.register(ObjectId)
     def get_robot(object_id: ObjectId) -> Type[Robot]:
         return RobotFactory.create_from_object_id(object_id)
 
-    @dispatch(str)
+    @get_robot.register(str)
     def get_robot(robot_type: str) -> Type[Robot]:
         model = RobotModel.objects(_type=robot_type).first()
         return RobotFactory.create_from_model(model)
 
-    @dispatch(int, str)
+    @get_robot.register(int, str)
     def get_robot(robot_id: int, robot_type: str) -> Type[Robot]:
         model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
