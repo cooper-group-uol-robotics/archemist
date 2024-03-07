@@ -41,7 +41,7 @@ try:
             self._op_complete = False
             if isinstance(current_op, PPLiquidDispenseOp):
                 # TODO depending on the liquid we can select the correct pump
-                pump_index = self._station.liquid_pump_map[current_op.liquid_name]
+                # pump_index = self._station.liquid_pump_map[current_op.liquid_name]
                 for i in range(10):
                     self._pump_pub.publish(
                         dispenser_command=DispenserCommand.DISPENSEPID, dispenser_ml=current_op.dispense_volume)
