@@ -81,16 +81,16 @@ class RobotsGetter:
         return robots_list
 
     @get_robot.register(ObjectId)
-    def get_robot(object_id: ObjectId) -> Type[Robot]:
+    def get_robot_objectId(object_id: ObjectId) -> Type[Robot]:
         return RobotFactory.create_from_object_id(object_id)
 
     @get_robot.register(str)
-    def get_robot(robot_type: str) -> Type[Robot]:
+    def get_robot_str(robot_type: str) -> Type[Robot]:
         model = RobotModel.objects(_type=robot_type).first()
         return RobotFactory.create_from_model(model)
 
     @get_robot.register(int, str)
-    def get_robot(robot_id: int, robot_type: str) -> Type[Robot]:
+    def get_robot_int_str(robot_id: int, robot_type: str) -> Type[Robot]:
         model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)
