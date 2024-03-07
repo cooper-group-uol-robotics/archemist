@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, Type, TYPE_CHECKING
 if TYPE_CHECKING:
-    from archemist.core.state.material import Liquid, Solid
+    # from archemist.core.state.material import Liquid, Solid
     from archemist.core.state.robot import Robot, RobotModel
     from archemist.core.state.station import Station, StationModel
     from archemist.core.state.station_process import StationProcessModel, StationProcess
