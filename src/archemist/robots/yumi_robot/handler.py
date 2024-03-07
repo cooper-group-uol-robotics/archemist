@@ -47,7 +47,7 @@ class YuMiROSHandler(RobotOpHandler):
 
     def _process_op(self, robotOp) -> YuMiTask:
         task = None
-        if isinstance(robotOp, YuMiRobotTask):
+        if isinstance(robotOp, YuMiTask):
             self._task_counter += 1
             task = YuMiTask(
                 task_name=f'{robotOp.name}', cmd_seq=self._task_counter)
