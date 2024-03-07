@@ -30,7 +30,7 @@ def run_local_server(args):
 
 def run_station_handler(db_host, db_name, station_object_id, use_sim_handler):
     # needed to establish connection with db
-    db_handler = DatabaseHandler(db_host, db_name)
+    DatabaseHandler(db_host, db_name)
     station = StationFactory.create_from_object_id(station_object_id)
     handler = StationHandler(station, use_sim_handler)
     handler.initialise()
@@ -39,7 +39,7 @@ def run_station_handler(db_host, db_name, station_object_id, use_sim_handler):
 
 def run_robot_handler(db_host, db_name, robot_object_id, use_sim_handler):
     # needed to establish connection with db
-    db_handler = DatabaseHandler(db_host, db_name)
+    DatabaseHandler(db_host, db_name)
     robot = RobotFactory.create_from_object_id(robot_object_id)
     handler = RobotHandler(robot, use_sim_handler)
     handler.initialise()
