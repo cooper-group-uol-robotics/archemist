@@ -2,7 +2,7 @@ from archemist.core.persistence.db_handler import DatabaseHandler
 from archemist.core.persistence.yaml_handler import YamlHandler
 from archemist.core.persistence.object_factory import RobotFactory, StationFactory
 from archemist.core.persistence.objects_getter import StateGetter
-from archemist.core.state.material import Liquid, Solid
+# from archemist.core.state.material import Liquid, Solid
 from archemist.core.state.state import InputState, WorkflowState, OutputState
 from archemist.core.exceptions.exception import DatabaseNotPopulatedError
 from pathlib import Path

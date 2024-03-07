@@ -8,7 +8,7 @@ from .model import (LightBoxStationModel,
 from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationSampleOp
-from typing import List, Union, Dict
+from typing import Union, Dict
 import math
 
 
