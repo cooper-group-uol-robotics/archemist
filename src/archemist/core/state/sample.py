@@ -2,7 +2,7 @@ from archemist.core.models.sample_model import SampleModel
 from archemist.core.persistence.object_factory import OpResultFactory
 from archemist.core.persistence.models_proxy import ModelProxy, ListProxy
 from archemist.core.state.station_op_result import StationOpResult, MaterialOpResult
-# from archemist.core.util.units import L, mL, uL, g, mg, ug
+from archemist.core.util.units import L, mL, uL, g, mg, ug
 
 from bson.objectid import ObjectId
 from typing import Any, List, Union, Dict, Type

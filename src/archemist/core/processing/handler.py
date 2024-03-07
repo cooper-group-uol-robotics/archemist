@@ -11,7 +11,7 @@ from archemist.core.state.station import Station, OpState, LotStatus
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.persistence.object_factory import StationFactory, RobotFactory, ProcessFactory
 from archemist.core.util.enums import StationState, RobotState, OpOutcome, ProcessStatus
-from typing import Tuple, List, Type, Optional
+from typing import Tuple, Dict, List, Type, Optional
 from abc import ABC, abstractmethod
 
 

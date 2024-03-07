@@ -1,8 +1,8 @@
 from archemist.core.state.state import State
-# from archemist.core.state.batch import Batch
-# from archemist.core.util.location import Location
-from archemist.core.processing.scheduler import LazyRobotScheduler
-# from collections import deque
+from archemist.core.state.batch import Batch
+from archemist.core.util.location import Location
+from archemist.core.processing.scheduler import MultiBatchRobotScheduler, LazyRobotScheduler
+from collections import deque
 from threading import Thread
 from time import sleep
 

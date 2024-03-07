@@ -1,6 +1,6 @@
 from mongoengine import Document, EmbeddedDocument
 from mongoengine.base.datastructures import BaseList, BaseDict
-from typing import Callable
+from typing import Any, Callable
 from enum import Enum, auto
 from weakref import proxy
 from bson.objectid import ObjectId

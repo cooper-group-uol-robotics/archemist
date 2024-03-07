@@ -7,7 +7,7 @@ from archemist.core.state.station import Station
 from archemist.core.state.sample import Sample
 from archemist.core.state.station_op import StationOp, StationSampleOp
 from archemist.core.util.enums import OpOutcome
-from typing import Dict, Any, Union, List, Literal, Optional
+from typing import Dict, Any, Type, Union, List, Literal, Optional
 
 
 class QuantosCartridge:

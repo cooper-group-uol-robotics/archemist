@@ -22,7 +22,7 @@ class SimPXRDStationHandler(SimStationOpHandler):
 
 try:
     import rospy
-    # from std_msgs.msg import String
+    from std_msgs.msg import String
     from pxrd_msgs.msg import PxrdCommand, PxrdStatus
 
     class PXRDStationROSHandler(StationHandler):

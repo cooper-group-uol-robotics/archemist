@@ -1,4 +1,4 @@
-from mongoengine import fields
+from mongoengine import fields, EmbeddedDocument
 from archemist.core.models.station_model import StationModel
 from archemist.core.models.station_op_model import StationOpModel, StationSampleOpModel
 from enum import Enum, auto
