@@ -16,7 +16,7 @@ from archemist.stations import import_stations_models
 from archemist.robots import import_robots_models
 
 from typing import List, Type
-from multipledispatch import dispatch, Dispatcher
+from multipledispatch import dispatch
 from bson.objectid import ObjectId
 
 
@@ -33,7 +33,6 @@ class MaterialsGetter:
 class StationsGetter:
     # this is needed to query derived stations models
     import_stations_models()
-    get_station = Dispatcher("get_station")
 
     @staticmethod
     def get_stations(station_type: str = None) -> List[Type[Station]]:
@@ -47,17 +46,17 @@ class StationsGetter:
 
         return stations_list
 
-    @get_station.register(ObjectId)
-    def get_station_objectId(object_id: ObjectId) -> Type[Station]:
+    @dispatch(ObjectId)
+    def get_station(object_id: ObjectId) -> Type[Station]:
         return StationFactory.create_from_object_id(object_id)
 
-    @get_station.register(str)
-    def get_station_str(station_type: str) -> Type[Station]:
+    @dispatch(str)
+    def get_station(station_type: str) -> Type[Station]:
         model = StationModel.objects(_type=station_type).first()
         return StationFactory.create_from_model(model)
 
-    @get_station.register(int, str)
-    def get_station_int_str(station_id: int, station_type: str) -> Type[Station]:
+    @dispatch(int, str)
+    def get_station(station_id: int, station_type: str) -> Type[Station]:
         model = StationModel.objects.get(_type=station_type, exp_id=station_id)
         if model is not None:
             return StationFactory.create_from_model(model)
@@ -66,7 +65,6 @@ class StationsGetter:
 class RobotsGetter:
     # this is needed to query derived robots models
     import_robots_models()
-    get_robot = Dispatcher("get_robot")
 
     @staticmethod
     def get_robots(robot_type: str = None) -> List[Type[Robot]]:
@@ -80,17 +78,17 @@ class RobotsGetter:
 
         return robots_list
 
-    @get_robot.register(ObjectId)
-    def get_robot_objectId(object_id: ObjectId) -> Type[Robot]:
+    @dispatch(ObjectId)
+    def get_robot(object_id: ObjectId) -> Type[Robot]:
         return RobotFactory.create_from_object_id(object_id)
 
-    @get_robot.register(str)
-    def get_robot_str(robot_type: str) -> Type[Robot]:
+    @dispatch(str)
+    def get_robot(robot_type: str) -> Type[Robot]:
         model = RobotModel.objects(_type=robot_type).first()
         return RobotFactory.create_from_model(model)
 
-    @get_robot.register(int, str)
-    def get_robot_int_str(robot_id: int, robot_type: str) -> Type[Robot]:
+    @dispatch(int, str)
+    def get_robot(robot_id: int, robot_type: str) -> Type[Robot]:
         model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)
