@@ -48,16 +48,16 @@ class StationsGetter:
         return stations_list
 
     @get_station.register(ObjectId)
-    def get_station(object_id: ObjectId) -> Type[Station]:
+    def get_station_objectId(object_id: ObjectId) -> Type[Station]:
         return StationFactory.create_from_object_id(object_id)
 
     @get_station.register(str)
-    def get_station(station_type: str) -> Type[Station]:
+    def get_station_str(station_type: str) -> Type[Station]:
         model = StationModel.objects(_type=station_type).first()
         return StationFactory.create_from_model(model)
 
     @get_station.register(int, str)
-    def get_station(station_id: int, station_type: str) -> Type[Station]:
+    def get_station_int_str(station_id: int, station_type: str) -> Type[Station]:
         model = StationModel.objects.get(_type=station_type, exp_id=station_id)
         if model is not None:
             return StationFactory.create_from_model(model)
