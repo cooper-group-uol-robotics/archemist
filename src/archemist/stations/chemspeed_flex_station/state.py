@@ -1,4 +1,4 @@
-from archemist.core.persistence.models_proxy import ModelProxy, DictProxy
+from archemist.core.persistence.models_proxy import ModelProxy
 from .model import ChemSpeedJobStatus, ChemSpeedFlexStationModel, CSLiquidDispenseOpModel
 from archemist.core.models.station_op_model import StationOpModel
 from archemist.core.state.station import Station
