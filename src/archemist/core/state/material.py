@@ -3,7 +3,7 @@ from bson.objectid import ObjectId
 from archemist.core.models.material_model import MaterialModel, SolidMaterialModel, LiquidMaterialModel
 from archemist.core.persistence.models_proxy import ModelProxy
 from typing import Union, Literal, Dict, Any
-from archemist.core.util.units import L, mL, uL, kg, g, mg, ug, m3, cm3, mm3
+from archemist.core.util.units import L, mL, uL, kg, g, mg, ug, m3, cm3, mm3  # noqa: F401
 from unyt.array import unyt_quantity
 
 
