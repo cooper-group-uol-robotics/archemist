@@ -157,7 +157,7 @@ class RobotTest(unittest.TestCase):
         # create batches and loading ops
         batch_1 = Batch.from_args(2, Location.from_args(coordinates=(1, 3), descriptor='table_frame'))
         batch_2 = Batch.from_args(2, Location.from_args(coordinates=(1, 3), descriptor='table_frame'))
-        lot = Lot.from_args([batch_1, batch_2])
+        self.lot = Lot.from_args([batch_1, batch_2])
         task_loc = batch_1.location
         params = {"rack_number": 1, "calibrate": False}
         loading_robot_op_1 = CollectBatchOp.from_args("load_batch", "Robot",
