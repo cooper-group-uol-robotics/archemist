@@ -1,0 +1,10 @@
+[flake8]
+exclude = 
+    tests
+extend-ignore =
+    # "Whitespace before ':'" - not PEP-8 compliant
+    E203,
+    # "Line too long (82 >= 79 characters)" - allow comments and strings to pass  
+    E501,
+per-file-ignores =
+    __init__.py:F401
