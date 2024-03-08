@@ -1,6 +1,6 @@
 from mongoengine import Document, EmbeddedDocument, fields, connect
 import uuid
-from archemist.core.persistence.models_proxy import *
+from archemist.core.persistence.models_proxy import ModelProxy
 
 import unittest
 
