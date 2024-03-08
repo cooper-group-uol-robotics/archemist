@@ -1,5 +1,4 @@
 import unittest
-from datetime import date
 from archemist.core.util.location import Location
 from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.station_op import StationOp

@@ -1,6 +1,4 @@
 import unittest
-from typing import List
-from datetime import datetime
 
 from mongoengine import connect
 from archemist.core.state.robot_op import (RobotTaskOp,

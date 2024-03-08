@@ -9,7 +9,6 @@ from archemist.core.state.lot import Lot
 from archemist.core.util.location import Location
 from archemist.core.util.enums import LotStatus
 from archemist.core.state.station_process import StationProcess
-from archemist.core.state.material import Liquid, Solid
 from datetime import date
 
 

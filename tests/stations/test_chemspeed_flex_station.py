@@ -3,7 +3,6 @@ from datetime import datetime
 
 from mongoengine import connect
 
-from archemist.core.state.material import Liquid
 from archemist.stations.chemspeed_flex_station.state import (ChemSpeedFlexStation,
                                                              ChemSpeedJobStatus,
                                                              CSOpenDoorOp,

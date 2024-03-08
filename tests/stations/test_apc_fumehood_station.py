@@ -1,8 +1,6 @@
 import unittest
 
 from mongoengine import connect
-from bson.objectid import ObjectId
-from time import sleep
 
 from archemist.stations.apc_fumehood_station.state import (APCFumehoodStation,
                                                            APCCartridge,
@@ -18,7 +16,7 @@ from archemist.core.state.batch import Batch
 from archemist.core.state.lot import Lot
 from archemist.core.util.enums import OpOutcome, ProcessStatus
 from datetime import date
-from .testing_utils import test_req_robot_ops, test_req_station_op, test_req_station_proc
+from .testing_utils import test_req_robot_ops, test_req_station_op
 
 
 class MTSynthesisStationTest(unittest.TestCase):
