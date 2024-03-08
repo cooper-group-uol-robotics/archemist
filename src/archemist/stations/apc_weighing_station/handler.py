@@ -1,4 +1,3 @@
-import rospy
 from typing import Tuple, List, Optional
 from archemist.core.processing.handler import StationOpHandler, SimStationOpHandler
 from .state import (
