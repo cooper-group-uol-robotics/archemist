@@ -71,7 +71,7 @@ steps:
           - name: add_liquid_2
             op: SyringePumpDispenseVolumeOp
             parameters:
-              liquid_name: acetic anhydride
+              liquid_name: acetic_anhydride
               dispense_volume: 35
               dispense_unit: mL
               dispense_rate: 150
@@ -102,6 +102,10 @@ steps:
               target_temperature: 5
               target_stirring_speed: 400
               wait_duration: Null
+          - name: wait
+            op: MTSynthWaitOp
+            parameters:
+              seconds: 30
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:

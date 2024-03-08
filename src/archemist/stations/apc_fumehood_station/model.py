@@ -11,6 +11,7 @@ class APCCartridgeModel(EmbeddedDocument):
 class APCFumehoodStationModel(StationModel):
     sash_open = fields.BooleanField(default=False)
     cartridges = fields.EmbeddedDocumentListField(APCCartridgeModel, default=[])
+    loaded_cartridge_index = fields.IntField(min_value=0,null=True)
 
 class APCDispenseSolidOpModel(StationSampleOpModel):
     solid_name = fields.StringField(required=True)

@@ -28,6 +28,9 @@ class MTSynthSampleOpModel(StationSampleOpModel):
     target_stirring_speed = fields.IntField(min_value=0, max_value=1000, null=True)
     dilution = fields.IntField(min_value=80, max_value=250, null=True)
 
+class MTSynthWaitOpModel(StationOpModel):
+    seconds = fields.IntField(required=True)
+
 class MTSynthCustomOpenCloseReactionValveOpModel(StationOpModel):
     steps = fields.IntField(required=True)
 

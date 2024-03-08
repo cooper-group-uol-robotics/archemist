@@ -110,19 +110,19 @@ stations:
     properties: Null
     materials:
       liquids:
-        - name: acetic_anhyride
-          amount: 1000
+        - name: acetic_anhydride
+          amount: 2000
           unit: mL
-          density: 555
+          density: 1000
           density_unit: kg/m3
           details:
             inlet_port: 1
             outlet_port: 2
           expiry_date: 31/03/2024
         - name: water
-          amount: 1000
+          amount: 100000
           unit: mL
-          density: 2000
+          density: 1000
           density_unit: kg/m3
           details:
             inlet_port: 3
@@ -139,7 +139,7 @@ stations:
     materials:
       liquids:
         - name: water
-          amount: 5000
+          amount: 100000
           unit: mL
           density: 1000
           density_unit: kg/m3
@@ -161,7 +161,7 @@ stations:
     materials:
       solids:
         - name: 4-aminophenol
-          amount: 30
+          amount: 10000
           unit: g
           expiry_date: 31/03/2024
           details: Null

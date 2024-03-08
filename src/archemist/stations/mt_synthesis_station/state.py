@@ -4,7 +4,8 @@ from .model import (MTSynthesisStationModel,
                     OptiMaxMode,
                     MTSynthHeatStirOpModel,
                     MTSynthSampleOpModel,
-                    MTSynthCustomOpenCloseReactionValveOpModel)
+                    MTSynthCustomOpenCloseReactionValveOpModel,
+                    MTSynthWaitOpModel)
 from archemist.core.state.station import Station
 from archemist.core.state.station_op import StationOp, StationSampleOp, StationOpModel
 from archemist.core.state.sample import Sample
@@ -79,7 +80,7 @@ class MTSynthesisStation(Station):
                 self.optimax_mode = OptiMaxMode.STIRRING
                 self.set_reaction_temperature = None
                 self.set_stirring_speed = op.target_stirring_speed
-        elif isinstance(op, MTSynthCustomOpenCloseReactionValveOp):
+        elif isinstance(op, MTSynthCustomOpenCloseReactionValveOp) or isinstance(op, MTSynthLongOpenCloseReactionValveOp):
             self.optimax_valve_open = True
 
     def complete_assigned_op(self, outcome: OpOutcome, results: List[Type[StationOpResult]]):
@@ -88,9 +89,7 @@ class MTSynthesisStation(Station):
             self.optimax_mode =None
         elif isinstance(op, MTSynthSampleOp):
             self.num_sampling_vials -= 1
-        elif isinstance(op, MTSynthOpenReactionValveOp):
-            self.optimax_valve_open = True
-        elif isinstance(op, MTSynthCloseReactionValveOp) or isinstance(op, MTSynthCustomOpenClosrReactionValveOp):
+        elif isinstance(op, MTSynthLongOpenCloseReactionValveOp) or isinstance(op, MTSynthCustomOpenCloseReactionValveOp):
             self.optimax_valve_open = False
         super().complete_assigned_op(outcome, results)
 
@@ -166,7 +165,23 @@ class MTSynthSampleOp(StationSampleOp):
     @property
     def dilution(self) -> int:
         return self._model_proxy.dilution
+    
+class MTSynthWaitOp(StationOp):
+    def __init__(self, op_model: Union[MTSynthWaitOpModel, ModelProxy]) -> None:
+        super().__init__(op_model)
 
+    @classmethod
+    def from_args(cls, seconds: int):
+        model = MTSynthWaitOpModel()
+        cls._set_model_common_fields(model, associated_station=MTSynthesisStation.__name__)
+        model.seconds = int(seconds)
+        model.save()
+        return cls(model)
+    
+    @property
+    def seconds(self) -> int:
+        return self._model_proxy.seconds
+    
 class MTSynthStopReactionOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)

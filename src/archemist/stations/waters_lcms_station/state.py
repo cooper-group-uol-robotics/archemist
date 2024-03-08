@@ -123,7 +123,7 @@ class LCMSAnalysisResult(StationOpResult):
         model = LCMSAnalysisResultModel()
         cls._set_model_common_fields(model, origin_op)
         model.chemicals = chemicals
-        model.concentrations =concentrations
+        model.concentrations = concentrations
         model.y_values = y_values
         model.save()
         return cls(model)

@@ -61,7 +61,7 @@ class APCFumehoodStation(Station):
 
     @property
     def loaded_cartridge(self) -> APCCartridge:
-        cartridge_index = self._model_proxy.hotel_index
+        cartridge_index = self._model_proxy.loaded_cartridge_index
         if cartridge_index is not None:
             return self.cartridges[cartridge_index]
 
@@ -90,7 +90,12 @@ class APCFumehoodStation(Station):
             self.sash_open = False
         super().complete_assigned_op(outcome, results)
 
+    def load_cartridge(self, cartridge_index: int):
+        self._model_proxy.loaded_cartridge_index = cartridge_index
 
+    def unload_cartridge(self):
+        self._model_proxy.loaded_cartridge_index = None
+        
 class APCDispenseSolidOp(StationSampleOp):
     def __init__(self, op_model: Union[APCDispenseSolidOpModel, ModelProxy]) -> None:
         super().__init__(op_model)

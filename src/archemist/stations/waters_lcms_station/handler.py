@@ -11,9 +11,6 @@ import random
 from threading import Thread
 import socket
 
-random.seed(123)
-
-
 class SimWatersLCMSStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
@@ -21,9 +18,12 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
     def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
             current_op = self._station.assigned_op
             if isinstance(current_op, LCMSSampleAnalysisOp):
-                result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                      concentration=random.choice([0.99, 0.01]),
-                                                      result_filename="file.xml")
+                result = LCMSAnalysisResult.from_args(origin_op = current_op.object_id,
+                                                      chemicals=["4-aminophenol", "paracetamol"],
+                                                      concentrations=[0.01,0.7],
+                                                      y_values=[1,2,3,4,5,6,7,8,9]
+                                                      )
+                print(f" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>{result}")
                 return OpOutcome.SUCCEEDED, [result]
             else:
                 return OpOutcome.SUCCEEDED, None
@@ -70,7 +70,7 @@ class WaterLCMSSocketHandler(StationOpHandler):
             self._socket.sendall(b'StartAnalysisRack2')
         else:
             print(f'[{self.__class__.__name__}] Unkown operation was received')
-        self._thread = Thread(target=self._lcsm_status_update, daemon=True)
+        self._thread = Thread(target=self._lcms_status_update, daemon=True)
 
     def is_op_execution_complete(self) -> bool:
         return self._result_received
@@ -85,7 +85,7 @@ class WaterLCMSSocketHandler(StationOpHandler):
             else:
                 return OpOutcome.SUCCEEDED, None
 
-    def _lcsm_status_update(self):
+    def _lcms_status_update(self):
         msg = self._socket.recv(1024)
         self._result_received = True
         if msg == b'Completed':
@@ -94,77 +94,81 @@ class WaterLCMSSocketHandler(StationOpHandler):
             self._op_result = False
 
 
-import rospy
-from roslabware_msgs.msg import LcmsCmd, LcmsReading, LcmsTask
-from std_msgs.msg import Bool
+try: 
+    import rospy
+    from roslabware_msgs.msg import LcmsCmd, LcmsReading, LcmsTask
+    from std_msgs.msg import Bool
 
-class WaterLCMSRosHandler(StationOpHandler):
-    def __init__(self, station: Station):
-        super().__init__(station)
+    class WaterLCMSRosHandler(StationOpHandler):
+        def __init__(self, station: Station):
+            super().__init__(station)
 
-    def initialise(self) -> bool:
-        rospy.init_node(f'{self._station}_handler')
-        self._lcms_pub = rospy.Publisher("/lcms_command", LcmsCmd, queue_size=2)
-        rospy.Subscriber("/lcms/task_complete", LcmsTask, self.lcms_callback)
-        rospy.Subscriber("/lcms_info", LcmsReading, self.lcms_reading_callback)
-        self._op_complete = False
-        self._op_results = {}
-        self._seq_id = 1
-        self.chemicals = []
-        self.concentrations = []
-        self.y_values = []
-        rospy.sleep(2)
-        return True
-    
-    def execute_op(self):
-        current_op = self._station.assigned_op
-        self._result_received = False
-        self._op_result = False
-        if isinstance(current_op,LCMSInsertRackOp):
-            print(f'Autosampler - inserting rack {current_op}')
-            for i in range(10):
-                self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.LOAD_BATCH)
+        def initialise(self) -> bool:
+            rospy.init_node(f'{self._station}_handler')
+            self._lcms_pub = rospy.Publisher("/lcms_command", LcmsCmd, queue_size=2)
+            rospy.Subscriber("/lcms/task_complete", LcmsTask, self.lcms_callback)
+            rospy.Subscriber("/lcms_info", LcmsReading, self.lcms_reading_callback)
+            self._op_complete = False
+            self._op_results = {}
+            self._seq_id = 1
+            self.chemicals = []
+            self.concentrations = []
+            self.y_values = []
+            rospy.sleep(2)
+            return True
+        
+        def execute_op(self):
+            current_op = self._station.assigned_op
+            self._result_received = False
+            self._op_result = False
+            if isinstance(current_op,LCMSInsertRackOp):
+                print(f'Autosampler - inserting rack {current_op}')
+                for i in range(10):
+                    self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.LOAD_BATCH)
 
-        elif isinstance(current_op,LCMSEjectRackOp):
-            print(f'Autosampler - extracting rack {current_op}')
-            for i in range(10):
-                self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.UNLOAD_BATCH)
+            elif isinstance(current_op,LCMSEjectRackOp):
+                print(f'Autosampler - extracting rack {current_op}')
+                for i in range(10):
+                    self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.UNLOAD_BATCH)
 
-        elif isinstance(current_op,LCMSPrepAnalysisOp):
-            print('LCMS Prep Operation')
-            for i in range(10):
-                self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.START_PREP, lcms_num_samples = 1)
+            elif isinstance(current_op,LCMSPrepAnalysisOp):
+                print('LCMS Prep Operation')
+                for i in range(10):
+                    self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.START_PREP, lcms_num_samples = 1)
 
-        elif isinstance(current_op,LCMSSampleAnalysisOp):
-            print('LCMS Analysis Operation')
-            for i in range(10):
-                self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.START_ANALYSIS)
-        else:
-            print(f'[{self.__class__.__name__}] Unkown operation was received')
+            elif isinstance(current_op,LCMSSampleAnalysisOp):
+                print('LCMS Analysis Operation')
+                for i in range(10):
+                    self._lcms_pub.publish(seq=self._seq_id, lcms_command=LcmsCmd.START_ANALYSIS)
+            else:
+                print(f'[{self.__class__.__name__}] Unkown operation was received')
 
-    def is_op_execution_complete(self) -> bool: 
-        return self._op_complete
-    
-    def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
-        current_op = self._station.assigned_op
-        if isinstance(current_op, LCMSSampleAnalysisOp):
-            result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
-                                                  chemicals=self.chemicals,
-                                                  concentrations=self.concentrations,
-                                                  y_values=self.y_values) 
-            return OpOutcome.SUCCEEDED, [result]
-        else:
-            return OpOutcome.SUCCEEDED, None
+        def is_op_execution_complete(self) -> bool: 
+            return self._op_complete
+        
+        def get_op_result(self) -> Tuple[OpOutcome, Optional[List[LCMSAnalysisResult]]]:
+            current_op = self._station.assigned_op
+            if isinstance(current_op, LCMSSampleAnalysisOp):
+                result = LCMSAnalysisResult.from_args(origin_op=current_op.object_id,
+                                                    chemicals=self.chemicals,
+                                                    concentrations=self.concentrations,
+                                                    y_values=self.y_values) 
+                return OpOutcome.SUCCEEDED, [result]
+            else:
+                return OpOutcome.SUCCEEDED, None
 
-    def shut_down(self):
-        pass
+        def shut_down(self):
+            pass
 
-    def lcms_callback(self, msg:LcmsTask):
-        if msg.seq == self._seq_id and msg.complete:
-            self._op_complete = msg.complete
-            self._seq_id+=1
-    
-    def lcms_reading_callback(self, msg:LcmsReading):
-        self.chemicals = msg.chemicals
-        self.concentrations = msg.concentrations
-        self.y_values = msg.y_values
+        def lcms_callback(self, msg:LcmsTask):
+            if msg.seq == self._seq_id and msg.complete:
+                self._op_complete = msg.complete
+                self._seq_id+=1
+        
+        def lcms_reading_callback(self, msg:LcmsReading):
+            self.chemicals = msg.chemicals
+            self.concentrations = msg.concentrations
+            self.y_values = msg.y_values
+
+except ImportError:
+    pass

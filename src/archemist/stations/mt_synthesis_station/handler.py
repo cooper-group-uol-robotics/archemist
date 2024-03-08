@@ -10,6 +10,7 @@ from .state import (
     MTSynthStopReactionOp,
     MTSynthLongOpenCloseReactionValveOp,
     MTSynthesisStation,
+    MTSynthWaitOp
 )
 from archemist.core.util.enums import OpOutcome
 
@@ -38,6 +39,9 @@ class SimMTSynthesisStationHandler(SimStationOpHandler):
             result = ProcessOpResult.from_args(
                 origin_op=op.object_id, parameters=parameters
             )
+        elif isinstance(op, MTSynthWaitOp):
+                rospy.loginfo("Waiting (crystallisation).")
+                time.sleep(op.seconds)
 
         return OpOutcome.SUCCEEDED, [result] if result is not None else None
 
@@ -130,6 +134,10 @@ try:
                         seq=self._seq_id, 
                         valve_command = BaseValveCmd.OPEN_CLOSE_LONG
                     )
+
+            elif isinstance(current_op, MTSynthWaitOp):
+                rospy.loginfo("Waiting (crystallisation).")
+                time.sleep(current_op.seconds)
 
             else:
                 rospy.logwarn(

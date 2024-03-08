@@ -39,7 +39,7 @@ class APCSynthesisProcess(StationProcess):
 
             State(name='run_reaction', on_enter=['request_reaction_start']),
             
-            State(name='wait_for_result'), # TODO nothing here! Need to check for LCMS results
+            State(name='wait_for_result', on_enter=['request_wait']),
 
             State(name='stop_reaction', on_enter=['request_reaction_stop']),
             State(name='final_state')]
@@ -60,8 +60,8 @@ class APCSynthesisProcess(StationProcess):
 
             {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             
-            {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions': 'are_req_station_procs_completed'},
-            {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_procs_completed']},
+            {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions':'are_req_station_ops_completed'},
+            {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_ops_completed']},
             
             {'source':'stop_reaction','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
         ]
@@ -171,6 +171,9 @@ class APCSynthesisProcess(StationProcess):
         current_op = self.generate_operation("heat_stir", target_sample=sample)
         self.request_station_op(current_op)
 
+    def request_wait(self):
+        pass
+
     def request_reaction_stop(self):
         station_op = MTSynthStopReactionOp.from_args()
         self.request_station_op(station_op)
@@ -186,9 +189,13 @@ class APCSynthesisProcess(StationProcess):
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
         results = list(sample.result_ops)
+        print("===========================================> ", results)
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
-                return result.concentration >= target_product_concentration
+                chemicals = [chemical for chemical in result.chemicals]
+                para_index = chemicals.index("paracetamol")
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", result.concentrations[para_index])
+                return result.concentrations[para_index] >= target_product_concentration
 
 class APCFiltrationProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -274,7 +281,8 @@ class APCFiltrationProcess(StationProcess):
         self.request_station_op(current_op)
 
     def request_wait_for_crystallisation(self):
-        time.sleep(1800) # TODO how should this be done properly?
+        station_op = self.generate_operation("wait")
+        self.request_station_op(station_op)
 
     def request_open_close_drain_valve_long(self):
         station_op = MTSynthLongOpenCloseReactionValveOp.from_args()
@@ -457,7 +465,10 @@ class APCCleaningProcess(StationProcess):
         results = list(sample.result_ops)
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
-                return result.concentration <= target_purity_concentration
+                chemicals = [chemical for chemical in result.chemicals]
+                para_index = chemicals.index("paracetamol")
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", result.concentrations[para_index])
+                return result.concentrations[para_index] <= target_purity_concentration
 
 class APCMeasureYieldProcess(StationProcess):
     
