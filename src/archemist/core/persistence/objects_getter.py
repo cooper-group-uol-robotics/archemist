@@ -51,12 +51,12 @@ class StationsGetter:
         return StationFactory.create_from_object_id(object_id)
 
     @dispatch(str)
-    def get_station(station_type: str) -> Type[Station]:
+    def get_station(station_type: str) -> Type[Station]: # noqa F811
         model = StationModel.objects(_type=station_type).first()
         return StationFactory.create_from_model(model)
 
     @dispatch(int, str)
-    def get_station(station_id: int, station_type: str) -> Type[Station]:
+    def get_station(station_id: int, station_type: str) -> Type[Station]: # noqa F811
         model = StationModel.objects.get(_type=station_type, exp_id=station_id)
         if model is not None:
             return StationFactory.create_from_model(model)
@@ -83,12 +83,12 @@ class RobotsGetter:
         return RobotFactory.create_from_object_id(object_id)
 
     @dispatch(str)
-    def get_robot(robot_type: str) -> Type[Robot]:
+    def get_robot(robot_type: str) -> Type[Robot]: # noqa F811
         model = RobotModel.objects(_type=robot_type).first()
         return RobotFactory.create_from_model(model)
 
     @dispatch(int, str)
-    def get_robot(robot_id: int, robot_type: str) -> Type[Robot]:
+    def get_robot(robot_id: int, robot_type: str) -> Type[Robot]: # noqa F811
         model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)
