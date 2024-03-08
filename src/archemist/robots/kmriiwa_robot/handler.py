@@ -16,7 +16,7 @@ class KmriiwaROSHandler(RobotOpHandler):
         # rospy.Subscriber('/kuka4/robot_status', RobotStatus, self._update_kmp_status_cb, queue_size=1)
         rospy.Subscriber('/kuka4/task_status', TaskStatus, self._kuka_task_cb, queue_size=1)
         
-        self._kuka_cmd_seq = 1
+        self._kuka_cmd_seq = 17
         self._assigned_task_type = None
         self._kuka_task_name = ''
         self._kmr_done = False
@@ -140,6 +140,8 @@ class KmriiwaROSHandler(RobotOpHandler):
                 combined_task.task_name = robot_op.name
 
                 _base_command = KMPCommand()
+                print(f"++++++++++++++++++++++++{robot_op.target_location.coordinates[0]}--------------")
+                print(f"////////////////////////{robot_op.target_location.coordinates[1]}--------------")
                 _base_command.node_id = robot_op.target_location.coordinates[0]
                 _base_command.graph_id = robot_op.target_location.coordinates[1] 
                 _base_command.fine_localization = robot_op.fine_localization

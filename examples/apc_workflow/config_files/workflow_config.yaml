@@ -68,7 +68,7 @@ workflow_output:
 robots:
   - type: KMRIIWARobot
     id: 2
-    handler: SimRobotOpHandler
+    handler: KmriiwaROSHandler
     total_lot_capacity: 1
     onboard_capacity: 1
 
@@ -106,7 +106,7 @@ stations:
       coordinates: [1,1]
       descriptor: apc_fumehood
     total_lot_capacity: 1
-    handler: SimSyringePumpStationHandler
+    handler: APCSyringePumpStationRosHandler
     properties: Null
     materials:
       liquids:
@@ -148,10 +148,10 @@ stations:
   - type: APCFumehoodStation
     id: 3
     location:
-      coordinates: [1,1]
+      coordinates: [36,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
-    handler: SimAPCFumehoodStationHandler
+    handler: APCFumeHoodStationRosHandler
     properties:
       cartridges:
         - associated_solid: 4-aminophenol
@@ -168,38 +168,38 @@ stations:
   - type: MTSynthesisStation
     id: 4
     location:
-      coordinates: [1,1]
+      coordinates: [36,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
-    handler: SimMTSynthesisStationHandler
+    handler: APCMTSynthesisStationRosHandler  
     materials: Null
     properties:
       num_sampling_vials: 12
   - type: APCFiltrationStation
     id: 5
     location:
-      coordinates: [1,1]
+      coordinates: [34,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
-    handler: SimAPCFiltrationStationHandler
+    handler: APCFiltrationStationHandler
     materials: Null
     properties: Null
   - type: WatersLCMSStation
     id: 6
     location:
-      coordinates: [3,1]
+      coordinates: [35,8]
       descriptor: lcms_station
     total_lot_capacity: 1
-    handler: SimWatersLCMSStationHandler
+    handler: WaterLCMSRosHandler
     materials: Null
     properties: Null
   - type: APCWeighingStation
     id: 7
     location:
-      coordinates: [1,1]
+      coordinates: [34,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
-    handler: SimAPCWeighingStationHandler
+    handler: APCWeighingStationHandler
     properties:
       funnel_storage_capacity: 3
     materials: Null

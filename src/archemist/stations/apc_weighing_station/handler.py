@@ -30,7 +30,7 @@ try:
     import rospy
     from roslabware_msgs.msg import KernPCB2500Cmd, KernPCB2500Reading, KernPCB2500Task
     from roslabware_msgs.msg import KernDoorCmd, KernDoorStatus, KernDoorTask
-    from roslabware_msgs.msg import sashDoorCmd, sashDoorStatus, sashDoorTask
+    from roslabware_msgs.msg import SashDoorCmd, SashDoorStatus, SashDoorTask
 
     class APCWeighingStationHandler(StationOpHandler):
         def __init__(self, station:APCWeighingStation):
@@ -40,14 +40,14 @@ try:
             rospy.init_node(f'{self._station}_handler')
             self._pub_balance = rospy.Publisher("/kern_pcb2500_command", KernPCB2500Cmd, queue_size=2)
             self._pub_door = rospy.Publisher("/kern_door_command", KernDoorCmd, queue_size=2)
-            self._pub_sash = rospy.Publisher("sash_door_Commands", sashDoorCmd, queue_size=2)
+            self._pub_sash = rospy.Publisher("sash_door_Commands", SashDoorCmd, queue_size=2)
             rospy.Subscriber("/kern_pcb2500_reading", KernPCB2500Reading, self.weight_callback)
             rospy.Subscriber("/kern_door/task_complete", KernPCB2500Task, self.weight_task_callback)
             # rospy.Subscriber("kern_Door_Status", KernDoorStatus, self.door_callback)
             rospy.Subscriber("/kern_door/task_complete", KernDoorTask, self.kern_door_task_callback)
 
             # rospy.Subscriber("sash_door_Status", sashDoorStatus, self.sash_callback)
-            rospy.Subscriber("/sash_door/task_complete", sashDoorTask, self.sash_task_callback)
+            rospy.Subscriber("/sash_door/task_complete", SashDoorTask, self.sash_task_callback)
             
             self._target_balance_door_status = None
             self._target_sash_door_status = None
@@ -114,10 +114,12 @@ try:
                 self._op_complete = msg.complete
                 self._seq_id+=1
 
-        def sash_task_callback(self, msg:sashDoorTask):
+        def sash_task_callback(self, msg:SashDoorTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1
 
-except ImportError:
+except ImportError as e:
+    print(e)
+    print("-----------------------WEIGHING---------------------------------------------")
     pass

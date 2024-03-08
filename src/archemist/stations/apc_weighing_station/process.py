@@ -9,6 +9,7 @@ from .state import (APCWeighingStation,
                     APCWeighingOp,
                     APCOpenBalanceDoorOp,
                     APCCloseBalanceDoorOp)
+from archemist.core.util import Location
 
 from typing import Union, List, Dict, Any
 
@@ -83,9 +84,12 @@ class APCWeighingProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_load_funnel(self):
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadWeighingFunnel",
             target_robot="KMRIIWARobot",
+            target_location=target_loc,
             task_type = 2,
             lbr_program_name = "loadWeighingFunnel"
         )
@@ -105,11 +109,14 @@ class APCWeighingProcess(StationProcess):
         self.data['is_weighing_complete'] = True
 
     def request_unload_funnel(self):
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
         weighing_station: APCWeighingStation = self.get_assigned_station()
         robot_task = RobotTaskOp.from_args(
             name="unLoadFinishedFunnel",
             target_robot="KMRIIWARobot",
             task_type = 2,
+            target_location=target_loc,
             lbr_program_name = "unLoadFinishedFunnel",
             lbr_program_params = [str(weighing_station.funnel_storage_index)]
             )
@@ -170,10 +177,13 @@ class APCNewFunnelProcess(StationProcess):
     ''' States callbacks. '''
     def request_load_funnel(self):
         weighing_station: APCWeighingStation = self.get_assigned_station()
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadFreshFunnel",
             target_robot="KMRIIWARobot",
             task_type = 2,
+            target_location=target_loc,
             lbr_program_name = "loadFreshFunnel",
             lbr_program_params = [str(weighing_station.funnel_storage_index)]
             )

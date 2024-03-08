@@ -16,6 +16,7 @@ from archemist.stations.apc_weighing_station.state import APCWeighingStation
 
 from archemist.core.state.lot import Lot
 from .state import APCMetaStation
+from archemist.core.util import Location
 import time
 
 from typing import Union, List, Dict, Any
@@ -523,13 +524,30 @@ class APCMeasureYieldProcess(StationProcess):
     ''' States callbacks. '''
 
     def request_navigate_to_weighing(self):
-        robot_task = RobotNavOp.from_args(
-            name="NavToWeighing",
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
+        print(f"-------------------------{location_dict}----------------------------------")
+        print(f"-------------------------{target_loc}------------------------------")
+        t_op = RobotTaskOp.from_args(
+            name="loadWeighingFunnel",
             target_robot="KMRIIWARobot",
-            target_location=None
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="loadWeighingFunnel",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=1
         )
-        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
-        self.request_robot_ops([robot_task, wait_for_next_op])
+        # robot_task = RobotNavOp.from_args(
+        #     name="loadWeighingFunnel",
+        #     target_robot="KMRIIWARobot",
+        #     target_location=target_loc,
+        #     task_type = 1,
+        #     lbr_program_name = "loadWeighingFunnel"
+        # )
+        #wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
+        print(f"///////////////////////////{t_op}///////////////////////////")
+        self.request_robot_ops([t_op]) #, wait_for_next_op])
 
     def request_open_sash(self):
         station_op = APCOpenSashOp.from_args()

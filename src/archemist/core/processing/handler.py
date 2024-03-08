@@ -134,13 +134,11 @@ class StationProcessHandler:
         for proc in self._station.running_procs:
             if proc.status == ProcessStatus.REQUESTING_ROBOT_OPS:
                 for robot_op in proc.req_robot_ops:
-                    if isinstance(robot_op, RobotTaskOp) or \
+                    if (isinstance(robot_op, RobotTaskOp) and robot_op.target_location.is_unspecified()) or \
                         isinstance(robot_op, CollectBatchOp) or\
                         isinstance(robot_op, DropBatchOp) or\
                         (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
-                        
                         robot_op.target_location = self._station.location
-                        
                     self._station.add_req_robot_op(robot_op)
                 proc.switch_to_waiting()
             

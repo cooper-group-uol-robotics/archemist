@@ -24,7 +24,7 @@ class SimAPCFumehoodStationHandler(SimStationOpHandler):
 
 try:
     import rospy
-    from roslabware_msgs.msg import sashDoorCmd, sashDoorStatus, sashDoorTask
+    from roslabware_msgs.msg import SashDoorCmd, SashDoorStatus, SashDoorTask
     from std_msgs.msg import Bool
 
     class APCFumeHoodStationRosHandler(StationOpHandler):
@@ -34,11 +34,11 @@ try:
         def initialise(self) -> bool:
             rospy.init_node(f"{self._station}_handler")
             self._pub_sashDoor = rospy.Publisher(
-                "/sash_door_command", sashDoorCmd, queue_size=2
+                "/sash_door_command", SashDoorCmd, queue_size=2
             )
             
             rospy.Subscriber(
-                "/sash_door/task_complete", sashDoorTask, self.SashDoor_callback
+                "/sash_door/task_complete", SashDoorTask, self.SashDoor_callback
             )
             self._op_complete = False
             self._op_results = {}
@@ -57,7 +57,7 @@ try:
                 for i in range(10):
                     self._pub_sashDoor.publish(
                         seq=self._seq_id,
-                        sash_door_command = sashDoorCmd.OPEN_DOOR,
+                        sash_door_command = SashDoorCmd.OPEN_DOOR,
                     )
 
             elif isinstance(current_op, APCCloseSashOp):
@@ -67,7 +67,7 @@ try:
                 for i in range(10):
                     self._pub_sashDoor.publish(
                         seq=self._seq_id,
-                        sash_door_command = sashDoorCmd.CLOSE_DOOR
+                        sash_door_command = SashDoorCmd.CLOSE_DOOR
                     )
             else:
                 rospy.logwarn(
@@ -93,10 +93,12 @@ try:
         def shut_down(self):
             pass
 
-        def SashDoor_callback(self, msg:sashDoorTask):
+        def SashDoor_callback(self, msg:SashDoorTask):
             if msg.seq == self._seq_id and msg.complete:
                 self._op_complete = msg.complete
                 self._seq_id+=1
 
-except ImportError:
+except ImportError as e:
+    print(e)
+    print("----------------------------------fumehood------------------------------------")
     pass
