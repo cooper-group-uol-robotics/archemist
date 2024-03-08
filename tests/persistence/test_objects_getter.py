@@ -46,8 +46,8 @@ class ObjectsGetterTest(unittest.TestCase):
             'details': {'dispense_src': 'quantos', 'cartridge_id': 123}
         }
 
-        liquid = Liquid.from_dict(liquid_dict)
-        solid = Solid.from_dict(solid_dict)
+        self.liquid = Liquid.from_dict(liquid_dict)
+        self.solid = Solid.from_dict(solid_dict)
 
         # construct robots
         robot_dict_1 = {
@@ -160,10 +160,10 @@ class ObjectsGetterTest(unittest.TestCase):
                 "args": None
             }
         }
-        input_state = InputState.from_dict(input_dict)
+        self.input_state = InputState.from_dict(input_dict)
 
         # construct workflow state
-        workflow_state = WorkflowState.from_args("test_workflow")
+        self.workflow_state = WorkflowState.from_args("test_workflow")
 
         # construct ouput state
         output_dict = {
@@ -172,7 +172,7 @@ class ObjectsGetterTest(unittest.TestCase):
             "lot_output_process": None,
             "lots_need_manual_removal": False
         }
-        output_state = OutputState.from_dict(output_dict)
+        self.output_state = OutputState.from_dict(output_dict)
 
     def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
