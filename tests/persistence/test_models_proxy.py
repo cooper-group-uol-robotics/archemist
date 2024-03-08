@@ -715,7 +715,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.embed_list[1].a_dict), 2)
 
         # test get operation
-        a_dict = {'a': 1, 'b': 2}
+        # a_dict = {'a': 1, 'b': 2}
         for k, v in self.foo_model.embed_list[1].a_dict.items():
             self.assertEqual(embed.a_dict[k], v)
 
@@ -845,7 +845,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.a_map['b'].a_dict), 2)
 
         # test get operation
-        a_dict = {'a': 1, 'b': 2}
+        # a_dict = {'a': 1, 'b': 2}
         for k, v in self.foo_model.a_map['b'].a_dict.items():
             self.assertEqual(embed.a_dict[k], v)
 
