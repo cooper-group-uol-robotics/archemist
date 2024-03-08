@@ -18,7 +18,8 @@ setup(
                          'multipledispatch==0.6.0',
                          'PyInquirer==1.0.3',
                          'watchdog==2.1.9',
-                         'strictyaml==1.6.2',],
+                         'strictyaml==1.6.2',
+                         'unyt==2.9.5'],
      entry_points={
           'console_scripts': ["archemist = archemist.__main__:main"]
      }
