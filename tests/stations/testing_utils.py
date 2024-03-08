@@ -17,10 +17,11 @@ def test_req_robot_ops(test_case: TestCase,
         test_case.assertIsInstance(robot_op, expected_op_types[index])
         robot_op.complete_op(ObjectId(), OpOutcome.SUCCEEDED)
 
+
 def test_req_station_op(test_case: TestCase,
-                       process: Type[StationProcess],
-                       expected_op: type
-                       ):
+                        process: Type[StationProcess],
+                        expected_op: type
+                        ):
     test_case.assertEqual(process.status, ProcessStatus.REQUESTING_STATION_OPS)
     process.switch_to_waiting()
     station_op = process.req_station_ops[0]
@@ -28,14 +29,13 @@ def test_req_station_op(test_case: TestCase,
     dummy_results = [StationOpResult.from_args(station_op.object_id)]
     station_op.complete_op(OpOutcome.SUCCEEDED, dummy_results)
 
+
 def test_req_station_proc(test_case: TestCase,
-                       process: Type[StationProcess],
-                       expected_proc: type
-                       ):
+                          process: Type[StationProcess],
+                          expected_proc: type
+                          ):
     test_case.assertEqual(process.status, ProcessStatus.REQUESTING_STATION_PROCS)
     process.switch_to_waiting()
     station_proc = process.req_station_procs[0]
     test_case.assertIsInstance(station_proc, expected_proc)
     station_proc._model_proxy.status = ProcessStatus.FINISHED
-
-

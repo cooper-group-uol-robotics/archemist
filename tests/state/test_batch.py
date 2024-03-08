@@ -4,12 +4,13 @@ from archemist.core.state.batch import Batch
 from mongoengine import connect
 from archemist.core.util.location import Location
 
+
 class BatchTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -19,8 +20,8 @@ class BatchTest(unittest.TestCase):
         batch = Batch.from_args(2)
         self.assertIsNotNone(batch.object_id)
         self.assertEqual(batch.location, Location.from_args())
-        new_loc = Location.from_args(coordinates=(1,3), descriptor="InputSite")
-        batch.location = Location.from_args(coordinates=(1,3), descriptor="InputSite")
+        new_loc = Location.from_args(coordinates=(1, 3), descriptor="InputSite")
+        batch.location = Location.from_args(coordinates=(1, 3), descriptor="InputSite")
         self.assertEqual(batch.location, new_loc)
         self.assertIsNone(batch.parent_lot_id)
         lot_id = ObjectId()
@@ -36,6 +37,7 @@ class BatchTest(unittest.TestCase):
         # test samples
         self.assertEqual(batch.num_samples, len(batch.samples))
         self.assertEqual(batch.samples[0].parent_batch_id, batch.object_id)
+
 
 if __name__ == '__main__':
     unittest.main()

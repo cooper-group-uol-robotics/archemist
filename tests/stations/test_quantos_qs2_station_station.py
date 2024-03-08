@@ -13,6 +13,7 @@ from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.enums import StationState, OpOutcome
 from datetime import date
 
+
 class QuantosSolidDispenserQS2Test(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -21,7 +22,7 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         station_dict = {
             'type': 'QuantosSolidDispenserQS2',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ChemSpeedFlexStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'properties': {
@@ -37,9 +38,9 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
                 }]
             }
         }
-        
+
         self.station = QuantosSolidDispenserQS2.from_dict(station_dict=station_dict)
-        
+
     def tearDown(self):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
@@ -57,18 +58,18 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         cartridge.remaining_dosages -= 1
         self.assertEqual(cartridge.remaining_dosages, 0)
         self.assertTrue(cartridge.is_consumed())
-    
+
     def test_state(self):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
-        
+
         # test station specific methods
         self.assertEqual(len(self.station.solids_dict), 1)
         self.assertEqual(self.station.solids_dict["NaCl"].mass, 100)
-        self.assertEqual(self.station.carousel_pos,1)
+        self.assertEqual(self.station.carousel_pos, 1)
         self.station.carousel_pos = 2
-        self.assertEqual(self.station.carousel_pos,2)
+        self.assertEqual(self.station.carousel_pos, 2)
         self.assertFalse(self.station.door_open)
         self.assertEqual(len(self.station.cartridges), 1)
         self.assertEqual(self.station.cartridges[0].associated_solid, "NaCl")
@@ -157,7 +158,7 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
                                            dispense_unit="mg")
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -168,6 +169,7 @@ class QuantosSolidDispenserQS2Test(unittest.TestCase):
         self.assertEqual(op_results[0].units[0], "mg")
 
         self.station.complete_assigned_op(outcome, op_results)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,6 +12,8 @@ from archemist.core.util.enums import OpOutcome
 from bson.objectid import ObjectId
 
 ''' ==== Station Description ==== '''
+
+
 class WatersLCMSStation(Station):
     def __init__(self, station_model: Union[WatersLCMSStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -57,6 +59,8 @@ class WatersLCMSStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class LCMSInsertRackOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -64,9 +68,11 @@ class LCMSInsertRackOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)
+
 
 class LCMSEjectRackOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
@@ -75,9 +81,11 @@ class LCMSEjectRackOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.save()
         return cls(model)
+
 
 class LCMSSampleAnalysisOp(StationSampleOp):
     def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]) -> None:
@@ -86,10 +94,12 @@ class LCMSSampleAnalysisOp(StationSampleOp):
     @classmethod
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
-        cls._set_model_common_fields(model, associated_station=WatersLCMSStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=WatersLCMSStation.__name__)
         model.target_sample = target_sample.model
         model.save()
         return cls(model)
+
 
 class LCMSAnalysisResult(StationOpResult):
     def __init__(self, result_model: Union[LCMSAnalysisResultModel, ModelProxy]):
@@ -98,7 +108,7 @@ class LCMSAnalysisResult(StationOpResult):
     @classmethod
     def from_args(cls,
                   origin_op: ObjectId,
-                  concentration: float, 
+                  concentration: float,
                   result_filename: str):
         model = LCMSAnalysisResultModel()
         cls._set_model_common_fields(model, origin_op)

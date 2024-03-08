@@ -2,9 +2,9 @@ import unittest
 
 from mongoengine import connect
 from archemist.stations.apc_filtration_station.state import (
-    APCFiltrationStation, 
-    APCFilterProductOp, 
-    APCDrainWasteOp, 
+    APCFiltrationStation,
+    APCFilterProductOp,
+    APCDrainWasteOp,
     APCDryProductOp)
 from archemist.stations.apc_filtration_station.handler import SimAPCFiltrationStationHandler
 from archemist.core.state.station_op_result import ProcessOpResult
@@ -25,7 +25,7 @@ class APCWeighingStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'APCFiltrationStation',
             'id': 35,
-            'location': {'coordinates': [1,7], 'descriptor': "APCFiltrationStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "APCFiltrationStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'properties': None,
@@ -92,7 +92,7 @@ class APCWeighingStationTest(unittest.TestCase):
                                          time_unit="minute")
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertIsInstance(op_results[0], ProcessOpResult)

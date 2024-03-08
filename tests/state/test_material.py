@@ -1,5 +1,5 @@
 import unittest
-from mongoengine import connect,errors
+from mongoengine import connect, errors
 from archemist.core.state.material import Liquid, Solid
 from datetime import date
 from bson.objectid import ObjectId
@@ -14,7 +14,7 @@ class MaterialTest(unittest.TestCase):
     def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
-            self._client[self._db_name][coll].drop()  
+            self._client[self._db_name][coll].drop()
 
     def test_liquid(self):
         liquid_dict = {
@@ -26,7 +26,7 @@ class MaterialTest(unittest.TestCase):
             'expiry_date': date.fromisoformat('2025-02-11'),
             'details': {
                 'pump_id': 'pUmP1'
-                }
+            }
         }
         # construct liquid
         t_liquid = Liquid.from_dict(liquid_dict)
@@ -41,19 +41,19 @@ class MaterialTest(unittest.TestCase):
         self.assertAlmostEqual(t_liquid.mass, 997*0.4, 3)
         self.assertEqual(t_liquid.details["pump_id"], 'pUmP1')
         self.assertEqual(t_liquid.expiry_date, date.fromisoformat('2025-02-11'))
-        
+
         # increase volume
         t_liquid.increase_volume(1, 'L')
         self.assertEqual(t_liquid.volume, 1400)
         self.assertEqual(t_liquid.mass, 997*1.4)
-        
+
         # decrease volume
         t_liquid.decrease_volume(1.3, 'L')
         self.assertAlmostEqual(t_liquid.volume, 100, 6)
         self.assertAlmostEqual(t_liquid.mass, 997*0.1, 6)
         with self.assertRaises(errors.ValidationError):
             t_liquid.decrease_volume(1.3, 'L')
-    
+
     def test_solid(self):
         solid_dict = {
             'name': 'sodium_chloride',
@@ -85,6 +85,7 @@ class MaterialTest(unittest.TestCase):
         self.assertAlmostEqual(t_solid.mass, 6000, 6)
         with self.assertRaises(errors.ValidationError):
             t_solid.decrease_mass(55000, "ug")
+
 
 if __name__ == '__main__':
     connect(db='archemist_test', host='mongodb://localhost:27017', alias='archemist_state')

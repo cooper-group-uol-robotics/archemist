@@ -4,13 +4,14 @@ from datetime import datetime
 from mongoengine import connect
 
 from archemist.stations.syringe_pump_station.state import (SyringePumpStation,
-                                                              SyringePumpDispenseVolumeOp,
-                                                              SyringePumpDispenseRateOp,
-                                                              SyringePumpFinishDispensingOp)
+                                                           SyringePumpDispenseVolumeOp,
+                                                           SyringePumpDispenseRateOp,
+                                                           SyringePumpFinishDispensingOp)
 from archemist.stations.syringe_pump_station.handler import SimSyringePumpStationHandler
 from archemist.core.util.enums import StationState, OpOutcome
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.station_op_result import MaterialOpResult, ProcessOpResult
+
 
 class SyringePumpStationTest(unittest.TestCase):
     def setUp(self):
@@ -20,7 +21,7 @@ class SyringePumpStationTest(unittest.TestCase):
         self.station_dict = {
             'type': 'SyringePumpStation',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "APCSyringePumpStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "APCSyringePumpStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials':
@@ -38,12 +39,12 @@ class SyringePumpStationTest(unittest.TestCase):
             },
             'properties': None
         }
-                
+
     def tearDown(self):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
-    
+
     def test_state(self):
         # test station is constructed properly
         station = SyringePumpStation.from_dict(self.station_dict)
@@ -57,11 +58,11 @@ class SyringePumpStationTest(unittest.TestCase):
 
         # test SyringePumpDispenseVolumeOp
         t_op = SyringePumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water',
-                                            dispense_volume=100,
-                                            dispense_unit="mL",
-                                            dispense_rate=3.5,
-                                            rate_unit="mL/minute")
+                                                     liquid_name='water',
+                                                     dispense_volume=100,
+                                                     dispense_unit="mL",
+                                                     dispense_rate=3.5,
+                                                     rate_unit="mL/minute")
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.liquid_name, "water")
         self.assertEqual(t_op.dispense_volume, 100)
@@ -82,9 +83,9 @@ class SyringePumpStationTest(unittest.TestCase):
 
         # test SyringePumpDispenseRateOp
         t_op = SyringePumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
-                                                liquid_name='water',
-                                                dispense_rate=5.0,
-                                                rate_unit="mL/minute")
+                                                   liquid_name='water',
+                                                   dispense_rate=5.0,
+                                                   rate_unit="mL/minute")
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.liquid_name, "water")
         self.assertEqual(t_op.dispense_rate, 5.0)
@@ -94,10 +95,9 @@ class SyringePumpStationTest(unittest.TestCase):
         station.update_assigned_op()
         station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
 
-
         # test SyringePumpFinishDispensingOp
         t_op = SyringePumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water')
+                                                       liquid_name='water')
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.liquid_name, "water")
 
@@ -128,14 +128,14 @@ class SyringePumpStationTest(unittest.TestCase):
 
         # test handling SyringePumpDispenseVolumeOp
         t_op = SyringePumpDispenseVolumeOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water',
-                                            dispense_volume=100,
-                                            dispense_unit="mL",
-                                            dispense_rate=3.5,
-                                            rate_unit="mL/minute")
+                                                     liquid_name='water',
+                                                     dispense_volume=100,
+                                                     dispense_unit="mL",
+                                                     dispense_rate=3.5,
+                                                     rate_unit="mL/minute")
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -149,12 +149,12 @@ class SyringePumpStationTest(unittest.TestCase):
 
         # test handling SyringePumpDispenseRateOp
         t_op = SyringePumpDispenseRateOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water',
-                                            dispense_rate=3.5,
-                                            rate_unit="mL/minute")
+                                                   liquid_name='water',
+                                                   dispense_rate=3.5,
+                                                   rate_unit="mL/minute")
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -166,10 +166,10 @@ class SyringePumpStationTest(unittest.TestCase):
 
         # test handling SyringePumpFinishDispensingOp
         t_op = SyringePumpFinishDispensingOp.from_args(target_sample=lot.batches[0].samples[0],
-                                            liquid_name='water')
+                                                       liquid_name='water')
         station.add_station_op(t_op)
         station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)

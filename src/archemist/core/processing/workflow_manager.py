@@ -19,7 +19,7 @@ class WorkflowManager:
                  output_state: OutputState,
                  robot_scheduler: RobotScheduler,
                  recipes_dir: Path):
-        
+
         self._input_processor = InputProcessor(input_state)
         self._workflow_processor = WorkflowProcessor(workflow_state)
         self._output_processor = OutputProcessor(output_state)
@@ -59,7 +59,7 @@ class WorkflowManager:
 
     def remove_all_lots(self):
         return self._output_processor.remove_all_lots()
-    
+
     def queue_robot_op(self, robot_op: Type[RobotOp]):
         self._workflow_processor.robot_ops_queue.append(robot_op)
 
@@ -67,20 +67,22 @@ class WorkflowManager:
         while self._status != WorkflowManagerStatus.INVALID:
             if self._status == WorkflowManagerStatus.RUNNING:
                 self._queue_added_recipes()
-                
-                # input processor update 
+
+                # input processor update
                 self._input_processor.process_lots()
-                
+
                 # add input processor requested ops to the robot ops queue
                 while self._input_processor.requested_robot_ops:
-                    robot_op = self._input_processor.requested_robot_ops.pop(left=True)
+                    robot_op = self._input_processor.requested_robot_ops.pop(
+                        left=True)
                     self._workflow_processor.robot_ops_queue.append(robot_op)
 
                 # workflow processor update
                 new_lots = self._input_processor.retrieve_ready_for_collection_lots()
                 if new_lots:
-                    self._workflow_processor.add_ready_for_collection_lots(new_lots)
-                
+                    self._workflow_processor.add_ready_for_collection_lots(
+                        new_lots)
+
                 self._workflow_processor.process_workflow()
 
                 # output processor update
@@ -93,20 +95,22 @@ class WorkflowManager:
 
                 # add output processor requested ops to the robot ops queue
                 while self._output_processor.requested_robot_ops:
-                    robot_op = self._output_processor.requested_robot_ops.pop(left=True)
+                    robot_op = self._output_processor.requested_robot_ops.pop(
+                        left=True)
                     self._workflow_processor.robot_ops_queue.append(robot_op)
 
             # schedule robot ops
             if self._workflow_processor.robot_ops_queue:
-                self._robot_scheduler.schedule(self._workflow_processor.robot_ops_queue)
+                self._robot_scheduler.schedule(
+                    self._workflow_processor.robot_ops_queue)
 
             sleep(PROCESSING_SLEEP_DURATION)
 
     def _queue_added_recipes(self):
         while self._recipes_watchdog.recipes_queue:
-                recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
-                recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
-                self._input_processor.add_recipe(recipe_dict)
+            recipe_file_path = self._recipes_watchdog.recipes_queue.popleft()
+            recipe_dict = YamlHandler.load_recipe_file(recipe_file_path)
+            self._input_processor.add_recipe(recipe_dict)
 
-    def _log_processor(self, message:str):
+    def _log_processor(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')

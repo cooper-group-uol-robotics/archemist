@@ -1,5 +1,4 @@
 import unittest
-from datetime import date
 from archemist.core.util.location import Location
 from archemist.core.state.robot_op import RobotOp
 from archemist.core.state.station_op import StationOp
@@ -15,7 +14,7 @@ class StateTest(unittest.TestCase):
 
     def setUp(self):
         self._db_name = 'archemist_test'
-        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')     
+        self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
     def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
@@ -84,7 +83,7 @@ class StateTest(unittest.TestCase):
 
         lot_2.status = LotStatus.READY_FOR_COLLECTION
         self.assertEqual(input_state.get_lots_num(status=LotStatus.READY_FOR_COLLECTION), 1)
-        
+
         # set lots to None
         input_state.lot_slots["1"] = None
         self.assertIsNone(input_state.lot_slots["1"])
@@ -156,7 +155,7 @@ class StateTest(unittest.TestCase):
 
         # test requested_robot_ops
         self.assertFalse(workflow_state.robot_ops_queue)
-        
+
         robot_op = RobotOp.from_args()
         workflow_state.robot_ops_queue.append(robot_op)
         self.assertEqual(len(workflow_state.robot_ops_queue), 1)
@@ -165,7 +164,7 @@ class StateTest(unittest.TestCase):
 
         # test station_op_requests_queue
         self.assertFalse(workflow_state.station_op_requests_queue)
-        
+
         station_op = StationOp.from_args()
         workflow_state.station_op_requests_queue.append(station_op)
         self.assertEqual(len(workflow_state.station_op_requests_queue), 1)
@@ -183,19 +182,19 @@ class StateTest(unittest.TestCase):
 
     def test_output_state(self):
         output_dict = {
-            "location":  {'coordinates': [12,7], 'descriptor': 'OutputSite'},
+            "location":  {'coordinates': [12, 7], 'descriptor': 'OutputSite'},
             "total_lot_capacity": 2,
             "lot_output_process": None,
             "lots_need_manual_removal": False
         }
         output_state = OutputState.from_dict(output_dict)
         self.assertIsNotNone(output_state.object_id)
-        self.assertEqual(output_state.location, Location.from_dict({'coordinates': [12,7], 'descriptor': 'OutputSite'}))
+        self.assertEqual(output_state.location, Location.from_dict({'coordinates': [12, 7], 'descriptor': 'OutputSite'}))
         self.assertEqual(output_state.total_lot_capacity, 2)
         self.assertEqual(output_state.free_lot_capacity, 2)
         self.assertIsNone(output_state.lot_output_process)
         self.assertFalse(output_state.lots_need_manual_removal)
-        
+
         # test empty queues
         self.assertFalse(output_state.requested_robot_ops)
         self.assertFalse(output_state.procs_history)
@@ -256,5 +255,3 @@ class StateTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

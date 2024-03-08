@@ -32,6 +32,7 @@ from archemist.stations.apc_meta_station.process import (APCSynthesisProcess,
 from archemist.core.util.enums import ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op, test_req_station_proc
 
+
 class APCMetaStationTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -41,13 +42,13 @@ class APCMetaStationTest(unittest.TestCase):
         self.station_dict = {
             'type': 'APCMetaStation',
             'id': 23,
-            'location': {'coordinates': [1,7], 'descriptor': "APCMetaStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "APCMetaStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'properties': None
         }
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -62,62 +63,62 @@ class APCMetaStationTest(unittest.TestCase):
 
         # construct stations
         station = APCMetaStation.from_dict(self.station_dict)
-        
+
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "add_liquid_1",
-                    "op": "SyringePumpDispenseVolumeOp",
-                    "parameters": {
+            {
+                "name": "add_liquid_1",
+                "op": "SyringePumpDispenseVolumeOp",
+                "parameters": {
                         "liquid_name": "water",
                         "dispense_volume": 50,
                         "dispense_unit": "mL",
                         "dispense_rate": 5,
-                        "rate_unit": "mL/minute"                   
-                    }
-                },
-                {
-                    "name": "dispense_liquid_2",
-                    "op": "SyringePumpDispenseRateOp",
-                    "parameters": {
+                        "rate_unit": "mL/minute"
+                }
+            },
+            {
+                "name": "dispense_liquid_2",
+                "op": "SyringePumpDispenseRateOp",
+                "parameters": {
                         "liquid_name": "C4O3H6",
                         "dispense_rate": 5,
-                        "rate_unit": "mL/minute"                  
-                    }
-                },
-                {
-                    "name": "add_solid",
-                    "op": "APCDispenseSolidOp",
-                    "parameters": {
+                        "rate_unit": "mL/minute"
+                }
+            },
+            {
+                "name": "add_solid",
+                "op": "APCDispenseSolidOp",
+                "parameters": {
                         "solid_name": "NaCl",
                         "dispense_mass": 15,
-                        "dispense_unit": "mg"                    
-                    }
-                },
-                {
-                    "name": "heat_stir",
-                    "op": "MTSynthHeatStirOp",
-                    "parameters": {
+                        "dispense_unit": "mg"
+                }
+            },
+            {
+                "name": "heat_stir",
+                "op": "MTSynthHeatStirOp",
+                "parameters": {
                         "target_temperature": 100,
                         "target_stirring_speed": 50,
                         "wait_duration": None,
-                    }
-                }]
+                }
+            }]
 
         process = APCSynthesisProcess.from_args(lot=lot,
-                                              target_batch_index=0,
-                                              target_sample_index=0,
-                                              target_product_concentration=0.8,
-                                              operations=operations)
+                                                target_batch_index=0,
+                                                target_sample_index=0,
+                                                target_product_concentration=0.8,
+                                                operations=operations)
         process.lot_slot = 0
         process.assigned_to = station.object_id
-        
+
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
         self.assertEqual(process.status, ProcessStatus.INACTIVE)
@@ -160,7 +161,7 @@ class APCMetaStationTest(unittest.TestCase):
         # wait_for_result
         process.tick()
         self.assertEqual(process.m_state, 'wait_for_result')
-        
+
         # manually add lcms analysis result to advance state
         from archemist.stations.waters_lcms_station.state import LCMSAnalysisResult
         solubility_result = LCMSAnalysisResult.from_args(origin_op=ObjectId(),
@@ -186,7 +187,7 @@ class APCMetaStationTest(unittest.TestCase):
         # wait_for_result
         process.tick()
         self.assertEqual(process.m_state, 'wait_for_result')
-        
+
         # manually add lcms analysis result to advance state
         solubility_result = LCMSAnalysisResult.from_args(origin_op=ObjectId(),
                                                          concentration=0.99,
@@ -202,7 +203,7 @@ class APCMetaStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'stop_reaction')
         test_req_station_op(self, process, MTSynthStopReactionOp)
-        
+
         # final_state
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
@@ -212,30 +213,30 @@ class APCMetaStationTest(unittest.TestCase):
 
         # construct station
         station = APCMetaStation.from_dict(self.station_dict)
-        
+
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         station.add_lot(lot)
 
         # create station process
         operations = [
             {
-                    "name": "heat_stir_discharge",
-                    "op": "MTSynthHeatStirOp",
-                    "parameters": {
+                "name": "heat_stir_discharge",
+                "op": "MTSynthHeatStirOp",
+                "parameters": {
                         "target_temperature": 100,
                         "target_stirring_speed": 50,
                         "wait_duration": None,
-                    }
+                }
             },
             {
                 "name": "discharge_product",
                 "op": "MTSynthTimedOpenReactionValveOp",
                 "parameters": {
                     "duration": 1,
-                    "time_unit": "second"                    
+                    "time_unit": "second"
                 }
             },
             {
@@ -244,7 +245,7 @@ class APCMetaStationTest(unittest.TestCase):
                 "parameters": {
                     "liquid_name": "water",
                     "dispense_volume": 20,
-                    "dispense_unit": "mL"                    
+                    "dispense_unit": "mL"
                 }
             },
             {
@@ -252,7 +253,7 @@ class APCMetaStationTest(unittest.TestCase):
                 "op": "APCDryProductOp",
                 "parameters": {
                     "duration": 5,
-                    "time_unit": "minute"                    
+                    "time_unit": "minute"
                 }
             },
         ]
@@ -260,11 +261,11 @@ class APCMetaStationTest(unittest.TestCase):
         num_discharge_cycles = 3
         num_wash_cycles = 3
         process = APCFiltrationProcess.from_args(lot=lot,
-                                                target_batch_index=0,
-                                                target_sample_index=0,
-                                                operations=operations,
-                                                num_discharge_cycles=num_discharge_cycles,
-                                                num_wash_cycles=num_wash_cycles)
+                                                 target_batch_index=0,
+                                                 target_sample_index=0,
+                                                 operations=operations,
+                                                 num_discharge_cycles=num_discharge_cycles,
+                                                 num_wash_cycles=num_wash_cycles)
         process.lot_slot = 0
         process.assigned_to = station.object_id
         # assert initial state
@@ -314,7 +315,7 @@ class APCMetaStationTest(unittest.TestCase):
             test_req_station_op(self, process, APCFilterProductOp)
 
         for i in range(num_discharge_cycles, num_wash_cycles + num_discharge_cycles):
-            # test add_wash_liquid 
+            # test add_wash_liquid
             process.tick()
             self.assertEqual(process.m_state, 'add_wash_liquid')
             test_req_station_op(self, process, DiaphragmPumpDispenseVolumeOp)
@@ -343,7 +344,7 @@ class APCMetaStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'dry_product')
         test_req_station_op(self, process, APCDryProductOp)
-        
+
         # final_state
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
@@ -353,47 +354,47 @@ class APCMetaStationTest(unittest.TestCase):
 
         # construct station
         station = APCMetaStation.from_dict(self.station_dict)
-        
+
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         station.add_lot(lot)
 
         # create station process
         operations = [
-                {
+            {
                 "name": "add_wash_liquid",
                 "op": "DiaphragmPumpDispenseVolumeOp",
                 "parameters": {
-                    "liquid_name": "water",
-                    "dispense_volume": 20,
-                    "dispense_unit": "mL"                    
+                        "liquid_name": "water",
+                        "dispense_volume": 20,
+                        "dispense_unit": "mL"
                 }
-                },
-                {
-                    "name": "wash_heat_stir",
-                    "op": "MTSynthHeatStirOp",
-                    "parameters": {
+            },
+            {
+                "name": "wash_heat_stir",
+                "op": "MTSynthHeatStirOp",
+                "parameters": {
                         "target_temperature": 100,
                         "target_stirring_speed": 50,
                         "wait_duration": None,
-                    }
-                },
-                {
+                }
+            },
+            {
                 "name": "wash_discharge",
                 "op": "MTSynthTimedOpenReactionValveOp",
                 "parameters": {
-                    "duration": 1,
-                    "time_unit": "second"                    
+                        "duration": 1,
+                        "time_unit": "second"
                 }
             }]
 
         process = APCCleaningProcess.from_args(lot=lot,
-                                              target_purity_concentration=0.01,
-                                              target_batch_index=0,
-                                              target_sample_index=0,
-                                              operations=operations)
+                                               target_purity_concentration=0.01,
+                                               target_batch_index=0,
+                                               target_sample_index=0,
+                                               operations=operations)
         process.lot_slot = 0
         process.assigned_to = station.object_id
 
@@ -498,7 +499,7 @@ class APCMetaStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'unload_cleaning_funnel')
         test_req_robot_ops(self, process, [RobotTaskOp])
-        
+
         # final_state
         process.tick()
         self.assertEqual(process.m_state, 'final_state')
@@ -508,20 +509,20 @@ class APCMetaStationTest(unittest.TestCase):
 
         # construct stations
         station = APCMetaStation.from_dict(self.station_dict)
-        
+
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add batches to station
         station.add_lot(lot)
 
         # create station process
         process = APCMeasureYieldProcess.from_args(lot=lot,
-                                              target_batch_index=0,
-                                              target_sample_index=0)
+                                                   target_batch_index=0,
+                                                   target_sample_index=0)
         process.lot_slot = 0
         process.assigned_to = station.object_id
-        
+
         # assert initial state
         self.assertEqual(process.m_state, 'init_state')
         self.assertEqual(process.status, ProcessStatus.INACTIVE)
@@ -550,7 +551,7 @@ class APCMetaStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'close_sash')
         test_req_station_op(self, process, APCCloseSashOp)
-        
+
         # final_state
         process.tick()
         self.assertEqual(process.m_state, 'final_state')

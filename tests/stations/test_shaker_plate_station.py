@@ -10,6 +10,7 @@ from archemist.core.state.lot import Lot, Batch
 from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class ShakerPlateStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -18,7 +19,7 @@ class ShakerPlateStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'ShakerPlateStation',
             'id': 20,
-            'location': {'coordinates': [1,7], 'descriptor': "ShakerPlateStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ShakerPlateStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials': None,
@@ -31,7 +32,7 @@ class ShakerPlateStationTest(unittest.TestCase):
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
-    
+
     def test_state(self):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
@@ -52,34 +53,33 @@ class ShakerPlateStationTest(unittest.TestCase):
         self.assertIsNotNone(t_op.object_id)
         self.assertEqual(t_op.duration, 3)
         self.assertEqual(t_op.time_unit, "minute")
-        
+
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.assertTrue(self.station.is_shaking)
         self.station.complete_assigned_op(OpOutcome.SUCCEEDED, None)
         self.assertFalse(self.station.is_shaking)
-                
 
     def test_yumi_shaker_plate_process(self):
         # construct batches
         batch_1 = Batch.from_args(2)
         batch_2 = Batch.from_args(2)
         lot = Lot.from_args([batch_1, batch_2])
-        
+
         # add lot to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "shake_op",
-                    "op": "ShakerPlateOp",
-                    "parameters": {
+            {
+                "name": "shake_op",
+                "op": "ShakerPlateOp",
+                "parameters": {
                         "duration": 3,
                         "time_unit": "minute"
-                    }
                 }
-            ]
+            }
+        ]
         process = PXRDWorkflowShakingProcess.from_args(lot=lot,
                                                        eight_well_rack_first=True,
                                                        operations=operations)
@@ -113,7 +113,7 @@ class ShakerPlateStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'unscrew_caps')
         test_req_robot_ops(self, process, [RobotTaskOp])
-        
+
         # pick_lot
         process.tick()
         self.assertEqual(process.m_state, 'pick_lot')
@@ -143,17 +143,18 @@ class ShakerPlateStationTest(unittest.TestCase):
                                        time_unit="minute")
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
-        # get op 
+
+        # get op
         parameters = {}
-        parameters["duration"]  = t_op.duration
-        parameters["time_unit"]  = t_op.time_unit
-        
+        parameters["duration"] = t_op.duration
+        parameters["time_unit"] = t_op.time_unit
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
         self.assertEqual(op_results[0].origin_op, t_op.object_id)
         self.assertDictEqual(op_results[0].parameters, parameters)
+
 
 if __name__ == '__main__':
     unittest.main()

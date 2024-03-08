@@ -2,7 +2,7 @@ import unittest
 from mongoengine import connect
 
 from archemist.core.persistence.object_factory import RobotFactory, RobotOpFactory, StationFactory,\
-                                                        StationOpFactory, ProcessFactory, OpResultFactory
+    StationOpFactory, ProcessFactory, OpResultFactory
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.processing.handler import SimStationOpHandler, SimRobotOpHandler
 from archemist.core.state.station_op_result import StationOpResult, ProcessOpResult
@@ -15,7 +15,7 @@ class ObjectFactoryTest(unittest.TestCase):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -24,7 +24,7 @@ class ObjectFactoryTest(unittest.TestCase):
         station_dict = {
             'type': 'Station',
             'id': 23,
-            'location': {'coordinates': [1,7], 'descriptor': "Station"},
+            'location': {'coordinates': [1, 7], 'descriptor': "Station"},
             'batch_capacity': 2,
             'handler': 'GenericStationHandler',
             'total_lot_capacity': 2,
@@ -32,7 +32,7 @@ class ObjectFactoryTest(unittest.TestCase):
 
         # general station
         # test construction from dict
-        station_from_dict =  StationFactory.create_from_dict(station_dict)
+        station_from_dict = StationFactory.create_from_dict(station_dict)
         self.assertEqual(station_from_dict.id, 23)
 
         # station_dict['type'] = "NonExistantStation"
@@ -70,9 +70,9 @@ class ObjectFactoryTest(unittest.TestCase):
         # TODO test station_op from archemist.stations
 
     def test_op_result_factory(self):
-        # construct result_op 
+        # construct result_op
         op_result = StationOpResult.from_args(origin_op=ObjectId())
-        
+
         # test construction from model
         op_result_from_model = OpResultFactory.create_from_model(op_result.model)
         self.assertEqual(op_result, op_result_from_model)
@@ -82,9 +82,9 @@ class ObjectFactoryTest(unittest.TestCase):
         self.assertEqual(op_result, op_result_from_object_id)
 
         # construct process_op
-        parameters_dict = {"speed": 500} 
+        parameters_dict = {"speed": 500}
         process_op_result = ProcessOpResult.from_args(origin_op=ObjectId(), parameters=parameters_dict)
-        
+
         # test construction from model
         op_result_from_model = OpResultFactory.create_from_model(process_op_result.model)
         self.assertEqual(process_op_result, op_result_from_model)
@@ -98,15 +98,15 @@ class ObjectFactoryTest(unittest.TestCase):
     def test_robot_factory(self):
         robot_dict = {
             "type": "Robot",
-            "location": {'coordinates': [1,7], 'descriptor': "Station"},
+            "location": {'coordinates': [1, 7], 'descriptor': "Station"},
             "id": 187,
-            "batch_capacity":2,
+            "batch_capacity": 2,
             "handler": "GenericRobotHandler"
         }
 
         # general robot
         # test construction from dict
-        robot_from_dict =  RobotFactory.create_from_dict(robot_dict)
+        robot_from_dict = RobotFactory.create_from_dict(robot_dict)
         self.assertEqual(robot_from_dict.id, 187)
 
         # TODO fix this once actual robots are added
@@ -145,9 +145,9 @@ class ObjectFactoryTest(unittest.TestCase):
             "target_robot": "Robot",
             "requested_by": random_station_id,
             "params": {"index": 1}
-            }
+        }
         robot_op_from_args = RobotOpFactory.create_from_args("RobotTaskOp", op_params)
-        
+
         self.assertIsNotNone(robot_op_from_args)
         self.assertEqual(len(robot_op_from_args.params), 1)
         self.assertEqual(robot_op_from_args.params["index"], 1)
@@ -163,13 +163,13 @@ class ObjectFactoryTest(unittest.TestCase):
         # general station process
         proc_dict = {"type": "StationProcess"}
         # construct from dict
-        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1,2), descriptor="some_frame"))
+        batch_1 = Batch.from_args(3, Location.from_args(coordinates=(1, 2), descriptor="some_frame"))
         lot = Lot.from_args([batch_1])
-        proc_from_args = ProcessFactory.create_from_dict(proc_dict,lot)
+        proc_from_args = ProcessFactory.create_from_dict(proc_dict, lot)
         self.assertIsNotNone(proc_from_args)
 
         # construct from model
-        proc_from_model  = ProcessFactory.create_from_model(proc_from_args.model)
+        proc_from_model = ProcessFactory.create_from_model(proc_from_args.model)
         self.assertEqual(proc_from_args.object_id, proc_from_model.object_id)
 
         # construct from objectid
@@ -177,6 +177,7 @@ class ObjectFactoryTest(unittest.TestCase):
         self.assertEqual(proc_from_args.object_id, proc_from_object_id.object_id)
 
         # TODO test station_process from archemist.stations
+
 
 if __name__ == "__main__":
     unittest.main()

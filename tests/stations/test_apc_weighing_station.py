@@ -3,8 +3,8 @@ import unittest
 from mongoengine import connect
 
 from archemist.stations.apc_weighing_station.state import (
-    APCWeighingStation, 
-    APCOpenBalanceDoorOp, 
+    APCWeighingStation,
+    APCOpenBalanceDoorOp,
     APCCloseBalanceDoorOp,
     APCTareOp,
     APCWeighingOp,
@@ -31,10 +31,10 @@ class APCWeighingStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'APCWeighingStation',
             'id': 35,
-            'location': {'coordinates': [1,7], 'descriptor': "ApcWeighingStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ApcWeighingStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
-            'properties': 
+            'properties':
             {
                 'funnel_storage_capacity': 3
             },
@@ -100,7 +100,7 @@ class APCWeighingStationTest(unittest.TestCase):
         # construct batches
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
-        
+
         # add lot to station
         self.station.add_lot(lot)
 
@@ -167,7 +167,7 @@ class APCWeighingStationTest(unittest.TestCase):
         self.assertEqual(process.m_state, 'final_state')
         self.assertEqual(process.status, ProcessStatus.FINISHED)
 
-    def test_sim_handler(self): 
+    def test_sim_handler(self):
         batch = Batch.from_args(1)
         lot = Lot.from_args([batch])
 
@@ -184,7 +184,7 @@ class APCWeighingStationTest(unittest.TestCase):
         t_op = APCWeighingOp.from_args(target_sample=batch.samples[0])
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertIsInstance(op_results[0], APCWeighResult)

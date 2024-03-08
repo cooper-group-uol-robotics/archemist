@@ -5,7 +5,8 @@ from mongoengine import fields
 
 class LightBoxStationModel(StationModel):
     rgb_target_index = fields.IntField(default=0)
-    lab_target_index = fields.FloatField(default=0)  
+    lab_target_index = fields.FloatField(default=0)
+
 
 class LBAnalyseRGBResultModel(StationOpResultModel):
     result_filename = fields.StringField()
@@ -13,7 +14,8 @@ class LBAnalyseRGBResultModel(StationOpResultModel):
     green_intensity = fields.IntField(min_value=0, max_value=255)
     blue_intensity = fields.IntField(min_value=0, max_value=255)
     color_index = fields.IntField()
-    color_diff = fields.IntField()    
+    color_diff = fields.IntField()
+
 
 class LBAnalyseLABResultModel(StationOpResultModel):
     result_filename = fields.StringField()

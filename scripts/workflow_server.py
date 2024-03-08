@@ -12,21 +12,22 @@ import json
 
 if __name__ == '__main__':
     current_dir = Path.cwd()
-    server_config_file_path = current_dir.joinpath(f'server_settings.yaml')
+    server_config_file_path = current_dir.joinpath('server_settings.yaml')
     server_setttings = YamlHandler.loadYamlFile(server_config_file_path)
-    
+
     workflow_dir = Path(server_setttings['workflow_dir_path'])
-    workflow_config_file_path = workflow_dir.joinpath(f'config_files/workflow_config.yaml')
-    recipes_dir_path = workflow_dir.joinpath(f'recipes')
+    workflow_config_file_path = workflow_dir.joinpath(
+        'config_files/workflow_config.yaml')
+    recipes_dir_path = workflow_dir.joinpath('recipes')
 
     db_name = server_setttings['db_name']
     batch_addition_location = Location(server_setttings['batch_addition']['location']['node_id'],
-                                        server_setttings['batch_addition']['location']['graph_id'], 
-                                        server_setttings['batch_addition']['location']['frame_name'])
+                                       server_setttings['batch_addition']['location']['graph_id'],
+                                       server_setttings['batch_addition']['location']['frame_name'])
     batch_num_vials = server_setttings['batch_addition']['num_vials']
     recipe_loop_mode = server_setttings['recipe_loop_mode']
     auto_batch_addition = server_setttings['auto_batch_addition']
-    
+
     batch_id = 0
     recipe_to_loop = None
     loop_batch_added = False
@@ -35,9 +36,10 @@ if __name__ == '__main__':
     socket = context.socket(zmq.PAIR)
     socket.bind('tcp://127.0.0.1:5555')
     # Construct state from config file
-    host='mongodb://localhost:27017'
-    pers_manager = PersistenceManager(host,db_name)
-    state = pers_manager.construct_state_from_config_file(workflow_config_file_path)
+    host = 'mongodb://localhost:27017'
+    pers_manager = PersistenceManager(host, db_name)
+    state = pers_manager.construct_state_from_config_file(
+        workflow_config_file_path)
     # construct the state manager
     wm_manager = WorkflowManager(state)
 
@@ -48,10 +50,9 @@ if __name__ == '__main__':
     recipes_watcher = RecipeFilesWatchdog(recipes_dir_path)
     recipes_watcher.start()
 
-
     # recipe_index = 0
     # init = False
-    
+
     # spin
     while True:
 
@@ -67,7 +68,7 @@ if __name__ == '__main__':
                 recipe_file_path = recipes_watcher.recipes_queue.pop()
                 recipe_dict = YamlHandler.loadYamlFile(recipe_file_path)
                 wm_manager.queue_recipe(recipe_dict)
-                print(f'new recipe file queued')
+                print('new recipe file queued')
 
         if auto_batch_addition:
             if not loop_batch_added:
@@ -94,11 +95,14 @@ if __name__ == '__main__':
                 state.add_clean_batch(batch_num_vials, batch_addition_location)
                 batch_id += 1
             elif msg['cmd'] == 'charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('ChargeRobot',[False,85]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('ChargeRobot', [False, 85]))
             elif msg['cmd'] == 'stop_charge':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('StopCharge',[False]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('StopCharge', [False]))
             elif msg['cmd'] == 'resume_app':
-                wm_manager.queue_robot_op(KukaLBRMaintenanceTask.from_args('resumeLBRApp',[False]))
+                wm_manager.queue_robot_op(
+                    KukaLBRMaintenanceTask.from_args('resumeLBRApp', [False]))
             elif msg['cmd'] == 'terminate':
                 if wm_manager._running:
                     wm_manager.stop_processor()

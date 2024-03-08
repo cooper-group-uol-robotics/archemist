@@ -11,6 +11,8 @@ from bson.objectid import ObjectId
 
 
 ''' ==== Station Description ==== '''
+
+
 class APCWeighingStation(Station):
     def __init__(self, weighing_station_model: Union[APCWeighingStationModel, ModelProxy]) -> None:
         super().__init__(weighing_station_model)
@@ -52,8 +54,8 @@ class APCWeighingStation(Station):
         super().complete_assigned_op(outcome, results)
 
 
-
 ''' ==== Station Operation Descriptors ==== '''
+
 
 class APCOpenBalanceDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
@@ -62,9 +64,11 @@ class APCOpenBalanceDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
+
 
 class APCCloseBalanceDoorOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
@@ -73,10 +77,12 @@ class APCCloseBalanceDoorOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class APCTareOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -84,10 +90,12 @@ class APCTareOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class APCWeighingOp(StationSampleOp):
     def __init__(self, op_model: Union[StationSampleOpModel, ModelProxy]):
         super().__init__(op_model)
@@ -96,9 +104,11 @@ class APCWeighingOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=APCWeighingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCWeighingStation.__name__)
         model.save()
         return cls(model)
+
 
 class APCWeighResult(StationOpResult):
     def __init__(self, result_model: Union[APCWeighResultModel, ModelProxy]):
@@ -122,7 +132,3 @@ class APCWeighResult(StationOpResult):
     @property
     def unit(self) -> Literal["g"]:
         return self._model_proxy.unit
-    
-    
-
-    

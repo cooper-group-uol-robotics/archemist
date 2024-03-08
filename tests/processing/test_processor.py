@@ -15,18 +15,19 @@ from archemist.core.processing.processor import InputProcessor, OutputProcessor,
 from archemist.core.processing.handler import StationProcessHandler
 from archemist.core.util.enums import LotStatus, OpOutcome
 
+
 class TestProcess1(StationProcess):
 
     def __init__(self, process_model) -> None:
         super().__init__(process_model)
-        
+
         self.STATES = [State(name='init_state'),
-            State(name='pickup_batch', on_enter=['request_pickup_batch']),
-            State(name='final_state')]
-        
+                       State(name='pickup_batch', on_enter=['request_pickup_batch']),
+                       State(name='final_state')]
+
         self.TRANSITIONS = [
-            {'source':'init_state','dest':'pickup_batch'},
-            {'source':'pickup_batch','dest':'final_state', 'conditions':'are_req_robot_ops_completed'},
+            {'source': 'init_state', 'dest': 'pickup_batch'},
+            {'source': 'pickup_batch', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
         ]
 
     def initialise_process_data(self):
@@ -36,22 +37,23 @@ class TestProcess1(StationProcess):
         robot_op = RobotOp.from_args()
         self.request_robot_ops([robot_op])
 
+
 class TestProcess2(StationProcess):
 
     def __init__(self, process_model) -> None:
         super().__init__(process_model)
-        
+
         self.STATES = [State(name='init_state'),
-            State(name='pickup_batch', on_enter=['request_pickup_batch']),
-            State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
-            State(name='run_external_op', on_enter=['request_external_op']),
-            State(name='final_state')]
-        
+                       State(name='pickup_batch', on_enter=['request_pickup_batch']),
+                       State(name='run_analysis_proc', on_enter=['request_analysis_proc']),
+                       State(name='run_external_op', on_enter=['request_external_op']),
+                       State(name='final_state')]
+
         self.TRANSITIONS = [
-            {'source':'init_state','dest':'pickup_batch'},
-            {'source':'pickup_batch','dest':'run_analysis_proc', 'conditions':'are_req_robot_ops_completed'},
-            {'source':'run_analysis_proc','dest':'run_external_op', 'conditions':'are_req_station_procs_completed'},
-            {'source':'run_external_op','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+            {'source': 'init_state', 'dest': 'pickup_batch'},
+            {'source': 'pickup_batch', 'dest': 'run_analysis_proc', 'conditions': 'are_req_robot_ops_completed'},
+            {'source': 'run_analysis_proc', 'dest': 'run_external_op', 'conditions': 'are_req_station_procs_completed'},
+            {'source': 'run_external_op', 'dest': 'final_state', 'conditions': 'are_req_station_ops_completed'}
         ]
 
     def request_pickup_batch(self):
@@ -61,10 +63,11 @@ class TestProcess2(StationProcess):
     def request_analysis_proc(self):
         station_proc = StationProcess.from_args(self.lot, is_subprocess=True)
         self.request_station_process(station_proc)
-    
+
     def request_external_op(self):
         station_op = StationOp.from_args()
         self.request_station_op(station_op)
+
 
 class SomeStation(Station):
     def __init__(self, station_model) -> None:
@@ -77,12 +80,12 @@ class SomeStation(Station):
         model.save()
         return cls(model)
 
+
 class ProcessorTest(unittest.TestCase):
 
     def setUp(self):
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
-
 
         self.recipe_doc_1 = {
             "general": {"name": "test_archemist_recipe", "id": 198},
@@ -182,7 +185,6 @@ class ProcessorTest(unittest.TestCase):
             'total_lot_capacity': 2
         }
 
-
     def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
@@ -192,7 +194,7 @@ class ProcessorTest(unittest.TestCase):
 
         batch = Batch.from_args(3)
         lot = Lot.from_args([batch])
-        
+
         station = Station.from_dict(self.station_1_dict)
         station.add_lot(lot)
         self.assertEqual(station.free_lot_capacity, 1)
@@ -221,7 +223,7 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(len(input_state.batches_queue), 1)
         input_processor.add_clean_batch()
         self.assertEqual(len(input_state.batches_queue), 2)
-        input_processor.add_clean_batch() # no batch created since at capacity
+        input_processor.add_clean_batch()  # no batch created since at capacity
         self.assertEqual(len(input_state.batches_queue), 2)
 
         # test adding new recipes
@@ -230,7 +232,7 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(len(input_state.recipes_queue), 1)
         input_processor.add_recipe(self.recipe_doc_2)
         self.assertEqual(len(input_state.recipes_queue), 2)
-        input_processor.add_recipe(self.recipe_doc_2) # recipe not added since recipe already added
+        input_processor.add_recipe(self.recipe_doc_2)  # recipe not added since recipe already added
         self.assertEqual(len(input_state.recipes_queue), 2)
 
         # test process lots
@@ -320,7 +322,7 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(output_state.get_lots_num(), 2)
         self.assertFalse(output_processor.has_free_lot_capacity())
 
-        output_processor.add_lot(lot_3) # lot not added since no slot available
+        output_processor.add_lot(lot_3)  # lot not added since no slot available
         self.assertEqual(output_state.get_lots_num(), 2)
 
         # test processing lots
@@ -381,7 +383,7 @@ class ProcessorTest(unittest.TestCase):
 
         # test lots buffer
         self.assertFalse(workflow_state.lots_buffer)
-        
+
         # test adding lots
         workflow_processor.add_ready_for_collection_lots([lot_1, lot_2])
         self.assertEqual(len(workflow_state.lots_buffer), 2)
@@ -562,16 +564,5 @@ class ProcessorTest(unittest.TestCase):
         self.assertEqual(len(workflow_state.lots_buffer), 0)
 
 
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     unittest.main()
-
-

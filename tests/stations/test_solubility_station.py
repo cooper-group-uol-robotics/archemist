@@ -13,6 +13,7 @@ from archemist.core.util.enums import ProcessStatus, OpOutcome, StationState
 from archemist.core.state.robot_op import RobotTaskOp
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class SolubilityStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -21,10 +22,10 @@ class SolubilityStationTest(unittest.TestCase):
         station_dict = {
             'type': 'SolubilityStation',
             'id': 25,
-            'location': {'coordinates': [1,7], 'descriptor': "SolubilityStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "SolubilityStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
-            'parameters':{}
+            'parameters': {}
         }
 
         self.station = SolubilityStation.from_dict(station_dict)
@@ -44,7 +45,6 @@ class SolubilityStationTest(unittest.TestCase):
         lot = Lot.from_args([batch_1])
         self.station.add_lot(lot)
 
-
         # test CheckSolubilityOp
         t_op = CheckSolubilityOp.from_args(lot.batches[0].samples[0])
         self.assertIsNotNone(t_op.object_id)
@@ -55,26 +55,26 @@ class SolubilityStationTest(unittest.TestCase):
                                                  result_filename="test123.png")
         self.assertEqual(op_result.solubility_state, SolubilityState.DISSOLVED)
         self.assertEqual(op_result.result_filename, "test123.png")
-    
+
     def test_solubility_station_process(self):
         num_samples = 3
         batch_1 = Batch.from_args(num_samples)
         batch_2 = Batch.from_args(num_samples)
         lot = Lot.from_args([batch_1, batch_2])
-        
+
         # add batches to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "check_solubility",
-                    "op": "CheckSolubilityOp",
-                    "parameters": None
-                }
-            ]
+            {
+                "name": "check_solubility",
+                "op": "CheckSolubilityOp",
+                "parameters": None
+            }
+        ]
         process = SolubilityStationProcess.from_args(lot=lot,
-                                            operations=operations)
+                                                     operations=operations)
         process.lot_slot = 0
 
         # assert initial state
@@ -109,7 +109,7 @@ class SolubilityStationTest(unittest.TestCase):
                 self.assertEqual(process.m_state, 'update_sample_index')
                 self.assertEqual(process.data['batch_index'], i)
                 self.assertEqual(process.data['sample_index'], j+1)
-            
+
             # update_batch_index
             process.tick()
             self.assertEqual(process.m_state, 'update_batch_index')
@@ -125,20 +125,20 @@ class SolubilityStationTest(unittest.TestCase):
         num_samples = 1
         batch_1 = Batch.from_args(num_samples)
         lot = Lot.from_args([batch_1])
-        
+
         # add batches to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "check_solubility_op",
-                    "op": "CheckSolubilityOp",
-                    "parameters": None
-                }
-            ]
+            {
+                "name": "check_solubility_op",
+                "op": "CheckSolubilityOp",
+                "parameters": None
+            }
+        ]
         process = PandaCheckSolubilityProcess.from_args(lot=lot,
-                                            operations=operations)
+                                                        operations=operations)
         process.lot_slot = 0
 
         # assert initial state
@@ -176,7 +176,7 @@ class SolubilityStationTest(unittest.TestCase):
         t_op = CheckSolubilityOp.from_args(target_sample=batch_1.samples[0])
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -185,6 +185,7 @@ class SolubilityStationTest(unittest.TestCase):
         self.assertIsNotNone(op_results[0].result_filename)
         self.assertIn(op_results[0].solubility_state, [SolubilityState.DISSOLVED, SolubilityState.UNDISSOLVED])
         self.station.complete_assigned_op(outcome, op_results)
+
 
 if __name__ == '__main__':
     unittest.main()

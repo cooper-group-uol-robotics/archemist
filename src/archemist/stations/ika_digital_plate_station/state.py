@@ -9,8 +9,10 @@ from typing import Literal, Dict, Union, List
 
 
 ''' ==== Station Description ==== '''
+
+
 class IKADigitalPlateStation(Station):
-    def __init__(self, station_model: Union[IkaDigitalPlateStationModel,ModelProxy]) -> None:
+    def __init__(self, station_model: Union[IkaDigitalPlateStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
 
     @classmethod
@@ -80,6 +82,8 @@ class IKADigitalPlateStation(Station):
 
 
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class IKAHeatStirBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -93,7 +97,8 @@ class IKAHeatStirBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
@@ -118,6 +123,7 @@ class IKAHeatStirBatchOp(StationBatchOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
+
 class IKAHeatBatchOp(StationBatchOp):
     def __init__(self, op_model: Union[IKADigitalPlateOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -130,7 +136,8 @@ class IKAHeatBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_temperature = int(target_temperature)
         model.duration = int(duration)
         if model.duration > 0:
@@ -163,7 +170,8 @@ class IKAStirBatchOp(StationBatchOp):
                   time_unit: Literal["second", "minute", "hour"]):
         model = IKADigitalPlateOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.target_stirring_speed = int(target_stirring_speed)
         model.duration = int(duration)
         if model.duration > 0:
@@ -183,15 +191,15 @@ class IKAStirBatchOp(StationBatchOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
+
 class IKAStopOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=IKADigitalPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=IKADigitalPlateStation.__name__)
         model.save()
         return cls(model)
-
-    

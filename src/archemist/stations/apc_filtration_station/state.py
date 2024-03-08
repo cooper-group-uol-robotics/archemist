@@ -7,6 +7,8 @@ from archemist.core.state.sample import Sample
 
 
 ''' ==== Station Description ==== '''
+
+
 class APCFiltrationStation(Station):
     def __init__(self, filtration_station_model: Union[StationModel, ModelProxy]) -> None:
         super().__init__(filtration_station_model)
@@ -18,7 +20,10 @@ class APCFiltrationStation(Station):
         model.save()
         return cls(model)
 
+
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class APCFilterProductOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -26,9 +31,11 @@ class APCFilterProductOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.save()
         return cls(model)
+
 
 class APCDryProductOp(StationSampleOp):
     def __init__(self, op_model: Union[APCDryProductOpModel, ModelProxy]) -> None:
@@ -40,7 +47,8 @@ class APCDryProductOp(StationSampleOp):
                   duration: int,
                   time_unit: Literal["second", "minute", "hour"]):
         model = APCDryProductOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.target_sample = target_sample.model
         model.duration = int(duration)
         model.time_unit = time_unit
@@ -55,6 +63,7 @@ class APCDryProductOp(StationSampleOp):
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit
 
+
 class APCDrainWasteOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -62,6 +71,7 @@ class APCDrainWasteOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFiltrationStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFiltrationStation.__name__)
         model.save()
         return cls(model)

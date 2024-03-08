@@ -7,6 +7,7 @@ from archemist.core.util.location import Location
 from archemist.core.util.enums import LotStatus
 from mongoengine import connect
 
+
 class LotTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
@@ -65,7 +66,7 @@ class LotTest(unittest.TestCase):
             ],
         }
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -88,7 +89,7 @@ class LotTest(unittest.TestCase):
         for batch in lot.batches:
             self.assertEqual(len(batch.station_stamps), 1)
             self.assertTrue("test_station_stamp" in batch.station_stamps[0])
-        
+
         # test recipe
         self.assertFalse(lot.is_recipe_attached())
         self.assertIsNone(lot.recipe)
@@ -100,6 +101,7 @@ class LotTest(unittest.TestCase):
         # test construction from object id
         lot_copy = Lot.from_object_id(lot.object_id)
         self.assertEqual(lot, lot_copy)
+
 
 if __name__ == "__main__":
     unittest.main()

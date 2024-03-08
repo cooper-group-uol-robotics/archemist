@@ -5,6 +5,7 @@ from archemist.core.state.station_op_result import MaterialOpResult
 from .state import APCDispenseSolidOp
 from archemist.core.util.enums import OpOutcome
 
+
 class SimAPCFumehoodStationHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
@@ -19,5 +20,5 @@ class SimAPCFumehoodStationHandler(SimStationOpHandler):
                                                 units=[op.dispense_unit])
         else:
             result = None
-        
+
         return OpOutcome.SUCCEEDED, [result] if result is not None else None

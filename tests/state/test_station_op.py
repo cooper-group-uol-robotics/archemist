@@ -12,12 +12,13 @@ from archemist.core.state.station_op import (StationOp,
 from archemist.core.state.lot import Lot, Batch
 from archemist.core.state.sample import Sample
 
+
 class StationOpTest(unittest.TestCase):
     def setUp(self) -> None:
         self._db_name = 'archemist_test'
         self._client = connect(db=self._db_name, host='mongodb://localhost:27017', alias='archemist_state')
 
-    def  tearDown(self) -> None:
+    def tearDown(self) -> None:
         coll_list = self._client[self._db_name].list_collection_names()
         for coll in coll_list:
             self._client[self._db_name][coll].drop()
@@ -34,7 +35,7 @@ class StationOpTest(unittest.TestCase):
         self.assertIsNone(station_op.outcome)
         self.assertIsNone(station_op.start_timestamp)
         self.assertIsNone(station_op.end_timestamp)
-        
+
         # test start timestamp
         station_op.add_start_timestamp()
         self.assertIsNotNone(station_op.start_timestamp)
@@ -47,7 +48,7 @@ class StationOpTest(unittest.TestCase):
         results = []
         for _ in range(2):
             results.append(StationOpResult.from_args(origin_op=station_op.object_id))
-        
+
         station_op.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op.results), 2)
@@ -83,7 +84,7 @@ class StationOpTest(unittest.TestCase):
         results = []
         for _ in range(lot.num_batches):
             results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
-        
+
         station_op_2.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_2.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op_2.results), 2)
@@ -98,7 +99,7 @@ class StationOpTest(unittest.TestCase):
         results = []
         for _ in range(lot.num_batches*num_samples):
             results.append(StationOpResult.from_args(origin_op=station_op_3.object_id))
-        
+
         station_op_3.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_3.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op_3.results), lot.num_batches*num_samples)
@@ -132,7 +133,7 @@ class StationOpTest(unittest.TestCase):
         results = []
         for _ in range(num_samples):
             results.append(StationOpResult.from_args(origin_op=station_op_2.object_id))
-        
+
         station_op_2.complete_op(OpOutcome.SUCCEEDED, results)
         self.assertEqual(station_op_2.outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(station_op_2.results), 2)
@@ -155,6 +156,7 @@ class StationOpTest(unittest.TestCase):
         self.assertIsNotNone(station_op.end_timestamp)
 
         self.assertEqual(sample.result_ops[0], results[0])
+
 
 if __name__ == "__main__":
     unittest.main()

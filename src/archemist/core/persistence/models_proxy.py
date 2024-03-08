@@ -1,9 +1,10 @@
 from mongoengine import Document, EmbeddedDocument
 from mongoengine.base.datastructures import BaseList, BaseDict
-from typing import Any, Callable
+from typing import Callable
 from enum import Enum, auto
 from weakref import proxy
 from bson.objectid import ObjectId
+
 
 class ParentType(Enum):
     DOCUMENT = auto()
@@ -13,6 +14,7 @@ class ParentType(Enum):
     EMBED_LIST_ELEMENT = auto()
     EMBED_DICT_ELEMENT = auto()
 
+
 class ModelProxy:
     def __init__(self, model_instance: Document):
         self._model = model_instance
@@ -21,7 +23,8 @@ class ModelProxy:
         fields = self._model._fields
         for field_name in fields:
             # Create a property for each field
-            setattr(self.__class__, field_name, self._create_property(field_name))
+            setattr(self.__class__, field_name,
+                    self._create_property(field_name))
 
     def _create_property(self, field_name):
         # Create a getter function for the property
@@ -43,19 +46,20 @@ class ModelProxy:
         def setter(self, value):
             setattr(self._model, field_name, value)
             # Save the updated model
-            self._model.update(**{f"{field_name}":value})
+            self._model.update(**{f"{field_name}": value})
 
         # Create the property using the getter and setter functions
         return property(getter, setter)
-    
+
     @property
     def model(self):
         self._model.reload()
         return self._model
-    
+
     @property
     def object_id(self) -> ObjectId:
         return self._model.id
+
 
 class EmbedModelProxy:
     def __init__(self, embed_instance: EmbeddedDocument, parent_instance: Document, field_string: str, parent_type: ParentType):
@@ -85,14 +89,15 @@ class EmbedModelProxy:
             return ModelProxy(attr_value)
         else:
             return attr_value
-        
+
     def __setattr__(self, attr, value):
         if attr in ["_embedded", "_parent", "_field_string", "_parent_type", "_field_name",
                     "_field_index"]:
             super().__setattr__(attr, value)
         else:
             setattr(self._embedded, attr, value)
-            self._parent.update(**{f"set__{self._field_string}__{attr}":value})
+            self._parent.update(
+                **{f"set__{self._field_string}__{attr}": value})
 
     def _reload(self):
         self._parent.reload(self._field_name)
@@ -109,6 +114,7 @@ class EmbedModelProxy:
         self._reload()
         return self._embedded
 
+
 class ListFieldWrapper:
     def __init__(self, list_instance: BaseList, parent_instance: Document, field_string: str, parent_type: ParentType):
         self._list_instance = list_instance
@@ -118,12 +124,13 @@ class ListFieldWrapper:
         if parent_type == ParentType.DOCUMENT:
             self._list_field_name = self._field_string
         elif parent_type == ParentType.EMBED:
-            self._parent_field_name, self._list_field_name = field_string.split("__")
+            self._parent_field_name, self._list_field_name = field_string.split(
+                "__")
         elif parent_type == ParentType.EMBED_LIST_ELEMENT or parent_type == ParentType.EMBED_DICT_ELEMENT:
             self._parent_field_name, self._parent_field_index, \
                 self._list_field_name = field_string.split("__")
             self._test_and_fix_ref()
-    
+
     def __getitem__(self, index):
         self._reload()
         item = self._list_instance[index]
@@ -132,29 +139,31 @@ class ListFieldWrapper:
                 return EmbedModelProxy(item, self._parent, f"{self._list_field_name}__{index}",
                                        ParentType.LIST)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
             return item
-    
+
     def __setitem__(self, index, value):
         self._list_instance[index] = value
-        self._parent.update(**{f"set__{self._field_string}__{index}":value})
+        self._parent.update(**{f"set__{self._field_string}__{index}": value})
 
     def __len__(self):
         self._reload()
         return len(self._list_instance)
-    
+
     def __iter__(self):
         self._reload()
         for index, item in enumerate(self._list_instance):
             if isinstance(item, EmbeddedDocument):
                 if self._parent_type == ParentType.DOCUMENT:
                     yield EmbedModelProxy(item, self._parent, f"{self._list_field_name}__{index}",
-                                       ParentType.LIST)
+                                          ParentType.LIST)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 yield ModelProxy(item)
             else:
@@ -164,25 +173,26 @@ class ListFieldWrapper:
         self._reload()
         return item in self._list_instance
 
-    def append(self, value): # this should work with wrappers
-        self._parent.update(**{f"push__{self._field_string}":value})
+    def append(self, value):  # this should work with wrappers
+        self._parent.update(**{f"push__{self._field_string}": value})
 
     def pop(self, left=False):
         self._reload()
         if left:
-            item = self._list_instance.pop(0) # this needs to be converted
-            self._parent.update(**{f'pop__{self._field_string}':-1})
+            item = self._list_instance.pop(0)  # this needs to be converted
+            self._parent.update(**{f'pop__{self._field_string}': -1})
         else:
             item = self._list_instance.pop()
-            self._parent.update(**{f'pop__{self._field_string}':1})
+            self._parent.update(**{f'pop__{self._field_string}': 1})
         return item
 
     def extend(self, obj_list):
-        self._parent.update(**{f'push_all__{self._field_string}':[obj for obj in obj_list]})
+        self._parent.update(
+            **{f'push_all__{self._field_string}': [obj for obj in obj_list]})
 
     def remove(self, item):
-        self._parent.update(**{f'pull__{self._field_string}':item})
-    
+        self._parent.update(**{f'pull__{self._field_string}': item})
+
     def _reload(self):
         if self._parent_type == ParentType.DOCUMENT:
             self._parent.reload(self._list_field_name)
@@ -203,15 +213,16 @@ class ListFieldWrapper:
             embed_value = embed_list[self._parent_field_index]
             list_value = getattr(embed_value, self._list_field_name)
             self._test_and_fix_ref()
-        
+
         setattr(self, "_list_instance", list_value)
 
     def _test_and_fix_ref(self):
         # check if weak ref is broken in case of a nested embedded document
         try:
             hasattr(self._list_instance._instance, "__weakref__")
-        except:
+        except Exception:
             self._list_instance._instance = proxy(self._parent)
+
 
 class ListProxy:
     def __init__(self, list_wrapper: ListFieldWrapper,   callable: Callable):
@@ -220,13 +231,13 @@ class ListProxy:
 
     def __getitem__(self, index):
         return self._callable(self._list_wrapper.__getitem__(index))
-    
+
     def __setitem__(self, index, object):
         return self._list_wrapper.__setitem__(index, object.model)
-    
+
     def __len__(self):
         return self._list_wrapper.__len__()
-    
+
     def __iter__(self):
         for model in self._list_wrapper:
             yield self._callable(model)
@@ -239,12 +250,13 @@ class ListProxy:
 
     def pop(self, left=True):
         return self._callable(self._list_wrapper.pop(left))
-    
+
     def remove(self, object):
         return self._list_wrapper.remove(object.model)
-    
+
     def extend(self, obj_list):
         return self._list_wrapper.extend([obj.model for obj in obj_list])
+
 
 class DictFieldWrapper:
     def __init__(self, dict_instance: BaseDict, parent_instance: Document, field_string: str, parent_type: ParentType):
@@ -256,11 +268,12 @@ class DictFieldWrapper:
         if parent_type == ParentType.DOCUMENT:
             self._dict_field_name = self._field_string
         elif parent_type == ParentType.EMBED:
-            self._parent_field_name, self._dict_field_name = field_string.split("__")
+            self._parent_field_name, self._dict_field_name = field_string.split(
+                "__")
         elif parent_type == ParentType.EMBED_LIST_ELEMENT or parent_type == ParentType.EMBED_DICT_ELEMENT:
             self._parent_field_name, self._parent_field_index, \
                 self._dict_field_name = field_string.split("__")
-            
+
             self._test_and_fix_ref()
 
     def __getitem__(self, key):
@@ -269,9 +282,10 @@ class DictFieldWrapper:
         if isinstance(item, EmbeddedDocument):
             if self._parent_type == ParentType.DOCUMENT:
                 return EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
-                                    ParentType.DICT)
+                                       ParentType.DICT)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
@@ -279,11 +293,11 @@ class DictFieldWrapper:
 
     def __setitem__(self, key, value):
         self._dict_instance[key] = value
-        self._parent.update(**{f"set__{self._field_string}__{key}":value})
+        self._parent.update(**{f"set__{self._field_string}__{key}": value})
 
     def __delitem__(self, key):
         del self._dict_instance[key]
-        self._parent.update(**{f"unset__{self._field_string}__{key}":True})
+        self._parent.update(**{f"unset__{self._field_string}__{key}": True})
 
     def __len__(self):
         self._reload()
@@ -295,9 +309,10 @@ class DictFieldWrapper:
             if isinstance(item, EmbeddedDocument):
                 if self._parent_type == ParentType.DOCUMENT:
                     yield EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
-                                    ParentType.DICT)
+                                          ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 yield key, ModelProxy(item)
             else:
@@ -309,9 +324,10 @@ class DictFieldWrapper:
         if isinstance(item, EmbeddedDocument):
             if self._parent_type == ParentType.DOCUMENT:
                 return EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
-                                    ParentType.DICT)
+                                       ParentType.DICT)
             else:
-                raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                raise NotImplementedError(
+                    "current implementation doesn't support nested embedded documents")
         elif isinstance(item, Document):
             return ModelProxy(item)
         else:
@@ -324,9 +340,10 @@ class DictFieldWrapper:
             if isinstance(item, EmbeddedDocument):
                 if self._parent_type == ParentType.DOCUMENT:
                     value = EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
-                                    ParentType.DICT)
+                                            ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 value = ModelProxy(item)
             else:
@@ -334,7 +351,7 @@ class DictFieldWrapper:
             key_val_pair = (key, value)
             items.append(key_val_pair)
         return items
-    
+
     def values(self):
         self._reload()
         values = []
@@ -342,20 +359,21 @@ class DictFieldWrapper:
             if isinstance(item, EmbeddedDocument):
                 if self._parent_type == ParentType.DOCUMENT:
                     value = EmbedModelProxy(item, self._parent, f"{self._dict_field_name}__{key}",
-                                    ParentType.DICT)
+                                            ParentType.DICT)
                 else:
-                    raise NotImplementedError("current implementation doesn't support nested embedded documents")
+                    raise NotImplementedError(
+                        "current implementation doesn't support nested embedded documents")
             elif isinstance(item, Document):
                 value = ModelProxy(item)
             else:
                 value = item
             values.append(value)
         return values
-    
+
     def keys(self):
         self._reload()
         return [key for key in self._dict_instance.keys()]
-            
+
     def _reload(self):
         if self._parent_type == ParentType.DOCUMENT:
             self._parent.reload(self._dict_field_name)
@@ -376,15 +394,16 @@ class DictFieldWrapper:
             embed_value = embed_map[self._parent_field_index]
             dict_value = getattr(embed_value, self._dict_field_name)
             self._test_and_fix_ref()
-        
+
         setattr(self, "_dict_instance", dict_value)
 
     def _test_and_fix_ref(self):
         # check if weak ref is broken in case of a nested embedded document
         try:
             hasattr(self._dict_instance._instance, "__weakref__")
-        except:
+        except Exception:
             self._dict_instance._instance = proxy(self._parent)
+
 
 class DictProxy:
     def __init__(self, dict_wrapper: DictFieldWrapper,   callable: Callable):
@@ -393,16 +412,16 @@ class DictProxy:
 
     def __getitem__(self, key):
         return self._callable(self._dict_wrapper.__getitem__(key))
-    
+
     def __setitem__(self, key, object):
         return self._dict_wrapper.__setitem__(key, object.model if object else None)
-    
+
     def __delitem__(self, key):
         return self._dict_wrapper.__delitem__(key)
-    
+
     def __len__(self):
         return self._dict_wrapper.__len__()
-    
+
     def __iter__(self):
         for key, value in self._dict_wrapper:
             yield key, self._callable(value)
@@ -415,4 +434,4 @@ class DictProxy:
         return [(key, self._callable(item)) for key, item in self._dict_wrapper.items()]
 
     def values(self):
-        return [self._callable(value) for value in self._dict_wrapper.values()]  
+        return [self._callable(value) for value in self._dict_wrapper.values()]

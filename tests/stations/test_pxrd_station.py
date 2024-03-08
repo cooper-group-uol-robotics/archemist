@@ -1,6 +1,4 @@
 import unittest
-from typing import List
-from datetime import datetime
 
 from mongoengine import connect
 from archemist.core.state.robot_op import (RobotTaskOp,
@@ -9,7 +7,7 @@ from archemist.core.state.robot_op import (RobotTaskOp,
                                            DropBatchOp)
 from archemist.stations.pxrd_station.state import (PXRDStation,
                                                    PXRDJobStatus,
-                                                   PXRDAnalysisOp, 
+                                                   PXRDAnalysisOp,
                                                    PXRDAnalysisResult)
 from archemist.stations.pxrd_station.process import PXRDWorkflowAnalysisProcess
 from archemist.stations.pxrd_station.handler import SimPXRDStationHandler
@@ -20,6 +18,7 @@ from archemist.core.util.enums import StationState, OpOutcome, ProcessStatus
 from archemist.core.util.location import Location
 from .testing_utils import test_req_robot_ops, test_req_station_op
 
+
 class PXRDStationTest(unittest.TestCase):
     def setUp(self):
         self._db_name = 'archemist_test'
@@ -28,12 +27,12 @@ class PXRDStationTest(unittest.TestCase):
         self.station_doc = {
             'type': 'PXRDStation',
             'id': 22,
-            'location': {'coordinates': [1,7], 'descriptor': "ChemSpeedFlexStation"},
+            'location': {'coordinates': [1, 7], 'descriptor': "ChemSpeedFlexStation"},
             'total_lot_capacity': 1,
             'handler': 'SimStationOpHandler',
             'materials': None,
             'properties': {
-                'doors_location': {'coordinates': [1,6], 'descriptor': "ChemSpeedFlexDoors"},
+                'doors_location': {'coordinates': [1, 6], 'descriptor': "ChemSpeedFlexDoors"},
             }
         }
 
@@ -48,7 +47,7 @@ class PXRDStationTest(unittest.TestCase):
         # test station is constructed properly
         self.assertIsNotNone(self.station)
         self.assertEqual(self.station.state, StationState.INACTIVE)
-        self.assertEqual(self.station.doors_location, Location.from_dict({'coordinates': [1,6], 'descriptor': "ChemSpeedFlexDoors"}))
+        self.assertEqual(self.station.doors_location, Location.from_dict({'coordinates': [1, 6], 'descriptor': "ChemSpeedFlexDoors"}))
 
         # construct lot and add it to station
         batch_1 = Batch.from_args(2)
@@ -67,7 +66,7 @@ class PXRDStationTest(unittest.TestCase):
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
         self.assertEqual(self.station.job_status, PXRDJobStatus.RUNNING_JOB)
-        
+
         # test PXRDAnalysisResult
         t_result = PXRDAnalysisResult.from_args(t_op.object_id, "some_file.xml")
         self.assertIsNotNone(t_result)
@@ -81,18 +80,18 @@ class PXRDStationTest(unittest.TestCase):
         batch_1 = Batch.from_args(2)
         batch_2 = Batch.from_args(2)
         lot = Lot.from_args([batch_1, batch_2])
-        
+
         # add lot to station
         self.station.add_lot(lot)
 
         # create station process
         operations = [
-                {
-                    "name": "analyse_op",
-                    "op": "PXRDAnalysisOp",
-                    "parameters": None
-                }
-            ]
+            {
+                "name": "analyse_op",
+                "op": "PXRDAnalysisOp",
+                "parameters": None
+            }
+        ]
         process = PXRDWorkflowAnalysisProcess.from_args(lot=lot,
                                                         eight_well_rack_first=True,
                                                         operations=operations)
@@ -112,7 +111,7 @@ class PXRDStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door')
         test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
-        
+
         # open_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door_update')
@@ -127,7 +126,7 @@ class PXRDStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door')
         test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
-        
+
         # close_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door_update')
@@ -142,7 +141,7 @@ class PXRDStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door')
         test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
-        
+
         # open_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'open_pxrd_door_update')
@@ -157,7 +156,7 @@ class PXRDStationTest(unittest.TestCase):
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door')
         test_req_robot_ops(self, process, [RobotTaskOp, RobotWaitOp])
-        
+
         # close_pxrd_door_update
         process.tick()
         self.assertEqual(process.m_state, 'close_pxrd_door_update')
@@ -185,7 +184,7 @@ class PXRDStationTest(unittest.TestCase):
         t_op = PXRDAnalysisOp.from_args(target_batch=batch_1)
         self.station.add_station_op(t_op)
         self.station.update_assigned_op()
-        
+
         outcome, op_results = handler.get_op_result()
         self.assertEqual(outcome, OpOutcome.SUCCEEDED)
         self.assertEqual(len(op_results), 1)
@@ -193,6 +192,7 @@ class PXRDStationTest(unittest.TestCase):
         self.assertTrue(isinstance(op_results[0], PXRDAnalysisResult))
         self.assertIsNotNone(op_results[0].result_filename)
         self.station.complete_assigned_op(outcome, op_results)
+
 
 if __name__ == '__main__':
     unittest.main()

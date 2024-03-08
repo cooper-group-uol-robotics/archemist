@@ -1,8 +1,9 @@
 from mongoengine import Document, EmbeddedDocument, fields, connect
 import uuid
-from archemist.core.persistence.models_proxy import *
+from archemist.core.persistence.models_proxy import ModelProxy
 
 import unittest
+
 
 class BarModel(Document):
     uuid = fields.UUIDField(binary=False, default=uuid.uuid4())
@@ -10,23 +11,25 @@ class BarModel(Document):
 
     meta = {'collection': 'models', 'db_alias': 'db_proxy'}
 
+
 class EmbedModel(EmbeddedDocument):
     num = fields.IntField(default=0)
     flag = fields.BooleanField(default=False)
     string = fields.StringField(null=True)
-    
+
     num_list = fields.ListField(fields.IntField(), default=[])
     a_dict = fields.DictField(default={})
-    
+
     doc = fields.ReferenceField(BarModel, null=True)
     docs = fields.ListField(fields.ReferenceField(BarModel), default=[])
+
 
 class FooModel(Document):
     uuid = fields.UUIDField(binary=False, default=uuid.uuid4())
     num = fields.IntField(default=0)
     flag = fields.BooleanField(default=False)
     string = fields.StringField(null=True)
-    
+
     num_list = fields.ListField(fields.IntField(), default=[])
     a_dict = fields.DictField(default={})
 
@@ -36,30 +39,31 @@ class FooModel(Document):
 
     doc = fields.ReferenceField(BarModel, null=True)
     docs = fields.ListField(fields.ReferenceField(BarModel), default=[])
-    dict_docs = fields.DictField(default={}) # MapField(ReferenceField) not working
+    dict_docs = fields.DictField(default={})  # MapField(ReferenceField) not working
 
     meta = {'collection': 'models', 'db_alias': 'db_proxy'}
+
 
 class TestDbProxy(unittest.TestCase):
     def setUp(self):
         self._client = connect(db="db_proxy_test", host="mongodb://localhost:27017", alias='db_proxy')
 
-        def clear_database(client, db_name:str):
+        def clear_database(client, db_name: str):
             coll_list = client[db_name].list_collection_names()
             for coll in coll_list:
                 client[db_name][coll].drop()
 
-        clear_database(self._client,"db_proxy_test")
+        clear_database(self._client, "db_proxy_test")
 
         # construct bar_wrapper
         self.bar_model: BarModel = BarModel()
-        self.bar_model.num_list = [1,2]
+        self.bar_model.num_list = [1, 2]
         self.bar_model.save()
         self.bar_wrapper = ModelProxy(self.bar_model)
 
         # construct baz_wrapper
         self.baz_model: BarModel = BarModel()
-        self.baz_model.num_list = [3,4]
+        self.baz_model.num_list = [3, 4]
         self.baz_model.save()
         self.baz_wrapper = ModelProxy(self.baz_model)
 
@@ -71,18 +75,18 @@ class TestDbProxy(unittest.TestCase):
 
         # construct foo_wrapper
         self.foo_model: FooModel = FooModel()
-        self.foo_model.num_list = [1,2,3]
-        self.foo_model.a_dict = {'a':1, 'b':2}
-        
+        self.foo_model.num_list = [1, 2, 3]
+        self.foo_model.a_dict = {'a': 1, 'b': 2}
+
         self.foo_model.save()
         self.foo_wrapper = ModelProxy(self.foo_model)
 
     def test_doc_simple_fields(self):
-        
+
         self.assertIsNotNone(self.foo_wrapper.object_id)
         self.assertEqual(self.foo_wrapper.object_id, self.foo_model.id)
         self.assertEqual(self.foo_wrapper.uuid, self.foo_model.uuid)
-        
+
         self.assertEqual(self.foo_wrapper.num, self.foo_model.num)
         self.foo_wrapper.num = 3
         self.assertEqual(self.foo_wrapper.num, 3)
@@ -99,16 +103,16 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(self.foo_wrapper.string, self.foo_model.string)
 
     def test_doc_list_field(self):
-        
+
         # test len operation
         self.assertEqual(len(self.foo_model.num_list), 3)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
-        
+
         # test get operation
-        num_list = [1,2,3]
+        num_list = [1, 2, 3]
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],num_list[i])
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test in operation
         self.assertIn(2, self.foo_wrapper.num_list)
@@ -117,9 +121,9 @@ class TestDbProxy(unittest.TestCase):
         # test set operation
         self.foo_wrapper.num_list[1] = 55
         self.foo_model.reload()
-        self.assertEqual(self.foo_model.num_list[1],55)
+        self.assertEqual(self.foo_model.num_list[1], 55)
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test append operation
         self.foo_wrapper.num_list.append(9)
@@ -128,7 +132,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(self.foo_model.num_list[-1], 9)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test pop operation
         num = self.foo_wrapper.num_list.pop()
@@ -137,7 +141,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.num_list), 3)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])#
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test pop left operation
         num = self.foo_wrapper.num_list.pop(True)
@@ -146,19 +150,19 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.num_list), 2)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test iterator
         for index, num in enumerate(self.foo_wrapper.num_list):
             self.assertEqual(num, self.foo_model.num_list[index])
 
         # test extend operation
-        self.foo_wrapper.num_list.extend([4,5])
+        self.foo_wrapper.num_list.extend([4, 5])
         self.foo_model.reload()
         self.assertEqual(len(self.foo_model.num_list), 4)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
         # test remove operation
         self.foo_wrapper.num_list.remove(4)
@@ -169,15 +173,15 @@ class TestDbProxy(unittest.TestCase):
         self.assertNotIn(4, self.foo_model.num_list)
         self.assertEqual(len(self.foo_wrapper.num_list), len(self.foo_model.num_list))
         for i in range(len(self.foo_model.num_list)):
-            self.assertEqual(self.foo_wrapper.num_list[i],self.foo_model.num_list[i])
+            self.assertEqual(self.foo_wrapper.num_list[i], self.foo_model.num_list[i])
 
     def test_doc_dict_field(self):
         # test len operation
         self.assertEqual(len(self.foo_model.a_dict), 2)
         self.assertEqual(len(self.foo_wrapper.a_dict), len(self.foo_model.a_dict))
-        
+
         # test __get__ operation
-        a_dict = {'a':1, 'b':2}
+        a_dict = {'a': 1, 'b': 2}
         for key in a_dict.keys():
             self.assertEqual(self.foo_wrapper.a_dict[key], a_dict[key])
             self.assertEqual(self.foo_wrapper.a_dict[key], self.foo_model.a_dict[key])
@@ -192,25 +196,25 @@ class TestDbProxy(unittest.TestCase):
         self.foo_model.reload()
         self.assertEqual(self.foo_model.a_dict['c'], 3)
         for k, v in self.foo_model.a_dict.items():
-            self.assertEqual(self.foo_wrapper.a_dict[k],v)
+            self.assertEqual(self.foo_wrapper.a_dict[k], v)
 
         # test set existing key operation
         self.foo_wrapper.a_dict['c'] = 55
         self.foo_model.reload()
         self.assertEqual(self.foo_model.a_dict['c'], 55)
         for k, v in self.foo_model.a_dict.items():
-            self.assertEqual(self.foo_wrapper.a_dict[k],v)
+            self.assertEqual(self.foo_wrapper.a_dict[k], v)
 
         # test del operation
         del self.foo_wrapper.a_dict['c']
         self.foo_model.reload()
         self.assertNotIn('c', self.foo_model.a_dict.keys())
         for k, v in self.foo_model.a_dict.items():
-            self.assertEqual(self.foo_wrapper.a_dict[k],v)
+            self.assertEqual(self.foo_wrapper.a_dict[k], v)
 
         # test iterator
         self.assertEqual(len(self.foo_wrapper.a_dict), 2)
-        for k,v in self.foo_wrapper.a_dict:
+        for k, v in self.foo_wrapper.a_dict:
             self.assertEqual(a_dict[k], v)
 
         # test items
@@ -264,8 +268,8 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.docs), 3)
         self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
         for i in range(len(self.foo_model.docs)):
-            self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)
-        
+            self.assertEqual(self.foo_wrapper.docs[i].uuid, self.foo_model.docs[i].uuid)
+
         # test get operation
         bar_wrapper = self.foo_wrapper.docs[0]
         self.assertEqual(bar_wrapper.uuid, self.bar_model.uuid)
@@ -295,7 +299,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.docs), 2)
         self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
         for i in range(len(self.foo_model.docs)):
-            self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)
+            self.assertEqual(self.foo_wrapper.docs[i].uuid, self.foo_model.docs[i].uuid)
 
         # test iterator
         for index, item in enumerate(self.foo_wrapper.docs):
@@ -307,7 +311,7 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.docs), 4)
         self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
         for i in range(len(self.foo_model.docs)):
-            self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)
+            self.assertEqual(self.foo_wrapper.docs[i].uuid, self.foo_model.docs[i].uuid)
 
         # test remove operation
         self.foo_wrapper.docs.remove(self.bar_model)
@@ -315,20 +319,19 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(len(self.foo_model.docs), 3)
         self.assertEqual(len(self.foo_wrapper.docs), len(self.foo_model.docs))
         for i in range(len(self.foo_model.docs)):
-            self.assertEqual(self.foo_wrapper.docs[i].uuid,self.foo_model.docs[i].uuid)
+            self.assertEqual(self.foo_wrapper.docs[i].uuid, self.foo_model.docs[i].uuid)
 
     def test_doc_reference_map(self):
         # test empty dict
         self.assertEqual(len(self.foo_model.dict_docs), 0)
-        
+
         # test set operation
         self.foo_wrapper.dict_docs['a'] = self.bar_model
         self.foo_wrapper.dict_docs['b'] = self.baz_model
         self.foo_model.reload()
         self.assertEqual(len(self.foo_model.dict_docs), 2)
         self.assertEqual(len(self.foo_model.dict_docs), len(self.foo_wrapper.dict_docs))
-        
-        
+
         # test __get__ operation
         bar_wrapper = self.foo_wrapper.dict_docs['a']
         self.assertEqual(bar_wrapper.uuid, self.bar_model.uuid)
@@ -376,7 +379,7 @@ class TestDbProxy(unittest.TestCase):
         self.foo_model.reload()
         self.assertNotIn('b', self.foo_model.dict_docs.keys())
         for k, v in self.foo_model.dict_docs.items():
-            self.assertEqual(self.foo_wrapper.dict_docs[k].uuid,v.uuid)
+            self.assertEqual(self.foo_wrapper.dict_docs[k].uuid, v.uuid)
 
     def test_embedded_doc_simple_fields(self):
         # test field is empty
@@ -394,8 +397,8 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(embed.string, "em")
         self.assertEqual(embed.num, 0)
         self.assertEqual(embed.flag, False)
-        self.assertEqual(len(embed.num_list),0)
-        self.assertEqual(len(embed.a_dict),0)
+        self.assertEqual(len(embed.num_list), 0)
+        self.assertEqual(len(embed.a_dict), 0)
 
         # test modifying non-collection fields
         embed.string = "how"
@@ -428,10 +431,10 @@ class TestDbProxy(unittest.TestCase):
         # append + extend test
         embed.num_list.append(1)
         embed.num_list.append(2)
-        embed.num_list.extend([3,4])
+        embed.num_list.extend([3, 4])
         self.foo_model.reload("embed")
-        self.assertEqual(len(self.foo_model.embed.num_list),4)
-        
+        self.assertEqual(len(self.foo_model.embed.num_list), 4)
+
         # get + len test
         for i in range(len(embed.num_list)):
             self.assertEqual(self.foo_model.embed.num_list[i], embed.num_list[i])
@@ -443,12 +446,12 @@ class TestDbProxy(unittest.TestCase):
 
         # pop test
         num = embed.num_list.pop()
-        self.assertEqual(num,4)
+        self.assertEqual(num, 4)
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.num_list), 3)
         self.assertEqual(self.foo_model.embed.num_list[-1], 3)
         left_num = embed.num_list.pop(True)
-        self.assertEqual(left_num,1)
+        self.assertEqual(left_num, 1)
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.num_list), 2)
         self.assertEqual(self.foo_model.embed.num_list[0], 123)
@@ -458,7 +461,7 @@ class TestDbProxy(unittest.TestCase):
             self.assertEqual(num, self.foo_model.embed.num_list[index])
 
         # set the whole list
-        embed.num_list = [5,6,7]
+        embed.num_list = [5, 6, 7]
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.num_list), 3)
         for index, num in enumerate(embed.num_list):
@@ -468,7 +471,7 @@ class TestDbProxy(unittest.TestCase):
         self.foo_wrapper.embed = self.embedded_model
         self.foo_model.reload()
         embed = self.foo_wrapper.embed
-        
+
         # get + len test
         self.assertEqual(len(embed.docs), 2)
         self.assertEqual(embed.docs[0].uuid, self.bar_model.uuid)
@@ -478,7 +481,7 @@ class TestDbProxy(unittest.TestCase):
         embed.docs.append(self.bar_model)
         embed.docs.extend([self.baz_model])
         self.foo_model.reload("embed")
-        self.assertEqual(len(self.foo_model.embed.docs),4)
+        self.assertEqual(len(self.foo_model.embed.docs), 4)
 
         # set test
         embed.docs[3] = self.bar_model
@@ -487,12 +490,12 @@ class TestDbProxy(unittest.TestCase):
 
         # pop test
         doc = embed.docs.pop()
-        self.assertEqual(doc.uuid,self.bar_model.uuid)
+        self.assertEqual(doc.uuid, self.bar_model.uuid)
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.docs), 3)
         self.assertEqual(self.foo_model.embed.docs[-1].uuid, self.bar_model.uuid)
         left_doc = embed.docs.pop(True)
-        self.assertEqual(left_doc.uuid,self.bar_model.uuid)
+        self.assertEqual(left_doc.uuid, self.bar_model.uuid)
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.docs), 2)
         self.assertEqual(self.foo_model.embed.docs[0].uuid, self.baz_model.uuid)
@@ -512,31 +515,31 @@ class TestDbProxy(unittest.TestCase):
         self.foo_wrapper.embed = self.embedded_model
         self.foo_model.reload()
         embed = self.foo_wrapper.embed
-        
+
         # test set operation
         embed.a_dict['a'] = 1
         embed.a_dict['b'] = 2
-        
+
         # test len operation
         self.foo_model.reload("embed")
         self.assertEqual(len(self.foo_model.embed.a_dict), 2)
 
         # test __get__ operation
-        a_dict = {'a':1, 'b':2}
+        a_dict = {'a': 1, 'b': 2}
         for k, v in self.foo_model.embed.a_dict.items():
-            self.assertEqual(embed.a_dict[k],v)
+            self.assertEqual(embed.a_dict[k], v)
 
         # test get operation
-        self.assertEqual(embed.a_dict.get('a'),a_dict['a'])
+        self.assertEqual(embed.a_dict.get('a'), a_dict['a'])
         self.assertIsNone(embed.a_dict.get('c'))
         self.assertEqual(embed.a_dict.get('c', 24), 24)
 
         # test iterator
-        for k,v in embed.a_dict:
+        for k, v in embed.a_dict:
             self.assertEqual(self.foo_model.embed.a_dict[k], v)
 
         # test items
-        for k,v in embed.a_dict.items():
+        for k, v in embed.a_dict.items():
             self.assertEqual(self.foo_model.embed.a_dict[k], v)
 
         # test keys
@@ -546,9 +549,8 @@ class TestDbProxy(unittest.TestCase):
 
         # test values
         embed_dict_values = list(self.foo_model.embed.a_dict.values())
-        for i,v in enumerate(embed.a_dict.values()):
+        for i, v in enumerate(embed.a_dict.values()):
             self.assertEqual(embed_dict_values[i], v)
-
 
         # test set existing key operation
         embed.a_dict['b'] = 55
@@ -616,8 +618,8 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(embed.string, "em")
         self.assertEqual(embed.num, 0)
         self.assertEqual(embed.flag, False)
-        self.assertEqual(len(embed.num_list),0)
-        self.assertEqual(len(embed.a_dict),0)
+        self.assertEqual(len(embed.num_list), 0)
+        self.assertEqual(len(embed.a_dict), 0)
 
         # test modifying non-collection fields
         embed.string = "how"
@@ -656,10 +658,10 @@ class TestDbProxy(unittest.TestCase):
         # append + extend test
         embed.num_list.append(1)
         embed.num_list.append(2)
-        embed.num_list.extend([3,4])
+        embed.num_list.extend([3, 4])
         self.foo_model.reload("embed_list")
-        self.assertEqual(len(self.foo_model.embed_list[1].num_list),4)
-        
+        self.assertEqual(len(self.foo_model.embed_list[1].num_list), 4)
+
         # get + len test
         for i in range(len(embed.num_list)):
             self.assertEqual(self.foo_model.embed_list[1].num_list[i], embed.num_list[i])
@@ -671,12 +673,12 @@ class TestDbProxy(unittest.TestCase):
 
         # pop test
         num = embed.num_list.pop()
-        self.assertEqual(num,4)
+        self.assertEqual(num, 4)
         self.foo_model.reload("embed_list")
         self.assertEqual(len(self.foo_model.embed_list[1].num_list), 3)
         self.assertEqual(self.foo_model.embed_list[1].num_list[-1], 3)
         left_num = embed.num_list.pop(True)
-        self.assertEqual(left_num,1)
+        self.assertEqual(left_num, 1)
         self.foo_model.reload("embed_list")
         self.assertEqual(len(self.foo_model.embed_list[1].num_list), 2)
         self.assertEqual(self.foo_model.embed_list[1].num_list[0], 123)
@@ -686,7 +688,7 @@ class TestDbProxy(unittest.TestCase):
             self.assertEqual(num, self.foo_model.embed_list[1].num_list[index])
 
         # set the whole list
-        embed.num_list = [5,6,7]
+        embed.num_list = [5, 6, 7]
         self.foo_model.reload("embed_list")
         self.assertEqual(len(self.foo_model.embed_list[1].num_list), 3)
         for index, num in enumerate(embed.num_list):
@@ -704,23 +706,22 @@ class TestDbProxy(unittest.TestCase):
         embed = embed_list[1]
 
         # test set operation
-        
+
         embed.a_dict['a'] = 1
         embed.a_dict['b'] = 2
-        
+
         # test len operation
         self.foo_model.reload("embed_list")
         self.assertEqual(len(self.foo_model.embed_list[1].a_dict), 2)
-        
+
         # test get operation
-        a_dict = {'a':1, 'b':2}
+        # a_dict = {'a': 1, 'b': 2}
         for k, v in self.foo_model.embed_list[1].a_dict.items():
-            self.assertEqual(embed.a_dict[k],v)
+            self.assertEqual(embed.a_dict[k], v)
 
         # test iterator
-        for k,v in embed.a_dict:
+        for k, v in embed.a_dict:
             self.assertEqual(self.foo_model.embed_list[1].a_dict[k], v)
-
 
         # test set existing key operation
         embed.a_dict['b'] = 55
@@ -748,8 +749,8 @@ class TestDbProxy(unittest.TestCase):
         self.assertEqual(embed.string, "em")
         self.assertEqual(embed.num, 0)
         self.assertEqual(embed.flag, False)
-        self.assertEqual(len(embed.num_list),0)
-        self.assertEqual(len(embed.a_dict),0)
+        self.assertEqual(len(embed.num_list), 0)
+        self.assertEqual(len(embed.a_dict), 0)
 
         # test modifying non-collection fields
         embed.string = "how"
@@ -788,10 +789,10 @@ class TestDbProxy(unittest.TestCase):
         # append + extend test
         embed.num_list.append(1)
         embed.num_list.append(2)
-        embed.num_list.extend([3,4])
+        embed.num_list.extend([3, 4])
         self.foo_model.reload("a_map")
-        self.assertEqual(len(self.foo_model.a_map['b'].num_list),4)
-        
+        self.assertEqual(len(self.foo_model.a_map['b'].num_list), 4)
+
         # get + len test
         for i in range(len(embed.num_list)):
             self.assertEqual(self.foo_model.a_map['b'].num_list[i], embed.num_list[i])
@@ -803,12 +804,12 @@ class TestDbProxy(unittest.TestCase):
 
         # pop test
         num = embed.num_list.pop()
-        self.assertEqual(num,4)
+        self.assertEqual(num, 4)
         self.foo_model.reload("a_map")
         self.assertEqual(len(self.foo_model.a_map['b'].num_list), 3)
         self.assertEqual(self.foo_model.a_map['b'].num_list[-1], 3)
         left_num = embed.num_list.pop(True)
-        self.assertEqual(left_num,1)
+        self.assertEqual(left_num, 1)
         self.foo_model.reload("a_map")
         self.assertEqual(len(self.foo_model.a_map['b'].num_list), 2)
         self.assertEqual(self.foo_model.a_map['b'].num_list[0], 123)
@@ -818,7 +819,7 @@ class TestDbProxy(unittest.TestCase):
             self.assertEqual(num, self.foo_model.a_map['b'].num_list[index])
 
         # set the whole list
-        embed.num_list = [5,6,7]
+        embed.num_list = [5, 6, 7]
         self.foo_model.reload("a_map")
         self.assertEqual(len(self.foo_model.a_map['b'].num_list), 3)
         for index, num in enumerate(embed.num_list):
@@ -838,20 +839,19 @@ class TestDbProxy(unittest.TestCase):
         # test set operation
         embed.a_dict['a'] = 1
         embed.a_dict['b'] = 2
-        
+
         # test len operation
         self.foo_model.reload("a_map")
         self.assertEqual(len(self.foo_model.a_map['b'].a_dict), 2)
 
         # test get operation
-        a_dict = {'a':1, 'b':2}
+        # a_dict = {'a': 1, 'b': 2}
         for k, v in self.foo_model.a_map['b'].a_dict.items():
-            self.assertEqual(embed.a_dict[k],v)
+            self.assertEqual(embed.a_dict[k], v)
 
         # test iterator
-        for k,v in embed.a_dict:
+        for k, v in embed.a_dict:
             self.assertEqual(self.foo_model.a_map['b'].a_dict[k], v)
-
 
         # test set existing key operation
         embed.a_dict['b'] = 55
@@ -862,6 +862,7 @@ class TestDbProxy(unittest.TestCase):
         del embed.a_dict['b']
         self.foo_model.reload("a_map")
         self.assertNotIn('b', self.foo_model.a_map['b'].a_dict.keys())
+
 
 if __name__ == "__main__":
     unittest.main()
