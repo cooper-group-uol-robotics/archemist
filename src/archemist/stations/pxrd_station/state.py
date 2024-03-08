@@ -11,6 +11,8 @@ from archemist.core.util.location import Location
 from typing import List, Dict, Union, Type
 
 ''' ==== Station Description ==== '''
+
+
 class PXRDStation(Station):
     def __init__(self, station_model: Union[PXRDStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -19,7 +21,8 @@ class PXRDStation(Station):
     def from_dict(cls, station_dict: Dict):
         model = PXRDStationModel()
         cls._set_model_common_fields(model, station_dict)
-        model.doors_location = Location.from_dict(station_dict['properties']['doors_location']).model
+        model.doors_location = Location.from_dict(
+            station_dict['properties']['doors_location']).model
         model.save()
         return cls(model)
 
@@ -34,11 +37,11 @@ class PXRDStation(Station):
     @property
     def door_closed(self) -> bool:
         return self._model_proxy.door_closed
-    
+
     @door_closed.setter
     def door_closed(self, closed: bool):
         self._model_proxy.door_closed = closed
-    
+
     @property
     def doors_location(self) -> Location:
         return Location(self._model_proxy.doors_location)
@@ -55,7 +58,9 @@ class PXRDStation(Station):
             self.job_status = PXRDJobStatus.JOB_COMPLETE
         super().complete_assigned_op(outcome, results)
 
+
 ''' ==== Station Operation Descriptors ==== '''
+
 
 class PXRDAnalysisOp(StationBatchOp):
     def __init__(self, op_model: StationBatchOpModel):
@@ -65,10 +70,12 @@ class PXRDAnalysisOp(StationBatchOp):
     def from_args(cls, target_batch: Batch):
         model = StationBatchOpModel()
         model.target_batch = target_batch.model
-        cls._set_model_common_fields(model, associated_station=PXRDStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=PXRDStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class PXRDAnalysisResult(StationOpResult):
     def __init__(self, result_model: Union[PXRDAnalysisResultModel, ModelProxy]):
         super().__init__(result_model)

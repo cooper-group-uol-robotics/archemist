@@ -1,19 +1,23 @@
 from enum import Enum, auto
 
+
 class RobotState(Enum):
     INACTIVE = auto()
     ACTIVE = auto()
     ERROR = auto()
+
 
 class MobileRobotMode(Enum):
     OPERATIONAL = auto()
     COOLDOWN = auto()
     MAINTENANCE = auto()
 
+
 class StationState(Enum):
     INACTIVE = auto()
     ACTIVE = auto()
     ERROR = auto()
+
 
 class OpState(Enum):
     INVALID = auto()
@@ -22,10 +26,12 @@ class OpState(Enum):
     TO_BE_REPEATED = auto()
     TO_BE_SKIPPED = auto()
 
+
 class OpOutcome(Enum):
     SUCCEEDED = auto()
     FAILED = auto()
     SKIPPED = auto()
+
 
 class ProcessStatus(Enum):
     INACTIVE = auto()
@@ -38,6 +44,7 @@ class ProcessStatus(Enum):
     WAITING_ON_STATION_PROCS = auto()
     FINISHED = auto()
 
+
 class LotStatus(Enum):
     CREATED = auto()
     STANDBY = auto()
@@ -48,6 +55,7 @@ class LotStatus(Enum):
     OFFBOARDING = auto()
     NEED_REMOVAL = auto()
     FINISHED = auto()
+
 
 class WorkflowManagerStatus(Enum):
     INVALID = auto()

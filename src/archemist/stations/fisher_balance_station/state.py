@@ -10,10 +10,12 @@ from typing import Dict, Union, Literal
 from bson.objectid import ObjectId
 
 ''' ==== Station Description ==== '''
+
+
 class FisherWeightingStation(Station):
-    def __init__(self, station_model: Union[StationModel,ModelProxy]) -> None:
+    def __init__(self, station_model: Union[StationModel, ModelProxy]) -> None:
         super().__init__(station_model)
-    
+
     @classmethod
     def from_dict(cls, station_dict: Dict):
         model = StationModel()
@@ -21,7 +23,10 @@ class FisherWeightingStation(Station):
         model.save()
         return cls(model)
 
+
 ''' ==== Station Operation Descriptors ==== '''
+
+
 class FisherWeighOp(StationSampleOp):
     def __init__(self, op_model: StationSampleOpModel):
         super().__init__(op_model)
@@ -30,9 +35,11 @@ class FisherWeighOp(StationSampleOp):
     def from_args(cls, target_sample: Sample):
         model = StationSampleOpModel()
         model.target_sample = target_sample.model
-        cls._set_model_common_fields(model, associated_station=FisherWeightingStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=FisherWeightingStation.__name__)
         model.save()
         return cls(model)
+
 
 class FisherWeighResult(StationOpResult):
     def __init__(self, result_model: Union[FisherWeighResultModel, ModelProxy]):
@@ -57,4 +64,3 @@ class FisherWeighResult(StationOpResult):
     @property
     def unit(self) -> Literal["g", "mg", "ug"]:
         return self._model_proxy.unit
-

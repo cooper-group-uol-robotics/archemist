@@ -6,6 +6,7 @@ from archemist.core.processing.handler import StationOpHandler, SimStationOpHand
 from archemist.core.util.enums import OpOutcome
 from archemist.core.state.station_op_result import ProcessOpResult
 
+
 class SimShakePlateHandler(SimStationOpHandler):
     def __init__(self, station: Station):
         super().__init__(station)
@@ -14,16 +15,16 @@ class SimShakePlateHandler(SimStationOpHandler):
         current_op = self._station.assigned_op
         parameters = {}
         if isinstance(current_op, ShakerPlateOp):
-            parameters["duration"]  = current_op.duration
-            parameters["time_unit"]  = current_op.time_unit
+            parameters["duration"] = current_op.duration
+            parameters["time_unit"] = current_op.time_unit
         op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
-                                                parameters=parameters)
+                                              parameters=parameters)
         return OpOutcome.SUCCEEDED, [op_result]
 
 
 try:
     import rospy
-    from shaker_plate_msgs.msg import ShakerCommand,ShakerStatus
+    from shaker_plate_msgs.msg import ShakerCommand, ShakerStatus
 
     class ShakePlateROSHandler(StationOpHandler):
         def __init__(self, station: Station):
@@ -35,8 +36,10 @@ try:
             self._start_time = -1
             self._task_finished = False
             rospy.init_node(f'{self._station}_handler')
-            self._shaker_plate_pu = rospy.Publisher("/shaker_plate/command", ShakerCommand, queue_size=1)
-            rospy.Subscriber('/shaker_plate/status', ShakerStatus, self._state_update, queue_size=1)
+            self._shaker_plate_pu = rospy.Publisher(
+                "/shaker_plate/command", ShakerCommand, queue_size=1)
+            rospy.Subscriber('/shaker_plate/status', ShakerStatus,
+                             self._state_update, queue_size=1)
             rospy.sleep(1)
             return True
 
@@ -52,14 +55,16 @@ try:
                 if current_op.time_unit == "second":
                     self.total_seconds = current_op.duration,
                 elif current_op.time_unit == "minute":
-                    self.total_seconds = current_op.duration,*60
+                    self.total_seconds = current_op.duration, *60
                 elif current_op.time_unit == "hour":
-                    self.total_seconds = current_op.duration,*60*60
-                msg = ShakerCommand(shake_duration=current_op.self.total_seconds, task_seq=self._task_seq)
+                    self.total_seconds = current_op.duration, *60*60
+                msg = ShakerCommand(
+                    shake_duration=current_op.self.total_seconds, task_seq=self._task_seq)
                 for i in range(10):
                     self._shaker_plate_pu.publish(msg)
             else:
-                rospy.logwarn(f'[{self.__class__.__name__}] Unkown operation was received')
+                rospy.logwarn(
+                    f'[{self.__class__.__name__}] Unkown operation was received')
 
         def is_op_execution_complete(self) -> bool:
             return self._task_finished
@@ -68,8 +73,8 @@ try:
             current_op = self._station.assigned_op
             parameters = {}
             if isinstance(current_op, ShakerPlateOp):
-                parameters["duration"]  = current_op.duration
-                parameters["time_unit"]  = current_op.time_unit
+                parameters["duration"] = current_op.duration
+                parameters["time_unit"] = current_op.time_unit
             op_result = ProcessOpResult.from_args(origin_op=current_op.object_id,
                                                   parameters=parameters)
             return OpOutcome.SUCCEEDED, [op_result]

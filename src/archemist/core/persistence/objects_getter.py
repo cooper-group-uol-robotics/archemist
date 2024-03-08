@@ -19,62 +19,69 @@ from typing import List, Type
 from multipledispatch import dispatch
 from bson.objectid import ObjectId
 
+
 class MaterialsGetter:
     @staticmethod
     def get_liquids() -> List[Liquid]:
         return [Liquid(model) for model in LiquidMaterialModel.objects]
-    
+
     @staticmethod
     def get_solids() -> List[Solid]:
         return [Solid(model) for model in SolidMaterialModel.objects]
-    
+
+
 class StationsGetter:
     # this is needed to query derived stations models
     import_stations_models()
-    
+
     @staticmethod
-    def get_stations(station_type: str=None) -> List[Type[Station]]:
+    def get_stations(station_type: str = None) -> List[Type[Station]]:
         stations_list = []
         if station_type:
-            stations_list = [StationFactory.create_from_model(model) for model in StationModel.objects(_type=station_type)]
+            stations_list = [StationFactory.create_from_model(
+                model) for model in StationModel.objects(_type=station_type)]
         else:
-            stations_list = [StationFactory.create_from_model(model) for model in StationModel.objects]
-        
+            stations_list = [StationFactory.create_from_model(
+                model) for model in StationModel.objects]
+
         return stations_list
-    
+
     @dispatch(ObjectId)
     def get_station(object_id: ObjectId) -> Type[Station]:
         return StationFactory.create_from_object_id(object_id)
-    
+
     @dispatch(str)
     def get_station(station_type: str) -> Type[Station]:
         model = StationModel.objects(_type=station_type).first()
-        return StationFactory.create_from_model(model) 
+        return StationFactory.create_from_model(model)
 
     @dispatch(int, str)
     def get_station(station_id: int, station_type: str) -> Type[Station]:
-        model = StationModel.objects.get(_type=station_type,exp_id=station_id)
+        model = StationModel.objects.get(_type=station_type, exp_id=station_id)
         if model is not None:
             return StationFactory.create_from_model(model)
-        
+
+
 class RobotsGetter:
-     # this is needed to query derived robots models
+    # this is needed to query derived robots models
     import_robots_models()
 
     @staticmethod
-    def get_robots(robot_type: str=None) -> List[Type[Robot]]:
+    def get_robots(robot_type: str = None) -> List[Type[Robot]]:
         robots_list = []
         if robot_type:
-            robots_list = [RobotFactory.create_from_model(model) for model in RobotModel.objects(_type=robot_type)]
+            robots_list = [RobotFactory.create_from_model(
+                model) for model in RobotModel.objects(_type=robot_type)]
         else:
-            robots_list = [RobotFactory.create_from_model(model) for model in RobotModel.objects]
-        
+            robots_list = [RobotFactory.create_from_model(
+                model) for model in RobotModel.objects]
+
         return robots_list
-    
+
     @dispatch(ObjectId)
     def get_robot(object_id: ObjectId) -> Type[Robot]:
         return RobotFactory.create_from_object_id(object_id)
-    
+
     @dispatch(str)
     def get_robot(robot_type: str) -> Type[Robot]:
         model = RobotModel.objects(_type=robot_type).first()
@@ -82,15 +89,16 @@ class RobotsGetter:
 
     @dispatch(int, str)
     def get_robot(robot_id: int, robot_type: str) -> Type[Robot]:
-        model = RobotModel.objects.get(_type=robot_type,exp_id=robot_id)
+        model = RobotModel.objects.get(_type=robot_type, exp_id=robot_id)
         if model is not None:
             return RobotFactory.create_from_model(model)
-        
+
+
 class LotsGetter:
     @staticmethod
     def get_lots() -> List[Lot]:
         return [Lot(model) for model in LotModel.objects]
-    
+
     @staticmethod
     def get_finished_lots() -> List[Lot]:
         return [Lot(model) for model in LotModel.objects(status=LotStatus.FINISHED)]
@@ -100,12 +108,14 @@ class LotsGetter:
         model = LotModel.objects(batches=batch.model).first()
         if model is not None:
             return Lot(model)
-    
+
+
 class BatchesGetter:
     @staticmethod
     def get_batches() -> List[Batch]:
         return [Batch(model) for model in BatchModel.objects]
-    
+
+
 class RecipesGetter:
     @staticmethod
     def get_recipes() -> List[Recipe]:
@@ -114,7 +124,8 @@ class RecipesGetter:
     @staticmethod
     def recipe_exists(exp_id: int) -> bool:
         return bool(RecipeModel.objects(exp_id=exp_id))
-    
+
+
 class StateGetter:
     @staticmethod
     def get_input_state() -> InputState:
@@ -125,7 +136,7 @@ class StateGetter:
     def get_workflow_state() -> WorkflowState:
         model = WorkflowStateModel.objects(_type="WorkflowStateModel").first()
         return WorkflowState(model)
-    
+
     @staticmethod
     def get_output_state() -> OutputState:
         model = OutputStateModel.objects(_type="OutputStateModel").first()

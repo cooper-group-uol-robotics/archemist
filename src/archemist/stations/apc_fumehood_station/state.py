@@ -7,6 +7,7 @@ from archemist.core.state.sample import Sample
 from archemist.core.state.station_op_result import StationOpResult
 from archemist.core.util.enums import OpOutcome
 
+
 class APCCartridge:
     def __init__(self, cartridge_model: Union[APCCartridgeModel, EmbedModelProxy]):
         self._model_proxy = cartridge_model
@@ -41,6 +42,7 @@ class APCCartridge:
     def depleted(self, is_depleted: bool):
         self._model_proxy.depleted = is_depleted
 
+
 class APCFumehoodStation(Station):
     def __init__(self, station_model: Union[APCFumehoodStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -54,7 +56,7 @@ class APCFumehoodStation(Station):
             model.cartridges.append(cartridge.model)
         model.save()
         return cls(model)
-    
+
     @property
     def cartridges(self) -> List[APCCartridge]:
         return ListProxy(self._model_proxy.cartridges, APCCartridge)
@@ -99,6 +101,7 @@ class APCFumehoodStation(Station):
     def unload_cartridge(self):
         self._model_proxy.loaded_cartridge_index = None
 
+
 class APCDispenseSolidOp(StationSampleOp):
     def __init__(self, op_model: Union[APCDispenseSolidOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -110,7 +113,8 @@ class APCDispenseSolidOp(StationSampleOp):
                   dispense_mass: float,
                   dispense_unit: Literal["g", "mg", "ug"]):
         model = APCDispenseSolidOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.target_sample = target_sample.model
         model.solid_name = solid_name
         model.dispense_mass = float(dispense_mass)
@@ -129,7 +133,8 @@ class APCDispenseSolidOp(StationSampleOp):
     @property
     def dispense_unit(self) -> Literal["g", "mg", "ug"]:
         return self._model_proxy.dispense_unit
-    
+
+
 class APCOpenSashOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -137,10 +142,12 @@ class APCOpenSashOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.save()
         return cls(model)
-    
+
+
 class APCCloseSashOp(StationOp):
     def __init__(self, op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -148,6 +155,7 @@ class APCCloseSashOp(StationOp):
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=APCFumehoodStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=APCFumehoodStation.__name__)
         model.save()
         return cls(model)

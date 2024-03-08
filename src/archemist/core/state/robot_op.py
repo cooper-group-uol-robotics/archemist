@@ -21,7 +21,7 @@ class RobotOp:
             self._model_proxy = op_model
         else:
             self._model_proxy = ModelProxy(op_model)
-        
+
     @classmethod
     def _set_model_common_fields(cls, op_model: RobotOpModel, target_robot: str):
         op_model.target_robot = target_robot
@@ -38,7 +38,7 @@ class RobotOp:
     @property
     def model(self) -> RobotOpModel:
         return self._model_proxy.model
-    
+
     @property
     def object_id(self) -> ObjectId:
         return self._model_proxy.object_id
@@ -66,7 +66,7 @@ class RobotOp:
     @property
     def start_timestamp(self) -> datetime:
         return self._model_proxy.start_timestamp
-    
+
     @start_timestamp.setter
     def start_timestamp(self, new_start_timestamp: datetime):
         self._model_proxy.start_timestamp = new_start_timestamp
@@ -74,7 +74,7 @@ class RobotOp:
     @property
     def end_timestamp(self) -> datetime:
         return self._model_proxy.end_timestamp
-    
+
     @end_timestamp.setter
     def end_timestamp(self, new_end_timestamp: datetime):
         self._model_proxy.end_timestamp = new_end_timestamp
@@ -90,6 +90,7 @@ class RobotOp:
     def __eq__(self, __value: object) -> bool:
         return self.object_id == __value.object_id
 
+
 class RobotTaskOp(RobotOp):
     def __init__(self, op_model: Union[RobotTaskOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -97,10 +98,10 @@ class RobotTaskOp(RobotOp):
     @classmethod
     def from_args(cls, name: str,
                   target_robot: str,
-                  params: Dict={},
-                  target_location: Location=None,
-                  requested_by: ObjectId()=None,
-                  target_batch: Batch=None
+                  params: Dict = {},
+                  target_location: Location = None,
+                  requested_by: ObjectId() = None,
+                  target_batch: Batch = None
                   ):
         model = RobotTaskOpModel()
         cls._set_model_common_fields(model, target_robot)
@@ -112,7 +113,7 @@ class RobotTaskOp(RobotOp):
         model.target_batch = target_batch.model if target_batch else None
         model.save()
         return cls(model)
-    
+
     @property
     def name(self) -> str:
         return self._model_proxy.name
@@ -123,15 +124,15 @@ class RobotTaskOp(RobotOp):
 
     @property
     def target_location(self) -> Location:
-            return Location(self._model_proxy.target_location)
-        
+        return Location(self._model_proxy.target_location)
+
     @target_location.setter
     def target_location(self, new_location: Location):
         if isinstance(new_location, Location):
             self._model_proxy.target_location = new_location.model
         else:
             raise ValueError
-        
+
     @property
     def target_batch(self) -> Batch:
         if self._model_proxy.target_batch:
@@ -151,7 +152,8 @@ class RobotTaskOp(RobotOp):
         params = dict(self.params) if self.params else None
         return f'{self.__class__.__name__} - name: {self.name} - target:{self.target_robot}\
               - params: {params} - location: {self.target_location}'
-    
+
+
 class CollectBatchOp(RobotTaskOp):
     def __init__(self, op_model: Union[CollectBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -159,10 +161,10 @@ class CollectBatchOp(RobotTaskOp):
     @classmethod
     def from_args(cls, name: str,
                   target_robot: str,
-                  params: Dict={},
-                  target_location: Location=None,
-                  requested_by: ObjectId()=None,
-                  target_batch: Batch=None
+                  params: Dict = {},
+                  target_location: Location = None,
+                  requested_by: ObjectId() = None,
+                  target_batch: Batch = None
                   ):
         model = CollectBatchOpModel()
         cls._set_model_common_fields(model, target_robot)
@@ -183,6 +185,7 @@ class CollectBatchOp(RobotTaskOp):
     def target_onboard_slot(self, onboard_slot: int):
         self._model_proxy.target_onboard_slot = onboard_slot
 
+
 class DropBatchOp(RobotTaskOp):
     def __init__(self, op_model: Union[DropBatchOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
@@ -190,10 +193,10 @@ class DropBatchOp(RobotTaskOp):
     @classmethod
     def from_args(cls, name: str,
                   target_robot: str,
-                  params: Dict={},
-                  target_location: Location=None,
-                  requested_by: ObjectId()=None,
-                  target_batch: Batch=None
+                  params: Dict = {},
+                  target_location: Location = None,
+                  requested_by: ObjectId() = None,
+                  target_batch: Batch = None
                   ):
         model = DropBatchOpModel()
         cls._set_model_common_fields(model, target_robot)
@@ -213,13 +216,14 @@ class DropBatchOp(RobotTaskOp):
     @onboard_collection_slot.setter
     def onboard_collection_slot(self, onboard_slot: int):
         self._model_proxy.onboard_collection_slot = onboard_slot
-    
+
+
 class RobotMaintenanceOp(RobotOp):
     def __init__(self, op_model: Union[RobotMaintenanceOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, name: str, target_robot: str, target_robot_id: int, params: Dict={}):
+    def from_args(cls, name: str, target_robot: str, target_robot_id: int, params: Dict = {}):
         model = RobotMaintenanceOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
@@ -228,11 +232,11 @@ class RobotMaintenanceOp(RobotOp):
         model.requested_by = ObjectId(b"maintainer  ")
         model.save()
         return cls(model)
-    
+
     @property
     def name(self) -> str:
         return self._model_proxy.name
-    
+
     @property
     def target_robot_id(self) -> int:
         return self._model_proxy.target_robot_id
@@ -245,13 +249,14 @@ class RobotMaintenanceOp(RobotOp):
         params = self.params if self.params else None
         return f'{self.__class__.__name__} -> name: {self.name}\
               - target:{self.target_robot}_{self.target_robot_id} - params: {params}'
-    
+
+
 class RobotNavOp(RobotOp):
     def __init__(self, op_model: Union[RobotNavOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, name: str, target_robot: str, target_location: Location, params: Dict={}, requested_by: ObjectId()=None):
+    def from_args(cls, name: str, target_robot: str, target_location: Location, params: Dict = {}, requested_by: ObjectId() = None):
         model = RobotNavOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.name = name
@@ -261,48 +266,49 @@ class RobotNavOp(RobotOp):
         model.requested_by = requested_by
         model.save()
         return cls(model)
-    
+
     @property
     def name(self) -> str:
         return self._model_proxy.name
-    
+
     @property
     def params(self) -> Dict:
         return self._model_proxy.params
-    
+
     @property
     def target_location(self) -> Location:
-            return Location(self._model_proxy.target_location)
-        
+        return Location(self._model_proxy.target_location)
+
     @target_location.setter
     def target_location(self, new_location: Location):
         if isinstance(new_location, Location):
             self._model_proxy.target_location = new_location.model
         else:
             raise ValueError
-    
+
     def __str__(self) -> str:
         params = dict(self.params) if self.params else None
         return f'{self.__class__.__name__} - name: {self.name} - goal_location: {self.target_location}\
               - params: {params} - target:{self.target_robot}'
-    
+
+
 class RobotWaitOp(RobotOp):
     def __init__(self, op_model: Union[RobotWaitOpModel, ModelProxy]) -> None:
         super().__init__(op_model)
 
     @classmethod
-    def from_args(cls, target_robot: str, timeout: int, requested_by: ObjectId()=None):
+    def from_args(cls, target_robot: str, timeout: int, requested_by: ObjectId() = None):
         model = RobotWaitOpModel()
         cls._set_model_common_fields(model, target_robot)
         model.timeout = timeout
         model.requested_by = requested_by
         model.save()
         return cls(model)
-    
+
     @property
     def timeout(self) -> int:
         return self._model_proxy.timeout
-    
+
     def __str__(self) -> str:
         return f'{self.__class__.__name__} -> requested_by: {self.requested_by} - target:{self.target_robot}\
               - timeout: {self.timeout}'

@@ -8,6 +8,7 @@ from archemist.core.util.enums import OpOutcome
 
 from typing import List, Union, Dict, Type, Literal
 
+
 class ShakerPlateStation(Station):
     def __init__(self, station_model: Union[ShakerPlateStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
@@ -26,7 +27,7 @@ class ShakerPlateStation(Station):
     @is_shaking.setter
     def is_shaking(self, shaking: bool):
         self._model_proxy.is_shaking = shaking
-    
+
     def update_assigned_op(self):
         super().update_assigned_op()
         current_op = self.assigned_op
@@ -39,17 +40,19 @@ class ShakerPlateStation(Station):
             self.is_shaking = False
         super().complete_assigned_op(outcome, results)
 
+
 class ShakerPlateOp(StationBatchOp):
     def __init__(self, station_op_model: Union[ShakerPlateOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
-    def from_args(cls, 
+    def from_args(cls,
                   target_batch: Batch,
                   duration: int,
                   time_unit: Literal["second", "minute", "hour"]):
         model = ShakerPlateOpModel()
-        cls._set_model_common_fields(model, associated_station=ShakerPlateStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ShakerPlateStation.__name__)
         model.target_batch = target_batch.model
         model.duration = duration
         model.time_unit = time_unit
@@ -59,7 +62,7 @@ class ShakerPlateOp(StationBatchOp):
     @property
     def duration(self) -> int:
         return self._model_proxy.duration
-    
+
     @property
     def time_unit(self) -> Literal["second", "minute", "hour"]:
         return self._model_proxy.time_unit

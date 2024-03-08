@@ -9,8 +9,10 @@ from typing import List, Dict, Type, Union
 from archemist.core.util.enums import OpOutcome
 
 ''' ==== Station Description ==== '''
+
+
 class ChemSpeedFlexStation(Station):
-    def __init__(self, station_model: Union[ChemSpeedFlexStationModel,ModelProxy]) -> None:
+    def __init__(self, station_model: Union[ChemSpeedFlexStationModel, ModelProxy]) -> None:
         super().__init__(station_model)
 
     @classmethod
@@ -23,7 +25,7 @@ class ChemSpeedFlexStation(Station):
     @property
     def job_status(self) -> ChemSpeedJobStatus:
         return self._model_proxy.job_status
-    
+
     @job_status.setter
     def job_status(self, new_status: ChemSpeedJobStatus):
         self._model_proxy.job_status = new_status
@@ -31,7 +33,7 @@ class ChemSpeedFlexStation(Station):
     @property
     def door_closed(self) -> bool:
         return self._model_proxy.door_closed
-    
+
     @door_closed.setter
     def door_closed(self, closed: bool):
         self._model_proxy.door_closed = closed
@@ -62,42 +64,48 @@ class ChemSpeedFlexStation(Station):
 
 ''' ==== Station Operation Descriptors ==== '''
 
+
 class CSOpenDoorOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
 
 class CSCloseDoorOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
+
 
 class CSRunJobOp(StationOp):
-    def __init__(self, station_op_model: Union[StationOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[StationOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
     def from_args(cls):
         model = StationOpModel()
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
         model.save()
         return cls(model)
 
+
 class CSLiquidDispenseOp(StationLotOp):
-    def __init__(self, station_op_model: Union[CSLiquidDispenseOpModel,ModelProxy]) -> None:
+    def __init__(self, station_op_model: Union[CSLiquidDispenseOpModel, ModelProxy]) -> None:
         super().__init__(station_op_model)
 
     @classmethod
@@ -106,16 +114,18 @@ class CSLiquidDispenseOp(StationLotOp):
                   dispense_unit: str):
         model = CSLiquidDispenseOpModel()
         model.target_lot = target_lot.model
-        cls._set_model_common_fields(model, associated_station=ChemSpeedFlexStation.__name__)
-        model.dispense_table = {key: map(float, v_list) for key, v_list in dispense_table.items()}
+        cls._set_model_common_fields(
+            model, associated_station=ChemSpeedFlexStation.__name__)
+        model.dispense_table = {key: map(float, v_list)
+                                for key, v_list in dispense_table.items()}
         model.dispense_unit = dispense_unit
         model.save()
         return cls(model)
-    
+
     @property
     def dispense_table(self) -> Dict[str, List[float]]:
         return self._model_proxy.dispense_table
-    
+
     @property
     def dispense_unit(self) -> str:
         return self._model_proxy.dispense_unit
@@ -125,6 +135,6 @@ class CSLiquidDispenseOp(StationLotOp):
         zipped_qtys_tuples = zip(*[qtys for qtys in qtys_lists])
         csv_string = ""
         for qtys_tup in zipped_qtys_tuples:
-            row = ','.join(map(str,qtys_tup))
+            row = ','.join(map(str, qtys_tup))
             csv_string += row + r"\n"
         return csv_string

@@ -11,6 +11,7 @@ from archemist.core.state.lot import Lot, LotStatus
 from archemist.core.util.enums import ProcessStatus
 from typing import List, Type, Dict
 
+
 class InputProcessor:
 
     def __init__(self, input_state: InputState):
@@ -22,12 +23,15 @@ class InputProcessor:
 
     def add_clean_batch(self):
         current_num_lots = self._state.get_lots_num()
-        total_batches_num = len(self._state.batches_queue) + current_num_lots*self._state.batches_per_lot
+        total_batches_num = len(self._state.batches_queue) + \
+            current_num_lots*self._state.batches_per_lot
         if total_batches_num < self._state.total_lot_capacity*self._state.batches_per_lot:
-            new_batch = Batch.from_args(self._state.samples_per_batch, self._state.location)
+            new_batch = Batch.from_args(
+                self._state.samples_per_batch, self._state.location)
             self._state.batches_queue.append(new_batch)
         else:
-            self._log("maximum number of batches is reached. Cannot add a new batch")
+            self._log(
+                "maximum number of batches is reached. Cannot add a new batch")
 
     def add_recipe(self, recipe_dict: Dict):
         new_recipe_id = recipe_dict["general"]["id"]
@@ -35,7 +39,8 @@ class InputProcessor:
             self._state.recipes_queue.append(Recipe.from_dict(recipe_dict))
             self._log(f"new recipe with id {new_recipe_id} queued")
         else:
-            self._log(f"recipe with id {new_recipe_id} already exists. Recipe is not added to queue")
+            self._log(
+                f"recipe with id {new_recipe_id} already exists. Recipe is not added to queue")
 
     def process_lots(self):
         for slot, lot in self._state.lot_slots.items():
@@ -44,7 +49,8 @@ class InputProcessor:
                 if len(self._state.batches_queue) >= batches_per_lot:
                     new_lot_batches = []
                     for _ in range(batches_per_lot):
-                        new_lot_batches.append(self._state.batches_queue.pop(left=True))
+                        new_lot_batches.append(
+                            self._state.batches_queue.pop(left=True))
                     new_lot = Lot.from_args(new_lot_batches)
                     self._state.lot_slots[slot] = new_lot
                     self._log(f"{new_lot} is created")
@@ -57,15 +63,19 @@ class InputProcessor:
                 elif lot.status == LotStatus.STANDBY:
                     # check if next station has capacity
                     next_step_details = lot.recipe.current_state_details
-                    next_station = StationsGetter.get_station(next_step_details.station_id, next_step_details.station_type)
-                    num_prepared_lots = self._state.get_lots_num(LotStatus.ONBOARDING) + self._state.get_lots_num(LotStatus.READY_FOR_COLLECTION)
+                    next_station = StationsGetter.get_station(
+                        next_step_details.station_id, next_step_details.station_type)
+                    num_prepared_lots = self._state.get_lots_num(
+                        LotStatus.ONBOARDING) + self._state.get_lots_num(LotStatus.READY_FOR_COLLECTION)
                     if num_prepared_lots < next_station.free_lot_capacity:
                         if self._state.lot_input_process is not None:
                             new_proc_dict = self._state.lot_input_process
                         else:
-                            new_proc_dict = {"type": "StationProcess", "args": None}
-                        
-                        new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
+                            new_proc_dict = {
+                                "type": "StationProcess", "args": None}
+
+                        new_proc = ProcessFactory.create_from_dict(
+                            new_proc_dict, lot)
                         self._state.proc_slots[slot] = new_proc
                         new_proc.lot_slot = slot
                         lot.status = LotStatus.ONBOARDING
@@ -81,26 +91,28 @@ class InputProcessor:
                                    isinstance(robot_op, RobotTaskOp) or \
                                    (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
-                                self._state.requested_robot_ops.append(robot_op)
+                                self._state.requested_robot_ops.append(
+                                    robot_op)
                             proc.switch_to_waiting()
                     else:
                         self._state.proc_slots[slot] = None
                         self._state.procs_history.append(proc)
                         lot.status = LotStatus.READY_FOR_COLLECTION
                         self._log(f"{lot} is ready for collection")
-                        
+
     def retrieve_ready_for_collection_lots(self) -> List[Lot]:
         ready_for_collection_lots = []
         for slot, lot in self._state.lot_slots.items():
             if lot is not None and lot.status == LotStatus.READY_FOR_COLLECTION:
                 ready_for_collection_lots.append(lot)
                 self._state.lot_slots[slot] = None
-        
+
         return ready_for_collection_lots
-    
-    def _log(self, message:str):
+
+    def _log(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')
-    
+
+
 class OutputProcessor:
     def __init__(self, output_state: OutputState):
         self._state = output_state
@@ -126,13 +138,15 @@ class OutputProcessor:
                     if self._state.lot_output_process is not None:
                         new_proc_dict = self._state.lot_output_process
                     else:
-                        new_proc_dict = {"type": "StationProcess", "args": None}
+                        new_proc_dict = {
+                            "type": "StationProcess", "args": None}
 
-                    new_proc = ProcessFactory.create_from_dict(new_proc_dict, lot)
+                    new_proc = ProcessFactory.create_from_dict(
+                        new_proc_dict, lot)
                     self._state.proc_slots[slot] = new_proc
                     new_proc.lot_slot = slot
                     lot.status = LotStatus.OFFBOARDING
-                
+
                 elif lot.status == LotStatus.OFFBOARDING:
                     proc = self._state.proc_slots[slot]
                     if proc.m_state != "final_state":
@@ -144,7 +158,8 @@ class OutputProcessor:
                                    (isinstance(robot_op, RobotNavOp) and robot_op.target_location.is_unspecified()):
                                     robot_op.target_location = self._state.location
                                 robot_op.requested_by = self._state.object_id
-                                self._state.requested_robot_ops.append(robot_op)
+                                self._state.requested_robot_ops.append(
+                                    robot_op)
                             proc.switch_to_waiting()
                     else:
                         self._state.proc_slots[slot] = None
@@ -162,7 +177,8 @@ class OutputProcessor:
         if lot and lot.status == LotStatus.NEED_REMOVAL:
             lot.status = LotStatus.FINISHED
             self._state.lot_slots[slot] = None
-            self._log(f"{lot} was manually removed. Lot processing is finished")
+            self._log(
+                f"{lot} was manually removed. Lot processing is finished")
         else:
             self._log(f"unable to remove lot at output slot {slot}")
 
@@ -171,8 +187,9 @@ class OutputProcessor:
             if lot and lot.status == LotStatus.NEED_REMOVAL:
                 self.remove_lot(slot)
 
-    def _log(self, message:str):
+    def _log(self, message: str):
         print(f'[{self.__class__.__name__}]: {message}')
+
 
 class WorkflowProcessor:
     def __init__(self, workflow_state: WorkflowState):
@@ -195,20 +212,24 @@ class WorkflowProcessor:
                 recipe_state_details = lot.recipe.current_state_details
                 current_station_type = recipe_state_details.station_type
                 current_station_id = recipe_state_details.station_id
-                current_station = StationsGetter.get_station(current_station_id, current_station_type)
-                self._log_processor(f'Trying to assign ({lot}) to {current_station}')
+                current_station = StationsGetter.get_station(
+                    current_station_id, current_station_type)
+                self._log_processor(
+                    f'Trying to assign ({lot}) to {current_station}')
                 if current_station.free_lot_capacity > 0:
                     current_station.add_lot(lot)
                     self._state.lots_buffer.remove(lot)
                 else:
-                    self._log_processor(f'{lot} could not be assigned to {current_station}')
-        
+                    self._log_processor(
+                        f'{lot} could not be assigned to {current_station}')
+
         # process workflow stations
         for station in StationsGetter.get_stations():
             # get requested robot ops
             while station.requested_robot_ops:
                 robot_op = station.requested_robot_ops.pop(left=True)
-                self._log_processor(f'{robot_op} is added to robots scheduling queue')
+                self._log_processor(
+                    f'{robot_op} is added to robots scheduling queue')
                 self._state.robot_ops_queue.append(robot_op)
 
             # get requested external station procs
@@ -227,7 +248,8 @@ class WorkflowProcessor:
             ready_for_collection_lots = station.retrieve_ready_for_collection_lots()
             for lot in ready_for_collection_lots:
                 lot.recipe.advance_state(success=True)
-                self._log_processor(f'Processing {lot} is complete. Adding to lots buffer')
+                self._log_processor(
+                    f'Processing {lot} is complete. Adding to lots buffer')
                 lot.status = LotStatus.IN_WORKFLOW
                 self._state.lots_buffer.append(lot)
 
@@ -255,9 +277,8 @@ class WorkflowProcessor:
                 break
         return completed_lot
 
-    def _log_processor(self, message:str):
+    def _log_processor(self, message: str):
         print(f'[{self}]: {message}')
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}'
-    

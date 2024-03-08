@@ -3,6 +3,7 @@ from archemist.core.state.station import Station, StationModel
 
 from typing import Union, Dict
 
+
 class APCMetaStation(Station):
     def __init__(self, station_model: Union[StationModel, ModelProxy]) -> None:
         super().__init__(station_model)
