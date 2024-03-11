@@ -76,7 +76,7 @@ class APCLCMSAnalysisProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     def request_vial_placement(self):
-        location_dict = {"coordinates": [36, 8], "descriptor": "LCMS station"}
+        location_dict = {"coordinates": [35, 8], "descriptor": "LCMS station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadLCMS",
@@ -92,7 +92,7 @@ class APCLCMSAnalysisProcess(StationProcess):
 
     def request_vial_disposal(self):
         lcms_station: WatersLCMSStation = self.get_assigned_station()
-        location_dict = {"coordinates": [36, 8], "descriptor": "LCMS station"}
+        location_dict = {"coordinates": [35, 8], "descriptor": "LCMS station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="unLoadLCMS",

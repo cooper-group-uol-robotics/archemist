@@ -69,7 +69,7 @@ class APCSolidAdditionProcess(StationProcess):
             if not cartridge.depleted:
                 cartridge_index = cartridge.hotel_index
                 break
-        location_dict = {"coordinates": [35, 8], "descriptor": "Solid addition"}
+        location_dict = {"coordinates": [36, 8], "descriptor": "Solid addition"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="addSolid",

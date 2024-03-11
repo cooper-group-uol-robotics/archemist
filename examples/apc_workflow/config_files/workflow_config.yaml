@@ -116,8 +116,8 @@ stations:
           density: 1000
           density_unit: kg/m3
           details:
-            inlet_port: 1
-            outlet_port: 2
+            inlet_port: 5
+            outlet_port: 7
           expiry_date: 31/03/2024
         - name: water
           amount: 100000
@@ -125,8 +125,8 @@ stations:
           density: 1000
           density_unit: kg/m3
           details:
-            inlet_port: 3
-            outlet_port: 4
+            inlet_port: 4
+            outlet_port: 6
           expiry_date: 31/03/2024
   - type: DiaphragmPumpStation
     id: 2
@@ -163,7 +163,7 @@ stations:
         - name: 4-aminophenol
           amount: 10000
           unit: g
-          expiry_date: 31/03/2024
+          expiry_date: 31/12/2025
           details: Null
   - type: MTSynthesisStation
     id: 4

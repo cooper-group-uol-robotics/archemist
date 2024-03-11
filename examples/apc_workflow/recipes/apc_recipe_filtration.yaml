@@ -57,7 +57,7 @@ steps:
           - name: heat_stir_discharge
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 5
+              target_temperature: 19
               target_stirring_speed: 400
               wait_duration: Null
           - name: wait
@@ -72,7 +72,7 @@ steps:
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 500
+              dispense_volume: 50
               dispense_unit: mL
               dispense_rate: 150
               rate_unit: mL/minute

@@ -40,12 +40,12 @@ try:
             rospy.init_node(f'{self._station}_handler')
             self._pub_balance = rospy.Publisher("/kern_pcb2500_command", KernPCB2500Cmd, queue_size=2)
             self._pub_door = rospy.Publisher("/kern_door_command", KernDoorCmd, queue_size=2)
-            self._pub_sash = rospy.Publisher("sash_door_Commands", SashDoorCmd, queue_size=2)
+            self._pub_sash = rospy.Publisher("sash_door_command", SashDoorCmd, queue_size=2)
             rospy.Subscriber("/kern_pcb2500_reading", KernPCB2500Reading, self.weight_callback)
-            rospy.Subscriber("/kern_door/task_complete", KernPCB2500Task, self.weight_task_callback)
+            rospy.Subscriber("/kern_door/task_complete", KernDoorTask, self.weight_task_callback)
             # rospy.Subscriber("kern_Door_Status", KernDoorStatus, self.door_callback)
-            rospy.Subscriber("/kern_door/task_complete", KernDoorTask, self.kern_door_task_callback)
-
+            # rospy.Subscriber("/kern_door/task_complete", KernDoorTask, self.kern_door_task_callback)
+            rospy.Subscriber("/kern_pcb2500/task_complete", KernPCB2500Task, self.weight_task_callback)
             # rospy.Subscriber("sash_door_Status", sashDoorStatus, self.sash_callback)
             rospy.Subscriber("/sash_door/task_complete", SashDoorTask, self.sash_task_callback)
             
