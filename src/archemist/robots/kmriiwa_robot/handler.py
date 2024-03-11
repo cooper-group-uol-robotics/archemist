@@ -140,8 +140,6 @@ class KmriiwaROSHandler(RobotOpHandler):
                 combined_task.task_name = robot_op.name
 
                 _base_command = KMPCommand()
-                print(f"++++++++++++++++++++++++{robot_op.target_location.coordinates[0]}--------------")
-                print(f"////////////////////////{robot_op.target_location.coordinates[1]}--------------")
                 _base_command.node_id = robot_op.target_location.coordinates[0]
                 _base_command.graph_id = robot_op.target_location.coordinates[1] 
                 _base_command.fine_localization = robot_op.fine_localization

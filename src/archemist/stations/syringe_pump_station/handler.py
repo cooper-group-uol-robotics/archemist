@@ -113,5 +113,5 @@ try:
 
 except ImportError as e:
     print(e)
-    print("_____________________________SYRINGE__________________________________")
+    print(f"Error in handler: {e}")
     pass

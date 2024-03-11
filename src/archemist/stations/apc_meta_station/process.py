@@ -190,12 +190,10 @@ class APCSynthesisProcess(StationProcess):
         sample_index = self.data["target_sample_index"]
         sample = self.lot.batches[batch_index].samples[sample_index]
         results = list(sample.result_ops)
-        print("===========================================> ", results)
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
                 chemicals = [chemical for chemical in result.chemicals]
                 para_index = chemicals.index("paracetamol")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", result.concentrations[para_index])
                 return result.concentrations[para_index] >= target_product_concentration
 
 class APCFiltrationProcess(StationProcess):
@@ -394,11 +392,17 @@ class APCCleaningProcess(StationProcess):
 
     ''' state callbacks '''
     def request_load_cleaning_funnel(self):
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadEmptyFunnel",
             target_robot="KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "loadEmptyFunnel"
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="loadEmptyFunnel",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=2
         )
         self.request_robot_ops([robot_task])
         
@@ -449,11 +453,17 @@ class APCCleaningProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_unload_cleaning_funnel(self):
+        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="unLoadEmptyFunnel",
             target_robot="KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "unLoadEmptyFunnel"
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="unLoadEmptyFunnel",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=2
         )
         self.request_robot_ops([robot_task])
 
@@ -468,7 +478,6 @@ class APCCleaningProcess(StationProcess):
             if isinstance(result, LCMSAnalysisResult):
                 chemicals = [chemical for chemical in result.chemicals]
                 para_index = chemicals.index("paracetamol")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", result.concentrations[para_index])
                 return result.concentrations[para_index] <= target_purity_concentration
 
 class APCMeasureYieldProcess(StationProcess):
@@ -526,9 +535,7 @@ class APCMeasureYieldProcess(StationProcess):
     def request_navigate_to_weighing(self):
         location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
-        print(f"-------------------------{location_dict}----------------------------------")
-        print(f"-------------------------{target_loc}------------------------------")
-        t_op = RobotTaskOp.from_args(
+        robot_task = RobotTaskOp.from_args(
             name="loadWeighingFunnel",
             target_robot="KMRIIWARobot",
             target_location=target_loc,
@@ -538,16 +545,7 @@ class APCMeasureYieldProcess(StationProcess):
             fine_localization=True,
             task_type=1
         )
-        # robot_task = RobotNavOp.from_args(
-        #     name="loadWeighingFunnel",
-        #     target_robot="KMRIIWARobot",
-        #     target_location=target_loc,
-        #     task_type = 1,
-        #     lbr_program_name = "loadWeighingFunnel"
-        # )
-        #wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
-        print(f"///////////////////////////{t_op}///////////////////////////")
-        self.request_robot_ops([t_op]) #, wait_for_next_op])
+        self.request_robot_ops([robot_task])
 
     def request_open_sash(self):
         station_op = APCOpenSashOp.from_args()

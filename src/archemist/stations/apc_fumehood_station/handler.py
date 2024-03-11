@@ -99,6 +99,5 @@ try:
                 self._seq_id+=1
 
 except ImportError as e:
-    print(e)
-    print("----------------------------------fumehood------------------------------------")
+    print(f"Error in handler: {e}")
     pass

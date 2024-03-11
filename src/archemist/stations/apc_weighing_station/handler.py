@@ -121,5 +121,5 @@ try:
 
 except ImportError as e:
     print(e)
-    print("-----------------------WEIGHING---------------------------------------------")
+    print(f"Error in handler: {e}")
     pass

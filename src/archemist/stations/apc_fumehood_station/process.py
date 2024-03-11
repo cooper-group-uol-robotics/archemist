@@ -5,6 +5,7 @@ from archemist.core.state.robot_op import RobotTaskOp, RobotWaitOp
 from .state import APCFumehoodStation, APCDispenseSolidOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import Union, List, Dict, Any
+from archemist.core.util import Location
 
 class APCSolidAdditionProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -68,15 +69,19 @@ class APCSolidAdditionProcess(StationProcess):
             if not cartridge.depleted:
                 cartridge_index = cartridge.hotel_index
                 break
+        location_dict = {"coordinates": [35, 8], "descriptor": "Solid addition"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="addSolid",
             target_robot="KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "addSolid",
-            lbr_program_params = [str(cartridge_index)]
-            )
-        wait_task = RobotWaitOp.from_args("KMRIIWARobot", 3)
-        self.request_robot_ops([robot_task, wait_task])
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="addSolid",
+            lbr_program_params=[str(cartridge_index)],
+            fine_localization=True,
+            task_type=2
+        )
+        self.request_robot_ops([robot_task])
     
     def request_update_cartridge_state(self):
         # Update the solid addition cartridge - uses APCDispenseSolidOp

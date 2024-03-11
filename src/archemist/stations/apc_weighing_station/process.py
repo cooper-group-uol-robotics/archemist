@@ -90,11 +90,13 @@ class APCWeighingProcess(StationProcess):
             name="loadWeighingFunnel",
             target_robot="KMRIIWARobot",
             target_location=target_loc,
-            task_type = 2,
-            lbr_program_name = "loadWeighingFunnel"
+            params={},  
+            lbr_program_name="loadWeighingFunnel",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=2
         )
-        wait_for_next_op = RobotWaitOp.from_args("KMRIIWARobot", 3)
-        self.request_robot_ops([robot_task, wait_for_next_op])
+        self.request_robot_ops([robot_task])
 
     def request_close_balance_door(self):
         station_op = APCCloseBalanceDoorOp.from_args()
@@ -109,18 +111,21 @@ class APCWeighingProcess(StationProcess):
         self.data['is_weighing_complete'] = True
 
     def request_unload_funnel(self):
+        weighing_station: APCWeighingStation = self.get_assigned_station()
         location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
-        weighing_station: APCWeighingStation = self.get_assigned_station()
         robot_task = RobotTaskOp.from_args(
             name="unLoadFinishedFunnel",
             target_robot="KMRIIWARobot",
-            task_type = 2,
             target_location=target_loc,
-            lbr_program_name = "unLoadFinishedFunnel",
-            lbr_program_params = [str(weighing_station.funnel_storage_index)]
-            )
+            params={},  
+            lbr_program_name="unLoadFinishedFunnel",
+            lbr_program_params=[str(weighing_station.funnel_storage_index)],
+            fine_localization=True,
+            task_type=2
+        )
         self.request_robot_ops([robot_task])
+        
 
     def increment_funnel_index(self):
         weighing_station: APCWeighingStation = self.get_assigned_station()
@@ -182,10 +187,12 @@ class APCNewFunnelProcess(StationProcess):
         robot_task = RobotTaskOp.from_args(
             name="loadFreshFunnel",
             target_robot="KMRIIWARobot",
-            task_type = 2,
             target_location=target_loc,
-            lbr_program_name = "loadFreshFunnel",
-            lbr_program_params = [str(weighing_station.funnel_storage_index)]
-            )
+            params={},  
+            lbr_program_name="loadFreshFunnel",
+            lbr_program_params=[str(weighing_station.funnel_storage_index)],
+            fine_localization=True,
+            task_type=2
+        )
         self.request_robot_ops([robot_task])
 

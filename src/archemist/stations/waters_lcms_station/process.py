@@ -6,7 +6,7 @@ from archemist.core.persistence.models_proxy import ModelProxy
 from archemist.core.state.robot_op import RobotTaskOp
 from archemist.core.state.station_process import StationProcess, StationProcessModel
 from typing import List, Dict, Any
-
+from archemist.core.util import Location
 class APCLCMSAnalysisProcess(StationProcess):
     
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -66,7 +66,6 @@ class APCLCMSAnalysisProcess(StationProcess):
         prep_op = LCMSPrepAnalysisOp.from_args()
         self.request_station_op(prep_op)
         
-
     def request_collect_vial(self):
         robot_task = RobotTaskOp.from_args(
             name = "collectSample",
@@ -77,23 +76,34 @@ class APCLCMSAnalysisProcess(StationProcess):
         self.request_robot_ops([robot_task])
 
     def request_vial_placement(self):
+        location_dict = {"coordinates": [36, 8], "descriptor": "LCMS station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
-            name = "loadLCMS",
-            target_robot = "KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "loadLCMS"
-            )
+            name="loadLCMS",
+            target_robot="KMRIIWARobot",
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="loadLCMS",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=2
+        )
         self.request_robot_ops([robot_task])
 
     def request_vial_disposal(self):
         lcms_station: WatersLCMSStation = self.get_assigned_station()
+        location_dict = {"coordinates": [36, 8], "descriptor": "LCMS station"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="unLoadLCMS",
             target_robot="KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "unLoadLCMS",
-            lbr_program_params = [str(lcms_station.sample_index)]
-            )
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="unLoadLCMS",
+            lbr_program_params=[str(lcms_station.sample_index)],
+            fine_localization=True,
+            task_type=2
+        )
         self.request_robot_ops([robot_task])
 
     def request_increment_sample_index(self):
