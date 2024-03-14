@@ -116,8 +116,8 @@ stations:
           density: 1000
           density_unit: kg/m3
           details:
-            inlet_port: 5
-            outlet_port: 7
+            inlet_port: 4 #5 change back when not testing
+            outlet_port: 7 #8 change back when not testing
           expiry_date: 31/03/2024
         - name: water
           amount: 100000
@@ -126,7 +126,7 @@ stations:
           density_unit: kg/m3
           details:
             inlet_port: 4
-            outlet_port: 6
+            outlet_port: 7
           expiry_date: 31/03/2024
   - type: DiaphragmPumpStation
     id: 2
@@ -178,7 +178,7 @@ stations:
   - type: APCFiltrationStation
     id: 5
     location:
-      coordinates: [34,8]
+      coordinates: [38,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
     handler: APCFiltrationStationHandler
@@ -196,7 +196,7 @@ stations:
   - type: APCWeighingStation
     id: 7
     location:
-      coordinates: [34,8]
+      coordinates: [38,8]
       descriptor: apc_fumehood
     total_lot_capacity: 1
     handler: APCWeighingStationHandler

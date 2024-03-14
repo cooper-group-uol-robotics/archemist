@@ -58,16 +58,16 @@ steps:
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 500
+              dispense_volume: 250
               dispense_unit: mL
               dispense_rate: 150
               rate_unit: mL/minute
           - name: wash_heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 85
+              target_temperature: 20
               target_stirring_speed: 400
-              wait_duration: Null
+              wait_duration: 100
         args:
           target_batch_index: 0
           target_sample_index: 1

@@ -117,14 +117,8 @@ try:
                 for i in range(10):
                     self._pub_base_valve.publish(
                         seq=self._seq_id, 
-                        valve_command = BaseValveCmd.UPDATE,
+                        valve_command = BaseValveCmd.OPEN_CLOSE_STEPS,
                         num_steps = current_op.steps
-                    )
-                time.sleep(5)
-                for i in range(10):
-                    self._pub_base_valve.publish(
-                        seq=self._seq_id, 
-                        valve_command = BaseValveCmd.OPEN_CLOSE_STEPS
                     )
 
             elif isinstance(current_op, MTSynthLongOpenCloseReactionValveOp):
@@ -138,6 +132,7 @@ try:
             elif isinstance(current_op, MTSynthWaitOp):
                 rospy.loginfo("Waiting (crystallisation).")
                 time.sleep(current_op.seconds)
+                self._op_complete = True
 
             else:
                 rospy.logwarn(
@@ -156,6 +151,9 @@ try:
                 parameters["target_stirring_speed"] = op.target_stirring_speed
                 if op.wait_duration is not None:
                     parameters["wait_duration"] = op.wait_duration
+                    parameters["time_unit"] = op.time_unit
+                else:
+                    parameters["wait_duration"] = 100
                     parameters["time_unit"] = op.time_unit
                 result = ProcessOpResult.from_args(
                     origin_op=op.object_id, parameters=parameters

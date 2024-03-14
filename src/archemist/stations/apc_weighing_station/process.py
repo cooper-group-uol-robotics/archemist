@@ -39,10 +39,13 @@ class APCWeighingProcess(StationProcess):
             { 'source':'tare','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'},
             { 'source':'open_balance_door','dest':'load_funnel', 'unless':'is_weighing_complete', 'conditions':'are_req_station_ops_completed'},
             { 'source':'load_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'close_balance_door','dest':'weigh', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'close_balance_door','dest':'weigh', 'unless': 'is_weighing_complete', 'conditions':'are_req_station_ops_completed'},
             { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
             { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
             { 'source':'unload_funnel','dest':'update_funnel_index', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'update_funnel_index','dest':'close_balance_door', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'close_balance_door','dest':'final_state', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
+
             { 'source':'update_funnel_index','dest':'final_state'}
             ]
 
@@ -84,7 +87,7 @@ class APCWeighingProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_load_funnel(self):
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadWeighingFunnel",
@@ -112,7 +115,7 @@ class APCWeighingProcess(StationProcess):
 
     def request_unload_funnel(self):
         weighing_station: APCWeighingStation = self.get_assigned_station()
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="unLoadFinishedFunnel",
@@ -182,7 +185,7 @@ class APCNewFunnelProcess(StationProcess):
     ''' States callbacks. '''
     def request_load_funnel(self):
         weighing_station: APCWeighingStation = self.get_assigned_station()
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadFreshFunnel",

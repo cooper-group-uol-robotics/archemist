@@ -90,6 +90,7 @@ class APCSynthesisProcess(StationProcess):
         model.data["target_product_concentration"] = float(target_product_concentration)
         model.data["target_batch_index"] = int(target_batch_index)
         model.data["target_sample_index"] = int(target_sample_index)
+        model.data["lcms_iterate"] = 1 # only for when LCMS not working
         model.save()
         return cls(model)
 
@@ -173,6 +174,7 @@ class APCSynthesisProcess(StationProcess):
         self.request_station_op(current_op)
 
     def request_wait(self):
+        self.data["lcms_iterate"] = 2
         pass
 
     def request_reaction_stop(self):
@@ -185,16 +187,21 @@ class APCSynthesisProcess(StationProcess):
         return self.data['is_liquid_2_added']
 
     def is_reaction_complete(self):
-        target_product_concentration = self.data["target_product_concentration"]
-        batch_index = self.data["target_batch_index"]
-        sample_index = self.data["target_sample_index"]
-        sample = self.lot.batches[batch_index].samples[sample_index]
-        results = list(sample.result_ops)
-        for result in reversed(results):
-            if isinstance(result, LCMSAnalysisResult):
-                chemicals = [chemical for chemical in result.chemicals]
-                para_index = chemicals.index("paracetamol")
-                return result.concentrations[para_index] >= target_product_concentration
+        if self.data["lcms_iterate"] == 1:
+            return False
+        else:
+            return True
+        # TODO use the below again when LCMS is working
+        # target_product_concentration = self.data["target_product_concentration"]
+        # batch_index = self.data["target_batch_index"]
+        # sample_index = self.data["target_sample_index"]
+        # sample = self.lot.batches[batch_index].samples[sample_index]
+        # results = list(sample.result_ops)
+        # for result in reversed(results):
+        #     if isinstance(result, LCMSAnalysisResult):
+        #         chemicals = [chemical for chemical in result.chemicals]
+        #         para_index = chemicals.index("paracetamol")
+        #         return result.concentrations[para_index] >= target_product_concentration
 
 class APCFiltrationProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -270,7 +277,7 @@ class APCFiltrationProcess(StationProcess):
     ''' states callbacks '''
 
     def initialise_process_data(self):
-        self.data['num_discharge_cycles'] = 0
+        self.data['num_discharge_cycles'] = 1
 
     def request_heating_stirring(self):
         batch_index = self.data["target_batch_index"]
@@ -315,13 +322,18 @@ class APCFiltrationProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_discharge_cycle_update(self):
-        self.data["num_discharge_cycles"] += 1
+        self.data['num_discharge_cycles'] += 1
 
     ''' transitions callbacks '''
     def is_last_discharge(self):
+        print(self.data["num_discharge_cycles"])
+        print(self.data["max_num_discharge_cycles"])
+        print(self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"])
         if (self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"] == 0) and (self.data["num_discharge_cycles"] != 0):
+            print("here!")
             return True
         else:
+            print(":(here:(")
             return False
 
     def is_vessel_clean(self):
@@ -334,6 +346,10 @@ class APCCleaningProcess(StationProcess):
         ''' States '''
         self.STATES = [ State(name='init_state'),
             State(name='prep_state'), 
+
+            State(name='navigate_to_weighing_station', on_enter=['request_navigate_to_weighing']),
+            State(name='open_sash', on_enter=['request_open_sash']),
+            State(name='close_sash', on_enter=['request_close_sash']),
 
             State(name='load_cleaning_funnel', on_enter=['request_load_cleaning_funnel']),
             State(name='add_wash_liquid', on_enter=['request_adding_wash_liquid']),
@@ -351,17 +367,24 @@ class APCCleaningProcess(StationProcess):
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'load_cleaning_funnel'},
-            {'source':'load_cleaning_funnel', 'dest': 'add_wash_liquid', 'conditions': 'are_req_robot_ops_completed'},
-            {'source':'add_wash_liquid','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_reaction','dest':'stop_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'stop_reaction','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'sample_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'open_close_drain_valve', 'conditions':'are_req_station_procs_completed'},            
+            {'source':'prep_state', 'dest': 'navigate_to_weighing_station'},
+            {'source':'navigate_to_weighing_station', 'dest': 'open_sash', 'conditions': 'are_req_robot_ops_completed'},
+            {'source':'open_sash', 'dest': 'load_cleaning_funnel', 'unless': 'is_reactor_clean', 'conditions': 'are_req_station_ops_completed'},
+            {'source':'load_cleaning_funnel', 'dest': 'close_sash', 'conditions': 'are_req_robot_ops_completed'},
+            {'source':'close_sash', 'dest': 'add_wash_liquid', 'unless': 'is_reactor_clean', 'conditions': 'are_req_station_ops_completed'},
+            {'source':'add_wash_liquid','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
+            {'source':'sample_reaction','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
+            {'source':'run_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
+            {'source':'start_analysis_process','dest':'stop_reaction', 'conditions':'are_req_station_procs_completed'},
+            {'source':'stop_reaction','dest':'open_close_drain_valve', 'conditions':'are_req_station_ops_completed'},
             {'source':'open_close_drain_valve','dest':'drain_filter', 'conditions':'are_req_station_ops_completed'},
+
             {'source':'drain_filter','dest':'add_wash_liquid', 'unless': 'is_reactor_clean','conditions':'are_req_station_ops_completed'},
-            {'source':'drain_filter','dest':'unload_cleaning_funnel', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
-            {'source':'unload_cleaning_funnel', 'dest': 'final_state', 'conditions': 'are_req_robot_ops_completed'},
+            {'source':'drain_filter','dest':'open_sash', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
+
+            {'source':'open_sash', 'dest': 'unload_cleaning_funnel', 'conditions': ['are_req_station_ops_completed','is_reactor_clean']},
+            {'source':'unload_cleaning_funnel', 'dest': 'close_sash', 'conditions': ['are_req_robot_ops_completed','is_reactor_clean']},
+            {'source':'close_sash', 'dest': 'final_state', 'conditions': ['are_req_robot_ops_completed','is_reactor_clean']},
         ]
 
     @classmethod
@@ -387,12 +410,28 @@ class APCCleaningProcess(StationProcess):
         model.data["target_purity_concentration"] = float(target_purity_concentration)
         model.data["target_batch_index"] = int(target_batch_index)
         model.data["target_sample_index"] = int(target_sample_index)
+        model.data["lcms_iterate"] = 1 # only for when LCMS not working
         model.save()
         return cls(model)
 
     ''' state callbacks '''
+    def request_navigate_to_weighing(self):
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
+        robot_task = RobotTaskOp.from_args(
+            name="loadEmptyFunnel",
+            target_robot="KMRIIWARobot",
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="loadEmptyFunnel",
+            lbr_program_params=[],
+            fine_localization=True,
+            task_type=1
+        )
+        self.request_robot_ops([robot_task])
+
     def request_load_cleaning_funnel(self):
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadEmptyFunnel",
@@ -405,6 +444,14 @@ class APCCleaningProcess(StationProcess):
             task_type=2
         )
         self.request_robot_ops([robot_task])
+
+    def request_open_sash(self):
+        station_op = APCOpenSashOp.from_args()
+        self.request_station_op(station_op)
+
+    def request_close_sash(self):
+        station_op = APCCloseSashOp.from_args()
+        self.request_station_op(station_op)
         
     def request_adding_wash_liquid(self):
         batch_index = self.data["target_batch_index"]
@@ -445,6 +492,7 @@ class APCCleaningProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_open_close_drain_valve(self):
+        self.data["lcms_iterate"] = 2
         station_op = MTSynthLongOpenCloseReactionValveOp.from_args()
         self.request_station_op(station_op)
 
@@ -453,7 +501,7 @@ class APCCleaningProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_unload_cleaning_funnel(self):
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="unLoadEmptyFunnel",
@@ -469,16 +517,22 @@ class APCCleaningProcess(StationProcess):
 
     ''' transitions callbacks '''
     def is_reactor_clean(self):
-        target_purity_concentration = self.data["target_purity_concentration"]
-        batch_index = self.data["target_batch_index"]
-        sample_index = self.data["target_sample_index"]
-        sample = self.lot.batches[batch_index].samples[sample_index]
-        results = list(sample.result_ops)
-        for result in reversed(results):
-            if isinstance(result, LCMSAnalysisResult):
-                chemicals = [chemical for chemical in result.chemicals]
-                para_index = chemicals.index("paracetamol")
-                return result.concentrations[para_index] <= target_purity_concentration
+        if self.data["lcms_iterate"] == 1:
+            return False
+        else:
+            return True
+        # TODO use the below again when LCMS is working
+    
+        # target_purity_concentration = self.data["target_purity_concentration"]
+        # batch_index = self.data["target_batch_index"]
+        # sample_index = self.data["target_sample_index"]
+        # sample = self.lot.batches[batch_index].samples[sample_index]
+        # results = list(sample.result_ops)
+        # for result in reversed(results):
+        #     if isinstance(result, LCMSAnalysisResult):
+        #         chemicals = [chemical for chemical in result.chemicals]
+        #         para_index = chemicals.index("paracetamol")
+        #         return result.concentrations[para_index] <= target_purity_concentration
 
 class APCMeasureYieldProcess(StationProcess):
     
@@ -533,7 +587,7 @@ class APCMeasureYieldProcess(StationProcess):
     ''' States callbacks. '''
 
     def request_navigate_to_weighing(self):
-        location_dict = {"coordinates": [34, 8], "descriptor": "Weighing station"}
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
         target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
             name="loadWeighingFunnel",

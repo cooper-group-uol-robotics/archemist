@@ -63,14 +63,14 @@ try:
                 _withdraw_port = liq_id.details.get("inlet_port")
                 _dispense_port = liq_id.details.get("outlet_port")
                 for i in range(10):
-                    self._pub_pump.publish(seq=self._seq_id, tecan_xlp_command=TecanXlp6000Cmd.F_DISPENSE, xlp_withdraw_port=_withdraw_port, xlp_dispense_port=_dispense_port, xlp_volume = int(current_op.dispense_volume), xlp_speed = int(current_op.dispense_rate))
+                    self._pub_pump.publish(seq=self._seq_id, tecan_xlp_command=TecanXlp6000Cmd.F_DISPENSE, xlp_withdraw_port=int(_withdraw_port), xlp_dispense_port=int(_dispense_port), xlp_volume = int(current_op.dispense_volume), xlp_speed = int(current_op.dispense_rate))
             elif isinstance(current_op, SyringePumpDispenseRateOp):
                 liq_id = Liquid.from_object_id(self._station.liquids_dict[current_op.liquid_name].object_id)
                 _withdraw_port = liq_id.details.get("inlet_port")
                 _dispense_port = liq_id.details.get("outlet_port")
                 rospy.loginfo(f'Sending Dispense Rate Command (rate : {current_op.dispense_rate} {current_op.rate_unit} of {current_op.liquid_name})')
                 for i in range(10):
-                    self._pub_pump.publish(seq=self._seq_id, tecan_xlp_command=TecanXlp6000Cmd.INF_DISPENSE, xlp_withdraw_port=_withdraw_port, xlp_dispense_port=_dispense_port, xlp_speed = int(current_op.dispense_rate))
+                    self._pub_pump.publish(seq=self._seq_id, tecan_xlp_command=TecanXlp6000Cmd.INF_DISPENSE, xlp_withdraw_port=int(_withdraw_port), xlp_dispense_port=int(_dispense_port), xlp_speed = int(current_op.dispense_rate))
             elif isinstance(current_op, SyringePumpFinishDispensingOp):
                 rospy.loginfo(f'Sending Stop Dispense Command')
                 for i in range(10):

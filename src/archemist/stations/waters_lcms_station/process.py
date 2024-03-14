@@ -18,7 +18,7 @@ class APCLCMSAnalysisProcess(StationProcess):
             State(name='collect_vial', on_enter=['request_collect_vial']),
             State(name='place_vial', on_enter=['request_vial_placement']),
             State(name='insert_rack', on_enter=['request_rack_insertion']),
-            State(name='run_analysis', on_enter=['request_analysis']),
+            #State(name='run_analysis', on_enter=['request_analysis']), # TODO revert this back once LCMS is working again
             State(name='eject_rack', on_enter=['request_rack_ejection']),
             State(name='dispose_vial', on_enter=['request_vial_disposal']),
             State(name='increment_sample_index', on_enter=['request_increment_sample_index']),
@@ -30,8 +30,9 @@ class APCLCMSAnalysisProcess(StationProcess):
             { 'source':'prep_state','dest':'collect_vial', 'conditions':'are_req_station_ops_completed'},
             { 'source':'collect_vial','dest':'place_vial', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'place_vial','dest':'insert_rack', 'conditions':'are_req_robot_ops_completed'},
-            { 'source':'insert_rack','dest':'run_analysis', 'conditions':'are_req_station_ops_completed'},
-            { 'source':'run_analysis','dest':'eject_rack', 'conditions':'are_req_station_ops_completed'},
+            { 'source':'insert_rack','dest':'eject_rack', 'conditions':'are_req_station_ops_completed'},
+            #{ 'source':'insert_rack','dest':'run_analysis', 'conditions':'are_req_station_ops_completed'}, # TODO revert this back once LCMS is working again
+            #{ 'source':'run_analysis','dest':'eject_rack', 'conditions':'are_req_station_ops_completed'},
             { 'source':'eject_rack','dest':'dispose_vial', 'conditions':'are_req_station_ops_completed'},
             { 'source':'dispose_vial','dest':'increment_sample_index', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'increment_sample_index','dest':'final_state', 'conditions':'are_req_station_ops_completed'},
@@ -67,12 +68,19 @@ class APCLCMSAnalysisProcess(StationProcess):
         self.request_station_op(prep_op)
         
     def request_collect_vial(self):
+        lcms_station: WatersLCMSStation = self.get_assigned_station()
+        location_dict = {"coordinates": [36, 8], "descriptor": "EasySampler"}
+        target_loc = Location.from_dict(location_dict)
         robot_task = RobotTaskOp.from_args(
-            name = "collectSample",
-            target_robot = "KMRIIWARobot",
-            task_type = 2,
-            lbr_program_name = "collectSample"
-            )
+            name="collectSample",
+            target_robot="KMRIIWARobot",
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="collectSample",
+            lbr_program_params=[str(lcms_station.sample_index)],
+            fine_localization=True,
+            task_type=2
+        )
         self.request_robot_ops([robot_task])
 
     def request_vial_placement(self):
@@ -110,12 +118,12 @@ class APCLCMSAnalysisProcess(StationProcess):
         lcms_station: WatersLCMSStation = self.get_assigned_station()
         lcms_station.sample_index += 1
 
-    def request_analysis(self):
-        batch_index = self.data["target_batch_index"]
-        sample_index = self.data["target_sample_index"]
-        sample = self.lot.batches[batch_index].samples[sample_index]
-        analysis_op = LCMSSampleAnalysisOp.from_args(target_sample=sample)
-        self.request_station_op(analysis_op)
+    # def request_analysis(self):
+    #     batch_index = self.data["target_batch_index"]
+    #     sample_index = self.data["target_sample_index"]
+    #     sample = self.lot.batches[batch_index].samples[sample_index]
+    #     analysis_op = LCMSSampleAnalysisOp.from_args(target_sample=sample)
+    #     self.request_station_op(analysis_op)
 
     def request_rack_insertion(self):
         insert_op = LCMSInsertRackOp.from_args()

@@ -59,11 +59,12 @@ steps:
             parameters:
               target_temperature: 19
               target_stirring_speed: 400
-              wait_duration: Null
+              wait_duration: 100
+              time_unit: "minute"
           - name: wait
             op: MTSynthWaitOp
             parameters:
-              seconds: 30
+              seconds: 10
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
@@ -79,7 +80,7 @@ steps:
           - name: dry_product
             op: APCDryProductOp
             parameters:
-              duration: 3
+              duration: 1
               time_unit: minute
         args:
           target_batch_index: 0
