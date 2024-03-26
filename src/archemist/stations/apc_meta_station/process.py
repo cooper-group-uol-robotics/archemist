@@ -27,8 +27,11 @@ class APCSynthesisProcess(StationProcess):
         
         ''' States '''
         self.STATES = [ State(name='init_state'),
-            State(name='prep_state', on_enter=['initialise_process_data']), 
+            State(name='prep_state', on_enter=['initialise_process_data']),
+            State(name='navigate_to_load_funnel', on_enter=['request_navigate_to_load_funnel']),  
+            State(name='open_sash', on_enter=['request_open_sash']),
             State(name='load_funnel', on_enter=['request_load_funnel_process']), 
+            State(name='close_sash', on_enter=['request_close_sash']),
             
             State(name='add_liquid_1', on_enter=['request_adding_liquid_1']),
             
@@ -48,8 +51,13 @@ class APCSynthesisProcess(StationProcess):
         ''' Transitions '''
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
-            {'source':'prep_state', 'dest': 'load_funnel'},
-            {'source':'load_funnel', 'dest': 'add_liquid_1', 'conditions':'are_req_station_procs_completed'},
+            {'source':'prep_state', 'dest': 'navigate_to_load_funnel'},
+
+            {'source':'navigate_to_load_funnel','dest':'open_sash', 'conditions':'are_req_robot_ops_completed'},
+            {'source':'open_sash','dest':'load_funnel', 'conditions':'are_req_station_ops_completed'},
+            {'source':'load_funnel', 'dest': 'close_sash', 'conditions':'are_req_station_procs_completed'},
+            {'source':'close_sash', 'dest': 'add_liquid_1', 'conditions':'are_req_station_ops_completed'},
+
             {'source':'add_liquid_1','dest':'add_solid', 'conditions':'are_req_station_ops_completed'},
             {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
@@ -98,22 +106,37 @@ class APCSynthesisProcess(StationProcess):
 
     def initialise_process_data(self):
         self.data['is_liquid_2_added'] = False
+        
+    def request_navigate_to_load_funnel(self):
+        location_dict = {"coordinates": [38, 8], "descriptor": "Weighing station"}
+        target_loc = Location.from_dict(location_dict)
+        robot_task = RobotTaskOp.from_args(
+            name="loadFreshFunnel",
+            target_robot="KMRIIWARobot",
+            target_location=target_loc,
+            params={},  
+            lbr_program_name="loadFreshFunnel",
+            lbr_program_params=["1"],
+            fine_localization=True,
+            task_type=1
+        )
+        self.request_robot_ops([robot_task])
 
+    def request_open_sash(self):
+        station_op = APCOpenSashOp.from_args()
+        self.request_station_op(station_op)
+        
     def request_load_funnel_process(self):
         batch_index = self.data["target_batch_index"]
         sample_index = self.data["target_sample_index"]
-        add_solid_operation = self.operation_specs_map["add_solid"]
-        operations = [{
-            "name": "add_solid",
-            "op": add_solid_operation.op_type,
-            "parameters": dict(add_solid_operation.parameters)
-        }]
-
         proc = APCNewFunnelProcess.from_args(lot=self.lot,
                                                  target_batch_index=batch_index,
-                                                 target_sample_index=sample_index,
-                                                 operations=operations)
+                                                 target_sample_index=sample_index)
         self.request_station_process(proc)
+
+    def request_close_sash(self):
+        station_op = APCCloseSashOp.from_args()
+        self.request_station_op(station_op)
 
     def request_adding_liquid_1(self):
         batch_index = self.data["target_batch_index"]

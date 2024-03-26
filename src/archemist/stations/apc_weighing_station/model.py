@@ -4,7 +4,7 @@ from mongoengine import fields
 
 class APCWeighingStationModel(StationModel):
     balance_doors_open = fields.BooleanField(default=False)
-    funnel_storage_index = fields.IntField(min_value=0, default=0)
+    funnel_storage_index = fields.IntField(min_value=1, default=1)
     funnel_storage_capacity = fields.IntField(min_value=0, required=True)
 
 class APCWeighResultModel(StationOpResultModel):
