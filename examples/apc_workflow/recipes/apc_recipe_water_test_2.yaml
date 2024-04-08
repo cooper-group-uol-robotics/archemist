@@ -45,7 +45,7 @@
 
 general:
   name: apc_recipe
-  id: 1
+  id: 2
 steps:
   - state_name: synthesise
     station:
@@ -79,7 +79,7 @@ steps:
           - name: heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 22
+              target_temperature: 20
               target_stirring_speed: 400
               wait_duration: 100
         args:
@@ -109,12 +109,12 @@ steps:
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              steps: 6000
+              steps: 7000
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 300
+              dispense_volume: 100
               dispense_unit: mL
               dispense_rate: 150
               rate_unit: mL/minute
@@ -126,8 +126,8 @@ steps:
         args:
           target_batch_index: 0
           target_sample_index: 1
-          num_discharge_cycles: 3
-          num_wash_cycles: 3
+          num_discharge_cycles: 2
+          num_wash_cycles: 1
     transitions:
       on_success: measure_yield
       on_fail: failed_state
@@ -162,7 +162,7 @@ steps:
           - name: wash_heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 23
+              target_temperature: 21
               target_stirring_speed: 400
               wait_duration: 100
         args:

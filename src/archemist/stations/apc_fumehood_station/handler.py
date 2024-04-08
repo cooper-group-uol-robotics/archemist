@@ -69,6 +69,11 @@ try:
                         seq=self._seq_id,
                         sash_door_command = SashDoorCmd.CLOSE_DOOR
                     )
+            elif isinstance(current_op, APCDispenseSolidOp):
+                rospy.loginfo(
+                    f"Updating solid addition cartridge state"
+                )
+                self._op_complete = True
             else:
                 rospy.logwarn(
                     f"[{self.__class__.__name__}] Unkown operation was received"
