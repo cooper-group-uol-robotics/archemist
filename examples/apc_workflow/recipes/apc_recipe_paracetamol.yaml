@@ -105,11 +105,11 @@ steps:
           - name: wait
             op: MTSynthWaitOp
             parameters:
-              seconds: 30
+              seconds: 1800
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              steps: 6000
+              steps: 7000
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:
@@ -127,7 +127,7 @@ steps:
           target_batch_index: 0
           target_sample_index: 1
           num_discharge_cycles: 3
-          num_wash_cycles: 3
+          num_wash_cycles: 2
     transitions:
       on_success: measure_yield
       on_fail: failed_state

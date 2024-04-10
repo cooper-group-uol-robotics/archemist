@@ -98,7 +98,7 @@ class APCSynthesisProcess(StationProcess):
         model.data["target_product_concentration"] = float(target_product_concentration)
         model.data["target_batch_index"] = int(target_batch_index)
         model.data["target_sample_index"] = int(target_sample_index)
-        model.data["lcms_iterate"] = 1 # only for when LCMS not working
+        # model.data["lcms_iterate"] = 1 # FOR WATER_RUN
         model.save()
         return cls(model)
 
@@ -197,7 +197,8 @@ class APCSynthesisProcess(StationProcess):
         self.request_station_op(current_op)
 
     def request_wait(self):
-        self.data["lcms_iterate"] = 2
+        # FOR WATER_RUN
+        # self.data["lcms_iterate"] = 2
         pass
 
     def request_reaction_stop(self):
@@ -210,21 +211,22 @@ class APCSynthesisProcess(StationProcess):
         return self.data['is_liquid_2_added']
 
     def is_reaction_complete(self):
-        if self.data["lcms_iterate"] == 1:
-            return False
-        else:
-            return True
-        # TODO use the below again when LCMS is working
-        # target_product_concentration = self.data["target_product_concentration"]
-        # batch_index = self.data["target_batch_index"]
-        # sample_index = self.data["target_sample_index"]
-        # sample = self.lot.batches[batch_index].samples[sample_index]
-        # results = list(sample.result_ops)
-        # for result in reversed(results):
-        #     if isinstance(result, LCMSAnalysisResult):
-        #         chemicals = [chemical for chemical in result.chemicals]
-        #         para_index = chemicals.index("paracetamol")
-        #         return result.concentrations[para_index] >= target_product_concentration
+        # FOR WATER_RUN
+        # if self.data["lcms_iterate"] == 1: 
+        #     return False
+        # else:
+        #     return True
+
+        target_product_concentration = self.data["target_product_concentration"]
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        sample = self.lot.batches[batch_index].samples[sample_index]
+        results = list(sample.result_ops)
+        for result in reversed(results):
+            if isinstance(result, LCMSAnalysisResult):
+                chemicals = [chemical for chemical in result.chemicals]
+                para_index = chemicals.index("paracetamol")
+                return result.concentrations[para_index] >= target_product_concentration
 
 class APCFiltrationProcess(StationProcess):
     def __init__(self, process_model: Union[StationProcessModel, ModelProxy]) -> None:
@@ -349,14 +351,9 @@ class APCFiltrationProcess(StationProcess):
 
     ''' transitions callbacks '''
     def is_last_discharge(self):
-        print(self.data["num_discharge_cycles"])
-        print(self.data["max_num_discharge_cycles"])
-        print(self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"])
         if (self.data["num_discharge_cycles"] % self.data["max_num_discharge_cycles"] == 0) and (self.data["num_discharge_cycles"] != 0):
-            print("here!")
             return True
         else:
-            print(":(here:(")
             return False
 
     def is_vessel_clean(self):
@@ -433,7 +430,7 @@ class APCCleaningProcess(StationProcess):
         model.data["target_purity_concentration"] = float(target_purity_concentration)
         model.data["target_batch_index"] = int(target_batch_index)
         model.data["target_sample_index"] = int(target_sample_index)
-        model.data["lcms_iterate"] = 1 # only for when LCMS not working
+        model.data["lcms_iterate"] = 0
         model.save()
         return cls(model)
 
@@ -515,7 +512,7 @@ class APCCleaningProcess(StationProcess):
         self.request_station_op(station_op)
 
     def request_open_close_drain_valve(self):
-        self.data["lcms_iterate"] = 2
+        self.data["lcms_iterate"] += 1
         station_op = MTSynthLongOpenCloseReactionValveOp.from_args()
         self.request_station_op(station_op)
 
@@ -540,22 +537,26 @@ class APCCleaningProcess(StationProcess):
 
     ''' transitions callbacks '''
     def is_reactor_clean(self):
-        if self.data["lcms_iterate"] == 1:
+        # FOR WATER_RUN
+        # if self.data["lcms_iterate"] == 1:
+        #     return False
+        # else:
+        #     return True
+    
+        target_purity_concentration = self.data["target_purity_concentration"]
+        batch_index = self.data["target_batch_index"]
+        sample_index = self.data["target_sample_index"]
+        sample = self.lot.batches[batch_index].samples[sample_index]
+        # Always do at least 2 wash cycles
+        if self.data["lcms_iterate"] < 2:
             return False
         else:
-            return True
-        # TODO use the below again when LCMS is working
-    
-        # target_purity_concentration = self.data["target_purity_concentration"]
-        # batch_index = self.data["target_batch_index"]
-        # sample_index = self.data["target_sample_index"]
-        # sample = self.lot.batches[batch_index].samples[sample_index]
-        # results = list(sample.result_ops)
-        # for result in reversed(results):
-        #     if isinstance(result, LCMSAnalysisResult):
-        #         chemicals = [chemical for chemical in result.chemicals]
-        #         para_index = chemicals.index("paracetamol")
-        #         return result.concentrations[para_index] <= target_purity_concentration
+            results = list(sample.result_ops)
+            for result in reversed(results):
+                if isinstance(result, LCMSAnalysisResult):
+                    chemicals = [chemical for chemical in result.chemicals]
+                    para_index = chemicals.index("paracetamol")
+                    return result.concentrations[para_index] <= target_purity_concentration
 
 class APCMeasureYieldProcess(StationProcess):
     
