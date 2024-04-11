@@ -120,6 +120,7 @@ try:
             current_op = self._station.assigned_op
             self._result_received = False
             self._op_result = False
+            self._op_complete = False
             if isinstance(current_op,LCMSInsertRackOp):
                 print(f'Autosampler - inserting rack {current_op}')
                 for i in range(10):

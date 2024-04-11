@@ -116,8 +116,8 @@ stations:
           density: 1000
           density_unit: kg/m3
           details:
-            inlet_port: 4 #5 change back when not testing
-            outlet_port: 7 #8 change back when not testing
+            inlet_port: 5
+            outlet_port: 8
           expiry_date: 31/03/2024
         - name: water
           amount: 100000
