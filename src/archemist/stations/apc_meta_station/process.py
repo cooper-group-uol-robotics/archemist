@@ -225,7 +225,7 @@ class APCSynthesisProcess(StationProcess):
         for result in reversed(results):
             if isinstance(result, LCMSAnalysisResult):
                 chemicals = [chemical for chemical in result.chemicals]
-                para_index = chemicals.index("paracetamol")
+                para_index = chemicals.index("Paracetamol")
                 return result.concentrations[para_index] >= target_product_concentration
 
 class APCFiltrationProcess(StationProcess):
@@ -555,7 +555,7 @@ class APCCleaningProcess(StationProcess):
             for result in reversed(results):
                 if isinstance(result, LCMSAnalysisResult):
                     chemicals = [chemical for chemical in result.chemicals]
-                    para_index = chemicals.index("paracetamol")
+                    para_index = chemicals.index("Paracetamol")
                     return result.concentrations[para_index] <= target_purity_concentration
 
 class APCMeasureYieldProcess(StationProcess):

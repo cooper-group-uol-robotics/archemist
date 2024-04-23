@@ -19,7 +19,7 @@ class SimWatersLCMSStationHandler(SimStationOpHandler):
             current_op = self._station.assigned_op
             if isinstance(current_op, LCMSSampleAnalysisOp):
                 result = LCMSAnalysisResult.from_args(origin_op = current_op.object_id,
-                                                      chemicals=["4-aminophenol", "paracetamol"],
+                                                      chemicals=["4 Amino Phenol", "Paracetamol"],
                                                       concentrations=[0.01,0.7],
                                                       y_values=[1,2,3,4,5,6,7,8,9]
                                                       )

@@ -45,105 +45,8 @@
 
 general:
   name: apc_recipe
-  id: 1
+  id: 2
 steps:
-  - state_name: synthesise
-    station:
-      type: APCMetaStation
-      id: 8
-      process:
-        type: APCSynthesisProcess
-        operations:
-          - name: add_liquid_1
-            op: SyringePumpDispenseVolumeOp
-            parameters:
-              liquid_name: water
-              dispense_volume: 500
-              dispense_unit: mL
-              dispense_rate: 150
-              rate_unit: mL/minute
-          - name: add_solid
-            op: APCDispenseSolidOp
-            parameters:
-              solid_name: 4-aminophenol
-              dispense_mass: 20
-              dispense_unit: g
-          - name: add_liquid_2
-            op: SyringePumpDispenseVolumeOp
-            parameters:
-              liquid_name: acetic_anhydride
-              dispense_volume: 35
-              dispense_unit: mL
-              dispense_rate: 150
-              rate_unit: mL/minute
-          - name: heat_stir
-            op: MTSynthHeatStirOp
-            parameters:
-              target_temperature: 70
-              target_stirring_speed: 400
-              wait_duration: 100
-        args:
-          target_batch_index: 0
-          target_sample_index: 0
-          target_product_concentration: 0.4
-    transitions:
-      on_success: filter
-      on_fail: failed_state
-  - state_name: filter
-    station:
-      type: APCMetaStation
-      id: 8
-      process:
-        type: APCFiltrationProcess
-        operations:
-          - name: heat_stir_discharge
-            op: MTSynthHeatStirOp
-            parameters:
-              target_temperature: 5
-              target_stirring_speed: 400
-              wait_duration: 100
-          - name: wait
-            op: MTSynthWaitOp
-            parameters:
-              seconds: 1800
-          - name: custom_discharge
-            op: MTSynthCustomOpenCloseReactionValveOp
-            parameters:
-              steps: 7000
-          - name: wash_product
-            op: SyringePumpDispenseVolumeOp
-            parameters:
-              liquid_name: water
-              dispense_volume: 500
-              dispense_unit: mL
-              dispense_rate: 150
-              rate_unit: mL/minute
-          - name: dry_product
-            op: APCDryProductOp
-            parameters:
-              duration: 3
-              time_unit: minute
-        args:
-          target_batch_index: 0
-          target_sample_index: 1
-          num_discharge_cycles: 3
-          num_wash_cycles: 2
-    transitions:
-      on_success: measure_yield
-      on_fail: failed_state
-  - state_name: measure_yield
-    station:
-      type: APCMetaStation
-      id: 8
-      process:
-        type: APCMeasureYieldProcess
-        operations: Null
-        args:
-          target_batch_index: 0
-          target_sample_index: 0
-    transitions:
-      on_success: cleaning
-      on_fail: failed_state
   - state_name: cleaning
     station:
       type: APCMetaStation
@@ -155,14 +58,14 @@ steps:
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 500
+              dispense_volume: 300
               dispense_unit: mL
               dispense_rate: 150
               rate_unit: mL/minute
           - name: wash_heat_stir
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 85
+              target_temperature: 20
               target_stirring_speed: 400
               wait_duration: 100
         args:
