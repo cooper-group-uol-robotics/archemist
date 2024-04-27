@@ -47,7 +47,7 @@ workflow_output:
   location:
     coordinates: [1,1]
     descriptor: output_site
-  total_lot_capacity: 1
+  total_lot_capacity: 3
   lots_need_manual_removal: False
   lot_output_process: Null
 

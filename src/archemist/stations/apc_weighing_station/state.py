@@ -49,8 +49,6 @@ class APCWeighingStation(Station):
             self.balance_doors_open = True
         elif isinstance(current_op, APCCloseBalanceDoorOp):
             self.balance_doors_open = False
-        elif isinstance(current_op, APCWeighingOp):
-            self.funnel_storage_index += 1
         super().complete_assigned_op(outcome, results)
 
 

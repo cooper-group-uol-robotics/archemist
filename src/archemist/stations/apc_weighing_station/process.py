@@ -28,6 +28,7 @@ class APCWeighingProcess(StationProcess):
             State(name='close_balance_door', on_enter=['request_close_balance_door']),
             State(name='weigh', on_enter=['request_weigh']),
             State(name='unload_funnel', on_enter=['request_unload_funnel']),
+            State(name='increment_funnel', on_enter=['request_increment_funnel']),
             State(name='final_state')
         ]
             
@@ -41,7 +42,8 @@ class APCWeighingProcess(StationProcess):
             { 'source':'close_balance_door','dest':'weigh', 'unless': 'is_weighing_complete', 'conditions':'are_req_station_ops_completed'},
             { 'source':'weigh','dest':'open_balance_door', 'conditions':'are_req_station_ops_completed'}, 
             { 'source':'open_balance_door','dest':'unload_funnel', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
-            { 'source':'unload_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'unload_funnel','dest':'increment_funnel', 'conditions':'are_req_robot_ops_completed'},
+            { 'source':'increment_funnel','dest':'close_balance_door', 'conditions':'are_req_robot_ops_completed'},
             { 'source':'close_balance_door','dest':'final_state', 'conditions':['are_req_station_ops_completed','is_weighing_complete']},
             ]
 
@@ -125,10 +127,9 @@ class APCWeighingProcess(StationProcess):
         )
         self.request_robot_ops([robot_task])
         
-
-    # def increment_funnel_index(self):
-    #     weighing_station: APCWeighingStation = self.get_assigned_station()
-    #     weighing_station.funnel_storage_index += 1
+    def request_increment_funnel(self):
+        weighing_station: APCWeighingStation = self.get_assigned_station()
+        weighing_station.funnel_storage_index += 1
 
     ''' transition callbacks '''
     def is_weighing_complete(self):

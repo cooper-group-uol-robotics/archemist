@@ -69,10 +69,10 @@ class APCSynthesisProcess(StationProcess):
 
             {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             
-            {'source':'wait_for_result','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions':'are_req_station_ops_completed'},
-            {'source':'wait_for_result','dest':'stop_reaction', 'conditions':['is_reaction_complete', 'are_req_station_ops_completed']},
-            
-            {'source':'stop_reaction','dest':'final_state', 'conditions':'are_req_station_ops_completed'}
+            {'source':'wait_for_result','dest':'stop_reaction', 'conditions': 'are_req_station_ops_completed'},
+
+            {'source':'stop_reaction','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions':'are_req_station_ops_completed'},
+            {'source':'stop_reaction','dest':'final_state', 'conditions':['is_reaction_complete', 'are_req_station_ops_completed']}
         ]
 
     @classmethod

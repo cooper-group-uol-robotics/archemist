@@ -91,11 +91,11 @@ class ArchemistCLI:
         selection = prompt(station_menu)
         if selection['station_menu'] == 'Repeat assigned op':
             self._log_client(f'repeating assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_name,station_id])
+            msg = CMDMessage(category=CMDCategory.STATION, cmd='repeat_op', params=[station_id, station_name])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Skip assigned op':
             self._log_client(f'skipping assigned op for station {station_name} with id: {station_id}')
-            msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_name,station_id])
+            msg = CMDMessage(category=CMDCategory.STATION, cmd='skip_op', params=[station_id, station_name])
             self._client.send_json(msg.to_json())
         elif selection['station_menu'] == 'Return':
             pass
@@ -110,11 +110,11 @@ class ArchemistCLI:
         selection = prompt(robot_menu)
         if selection['robot_menu'] == 'Repeat assigned op':
             self._log_client(f'repeating assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_name,robot_id])
+            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='repeat_op', params=[robot_id, robot_name])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Skip assigned op':
             self._log_client(f'skipping assigned op for station {robot_name} with id: {robot_id}')
-            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_name,robot_id])
+            msg = CMDMessage(category=CMDCategory.ROBOT, cmd='skip_op', params=[robot_id, robot_name])
             self._client.send_json(msg.to_json())
         elif selection['robot_menu'] == 'Return':
             pass

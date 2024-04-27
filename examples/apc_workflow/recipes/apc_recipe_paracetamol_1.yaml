@@ -45,7 +45,7 @@
 
 general:
   name: apc_recipe
-  id: 2
+  id: 1
 steps:
   - state_name: synthesise
     station:
@@ -105,11 +105,11 @@ steps:
           - name: wait
             op: MTSynthWaitOp
             parameters:
-              seconds: 1800
+              seconds: 300
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              steps: 7000
+              steps: 7500
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:

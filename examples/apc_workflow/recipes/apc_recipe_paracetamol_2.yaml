@@ -45,8 +45,50 @@
 
 general:
   name: apc_recipe
-  id: 1
+  id: 2
 steps:
+  - state_name: synthesise
+    station:
+      type: APCMetaStation
+      id: 8
+      process:
+        type: APCSynthesisProcess
+        operations:
+          - name: add_liquid_1
+            op: SyringePumpDispenseVolumeOp
+            parameters:
+              liquid_name: water
+              dispense_volume: 500
+              dispense_unit: mL
+              dispense_rate: 150
+              rate_unit: mL/minute
+          - name: add_solid
+            op: APCDispenseSolidOp
+            parameters:
+              solid_name: 4-aminophenol
+              dispense_mass: 20
+              dispense_unit: g
+          - name: add_liquid_2
+            op: SyringePumpDispenseVolumeOp
+            parameters:
+              liquid_name: acetic_anhydride
+              dispense_volume: 35
+              dispense_unit: mL
+              dispense_rate: 150
+              rate_unit: mL/minute
+          - name: heat_stir
+            op: MTSynthHeatStirOp
+            parameters:
+              target_temperature: 70
+              target_stirring_speed: 400
+              wait_duration: 100
+        args:
+          target_batch_index: 0
+          target_sample_index: 0
+          target_product_concentration: 0.4
+    transitions:
+      on_success: filter
+      on_fail: failed_state
   - state_name: filter
     station:
       type: APCMetaStation
@@ -72,7 +114,7 @@ steps:
             op: SyringePumpDispenseVolumeOp
             parameters:
               liquid_name: water
-              dispense_volume: 500
+              dispense_volume: 600
               dispense_unit: mL
               dispense_rate: 150
               rate_unit: mL/minute

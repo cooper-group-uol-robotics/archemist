@@ -169,6 +169,7 @@ try:
             self.chemicals = msg.chemicals
             self.concentrations = msg.concentrations
             self.y_values = msg.y_values
+            print("Results from LCMS: " + str(msg.chemicals) + " " + str(msg.concentrations))
 
 except ImportError:
     pass
