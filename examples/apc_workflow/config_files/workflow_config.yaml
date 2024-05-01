@@ -110,6 +110,15 @@ stations:
     properties: Null
     materials:
       liquids:
+        - name: 4-aminophenol
+          amount: 2000
+          unit: mL
+          density: 1000
+          density_unit: kg/m3
+          details:
+            inlet_port: 9
+            outlet_port: 10
+          expiry_date: 31/12/2024
         - name: acetic_anhydride
           amount: 2000
           unit: mL
@@ -118,7 +127,7 @@ stations:
           details:
             inlet_port: 5
             outlet_port: 8
-          expiry_date: 31/03/2024
+          expiry_date: 31/12/2024
         - name: water
           amount: 100000
           unit: mL
@@ -127,7 +136,7 @@ stations:
           details:
             inlet_port: 4
             outlet_port: 7
-          expiry_date: 31/03/2024
+          expiry_date: 31/12/2024
   - type: DiaphragmPumpStation
     id: 2
     location:
@@ -154,13 +163,13 @@ stations:
     handler: APCFumeHoodStationRosHandler
     properties:
       cartridges:
-        - associated_solid: 4-aminophenol
+        - associated_solid: 4-aminophenol_solid
           hotel_index: 1
-        - associated_solid: 4-aminophenol
+        - associated_solid: 4-aminophenol_solid
           hotel_index: 2
     materials:
       solids:
-        - name: 4-aminophenol
+        - name: 4-aminophenol_solid
           amount: 10000
           unit: g
           expiry_date: 31/12/2025
