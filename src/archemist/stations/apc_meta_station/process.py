@@ -62,14 +62,14 @@ class APCSynthesisProcess(StationProcess):
             {'source':'add_solid','dest':'sample_reaction', 'conditions':'are_req_station_procs_completed'},
             
             {'source':'sample_reaction','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
-            {'source':'run_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_procs_completed'},
+            {'source':'run_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
 
-            {'source':'start_analysis_process','dest':'add_liquid_2', 'unless':'is_liquid_2_added', 'conditions':'are_req_station_ops_completed'},
-            {'source':'start_analysis_process','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
+            {'source':'start_analysis_process','dest':'add_liquid_2', 'unless':'is_liquid_2_added'},
+            {'source':'start_analysis_process','dest':'wait_for_result', 'conditions':'is_liquid_2_added'},
 
             {'source':'add_liquid_2','dest':'wait_for_result', 'conditions':'are_req_station_ops_completed'},
             
-            {'source':'wait_for_result','dest':'stop_reaction', 'conditions': 'are_req_station_ops_completed'},
+            {'source':'wait_for_result','dest':'stop_reaction', 'conditions': 'are_req_station_procs_completed'},
 
             {'source':'stop_reaction','dest':'sample_reaction', 'unless':'is_reaction_complete', 'conditions':'are_req_station_ops_completed'},
             {'source':'stop_reaction','dest':'final_state', 'conditions':['is_reaction_complete', 'are_req_station_ops_completed']}
@@ -388,10 +388,13 @@ class APCCleaningProcess(StationProcess):
         self.TRANSITIONS = [
             {'source':'init_state', 'dest': 'prep_state'},
             {'source':'prep_state', 'dest': 'navigate_to_weighing_station'},
+
             {'source':'navigate_to_weighing_station', 'dest': 'open_sash', 'conditions': 'are_req_robot_ops_completed'},
             {'source':'open_sash', 'dest': 'load_cleaning_funnel', 'unless': 'is_reactor_clean', 'conditions': 'are_req_station_ops_completed'},
+
             {'source':'load_cleaning_funnel', 'dest': 'close_sash', 'conditions': 'are_req_robot_ops_completed'},
             {'source':'close_sash', 'dest': 'add_wash_liquid', 'unless': 'is_reactor_clean', 'conditions': 'are_req_station_ops_completed'},
+
             {'source':'add_wash_liquid','dest':'sample_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'sample_reaction','dest':'run_reaction', 'conditions':'are_req_station_ops_completed'},
             {'source':'run_reaction','dest':'start_analysis_process', 'conditions':'are_req_station_ops_completed'},
@@ -403,7 +406,7 @@ class APCCleaningProcess(StationProcess):
             {'source':'drain_filter','dest':'navigate_to_weighing_station', 'conditions':['are_req_station_ops_completed', 'is_reactor_clean']},
 
             {'source':'open_sash', 'dest': 'unload_cleaning_funnel', 'conditions': ['are_req_station_ops_completed','is_reactor_clean']},
-            {'source':'unload_cleaning_funnel', 'dest': 'close_sash', 'conditions': ['are_req_robot_ops_completed','is_reactor_clean']},
+            {'source':'unload_cleaning_funnel', 'dest': 'close_sash', 'conditions': 'are_req_robot_ops_completed'},
             {'source':'close_sash', 'dest': 'final_state', 'conditions': ['are_req_robot_ops_completed','is_reactor_clean']},
         ]
 

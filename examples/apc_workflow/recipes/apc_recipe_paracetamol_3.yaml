@@ -45,7 +45,7 @@
 
 general:
   name: apc_recipe
-  id: 2
+  id: 3
 steps:
   - state_name: synthesise
     station:
@@ -57,15 +57,15 @@ steps:
           - name: add_liquid_1
             op: SyringePumpDispenseVolumeOp
             parameters:
-              liquid_name: 4-aminophenol
+              liquid_name: water
               dispense_volume: 500
               dispense_unit: mL
-              dispense_rate: 120
+              dispense_rate: 150
               rate_unit: mL/minute
           - name: add_solid
             op: APCDispenseSolidOp
             parameters:
-              solid_name: 4-aminophenol_solid
+              solid_name: 4-aminophenol
               dispense_mass: 20
               dispense_unit: g
           - name: add_liquid_2
@@ -121,7 +121,7 @@ steps:
           - name: dry_product
             op: APCDryProductOp
             parameters:
-              duration: 3
+              duration: 5
               time_unit: minute
         args:
           target_batch_index: 0

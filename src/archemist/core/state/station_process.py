@@ -69,7 +69,7 @@ class StationProcess:
         proc_model.lot = lot.model if lot is not None else None
         proc_model.associated_station = associated_station
         proc_model.is_subprocess = is_subprocess
-        proc_model.skip_robot_ops = skip_robot_ops
+        proc_model.skip_robot_ops = bool(skip_robot_ops)
         proc_model.skip_station_ops = skip_station_ops
         proc_model.skip_ext_procs =  skip_ext_procs
         

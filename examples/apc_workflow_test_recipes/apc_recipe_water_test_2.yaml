@@ -45,7 +45,7 @@
 
 general:
   name: apc_recipe
-  id: 1
+  id: 2
 steps:
   - state_name: synthesise
     station:

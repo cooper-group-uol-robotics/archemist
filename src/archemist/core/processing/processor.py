@@ -196,7 +196,7 @@ class WorkflowProcessor:
                 current_station_type = recipe_state_details.station_type
                 current_station_id = recipe_state_details.station_id
                 current_station = StationsGetter.get_station(current_station_id, current_station_type)
-                self._log_processor(f'Trying to assign ({lot}) to {current_station}')
+                # self._log_processor(f'Trying to assign ({lot}) to {current_station}')
                 if current_station.free_lot_capacity > 0:
                     current_station.add_lot(lot)
                     self._state.lots_buffer.remove(lot)
