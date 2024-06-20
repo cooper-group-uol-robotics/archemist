@@ -1,0 +1,8 @@
+# ============ Server Settings ============
+#
+# db_name: the name of the database inside mongodb that will be used to store
+#          workflow state and data
+# mongodb_host: mongodb host connection URI
+
+db_name:
+mongodb_host:

@@ -1,0 +1,13 @@
+general:
+  name: weighing_test_workflow
+  id: 198
+process:
+  - state_name: weighing
+    station:
+      type: WeighingStation
+      id: 12
+      operation:
+        type: SampleWeighingOpDescriptor
+    transitions:
+      on_success: end_state
+      on_fail: end_state
