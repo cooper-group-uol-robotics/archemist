@@ -26,7 +26,7 @@ workflow_input:
     descriptor: input_site
   samples_per_batch: 2
   batches_per_lot: 1
-  total_lot_capacity: 1
+  total_lot_capacity: 3
   lot_input_process: Null
 
 # ============ Workflow Output Configuration ============

@@ -45,7 +45,7 @@
 
 general:
   name: apc_recipe
-  id: 2
+  id: 3
 steps:
   - state_name: synthesise
     station:
@@ -85,7 +85,7 @@ steps:
         args:
           target_batch_index: 0
           target_sample_index: 0
-          target_product_concentration: 0.4
+          target_product_concentration: 0.3
     transitions:
       on_success: filter
       on_fail: failed_state
@@ -109,7 +109,7 @@ steps:
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              steps: 7500
+              steps: 15000
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:

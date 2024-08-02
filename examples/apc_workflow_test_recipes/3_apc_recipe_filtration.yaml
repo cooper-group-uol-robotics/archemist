@@ -57,7 +57,7 @@ steps:
           - name: heat_stir_discharge
             op: MTSynthHeatStirOp
             parameters:
-              target_temperature: 5
+              target_temperature: 18
               target_stirring_speed: 400
               wait_duration: 100
               time_unit: "minute"
@@ -68,7 +68,7 @@ steps:
           - name: custom_discharge
             op: MTSynthCustomOpenCloseReactionValveOp
             parameters:
-              steps: 7500
+              steps: 13000
           - name: wash_product
             op: SyringePumpDispenseVolumeOp
             parameters:
